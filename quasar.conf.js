@@ -64,7 +64,12 @@ module.exports = function(ctx) {
         "QTabPanels",
         "QTabPanel",
         "QSeparator",
-        "QSpinner"
+        "QSpinner",
+        "QAvatar",
+        "QTooltip",
+        "QBadge",
+        "QBtnDropdown",
+        "QBtnGroup"
       ],
 
       directives: ["Ripple", "ClosePopup", "TouchHold"],

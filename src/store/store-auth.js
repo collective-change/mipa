@@ -47,12 +47,15 @@ const actions = {
         LocalStorage.set("loggedIn", true);
         this.$router.push("/");
         dispatch("tasks/fbReadData", null, { root: true });
+        dispatch("orgs/fbReadData", null, { root: true });
       } else {
         commit("setLoggedIn", false);
         LocalStorage.set("loggedIn", false);
         this.$router.replace("/auth");
         commit("tasks/clearTasks", null, { root: true });
         commit("tasks/setTasksDownloaded", false, { root: true });
+        commit("tasks/clearOrgs", null, { root: true });
+        commit("tasks/setOrgsDownloaded", false, { root: true });
       }
     });
   }

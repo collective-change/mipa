@@ -2,6 +2,7 @@ import Vue from "vue";
 import Vuex from "vuex";
 
 import tasks from "./store-tasks";
+import orgs from "./store-orgs";
 import settings from "./store-settings";
 import auth from "./store-auth";
 
@@ -16,6 +17,7 @@ export default function(/* { ssrContext } */) {
   const Store = new Vuex.Store({
     modules: {
       tasks,
+      orgs,
       settings,
       auth
     },
