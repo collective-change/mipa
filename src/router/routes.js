@@ -9,12 +9,8 @@ const routes = [
       { path: "/settings/help", component: () => import("pages/PageHelp.vue") },
       { path: "/auth", component: () => import("pages/PageAuth.vue") },
       {
-        path: "/organization/basic-info",
-        component: () => import("pages/PagePlaceholder.vue")
-      },
-      {
-        path: "/organization/users",
-        component: () => import("pages/PagePlaceholder.vue")
+        path: "/model/model",
+        component: () => import("pages/PageModel.vue")
       },
       {
         path: "/placeholder",

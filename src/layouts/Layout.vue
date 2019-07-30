@@ -185,7 +185,7 @@ export default {
           icon: "share",
           icon_class: "flip-horizontal",
           links: [
-            { text: "Model", to: "/placeholder" },
+            { text: "Model", to: "/model/model" },
             { text: "Units", to: "/placeholder" },
             { text: "Update values", to: "/placeholder" },
             { text: "Analysis", to: "/placeholder" },
