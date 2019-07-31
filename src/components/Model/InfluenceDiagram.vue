@@ -75,13 +75,13 @@ export default {
       //console.log('calculateNextFrame: ', frameTimeMs);
       let diagram = document.querySelector("#influence-diagram");
       let node = document.querySelector(".node");
-      let nodeDiameter = node.offsetWidth;
+      let nodeDiameter = node.offsetHeight;
       let dc = 10; //damping coefficient; damping deceleration = velocity * damping coefficient
       let xc = diagram.offsetWidth / 2; // x spring center
       let yc = diagram.offsetHeight / 2; // y spring center
       let kx = 30; //x spring constant
       let ky = 1; //y spring constant
-      let ar = 15; //repulsive acceleration between nodes
+      let ar = 20; //repulsive acceleration between nodes
       let dt = frameTimeMs / 1000; //delta time in seconds
       let ax = 0; //x acceleration
       let ay = 0; //y acceleration
@@ -100,39 +100,51 @@ export default {
         var yDist = 0;
         var arx = 0; //repulsive acceleration between nodes
         var ary = 0;
+        // var vcx = 0; //collision velocity between nodes
+        // var vcy = 0;
+        // var cr = 0.7; //coefficient of restitution
 
         // check for collision
         nodesData.forEach(function(nodeDataB) {
-          xDist = xPos - nodesPhysicsOld[nodeDataB.id].xPos;
-          yDist = yPos - nodesPhysicsOld[nodeDataB.id].yPos;
-          // if two nodes are nearby then calculate possible repulsive force
-          if (xDist < nodeDiameter && yDist < nodeDiameter) {
-            //calculate exact distance
-            dist = Math.sqrt(xDist * xDist + yDist * yDist);
-            if (dist < nodeDiameter) {
-              arx +=
-                Math.abs(dist) < nodeDiameter
-                  ? ar * (nodeDiameter - Math.abs(xDist)) * Math.sign(xDist)
-                  : 0;
-              ary +=
-                Math.abs(dist) < nodeDiameter
-                  ? ar * (nodeDiameter - Math.abs(yDist)) * Math.sign(yDist)
-                  : 0;
-              if (nodeData.id == "thisNode")
-                console.log("arx ary: ", arx, ", ", ary);
+          if (nodeDataB.id != nodeData.id) {
+            xDist = xPos - nodesPhysicsOld[nodeDataB.id].xPos;
+            yDist = yPos - nodesPhysicsOld[nodeDataB.id].yPos;
+            // if two nodes are nearby then calculate possible repulsive force
+            if (xDist < nodeDiameter && yDist < nodeDiameter) {
+              //calculate exact distance
+              dist = Math.sqrt(xDist * xDist + yDist * yDist);
+              if (dist < nodeDiameter) {
+                arx +=
+                  Math.abs(dist) < nodeDiameter
+                    ? ar * (nodeDiameter - Math.abs(xDist)) * Math.sign(xDist)
+                    : 0;
+                ary +=
+                  Math.abs(dist) < nodeDiameter
+                    ? ar * (nodeDiameter - Math.abs(yDist)) * Math.sign(yDist)
+                    : 0;
+
+                //vcx = nodesPhysicsOld[nodeDataB.id].xVelo;
+                //vcy = nodesPhysicsOld[nodeDataB.id].yVelo;
+              }
             }
           }
         });
+
         // x calculations
         ax = (xc - xPos) * kx + arx - xVelo * dc;
-        nodesPhysics[nodeData.id].xPos = xPos + xVelo * dt;
+        nodesPhysics[nodeData.id].xPos =
+          xPos + xVelo * dt + ((ax * dt) / 2) * dt;
         nodesPhysics[nodeData.id].xVelo = xVelo + ax * dt;
+        //nodesPhysics[nodeData.id].xVelo = xVelo + ax * dt + vcx;
+
         // y calculations
         ay = (yc - yPos) * ky + ary - yVelo * dc;
-        nodesPhysics[nodeData.id].yPos = yPos + yVelo * dt;
+        nodesPhysics[nodeData.id].yPos =
+          yPos + yVelo * dt + ((ay * dt) / 2) * dt;
         nodesPhysics[nodeData.id].yVelo = yVelo + ay * dt;
+        //nodesPhysics[nodeData.id].yVelo = yVelo + ay * dt + vcy;
 
-        console.log("ax ay: ", ax, ", ", ay);
+        //console.log("ax ay: ", ax, ", ", ay);
       });
     },
     renderChart() {
@@ -198,15 +210,16 @@ export default {
 
     .node-contents {
       display: table-cell;
-      position: absolute;
+      //position: absolute;
+      position: relative;
       vertical-align: middle;
-      height: 90%;
+      height: 50%;
       text-align: center;
-      //overflow-y: scroll;
-      overflow-x: hidden;
+      //overflow-y: hidden;
+      //overflow-x: hidden;
       font-size: 0.8em;
       line-height: 1;
-      display: inline-block; //for older versions of IE
+      //display: inline-block; //for older versions of IE
     }
   }
 }
