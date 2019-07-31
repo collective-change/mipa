@@ -21,7 +21,8 @@ export default {
   name: "influence-diagram",
   props: ["chartData"],
   data: () => ({
-    nodesPhysics: []
+    nodesPhysics: [],
+    numBands: 1 //number of vertical bands for nodes to go to
   }),
   mounted() {
     //set initial positions of nodes
@@ -58,11 +59,10 @@ export default {
       let nodeTargetCenterY = chartCenterY;
 
       let nodesData = this.chartData.nodes;
-      //this.nodesPhysics = [];
       let nodesPhysics = this.nodesPhysics;
-      //console.log("nodesPhysics, ", nodesPhysics);
       nodesData.forEach(function(nodeData) {
         nodesPhysics[nodeData.id] = {
+          band: 1, //to which vertical band the node should go to
           xPos: nodeTargetCenterX + Math.random() * 200 - 100,
           yPos: nodeTargetCenterY + Math.random() * 200 - 100,
           xVelo: 0,
@@ -87,10 +87,12 @@ export default {
       let ay = 0; //y acceleration
       let distance = 0; //distance between centers of two nodes
       let nodesData = this.chartData.nodes;
+      let linksData = this.chartData.links;
       let nodesPhysics = this.nodesPhysics;
       let nodesPhysicsOld = Object.assign({}, this.nodesPhysics);
 
       nodesData.forEach(function(nodeData) {
+        let band = nodesPhysicsOld[nodeData.id].band; //previous band
         let xPos = nodesPhysicsOld[nodeData.id].xPos; //previous xPos
         let yPos = nodesPhysicsOld[nodeData.id].yPos; //previous xPos
         let xVelo = nodesPhysicsOld[nodeData.id].xVelo; //previous xVelo
@@ -100,9 +102,18 @@ export default {
         var yDist = 0;
         var arx = 0; //repulsive acceleration between nodes
         var ary = 0;
-        // var vcx = 0; //collision velocity between nodes
-        // var vcy = 0;
-        // var cr = 0.7; //coefficient of restitution
+
+        //check links to see if this node has an influencer, if yes, increase band number to one above
+        // if no influencers, then set band to lowest influencee band - 1 but not less than 0
+        // if has both infuencer and influencee, then band = average of max influencer band and min influencee band
+        linksData.forEach(function(linkData) {
+          if (linkData.target == nodeData.id)
+            band = Math.max(band, nodesPhysicsOld[linkData.source].band + 1);
+          if (band > this.numBands) {
+            this.numBands = band;
+            console.log("this.numBands: ", this.numBands);
+          }
+        }, this);
 
         // check for collision
         nodesData.forEach(function(nodeDataB) {
@@ -130,6 +141,9 @@ export default {
           }
         });
 
+        //save band into physics model
+        nodesPhysics[nodeData.id].band = band;
+
         // x calculations
         ax = (xc - xPos) * kx + arx - xVelo * dc;
         nodesPhysics[nodeData.id].xPos =
@@ -145,11 +159,11 @@ export default {
         //nodesPhysics[nodeData.id].yVelo = yVelo + ay * dt + vcy;
 
         //console.log("ax ay: ", ax, ", ", ay);
-      });
+      }, this);
     },
     renderChart() {
       console.log("renderChart()");
-      var node = document.querySelector("*[v-bind='thisNode']");
+      var node = document.querySelector("*[v-bind='d']");
       node.style.backgroundColor = "red";
 
       var self = this;

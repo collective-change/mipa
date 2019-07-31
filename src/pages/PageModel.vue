@@ -19,19 +19,22 @@ export default {
       influenceDiagram: {
         data: {
           nodes: [
-            { id: "influencer1", name: "influencer 1", group: 0 },
-            { id: "influencer2", name: "influencer 2", group: 0 },
-            { id: "influencer3", name: "influencer 3", group: 0 },
-            { id: "thisNode", name: "this Node", group: 1 },
-            { id: "influencee1", name: "influencee 1", group: 2 },
-            { id: "influencee2", name: "influencee 2", group: 2 }
+            { id: "a", name: "A" },
+            { id: "b", name: "B" },
+            { id: "c", name: "C" },
+            { id: "d", name: "D" },
+            { id: "e", name: "E" },
+            { id: "f", name: "F" },
+            { id: "g", name: "G" }
           ],
           links: [
-            { source: "influencer1", target: "thisNode", value: 1 },
-            { source: "influencer2", target: "thisNode", value: 8 },
-            { source: "influencer3", target: "thisNode", value: 5 },
-            { source: "thisNode", target: "influencee1", value: 10 },
-            { source: "thisNode", target: "influencee2", value: 1 }
+            { source: "a", target: "b", value: 1 },
+            { source: "a", target: "c", value: 20 },
+            { source: "a", target: "f", value: 10 },
+            { source: "b", target: "d", value: 50 },
+            { source: "c", target: "f", value: 1 },
+            { source: "d", target: "g", value: 0.1 },
+            { source: "e", target: "f", value: 5 }
           ]
         }
       }
