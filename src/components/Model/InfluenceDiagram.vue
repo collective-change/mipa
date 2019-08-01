@@ -12,7 +12,7 @@
       </div>
     </div>
     <q-btn @click="renderChart">continue</q-btn>
-    <q-btn @click="setInitialPositoinsOfNodes">reload</q-btn>
+    <q-btn @click="setInitialPositionsOfNodes">reload</q-btn>
   </div>
 </template>
 
@@ -20,15 +20,15 @@
 export default {
   name: "influence-diagram",
   props: ["chartData"],
-  data: () => ({
-    nodesPhysics: [],
-    numBands: 1 //number of vertical bands for nodes to go to
-  }),
+  data: () => ({}),
   mounted() {
     //set initial positions of nodes
-    //this.nodesPhysics = [];
-    this.setInitialPositoinsOfNodes();
-    //this.renderChart();
+    this.nodesPhysics = {};
+    this.numBands = 1;
+    this.xBandLocations = [];
+    this.needToRecalculateBands = true;
+    this.setInitialPositionsOfNodes();
+    this.renderChart();
   },
   methods: {
     updateNodePositionsOnDiagram() {
@@ -49,8 +49,13 @@ export default {
           nodesPhysics[nodeId].yPos - node.offsetHeight / 2 + "px";
       });
     },
-    setInitialPositoinsOfNodes() {
-      //console.log("setInitialPositoinsOfNodes()");
+    setInitialPositionsOfNodes() {
+      //console.log("setInitialPositionsOfNodes()");
+      this.nodesPhysics = {};
+      this.numBands = 1;
+      this.xBandLocations = [];
+      this.needToRecalculateBands = true;
+
       let diagram = document.querySelector("#influence-diagram");
       let node = document.querySelector(".node");
       let chartCenterX = diagram.offsetWidth / 2;
@@ -63,15 +68,69 @@ export default {
       nodesData.forEach(function(nodeData) {
         nodesPhysics[nodeData.id] = {
           band: 1, //to which vertical band the node should go to
-          xPos: nodeTargetCenterX + Math.random() * 200 - 100,
-          yPos: nodeTargetCenterY + Math.random() * 200 - 100,
+          xPos:
+            nodeTargetCenterX +
+            (Math.random() * diagram.offsetWidth - chartCenterX) * 0.2,
+          yPos:
+            nodeTargetCenterY +
+            (Math.random() * diagram.offsetHeight - chartCenterY) * 0.3,
           xVelo: 0,
           yVelo: 0
         };
       });
       this.updateNodePositionsOnDiagram();
     },
+    recalculateBands() {
+      console.log("recalculateBands() nodesPhysics: ", this.nodesPhysics);
+      //check links to see if this node has an influencer, if yes, increase band number to one above
+      // if no influencers, then set band to lowest influencee band - 1 but not less than 1
+      let nodesData = this.chartData.nodes;
+      let linksData = this.chartData.links;
+      let nodesPhysics = this.nodesPhysics;
+      let influencerBands = [];
+      let influenceeBands = [];
+      let draftBand = 1;
+      nodesData.forEach(function(nodeData) {
+        linksData.forEach(function(linkData) {
+          //check if link has current node as target (i.e. has an influencer)
+          if (linkData.target == nodeData.id) {
+            influencerBands.push(nodesPhysics[linkData.source].band);
+          }
+          //check if link has current node as source (i.e. has an influencee)
+          if (linkData.source == nodeData.id) {
+            influenceeBands.push(nodesPhysics[linkData.target].band);
+          }
+        }, this);
+        if (influencerBands.length > 0) {
+          draftBand = Math.max(...influencerBands) + 1;
+        } else {
+          draftBand = Math.max(1, Math.min(...influenceeBands) - 1);
+        }
+
+        //if band has changed from previous iteration
+        if (draftBand != nodesPhysics[nodeData.id].band) {
+          //save band into physics model
+          nodesPhysics[nodeData.id].band = draftBand;
+        } else {
+          this.needToRecalculateBands = false;
+        }
+
+        if (draftBand > this.numBands) this.numBands = draftBand;
+      }, this);
+
+      // calculat where the bands should be
+      let diagram = document.querySelector("#influence-diagram");
+      let diagramWidth = diagram.offsetWidth;
+      let bandWidth = diagramWidth / this.numBands;
+      let bandOffset = bandWidth / 2;
+      let i;
+      for (i = 0; i < this.numBands; i++) {
+        this.xBandLocations.push(i * bandWidth + bandOffset);
+      }
+    },
     calculateNextFrame(frameTimeMs) {
+      if (this.needToRecalculateBands == true) this.recalculateBands();
+
       //console.log('calculateNextFrame: ', frameTimeMs);
       let diagram = document.querySelector("#influence-diagram");
       let node = document.querySelector(".node");
@@ -79,17 +138,20 @@ export default {
       let dc = 10; //damping coefficient; damping deceleration = velocity * damping coefficient
       let xc = diagram.offsetWidth / 2; // x spring center
       let yc = diagram.offsetHeight / 2; // y spring center
-      let kx = 30; //x spring constant
-      let ky = 1; //y spring constant
-      let ar = 20; //repulsive acceleration between nodes
+      let kx = 200; //x spring constant
+      let ky = 10; //y spring constant
+      let ar = 35; //repulsive acceleration between nodes
       let dt = frameTimeMs / 1000; //delta time in seconds
       let ax = 0; //x acceleration
       let ay = 0; //y acceleration
       let distance = 0; //distance between centers of two nodes
+
       let nodesData = this.chartData.nodes;
       let linksData = this.chartData.links;
       let nodesPhysics = this.nodesPhysics;
       let nodesPhysicsOld = Object.assign({}, this.nodesPhysics);
+
+      let candidateXVelo, candidateYVelo;
 
       nodesData.forEach(function(nodeData) {
         let band = nodesPhysicsOld[nodeData.id].band; //previous band
@@ -97,23 +159,12 @@ export default {
         let yPos = nodesPhysicsOld[nodeData.id].yPos; //previous xPos
         let xVelo = nodesPhysicsOld[nodeData.id].xVelo; //previous xVelo
         let yVelo = nodesPhysicsOld[nodeData.id].yVelo; //previous xVelo
-        var dist = 0;
-        var xDist = 0; //distance between centers of two nodes
-        var yDist = 0;
-        var arx = 0; //repulsive acceleration between nodes
-        var ary = 0;
-
-        //check links to see if this node has an influencer, if yes, increase band number to one above
-        // if no influencers, then set band to lowest influencee band - 1 but not less than 0
-        // if has both infuencer and influencee, then band = average of max influencer band and min influencee band
-        linksData.forEach(function(linkData) {
-          if (linkData.target == nodeData.id)
-            band = Math.max(band, nodesPhysicsOld[linkData.source].band + 1);
-          if (band > this.numBands) {
-            this.numBands = band;
-            console.log("this.numBands: ", this.numBands);
-          }
-        }, this);
+        let dist = 0;
+        let xDist = 0; //distance between centers of two nodes
+        let yDist = 0;
+        let arx = 0; //repulsive acceleration between nodes
+        let ary = 0;
+        let xBandLocation = 0;
 
         // check for collision
         nodesData.forEach(function(nodeDataB) {
@@ -139,23 +190,28 @@ export default {
               }
             }
           }
+          //arx = Math.abs(arx) > repulsionDebounceThreshold ? arx : 0;
+          //ary = Math.abs(ary) > repulsionDebounceThreshold ? ary : 0;
         });
 
-        //save band into physics model
-        nodesPhysics[nodeData.id].band = band;
-
         // x calculations
-        ax = (xc - xPos) * kx + arx - xVelo * dc;
+        // determine which band location to go to
+        xBandLocation = this.xBandLocations[nodesPhysics[nodeData.id].band - 1];
+        ax = (xBandLocation - xPos) * kx + arx - xVelo * dc;
         nodesPhysics[nodeData.id].xPos =
           xPos + xVelo * dt + ((ax * dt) / 2) * dt;
+        //candidateXVelo = xVelo + ax * dt;
         nodesPhysics[nodeData.id].xVelo = xVelo + ax * dt;
+        //Math.abs(candidateXVelo) > lowVelocityThreshold ? candidateXVelo : 0;
         //nodesPhysics[nodeData.id].xVelo = xVelo + ax * dt + vcx;
 
         // y calculations
         ay = (yc - yPos) * ky + ary - yVelo * dc;
         nodesPhysics[nodeData.id].yPos =
           yPos + yVelo * dt + ((ay * dt) / 2) * dt;
+        //candidateYVelo = yVelo + ay * dt;
         nodesPhysics[nodeData.id].yVelo = yVelo + ay * dt;
+        //Math.abs(candidateYVelo) > lowVelocityThreshold ? candidateYVelo : 0;
         //nodesPhysics[nodeData.id].yVelo = yVelo + ay * dt + vcy;
 
         //console.log("ax ay: ", ax, ", ", ay);
@@ -198,7 +254,7 @@ export default {
     }
   },
   watch: {
-    chartData: "renderChart"
+    chartData: ["renderChart"]
   }
 };
 </script>
