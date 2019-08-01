@@ -85,7 +85,7 @@
     >
       <q-scroll-area class="fit">
         <q-list padding>
-          <q-item v-for="link in links1" :key="link.text" v-ripple clickable>
+          <q-item v-for="link in links1" :key="link.text" v-ripple clickable :to="link.to" exact>
             <q-item-section avatar>
               <q-icon color="grey" :name="link.icon" :class="link.icon_class" />
             </q-item-section>
@@ -96,7 +96,22 @@
 
           <q-separator class="q-my-md" />
 
-          <q-item v-for="link in links4" :key="link.text" v-ripple clickable @click="logoutUser">
+          <q-item v-for="link in links2" :key="link.text" v-ripple clickable :to="link.to" exact>
+            <q-item-section avatar>
+              <q-icon color="grey" :name="link.icon" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ link.text }}</q-item-label>
+            </q-item-section>
+          </q-item>
+
+          <q-item
+            v-for="link in links3"
+            :key="link.text"
+            v-ripple
+            clickable
+            v-on:click="logoutUser"
+          >
             <q-item-section avatar>
               <q-icon color="grey" :name="link.icon" />
             </q-item-section>
@@ -223,14 +238,13 @@ export default {
         }
       },
 
-      links1: [{ icon: "home", text: "Home" }],
-
-      links4: [
-        { icon: "settings", text: "Settings" },
-        { icon: "help", text: "Help" },
-        { icon: "feedback", text: "Send feedback" },
-        { icon: "exit_to_app", text: "Logout", onclick: "logoutUser" }
+      links1: [{ icon: "home", text: "Home", to: "/" }],
+      links2: [
+        { icon: "settings", text: "Settings", to: "/settings" },
+        { icon: "help", text: "Help", to: "/settings/help" },
+        { icon: "feedback", text: "Send feedback" }
       ],
+      links3: [{ icon: "exit_to_app", text: "Logout", onclick: "logoutUser" }],
       buttons1: [
         { text: "About" },
         { text: "Copyright" },
