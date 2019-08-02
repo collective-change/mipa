@@ -20,4 +20,4 @@ let firebaseApp = firebase.initializeApp(firebaseConfig);
 let firebaseAuth = firebaseApp.auth();
 let firebaseDb = firebaseApp.firestore();
 
-export { firebaseAuth, firebaseDb };
+export { firebase, firebaseApp, firebaseAuth, firebaseDb };

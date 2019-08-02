@@ -1,6 +1,6 @@
 import Vue from "vue";
 import { uid, Notify } from "quasar";
-import { firebaseDb, firebaseAuth } from "boot/firebase";
+import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { showErrorMessage } from "src/functions/function-show-error-message";
 
 const state = {
@@ -52,9 +52,11 @@ const actions = {
     dispatch("fbDeleteOrg", id);
   },
   addOrg({ dispatch }, org) {
-    let orgID = uid();
+    org.users = [firebaseAuth.currentUser.uid];
+    org.superAdmins = [firebaseAuth.currentUser.uid];
+    //let timestampNow = firebase.firestore.FieldValue.serverTimestamp();
+    org.created = firebase.firestore.FieldValue.serverTimestamp();
     let payload = {
-      id: orgID,
       org: org
     };
     dispatch("fbAddOrg", payload);
@@ -111,11 +113,12 @@ const actions = {
     });
   },
   fbAddOrg({}, payload) {
-    let userId = firebaseAuth.currentUser.uid;
+    //let userId = firebaseAuth.currentUser.uid;
     let orgsRef = firebaseDb.collection("orgs");
     orgsRef
-      .doc(payload.id)
-      .set(payload.org)
+      //.doc(payload.id)
+      //.set(payload.org)
+      .add(payload.org)
       .then(function() {
         Notify.create("Organization added!");
       })
@@ -124,7 +127,7 @@ const actions = {
       });
   },
   fbUpdateOrg({}, payload) {
-    let userId = firebaseAuth.currentUser.uid;
+    //let userId = firebaseAuth.currentUser.uid;
     let orgsRef = firebaseDb.collection("orgs");
     orgsRef
       .doc(payload.id)

@@ -4,6 +4,16 @@
       <template v-if="orgsDownloaded">
         <div class="text-h6">Organizations</div>
         <orgs :orgs="orgs" />
+        <div class="absolute-bottom text-center q-mb-lg no-pointer-events">
+          <q-btn
+            @click="showAddOrg = true"
+            round
+            class="all-pointer-events"
+            color="primary"
+            size="24px"
+            icon="add"
+          />
+        </div>
       </template>
       <template v-else>
         <span class="absolute-center">
@@ -11,6 +21,9 @@
         </span>
       </template>
     </div>
+    <q-dialog v-model="showAddOrg">
+      <add-org @close="showAddOrg=false" />
+    </q-dialog>
   </q-page>
 </template>
 
@@ -20,7 +33,7 @@ import { mapGetters, mapState } from "vuex";
 export default {
   data() {
     return {
-      showAddTask: false
+      showAddOrg: false
     };
   },
   computed: {
@@ -28,8 +41,8 @@ export default {
     ...mapState("orgs", ["orgs", "orgsDownloaded"])
   },
   mounted() {
-    this.$root.$on("showAddTask", () => {
-      this.showAddTask = true;
+    this.$root.$on("showAddOrg", () => {
+      this.showAddOrg = true;
     });
   },
   beforeDestroy() {
@@ -43,7 +56,9 @@ export default {
     // "add-task": require("components/Tasks/Modals/AddTask.vue").default,
     // search: require("components/Tasks/Tools/Search.vue").default,
     // sort: require("components/Tasks/Tools/Sort.vue").default
-    orgs: require("components/Orgs/Orgs.vue").default
+    "no-orgs": require("components/Orgs/NoOrgs.vue").default,
+    orgs: require("components/Orgs/Orgs.vue").default,
+    "add-org": require("components/Orgs/Modals/AddOrg.vue").default
   }
 };
 </script>

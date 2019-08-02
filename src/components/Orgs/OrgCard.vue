@@ -5,7 +5,7 @@
       to="/settings"
       v-ripple
       v-touch-hold:1000.mouse="showEditOrgModal"
-      class="bg-primary text-white"
+      class="bg-primary text-white text-h4"
     >{{org.name}}</q-card-section>
 
     <q-separator />
@@ -27,6 +27,8 @@
         <q-btn to="/model/model" flat round dense icon="whatshot">
           <q-tooltip>Achieve</q-tooltip>
         </q-btn>
+        <q-btn @click.stop="showEditOrgModal" flat round dense color="primary" icon="edit" />
+        <q-btn @click.stop="promptToDelete(id)" flat round dense color="red" icon="delete" />
       </div>
     </q-card-actions>
 
