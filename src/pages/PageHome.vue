@@ -50,12 +50,6 @@ export default {
     //this.$store.dispatch("detachListener");
   },
   components: {
-    // "no-tasks": require("components/Tasks/NoTasks.vue").default,
-    // "tasks-todo": require("components/Tasks/TasksTodo.vue").default,
-    // "tasks-completed": require("components/Tasks/TasksCompleted.vue").default,
-    // "add-task": require("components/Tasks/Modals/AddTask.vue").default,
-    // search: require("components/Tasks/Tools/Search.vue").default,
-    // sort: require("components/Tasks/Tools/Sort.vue").default
     "no-orgs": require("components/Orgs/NoOrgs.vue").default,
     orgs: require("components/Orgs/Orgs.vue").default,
     "add-org": require("components/Orgs/Modals/AddOrg.vue").default

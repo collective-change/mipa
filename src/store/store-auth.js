@@ -1,5 +1,5 @@
 import { LocalStorage, Loading } from "quasar";
-import { firebaseAuth } from "boot/firebase";
+import { firebase, firebaseAuth, firebaseDb } from "boot/firebase";
 import { showErrorMessage } from "src/functions/function-show-error-message";
 
 const state = {
@@ -17,8 +17,13 @@ const actions = {
     Loading.show();
     firebaseAuth
       .createUserWithEmailAndPassword(payload.email, payload.password)
-      .then(response => {
-        console.log("response: ", response);
+      .then(cred => {
+        return firebaseDb
+          .collection("users")
+          .doc(cred.user.uid)
+          .set({
+            registrationTime: firebase.firestore.FieldValue.serverTimestamp()
+          });
       })
       .catch(error => {
         showErrorMessage("Error", error.message);

@@ -55,7 +55,8 @@ const actions = {
     org.users = [firebaseAuth.currentUser.uid];
     org.superAdmins = [firebaseAuth.currentUser.uid];
     //let timestampNow = firebase.firestore.FieldValue.serverTimestamp();
-    org.created = firebase.firestore.FieldValue.serverTimestamp();
+    org.createTime = firebase.firestore.FieldValue.serverTimestamp();
+    org.createdBy = firebaseAuth.currentUser.uid;
     let payload = {
       org: org
     };
@@ -73,10 +74,10 @@ const actions = {
     let userId = firebaseAuth.currentUser.uid;
     //userId = "AOoVZSkgp2WYae35UPLb8zqsL7A3";
     let orgs = firebaseDb.collection("orgs");
-    let userOrgs = orgs;
+    let userOrgs = orgs.where("users", "array-contains", userId);
 
     // initial check for data
-    userOrgs //.where("userId", "==", userId)
+    userOrgs
       .get()
       .then(function(docs) {
         commit("setOrgsDownloaded", true);
