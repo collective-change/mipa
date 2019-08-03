@@ -183,8 +183,8 @@ export default {
           ]
         },
         organization: {
-          text: "Organization",
-          icon: "business",
+          text: "Team",
+          icon: "people",
           links: [
             { text: "Basic information", to: "/organization/basic-info" },
             { text: "Users", to: "/organization/users" },

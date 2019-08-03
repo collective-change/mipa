@@ -69,7 +69,8 @@ module.exports = function(ctx) {
         "QTooltip",
         "QBadge",
         "QBtnDropdown",
-        "QBtnGroup"
+        "QBtnGroup",
+        "QOptionGroup"
       ],
 
       directives: ["Ripple", "ClosePopup", "TouchHold"],

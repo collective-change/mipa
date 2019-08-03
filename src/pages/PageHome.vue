@@ -2,7 +2,8 @@
   <q-page>
     <div class="q-pa-md absolute full-width full-height column">
       <template v-if="orgsDownloaded">
-        <div class="text-h6">Organizations</div>
+        <div class="text-h6">Teams</div>
+        <no-orgs v-if="!Object.keys(orgs).length" />
         <orgs :orgs="orgs" />
         <div class="absolute-bottom text-center q-mb-lg no-pointer-events">
           <q-btn

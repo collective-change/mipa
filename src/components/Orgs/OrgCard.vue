@@ -28,7 +28,7 @@
           <q-tooltip>Achieve</q-tooltip>
         </q-btn>
         <q-btn @click.stop="showEditOrgModal" flat round dense color="primary" icon="edit" />
-        <q-btn @click.stop="promptToDelete(id)" flat round dense color="red" icon="delete" />
+        <q-btn @click.stop="promptToDelete(id)" flat round dense color="red-4" icon="delete" />
       </div>
     </q-card-actions>
 

@@ -10,7 +10,7 @@
         align="justify"
         narrow-indicator
       >
-        <q-tab name="login" label="Login" />
+        <q-tab name="login" label="Sign in" />
         <q-tab name="register" label="Register" />
       </q-tabs>
 
