@@ -6,16 +6,26 @@
       v-ripple
       v-touch-hold:1000.mouse="showEditOrgModal"
       class="bg-primary text-white text-h4"
-    >{{org.name}}</q-card-section>
+    >
+      <div class="text-h5">{{org.name}}</div>
+      <div class="text-h4">{{org.goal}}</div>
+    </q-card-section>
 
     <q-separator />
 
     <q-card-actions align="right">
       <div class="row">
-        <q-btn to="/model/model" flat round dense icon="business">
-          <q-tooltip>Organization</q-tooltip>
+        <q-btn to="/model/model" flat round dense icon="people">
+          <q-tooltip>Team</q-tooltip>
         </q-btn>
-        <q-btn to="/model/model" flat round dense icon="share" class="flip-horizontal">
+        <q-btn
+          :to="`/team/${org.nameSlug}/model/${id}`"
+          flat
+          round
+          dense
+          icon="share"
+          class="flip-horizontal"
+        >
           <q-tooltip>Model</q-tooltip>
         </q-btn>
         <q-btn to="/model/model" flat round dense icon="wb_incandescent" class="flip-vertical">

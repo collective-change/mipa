@@ -1,7 +1,6 @@
 <template>
   <div class="row q-mb-sm">
     <q-input
-      outlined
       autofocus
       v-select-all
       clearable

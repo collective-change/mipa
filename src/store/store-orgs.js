@@ -2,6 +2,7 @@ import Vue from "vue";
 import { uid, Notify } from "quasar";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { showErrorMessage } from "src/functions/function-show-error-message";
+import { slugify } from "src/functions/function-slugify";
 
 const state = {
   orgs: {
@@ -57,6 +58,7 @@ const actions = {
     //let timestampNow = firebase.firestore.FieldValue.serverTimestamp();
     org.createTime = firebase.firestore.FieldValue.serverTimestamp();
     org.createdBy = firebaseAuth.currentUser.uid;
+    org.nameSlug = slugify(org.name);
     let payload = {
       org: org
     };

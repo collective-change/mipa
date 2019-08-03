@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    <h5>Model</h5>
+    <h5>{{ $route.params.teamName }}'s Model</h5>
     <div id="app">
       <influence-diagram :chartData="influenceDiagram.data"></influence-diagram>
     </div>

@@ -1,17 +1,16 @@
 <template>
   <q-card>
     <modal-header>Add a new team</modal-header>
-
     <q-form @submit.prevent="submitForm">
       <q-card-section>
         <modal-org-name :name.sync="orgToSubmit.name" ref="modalOrgName" />
-        <q-select
-          outlined
-          v-model="orgToSubmit.teamType"
-          :options="options"
-          emit-value
-          label="Type"
+        <q-input
+          v-model="orgToSubmit.goal"
+          label="Goal"
+          :rules="[val => !!val || 'Field is required']"
+          clearable
         />
+        <q-select v-model="orgToSubmit.teamType" :options="options" emit-value label="Type" />
       </q-card-section>
       <modal-buttons />
     </q-form>
@@ -26,7 +25,6 @@ export default {
   mixins: [mixinAddEditOrg],
   data() {
     return {
-      teamType: null,
       options: [
         { label: "Just me", value: "personal" },
         { label: "Family", value: "family" },
@@ -39,6 +37,7 @@ export default {
       ],
       orgToSubmit: {
         name: "",
+        goal: "",
         teamType: ""
       }
     };
