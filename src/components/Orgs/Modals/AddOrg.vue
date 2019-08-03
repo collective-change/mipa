@@ -9,7 +9,7 @@
           outlined
           v-model="orgToSubmit.teamType"
           :options="options"
-          :reduce="option => option.value"
+          emit-value
           label="Type"
         />
       </q-card-section>
