@@ -264,7 +264,9 @@ export default {
   width: 100%;
   height: 400px;
   position: relative;
-  background: Gainsboro;
+  border-color: gray;
+  border-width: 1px;
+  border-style: solid;
   overflow: hidden;
 
   .node {
