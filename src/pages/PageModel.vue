@@ -18,24 +18,24 @@ export default {
     return {
       influenceDiagram: {
         data: {
-          nodes: [
-            { id: "a", name: "A" },
-            { id: "b", name: "B" },
-            { id: "c", name: "C" },
-            { id: "d", name: "D" },
-            { id: "e", name: "E" },
-            { id: "f", name: "F" },
-            { id: "g", name: "G" }
-          ],
-          links: [
-            { source: "a", target: "b", value: 1 },
-            { source: "a", target: "c", value: 20 },
-            { source: "a", target: "f", value: 10 },
-            { source: "b", target: "d", value: 50 },
-            { source: "c", target: "f", value: 1 },
-            { source: "d", target: "g", value: 0.1 },
-            { source: "e", target: "f", value: 5 }
-          ]
+          nodes: {
+            a: { name: "A" },
+            b: { name: "B" },
+            c: { name: "C" },
+            d: { name: "D" },
+            e: { name: "E" },
+            f: { name: "F" },
+            g: { name: "G" }
+          },
+          links: {
+            l1: { source: "a", target: "b", value: 1 },
+            l2: { source: "a", target: "c", value: 20 },
+            l3: { source: "a", target: "f", value: 10 },
+            l4: { source: "b", target: "d", value: 50 },
+            l5: { source: "c", target: "f", value: 1 },
+            l6: { source: "d", target: "g", value: 0.1 },
+            l7: { source: "e", target: "f", value: 5 }
+          }
         }
       }
     };
