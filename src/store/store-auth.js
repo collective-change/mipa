@@ -41,6 +41,8 @@ const actions = {
       });
   },
   logoutUser() {
+    this.detachUserTasksListener();
+    this.detachUserOrgsListener();
     firebaseAuth.signOut();
   },
   handleAuthStateChange({ commit, dispatch }) {
@@ -48,12 +50,12 @@ const actions = {
       Loading.hide();
       if (user) {
         // User is signed in.
-        console.log("User logged in");
+        //console.log("User logged in");
         commit("setLoggedIn", true);
         LocalStorage.set("loggedIn", true);
         this.$router.push("/");
         dispatch("tasks/fbReadData", null, { root: true });
-        dispatch("orgs/fbReadData", null, { root: true });
+        //dispatch("orgs/fbReadData", null, { root: true });
       } else {
         commit("setLoggedIn", false);
         LocalStorage.set("loggedIn", false);

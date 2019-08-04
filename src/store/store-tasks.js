@@ -96,7 +96,7 @@ const actions = {
         this.$router.replace("/auth");
       });
 
-    this.detachListener = userTasks.onSnapshot(snapshot => {
+    this.detachUserTasksListener = userTasks.onSnapshot(snapshot => {
       snapshot.docChanges().forEach(change => {
         if (change.type === "added") {
           //console.log("New task: ", change.doc.data());

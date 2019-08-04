@@ -43,7 +43,6 @@ const mutations = {
     state.orgsDownloaded = value;
   }
 };
-
 const actions = {
   //may be asynchronous or synchronous
   updateOrg({ dispatch }, payload) {
@@ -70,9 +69,9 @@ const actions = {
   setSort({ commit }, value) {
     commit("setSort", value);
   },
-  //detachListener() {},
+  //detachUserOrgsListener() {},
   fbReadData({ commit }) {
-    console.log("start reading data from Firebase");
+    //console.log("start reading data from Firebase");
     //console.log(firebaseAuth.currentUser.uid);
     let userId = firebaseAuth.currentUser.uid;
     let orgs = firebaseDb.collection("orgs");
@@ -83,7 +82,7 @@ const actions = {
       .get()
       .then(function(docs) {
         commit("setOrgsDownloaded", true);
-        console.log("downloaded userOrgs: ", docs);
+        //console.log("downloaded userOrgs: ", docs);
       })
       .catch(function(error) {
         console.log("Error retrieving userOrgs");
@@ -91,10 +90,10 @@ const actions = {
         this.$router.replace("/auth");
       });
 
-    this.detachListener = userOrgs.onSnapshot(snapshot => {
+    this.detachUserOrgsListener = userOrgs.onSnapshot(snapshot => {
       snapshot.docChanges().forEach(change => {
         if (change.type === "added") {
-          console.log("New org: ", change.doc.data());
+          //console.log("New org: ", change.doc.data());
           let payload = {
             id: change.doc.id,
             org: change.doc.data()
@@ -114,6 +113,7 @@ const actions = {
         }
       });
     });
+    return this.detachUserOrgsListener;
   },
   fbAddOrg({}, payload) {
     //let userId = firebaseAuth.currentUser.uid;

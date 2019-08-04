@@ -30,6 +30,7 @@
 
 <script>
 import { mapGetters, mapState, mapActions } from "vuex";
+import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 
 export default {
   data() {
@@ -44,7 +45,21 @@ export default {
   actions: {
     ...mapActions("orgs", ["fbReadData"])
   },
+  created() {
+    //console.log(firebaseAuth.currentUser.uid);
+    (async () => {
+      console.log("waiting for uid");
+      while (
+        !firebaseAuth.currentUser // define the condition as you like
+      )
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log("uid is defined");
+      this.detachUserOrgsListener = this.$store.dispatch("orgs/fbReadData");
+    })();
+    console.log("above code doesn't block main function stack");
+  },
   mounted() {
+    //console.log(firebaseAuth.currentUser.uid);
     this.$root.$on("showAddOrg", () => {
       this.showAddOrg = true;
     });
