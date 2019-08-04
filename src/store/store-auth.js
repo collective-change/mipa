@@ -42,7 +42,7 @@ const actions = {
   },
   logoutUser() {
     this.detachUserTasksListener();
-    this.detachUserOrgsListener();
+    //this.detachUserOrgsListener(); //already done in orgs component onDestroy
     firebaseAuth.signOut();
   },
   handleAuthStateChange({ commit, dispatch }) {

@@ -43,20 +43,22 @@ export default {
     ...mapState("orgs", ["orgs", "orgsDownloaded"])
   },
   actions: {
-    ...mapActions("orgs", ["fbReadData"])
+    ...mapActions("orgs", ["fbReadData", "detachUserOrgsListener"])
+  },
+  methods: {
+    detachUserOrgsListener: function() {}
   },
   created() {
-    //console.log(firebaseAuth.currentUser.uid);
     (async () => {
-      console.log("waiting for uid");
+      //console.log("waiting for currentUser to be defined");
       while (
         !firebaseAuth.currentUser // define the condition as you like
       )
         await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log("uid is defined");
-      this.detachUserOrgsListener = this.$store.dispatch("orgs/fbReadData");
+      //console.log("currentUser is defined");
+      this.$store.dispatch("orgs/fbReadData");
     })();
-    console.log("above code doesn't block main function stack");
+    //console.log("above code doesn't block main function stack");
   },
   mounted() {
     //console.log(firebaseAuth.currentUser.uid);
@@ -65,8 +67,10 @@ export default {
     });
   },
   beforeDestroy() {
-    console.log("PageHome.vue beforeDestroy; we should detach listeners here.");
-    //this.$store.dispatch("detachListener");
+    //console.log("PageHome.vue beforeDestroy; we should detach listeners here.");
+    //console.log(this);
+    this.$store.dispatch("orgs/detachUserOrgsListener");
+    //console.log("detachUserOrgsListener should be dispatched.");
   },
   components: {
     "no-orgs": require("components/Orgs/NoOrgs.vue").default,

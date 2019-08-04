@@ -69,7 +69,7 @@ const actions = {
   setSort({ commit }, value) {
     commit("setSort", value);
   },
-  //detachUserOrgsListener() {},
+  detachUserOrgsListener() {},
   fbReadData({ commit }) {
     //console.log("start reading data from Firebase");
     //console.log(firebaseAuth.currentUser.uid);
