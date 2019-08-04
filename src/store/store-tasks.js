@@ -76,7 +76,7 @@ const actions = {
   setSort({ commit }, value) {
     commit("setSort", value);
   },
-  detachListener() {},
+  detachUserTasksListener() {},
   fbReadData({ commit }) {
     let userId = firebaseAuth.currentUser.uid;
     //userId = "AOoVZSkgp2WYae35UPLb8zqsL7A3";

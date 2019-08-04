@@ -40,9 +40,10 @@ const actions = {
         showErrorMessage("Error", error.message);
       });
   },
-  logoutUser() {
-    this.detachUserTasksListener();
-    //this.detachUserOrgsListener(); //already done in orgs component onDestroy
+  logoutUser({ dispatch }) {
+    //this.detachUserTasksListener();
+    //dispatch("tasks/detachUserTasksListener", null, { root: true });
+    //this.detachUserOrgsListener(); //already done in orgs component beforeDestroy
     firebaseAuth.signOut();
   },
   handleAuthStateChange({ commit, dispatch }) {
@@ -54,8 +55,7 @@ const actions = {
         commit("setLoggedIn", true);
         LocalStorage.set("loggedIn", true);
         this.$router.push("/");
-        dispatch("tasks/fbReadData", null, { root: true });
-        //dispatch("orgs/fbReadData", null, { root: true });
+        //dispatch("tasks/fbReadData", null, { root: true });
       } else {
         commit("setLoggedIn", false);
         LocalStorage.set("loggedIn", false);

@@ -38,16 +38,16 @@ export default {
       showAddOrg: false
     };
   },
+
   computed: {
     ...mapGetters("settings", ["settings"]),
     ...mapState("orgs", ["orgs", "orgsDownloaded"])
   },
+
   actions: {
-    ...mapActions("orgs", ["fbReadData", "detachUserOrgsListener"])
+    ...mapActions("orgs", ["fbReadData", "detachUserOrgsListenerAction"])
   },
-  methods: {
-    detachUserOrgsListener: function() {}
-  },
+
   created() {
     (async () => {
       //console.log("waiting for currentUser to be defined");
@@ -60,18 +60,18 @@ export default {
     })();
     //console.log("above code doesn't block main function stack");
   },
+
   mounted() {
     //console.log(firebaseAuth.currentUser.uid);
     this.$root.$on("showAddOrg", () => {
       this.showAddOrg = true;
     });
   },
+
   beforeDestroy() {
-    //console.log("PageHome.vue beforeDestroy; we should detach listeners here.");
-    //console.log(this);
-    this.$store.dispatch("orgs/detachUserOrgsListener");
-    //console.log("detachUserOrgsListener should be dispatched.");
+    this.$store.dispatch("orgs/detachUserOrgsListenerAction");
   },
+
   components: {
     "no-orgs": require("components/Orgs/NoOrgs.vue").default,
     orgs: require("components/Orgs/Orgs.vue").default,

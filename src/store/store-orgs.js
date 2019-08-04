@@ -16,7 +16,8 @@ const state = {
     //   name: "Org 3"
     // }
   },
-  orgsDownloaded: false
+  orgsDownloaded: false,
+  detachUserOrgsListener: null
 };
 
 const mutations = {
@@ -69,7 +70,9 @@ const actions = {
   setSort({ commit }, value) {
     commit("setSort", value);
   },
-  detachUserOrgsListener() {},
+  detachUserOrgsListenerAction() {
+    this.detachUserOrgsListener();
+  },
   fbReadData({ commit }) {
     //console.log("start reading data from Firebase");
     //console.log(firebaseAuth.currentUser.uid);
@@ -113,7 +116,6 @@ const actions = {
         }
       });
     });
-    return this.detachUserOrgsListener;
   },
   fbAddOrg({}, payload) {
     //let userId = firebaseAuth.currentUser.uid;
