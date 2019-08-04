@@ -54,7 +54,7 @@ export default {
       while (
         !firebaseAuth.currentUser // define the condition as you like
       )
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 200));
       //console.log("currentUser is defined");
       this.$store.dispatch("orgs/fbReadData");
     })();
