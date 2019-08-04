@@ -73,8 +73,8 @@ const actions = {
   //detachListener() {},
   fbReadData({ commit }) {
     console.log("start reading data from Firebase");
+    //console.log(firebaseAuth.currentUser.uid);
     let userId = firebaseAuth.currentUser.uid;
-    //userId = "AOoVZSkgp2WYae35UPLb8zqsL7A3";
     let orgs = firebaseDb.collection("orgs");
     let userOrgs = orgs.where("users", "array-contains", userId);
 

@@ -29,7 +29,7 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { mapGetters, mapState, mapActions } from "vuex";
 
 export default {
   data() {
@@ -40,6 +40,9 @@ export default {
   computed: {
     ...mapGetters("settings", ["settings"]),
     ...mapState("orgs", ["orgs", "orgsDownloaded"])
+  },
+  actions: {
+    ...mapActions("orgs", ["fbReadData"])
   },
   mounted() {
     this.$root.$on("showAddOrg", () => {

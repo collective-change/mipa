@@ -48,6 +48,7 @@ const actions = {
       Loading.hide();
       if (user) {
         // User is signed in.
+        console.log("User logged in");
         commit("setLoggedIn", true);
         LocalStorage.set("loggedIn", true);
         this.$router.push("/");
@@ -59,8 +60,8 @@ const actions = {
         this.$router.replace("/auth");
         commit("tasks/clearTasks", null, { root: true });
         commit("tasks/setTasksDownloaded", false, { root: true });
-        commit("tasks/clearOrgs", null, { root: true });
-        commit("tasks/setOrgsDownloaded", false, { root: true });
+        commit("orgs/clearOrgs", null, { root: true });
+        commit("orgs/setOrgsDownloaded", false, { root: true });
       }
     });
   }
