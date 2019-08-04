@@ -26,7 +26,8 @@ const state = {
   },
   search: "",
   sort: "name",
-  tasksDownloaded: false
+  tasksDownloaded: false,
+  detachUserTasksListener: null
 };
 
 const mutations = {
@@ -76,7 +77,9 @@ const actions = {
   setSort({ commit }, value) {
     commit("setSort", value);
   },
-  detachUserTasksListener() {},
+  detachUserTasksListenerAction() {
+    this.detachUserTasksListener();
+  },
   fbReadData({ commit }) {
     let userId = firebaseAuth.currentUser.uid;
     //userId = "AOoVZSkgp2WYae35UPLb8zqsL7A3";

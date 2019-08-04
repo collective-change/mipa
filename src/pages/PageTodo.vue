@@ -68,8 +68,9 @@ export default {
     });
   },
   beforeDestroy() {
-    console.log("PageTodo.vue beforeDestroy; we should detach listeners here.");
-    //this.$store.dispatch("detachListener");
+    //The following detach listener function is commented out because we want to keep listening to task changes.
+    //The detach function is called on logout instead.
+    //this.$store.dispatch("orgs/detachUserTasksListenerAction");
   },
   components: {
     "no-tasks": require("components/Tasks/NoTasks.vue").default,
