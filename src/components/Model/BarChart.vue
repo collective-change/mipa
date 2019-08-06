@@ -12,6 +12,7 @@ export default BaseChart.extend({
   methods: {
     renderChart() {
       // This code is based on https://bost.ocks.org/mike/bar/2/
+      console.log("BarChart renderChart()");
 
       var data = this.chartData;
       var width = this.width;
@@ -26,8 +27,10 @@ export default BaseChart.extend({
         .select(this.$el)
         .attr("width", width)
         .attr("height", barHeight * data.length);
+      console.log("B ", { chart });
 
       var d = chart.selectAll("g").data(data);
+      console.log("B ", { d });
 
       d.exit().remove();
 

@@ -1,36 +1,41 @@
 <template>
-  <div>
-    <svg class="bar-chart" />
-    <q-btn @click="renderChart">continue</q-btn>
-  </div>
+  <svg width="400" height="400" class="influence-diagram" />
 </template>
 
 <script>
 import BaseChart from "vue-d3-basechart";
 import * as d3 from "d3";
+import * as sizeof from "object-sizeof";
+import { responsify } from "src/functions/function-responsify-svg";
 
 export default BaseChart.extend({
   name: "influence-diagram",
-  props: ["width", "barHeight"],
+  props: ["nodes", "links"],
   methods: {
     renderChart() {
-      // This code is based on https://bost.ocks.org/mike/bar/2/
+      console.log("InfluenceDiagram renderChart()");
 
-      var data = this.chartData;
-      var width = this.width;
-      var barHeight = this.barHeight;
+      //var data = this.chartData;
+      var nodes = Object.values(this.nodes);
+      var initialWidth = 500;
+      var initialHeight = 500;
+      console.log({ nodes });
+      console.log("nodes size: ", sizeof(nodes));
 
-      var x = d3
-        .scaleLinear()
-        .domain([0, d3.max(data)])
-        .range([0, width]);
+      // var x = d3
+      //   .scaleLinear()
+      //   .domain([0, d3.max(data)])
+      //   .range([0, width]);
 
       var chart = d3
         .select(this.$el)
-        .attr("width", width)
-        .attr("height", barHeight * data.length);
+        .attr("width", initialWidth)
+        .attr("height", initialHeight)
+        .call(responsify);
+      console.log("I ", { chart });
 
-      var d = chart.selectAll("g").data(data);
+      var d = chart.selectAll("g").data(nodes);
+      console.log("I ", { d });
 
       d.exit().remove();
 
@@ -39,18 +44,21 @@ export default BaseChart.extend({
         .append("g")
         .merge(d)
         .attr("transform", function(d, i) {
-          return "translate(0," + i * barHeight + ")";
+          return "translate(0," + i * 20 + ")";
         });
-      g.selectAll("rect").remove();
-      g.selectAll("text").remove();
-      g.append("rect")
-        .attr("width", x)
-        .attr("height", barHeight - 1);
+      var cx = Math.random(400);
+      var cy = Math.random(400);
+      g.selectAll("circle").remove();
+      g.selectAll("circle").remove();
+      g.append("circle")
+        .attr("cx", cx)
+        .attr("cy", cy)
+        .attr("r", 20);
       g.append("text")
         .attr("x", function(d) {
-          return x(d) - 3;
+          return cx + 20;
         })
-        .attr("y", barHeight / 2)
+        .attr("y", cy)
         .attr("dy", ".35em")
         .text(function(d) {
           return d;
@@ -58,7 +66,7 @@ export default BaseChart.extend({
     }
   },
   watch: {
-    width: "renderChart",
+    chartData: "renderChart",
     barHeight: "renderChart"
   }
 });

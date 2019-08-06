@@ -7,12 +7,14 @@
         :width="barChart.width"
         :bar-height="barChart.barHeight"
       ></bar-chart>
-      <influence-diagram :chart-data="influenceDiagram.data"></influence-diagram>
+      <influence-diagram :nodes="nodes" :links="links"></influence-diagram>
     </div>
   </q-page>
 </template>
 
 <script>
+import { mapGetters, mapState } from "vuex";
+
 export default {
   name: "app",
   components: {
@@ -50,6 +52,9 @@ export default {
         }
       }
     };
+  },
+  computed: {
+    ...mapState("model", ["nodes", "modelDownloaded", "focusedNode"])
   }
 };
 </script>

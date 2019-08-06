@@ -1,10 +1,11 @@
 import Vue from "vue";
 import Vuex from "vuex";
 
+import auth from "./store-auth";
+import settings from "./store-settings";
 import tasks from "./store-tasks";
 import orgs from "./store-orgs";
-import settings from "./store-settings";
-import auth from "./store-auth";
+import model from "./store-model";
 
 Vue.use(Vuex);
 
@@ -16,10 +17,11 @@ Vue.use(Vuex);
 export default function(/* { ssrContext } */) {
   const Store = new Vuex.Store({
     modules: {
+      auth,
+      settings,
       tasks,
       orgs,
-      settings,
-      auth
+      model
     },
 
     // enable strict mode (adds overhead!)
