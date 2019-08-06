@@ -1,8 +1,5 @@
 <template>
-  <div>
-    <svg class="bar-chart" />
-    <q-btn @click="renderChart">continue</q-btn>
-  </div>
+  <svg class="bar-chart" />
 </template>
 
 <script>
@@ -10,7 +7,7 @@ import BaseChart from "vue-d3-basechart";
 import * as d3 from "d3";
 
 export default BaseChart.extend({
-  name: "influence-diagram",
+  name: "bar-chart",
   props: ["width", "barHeight"],
   methods: {
     renderChart() {
@@ -64,42 +61,7 @@ export default BaseChart.extend({
 });
 </script>
 
-<style lang="scss" scoped>
-#influence-diagram {
-  width: 100%;
-  height: 400px;
-  position: relative;
-  border-color: gray;
-  border-width: 1px;
-  border-style: solid;
-  overflow: hidden;
-
-  .node {
-    width: 3rem;
-    height: 3rem;
-    background: PaleTurquoise;
-    border-radius: 50%;
-    border-style: solid;
-    border-color: steelblue;
-    overflow: hidden;
-    display: table;
-    position: absolute;
-
-    .node-contents {
-      display: table-cell;
-      //position: absolute;
-      position: relative;
-      vertical-align: middle;
-      height: 50%;
-      text-align: center;
-      //overflow-y: hidden;
-      //overflow-x: hidden;
-      font-size: 0.8em;
-      line-height: 1;
-      //display: inline-block; //for older versions of IE
-    }
-  }
-}
+<style lang="scss">
 .bar-chart {
   rect {
     fill: steelblue;

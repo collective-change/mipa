@@ -2,7 +2,12 @@
   <q-page padding>
     <h5>{{ $route.params.teamName }}'s Model</h5>
     <div id="app">
-      <influence-diagram :chartData="influenceDiagram.data"></influence-diagram>
+      <bar-chart
+        :chart-data="barChart.data"
+        :width="barChart.width"
+        :bar-height="barChart.barHeight"
+      ></bar-chart>
+      <influence-diagram :chart-data="influenceDiagram.data"></influence-diagram>
     </div>
   </q-page>
 </template>
@@ -11,21 +16,27 @@
 export default {
   name: "app",
   components: {
+    "bar-chart": require("components/Model/BarChart.vue").default,
     "influence-diagram": require("components/Model/InfluenceDiagram.vue")
       .default
   },
   data() {
     return {
+      barChart: {
+        data: [4, 8, 15, 16, 23, 42],
+        width: 420,
+        barHeight: 20
+      },
       influenceDiagram: {
         data: {
           nodes: {
-            a: { name: "A" },
-            b: { name: "B" },
-            c: { name: "C" },
-            d: { name: "D" },
-            e: { name: "E" },
-            f: { name: "F" },
-            g: { name: "G" }
+            a: { id: "a", name: "A" },
+            b: { id: "b", name: "B" },
+            c: { id: "c", name: "C" },
+            d: { id: "d", name: "D" },
+            e: { id: "e", name: "E" },
+            f: { id: "f", name: "F" },
+            g: { id: "g", name: "G" }
           },
           links: {
             l1: { source: "a", target: "b", value: 1 },
