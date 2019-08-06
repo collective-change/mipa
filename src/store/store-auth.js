@@ -35,6 +35,8 @@ const actions = {
       .signInWithEmailAndPassword(payload.email, payload.password)
       .then(response => {
         //console.log("response: ", response);
+        this.$router.push("/");
+        Loading.hide();
       })
       .catch(error => {
         showErrorMessage("Error", error.message);
@@ -47,13 +49,14 @@ const actions = {
   },
   handleAuthStateChange({ commit, dispatch }) {
     firebaseAuth.onAuthStateChanged(user => {
-      Loading.hide();
+      //Loading.hide();
       if (user) {
         // User is signed in.
-        //console.log("User logged in");
         commit("setLoggedIn", true);
         LocalStorage.set("loggedIn", true);
-        this.$router.push("/");
+        if (this.$router.currentRoute.path == "/auth") {
+          this.$router.push("/");
+        }
         dispatch("tasks/fbReadData", null, { root: true });
       } else {
         commit("setLoggedIn", false);
