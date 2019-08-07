@@ -7,11 +7,12 @@ const state = {
   nodes: {
     a: {
       id: "a",
-      name: { en: "A", zh_tw: "甲" },
-      formula: {}, //a formula object
-      unit: { id: 287, unitObject: {} },
-      hasDetails: ["notes", "refUrls"],
-      chatId: "achat"
+      name: "A"
+      // name: { en: "A", zh_tw: "甲" },
+      // formula: {}, //a formula object
+      // unit: { id: 287, unitObject: {} },
+      // hasDetails: ["notes", "refUrls"],
+      // chatId: "achat"
     },
     b: { id: "b", name: "B" },
     c: { id: "c", name: "C" },
@@ -22,13 +23,21 @@ const state = {
   },
   links: {
     //in the objects below, so=source, ta=target, pd=partial derivative, cm=current multiplier
-    l1: { so: "a", ta: "b", pd: {}, cm: 2 },
-    l2: { so: "a", ta: "c", pd: {}, cm: 20 },
-    l3: { so: "a", ta: "f", pd: {}, cm: 10 },
-    l4: { so: "b", ta: "d", pd: {}, cm: 50 },
-    l5: { so: "c", ta: "f", pd: {}, cm: 1 },
-    l6: { so: "d", ta: "g", pd: {}, cm: 0.1 },
-    l7: { so: "e", ta: "f", pd: {}, cm: 5 }
+    // l1: { so: "a", ta: "b", pd: {}, cm: 2 },
+    // l2: { so: "a", ta: "c", pd: {}, cm: 20 },
+    // l3: { so: "a", ta: "f", pd: {}, cm: 10 },
+    // l4: { so: "b", ta: "d", pd: {}, cm: 50 },
+    // l5: { so: "c", ta: "f", pd: {}, cm: 1 },
+    // l6: { so: "d", ta: "g", pd: {}, cm: 0.1 },
+    // l7: { so: "e", ta: "f", pd: {}, cm: 5 }
+    l1: { id: "l1", source: "a", target: "b", pd: {}, cm: 2 },
+    l2: { id: "l2", source: "a", target: "c", pd: {}, cm: 20 },
+    l3: { id: "l3", source: "a", target: "f", pd: {}, cm: 10 },
+    l4: { id: "l4", source: "b", target: "d", pd: {}, cm: 50 },
+    l5: { id: "l5", source: "c", target: "f", pd: {}, cm: 1 },
+    l6: { id: "l6", source: "d", target: "f", pd: {}, cm: 1 },
+    l7: { id: "l7", source: "d", target: "g", pd: {}, cm: 0.1 },
+    l8: { id: "l8", source: "e", target: "f", pd: {}, cm: 5 }
   },
   modelDownloaded: false,
   detachModelListener: null,
