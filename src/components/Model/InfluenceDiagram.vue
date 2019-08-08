@@ -10,22 +10,35 @@ import { responsify } from "src/functions/function-responsify-svg";
 
 export default BaseChart.extend({
   name: "influence-diagram",
-  props: ["nodes", "links"],
+  props: ["storeNodes", "storeLinks"],
+  data() {
+    return {
+      graph: {}
+    };
+  },
+  mounted: function() {
+    console.log("mounted");
+    // this.graph.nodes = JSON.parse(
+    //   JSON.stringify(Object.values(this.storeNodes))
+    // );
+    // this.graph.links = JSON.parse(
+    //   JSON.stringify(Object.values(this.storeLinks))
+    // );
+  },
   methods: {
     renderChart() {
       console.log("InfluenceDiagram renderChart()");
 
-      //var data = this.chartData;
-      //var nodes = Object.values(this.nodes);
-      //var links = Object.values(this.links);
-      // var label = {
-      //   nodes: Object.values(this.nodes),
-      //   links: Object.values(this.links)
-      // };
+      var graph = this.graph;
+
+      //based on https://bl.ocks.org/mapio/53fed7d84cd1812d6a6639ed7aa83868
       var graph = {
-        nodes: Object.values(this.nodes),
-        links: Object.values(this.links)
+        nodes: [],
+        links: []
       };
+
+      graph.nodes = JSON.parse(JSON.stringify(Object.values(this.storeNodes)));
+      graph.links = JSON.parse(JSON.stringify(Object.values(this.storeLinks)));
 
       var label = {
         nodes: [],
@@ -41,10 +54,8 @@ export default BaseChart.extend({
         });
       });
 
-      //var viewBoxWidth = 1000;
-      //var viewBoxHeight = 1000;
-      var width = 800;
-      var height = 600;
+      var width = 1000; //svg view box width
+      var height = 1000;
       var color = d3.scaleOrdinal(d3.schemeCategory10);
       console.log("label.nodes: ", label.nodes);
       console.log("label.links: ", label.links);
@@ -93,7 +104,8 @@ export default BaseChart.extend({
       var svg = d3
         .select("#viz")
         .attr("width", width)
-        .attr("height", height);
+        .attr("height", height)
+        .call(responsify);
       var container = svg.append("g");
 
       svg.call(
@@ -249,7 +261,14 @@ export default BaseChart.extend({
     }
   },
   watch: {
-    // chartData: "renderChart",
+    storeNodes: function() {
+      //mark each node in graph.nodes as unconfirmed
+      //for each in storeNodes,
+      //copy to graph.nodes if missing
+      //update to graph.nodes if different
+      //remove "unconfirmed" mark
+      //remove unconfirmed nodes in d3Nodes
+    }
   }
 });
 </script>
