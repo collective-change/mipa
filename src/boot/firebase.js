@@ -20,4 +20,9 @@ let firebaseApp = firebase.initializeApp(firebaseConfig);
 let firebaseAuth = firebaseApp.auth();
 let firebaseDb = firebaseApp.firestore();
 
+// Export types that exists in Firestore
+// This is not always necessary, but it's used in other examples in Vuefire docs
+const { TimeStamp, GeoPoint } = firebase.firestore;
+export { TimeStamp, GeoPoint };
+
 export { firebase, firebaseApp, firebaseAuth, firebaseDb };

@@ -5,6 +5,7 @@ import { vuexfireMutations } from "vuexfire";
 import auth from "./store-auth";
 import settings from "./store-settings";
 import tasks from "./store-tasks";
+import teams from "./store-teams";
 import orgs from "./store-orgs";
 import model from "./store-model";
 
@@ -26,6 +27,7 @@ export default function(/* { ssrContext } */) {
       settings,
       tasks,
       orgs,
+      teams,
       model
     },
 

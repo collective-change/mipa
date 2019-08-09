@@ -46,6 +46,7 @@ const mutations = {
 };
 const actions = {
   //may be asynchronous or synchronous
+
   updateOrg({ dispatch }, payload) {
     dispatch("fbUpdateOrg", payload);
   },
