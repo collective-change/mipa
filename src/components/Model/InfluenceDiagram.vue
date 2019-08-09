@@ -277,15 +277,5 @@ export default BaseChart.extend({
 .influence-diagram {
   border-color: gray;
   border-width: 1px;
-
-  .node {
-    fill: paleturquoise;
-    stroke: steelblue;
-  }
-
-  .link {
-    stroke: #777;
-    stroke-width: 2px;
-  }
 }
 </style>

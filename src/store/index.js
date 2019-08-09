@@ -1,5 +1,6 @@
 import Vue from "vue";
 import Vuex from "vuex";
+import { vuexfireMutations } from "vuexfire";
 
 import auth from "./store-auth";
 import settings from "./store-settings";
@@ -16,6 +17,10 @@ Vue.use(Vuex);
 
 export default function(/* { ssrContext } */) {
   const Store = new Vuex.Store({
+    mutations: {
+      // other mutations
+      ...vuexfireMutations
+    },
     modules: {
       auth,
       settings,

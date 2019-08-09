@@ -12,10 +12,11 @@
   "dependencies": {
     "@quasar/extras": "^1.0.0",
     "eslint": "^6.1.0",
-    "firebase": "^6.3.1",
+    "firebase": "^6.3.5",
     "object-sizeof": "^1.4.0",
     "quasar": "^1.0.0",
-    "vue-d3-basechart": "^0.2.2"
+    "vue-d3-basechart": "^0.2.2",
+    "vuexfire": "^3.1.2"
   },
   "devDependencies": {
     "@quasar/app": "^1.0.0",
