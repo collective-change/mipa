@@ -13,10 +13,16 @@ const state = {
 const actions = {
   //may be asynchronous or synchronous
   bindTeams: firestoreAction(({ bindFirestoreRef }) => {
+    let userId = firebaseAuth.currentUser.uid;
     // return the promise returned by `bindFirestoreRef`
-    return bindFirestoreRef("teams", firebaseDb.collection("teams"), {
-      reset: false
-    });
+    return bindFirestoreRef(
+      "teams",
+      firebaseDb.collection("teams").where("users", "array-contains", userId),
+      {
+        reset: false,
+        maxRefDepth: 1
+      }
+    );
   }),
 
   unbindTeams: firestoreAction(({ unbindFirestoreRef }) => {
