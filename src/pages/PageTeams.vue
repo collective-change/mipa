@@ -1,7 +1,7 @@
 <template>
   <q-page>
     <div class="q-pa-md absolute full-width full-height column">
-      <template v-if="teams">
+      <template v-if="teams!=null">
         <div class="text-h6">Teams</div>
         <no-teams v-if="!Object.keys(teams).length" />
         <teams :teams="teams" />
@@ -45,7 +45,7 @@ export default {
   },
 
   actions: {
-    ...mapActions("teams", ["fbReadData", "detachUserTeamsListenerAction"])
+    //...mapActions("teams", ["fbReadData", "detachUserTeamsListenerAction"])
   },
 
   created() {
@@ -55,12 +55,7 @@ export default {
         !firebaseAuth.currentUser // define the condition as you like
       )
         await new Promise(resolve => setTimeout(resolve, 200));
-      //console.log("currentUser is defined");
-      //this.$store.dispatch("teams/fbReadData");
-      this.$store.dispatch("teams/openDBChannel");
-      // this.$store.dispatch("openDBChannel", {
-      //   where: [["users", "array-contains", userId]]
-      // })
+      this.$store.dispatch("teams/bindTeams");
     })();
     //console.log("above code doesn't block main function stack");
   },
@@ -73,7 +68,7 @@ export default {
   },
 
   beforeDestroy() {
-    this.$store.dispatch("teams/detachUserTeamsListenerAction");
+    this.$store.dispatch("teams/unbindTeams");
   },
 
   components: {

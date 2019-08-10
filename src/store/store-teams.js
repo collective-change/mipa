@@ -1,102 +1,79 @@
 //import Vue from "vue";
-//import { uid, Notify } from "quasar";
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-//import { vuexfireMutations, firestoreAction } from "vuexfire";
+import { Notify } from "quasar";
+import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
+import { firestoreAction } from "vuexfire";
 import { showErrorMessage } from "src/functions/function-show-error-message";
 import { slugify } from "src/functions/function-slugify";
 
 const state = {
-  teams: [],
-  data: {},
+  teams: null,
   teamsDownloaded: false
 };
 
-// const mutations = {
-//   //synchronous
-//   setTeamsDownloaded(state, value) {
-//     state.teamsDownloaded = value;
-//   }
-// };
-
 const actions = {
   //may be asynchronous or synchronous
-  updateTeam({ dispatch }, teamUpdates) {
-    dispatch("patch", teamUpdates);
-  },
-  deleteTeam({ dispatch }, id) {
-    dispatch("delete", id);
-  },
-  addTeam({ dispatch }, team) {
+  bindTeams: firestoreAction(({ bindFirestoreRef }) => {
+    // return the promise returned by `bindFirestoreRef`
+    return bindFirestoreRef("teams", firebaseDb.collection("teams"), {
+      reset: false
+    });
+  }),
+
+  unbindTeams: firestoreAction(({ unbindFirestoreRef }) => {
+    unbindFirestoreRef("teams");
+  }),
+
+  addTeam({}, team) {
     team.users = [firebaseAuth.currentUser.uid];
     team.superAdmins = [firebaseAuth.currentUser.uid];
     team.nameSlug = slugify(team.name);
-    dispatch("insert", team);
+    team.createTime = firebase.firestore.FieldValue.serverTimestamp();
+    team.createdBy = firebaseAuth.currentUser.uid;
+    firebaseDb
+      .collection("teams")
+      .add(team)
+      .then(function() {
+        Notify.create("Team added!");
+      })
+      .catch(function(error) {
+        showErrorMessage("Error adding team", error.message);
+      });
   },
 
-  fbReadData({ dispatch }) {
-    let userId = firebaseAuth.currentUser.uid;
-    // dispatch("openDBChannel", {
-    //   where: [["users", "array-contains", userId]]
-    // })
-    dispatch("openDBChannel")
-      .catch(function(error) {
-        console.log("Error retrieving teams");
-        showErrorMessage("Error retrieving teams", error.message);
-        this.$router.replace("/auth");
+  updateTeam({}, payload) {
+    payload.updates.updateTime = firebase.firestore.FieldValue.serverTimestamp();
+    payload.updates.updatedBy = firebaseAuth.currentUser.uid;
+    let teamsRef = firebaseDb.collection("teams");
+    teamsRef
+      .doc(payload.id)
+      .set(payload.updates, { merge: true })
+      .then(function() {
+        let keys = Object.keys(payload.updates);
+        //console.log("keys: ", keys);
+        Notify.create("Team updated!");
       })
-      .then(console.log("data read ", state.data));
-    //commit("setTeamsDownloaded", true);
+      .catch(function(error) {
+        showErrorMessage("Error updating team", error.message);
+      });
+  },
+
+  deleteTeam({}, id) {
+    //let userId = firebaseAuth.currentUser.uid;
+    firebaseDb
+      .collection("teams")
+      .doc(id)
+      .delete()
+      .then(function() {
+        Notify.create("Team deleted!");
+      })
+      .catch(function(error) {
+        showErrorMessage("Error delete team", error.message);
+      });
   }
-  // fbAddTeam({}, payload) {
-  //   //let userId = firebaseAuth.currentUser.uid;
-  //   let teamsRef = firebaseDb.collection("teams");
-  //   teamsRef
-  //     //.doc(payload.id)
-  //     //.set(payload.team)
-  //     .add(payload.team)
-  //     .then(function() {
-  //       Notify.create("Team added!");
-  //     })
-  //     .catch(function(error) {
-  //       showErrorMessage("Error adding team", error.message);
-  //     });
-  // },
-  // fbUpdateTeam({}, payload) {
-  //   //let userId = firebaseAuth.currentUser.uid;
-  //   let teamsRef = firebaseDb.collection("teams");
-  //   teamsRef
-  //     .doc(payload.id)
-  //     .set(payload.updates, { merge: true })
-  //     .then(function() {
-  //       let keys = Object.keys(payload.updates);
-  //       //console.log("keys: ", keys);
-  //       Notify.create("Team updated!");
-  //     })
-  //     .catch(function(error) {
-  //       showErrorMessage("Error updating team", error.message);
-  //     });
-  // },
-  // fbDeleteTeam({}, teamId) {
-  //   let userId = firebaseAuth.currentUser.uid;
-  //   let teamsRef = firebaseDb.collection("teams");
-  //   teamsRef
-  //     .doc(teamId)
-  //     .delete()
-  //     .then(function() {
-  //       Notify.create("Team deleted!");
-  //     })
-  //     .catch(function(error) {
-  //       showErrorMessage("Error removing team", error.message);
-  //     });
-  // }
 };
 
 export default {
-  firestorePath: "teams",
-  firestoreRefType: "collection", // or 'doc'
-  moduleName: "teams",
-  statePropName: "data",
-  namespaced: true, // automatically added
+  namespaced: true,
   state,
   actions
 };

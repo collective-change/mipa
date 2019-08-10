@@ -1,6 +1,7 @@
 import Vue from "vue";
 import { uid, Notify } from "quasar";
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
+import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
+import { firestoreAction } from "vuexfire";
 import { showErrorMessage } from "src/functions/function-show-error-message";
 
 const state = {
@@ -40,34 +41,9 @@ const state = {
     l8: { id: "l8", source: "e", target: "f", pd: {}, cm: 5 }
   },
   modelDownloaded: false,
-  detachModelListener: null,
   focusedNode: {}
 };
 
-const mutations = {
-  //synchronous
-  updateOrg(state, payload) {
-    Object.assign(state.orgs[payload.id], payload.updates);
-  },
-  deleteOrg(state, id) {
-    Vue.delete(state.orgs, id);
-  },
-  addOrg(state, payload) {
-    Vue.set(state.orgs, payload.id, payload.org);
-  },
-  clearOrgs(state) {
-    state.orgs = {};
-  },
-  setSearch(state, value) {
-    state.search = value;
-  },
-  setSort(state, value) {
-    state.sort = value;
-  },
-  setOrgsDownloaded(state, value) {
-    state.orgsDownloaded = value;
-  }
-};
 const actions = {
   //may be asynchronous or synchronous
   updateOrg({ dispatch }, payload) {
@@ -188,6 +164,5 @@ const actions = {
 export default {
   namespaced: true,
   state,
-  mutations,
   actions
 };

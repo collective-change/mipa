@@ -1,8 +1,6 @@
 import Vue from "vue";
 import Vuex from "vuex";
-//import { vuexfireMutations } from "vuexfire";
-import VuexEasyFirestore from "vuex-easy-firestore";
-import { firebase } from "../boot/firebase.js";
+import { vuexfireMutations } from "vuexfire";
 
 import auth from "./store-auth";
 import settings from "./store-settings";
@@ -13,12 +11,6 @@ import model from "./store-model";
 
 Vue.use(Vuex);
 
-// do the magic 🧙🏻‍
-const easyFirestore = VuexEasyFirestore([teams], {
-  logging: true,
-  FirebaseDependency: firebase
-});
-
 /*
  * If not building with SSR mode, you can
  * directly export the Store instantiation
@@ -26,18 +18,22 @@ const easyFirestore = VuexEasyFirestore([teams], {
 
 export default function(/* { ssrContext } */) {
   const Store = new Vuex.Store({
-    plugins: [easyFirestore],
+    mutations: {
+      // other mutations
+      ...vuexfireMutations
+    },
     modules: {
       auth,
       settings,
       tasks,
       orgs,
+      teams,
       model
-    }
+    },
 
     // enable strict mode (adds overhead!)
     // for dev mode only
-    //strict: process.env.DEV
+    strict: process.env.DEV
   });
 
   return Store;

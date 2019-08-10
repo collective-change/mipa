@@ -40,7 +40,7 @@ firebase
   });
 
 // Export types that exists in Firestore
-// This is not always necessary, but it's used in other examples in Vuefire docs
+// This is not always necessary, but it's used in other examples in Vuexfire docs
 const { TimeStamp, GeoPoint } = firebase.firestore;
 export { TimeStamp, GeoPoint };
 
