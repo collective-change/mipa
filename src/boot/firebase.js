@@ -5,6 +5,8 @@ import * as firebase from "firebase/app";
 import "firebase/auth";
 import "firebase/firestore";
 
+import { showErrorMessage } from "src/functions/function-show-error-message";
+
 // Your web app's Firebase configuration
 var firebaseConfig = {
   apiKey: "AIzaSyAdeJJGRZwCSeE-hc0uALhMrrrInUWHqyY",
@@ -19,6 +21,23 @@ var firebaseConfig = {
 let firebaseApp = firebase.initializeApp(firebaseConfig);
 let firebaseAuth = firebaseApp.auth();
 let firebaseDb = firebaseApp.firestore();
+
+firebase
+  .firestore()
+  .enablePersistence({ synchronizeTabs: true })
+  .catch(function(err) {
+    if (err.code == "failed-precondition") {
+      showErrorMessage(
+        "Error enabling persistence (failed precondition)",
+        error.message
+      );
+    } else if (err.code == "unimplemented") {
+      showErrorMessage(
+        "Error enabling persistence (unimplemented)",
+        error.message
+      );
+    }
+  });
 
 // Export types that exists in Firestore
 // This is not always necessary, but it's used in other examples in Vuefire docs

@@ -3,7 +3,8 @@ const routes = [
     path: "/",
     component: () => import("layouts/Layout.vue"),
     children: [
-      { path: "", component: () => import("pages/PageHome.vue") },
+      { path: "", component: () => import("pages/PageTeams.vue") },
+      //{ path: "", component: () => import("pages/PageHome.vue") },
       { path: "/todo", component: () => import("pages/PageTodo.vue") },
       { path: "/settings", component: () => import("pages/PageSettings.vue") },
       { path: "/settings/help", component: () => import("pages/PageHelp.vue") },
