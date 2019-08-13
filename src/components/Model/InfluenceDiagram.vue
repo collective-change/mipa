@@ -7,14 +7,14 @@
 </template>
 
 <script>
-import BaseChart from "vue-d3-basechart";
+//import BaseChart from "vue-d3-basechart";
 import * as d3 from "d3";
 import * as sizeof from "object-sizeof";
 import { responsify } from "src/functions/function-responsify-svg";
 import { sleep } from "src/functions/function-sleep";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 
-export default BaseChart.extend({
+export default {
   name: "influence-diagram",
   props: ["chartData", "chartDataLoaded"],
   // data() {
@@ -23,21 +23,25 @@ export default BaseChart.extend({
   //   //   label: { nodes: [], links: [] }
   //   // };
   // },
-  mounted() {},
+  mounted() {
+    this.renderWhenDataReady();
+    //this.renderChart();
+  },
   methods: {
-    renderChart() {
+    renderWhenDataReady() {
       if (this.chartData.nodes.length) {
         //console.log("this.chartDataLoaded: ", this.chartDataLoaded);
+        console.log("renderWhenDataReady()");
         console.log("this.chartData: ", this.chartData);
         //variable exists, do what you want
-        this.renderChart1();
+        this.renderChart();
       } else {
         let waitMs = 250;
-        setTimeout(this.renderChart, waitMs);
+        setTimeout(this.renderWhenDataReady, waitMs);
       }
     },
-    renderChart1() {
-      console.log("renderChart1()");
+    renderChart() {
+      console.log("renderChart()");
       //called by BaseChart > mounted() and chartData watcher
       //console.log("InfluenceDiagram renderChart()");
 
@@ -59,12 +63,10 @@ export default BaseChart.extend({
       //graph.nodes = this.storeNodes;
 
       var graph = {};
-      var label = { nodes: [], links: [] };
-      console.log("this.chartData: ", this.chartData);
       graph.nodes = this.chartData.nodes;
       graph.links = this.chartData.links;
-      console.log("graph.nodes:  ", graph.nodes);
 
+      var label = { nodes: [], links: [] };
       graph.nodes.forEach(function(d, i) {
         label.nodes.push({ node: d });
         label.nodes.push({ node: d });
@@ -77,9 +79,7 @@ export default BaseChart.extend({
       var width = 1000; //svg view box width
       var height = 1000;
       var color = d3.scaleOrdinal(d3.schemeCategory10);
-      console.log("label.nodes: ", label.nodes);
-      console.log("label.links: ", label.links);
-      console.log("label size: ", sizeof(label));
+      //console.log("label size: ", sizeof(label));
 
       var labelLayout = d3
         .forceSimulation(label.nodes)
@@ -116,10 +116,6 @@ export default BaseChart.extend({
         adjlist[d.source.index + "-" + d.target.index] = true;
         adjlist[d.target.index + "-" + d.source.index] = true;
       });
-
-      function neigh(a, b) {
-        return a == b || adjlist[a + "-" + b];
-      }
 
       var svg = d3
         .select("#viz")
@@ -177,7 +173,7 @@ export default BaseChart.extend({
         .enter()
         .append("text")
         .text(function(d, i) {
-          return i % 2 == 0 ? "" : d.node.id;
+          return i % 2 == 0 ? "" : d.node.name;
         })
         .style("fill", "#555")
         .style("font-family", "Arial")
@@ -185,6 +181,10 @@ export default BaseChart.extend({
         .style("pointer-events", "none"); // to prevent mouseover/drag capture
 
       node.on("mouseover", focus).on("mouseout", unfocus);
+
+      function neigh(a, b) {
+        return a == b || adjlist[a + "-" + b];
+      }
 
       function ticked() {
         node.call(updateNode);
@@ -302,8 +302,12 @@ export default BaseChart.extend({
     //   //remove "unconfirmed" mark
     //   //remove unconfirmed nodes in d3Nodes
     // }
+    chartData: {
+      handler: "renderWhenDataReady",
+      deep: true
+    }
   }
-});
+};
 </script>
 
 <style lang="scss" >

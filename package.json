@@ -15,8 +15,6 @@
     "firebase": "^6.3.5",
     "object-sizeof": "^1.4.0",
     "quasar": "^1.0.0",
-    "vue-d3-basechart": "^0.2.2",
-    "vuex-easy-firestore": "^1.34.2",
     "vuexfire": "^3.1.2"
   },
   "devDependencies": {
