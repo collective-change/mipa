@@ -1,5 +1,9 @@
 <template>
-  <svg width="400" height="400" id="viz" class="influence-diagram" />
+  <div>
+    <p>chartData</p>
+    <pre>{{chartData}}</pre>
+    <svg width="400" height="400" id="viz" class="influence-diagram" />
+  </div>
 </template>
 
 <script>
@@ -7,43 +11,59 @@ import BaseChart from "vue-d3-basechart";
 import * as d3 from "d3";
 import * as sizeof from "object-sizeof";
 import { responsify } from "src/functions/function-responsify-svg";
+import { sleep } from "src/functions/function-sleep";
+import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 
 export default BaseChart.extend({
   name: "influence-diagram",
-  props: ["storeNodes", "storeLinks"],
-  data() {
-    return {
-      graph: {}
-    };
-  },
-  mounted: function() {
-    console.log("mounted");
-    // this.graph.nodes = JSON.parse(
-    //   JSON.stringify(Object.values(this.storeNodes))
-    // );
-    // this.graph.links = JSON.parse(
-    //   JSON.stringify(Object.values(this.storeLinks))
-    // );
-  },
+  props: ["chartData", "chartDataLoaded"],
+  // data() {
+  //   // return {
+  //   //   graph: { nodes: [], links: [] },
+  //   //   label: { nodes: [], links: [] }
+  //   // };
+  // },
+  mounted() {},
   methods: {
     renderChart() {
-      console.log("InfluenceDiagram renderChart()");
+      if (this.chartData.nodes.length) {
+        //console.log("this.chartDataLoaded: ", this.chartDataLoaded);
+        console.log("this.chartData: ", this.chartData);
+        //variable exists, do what you want
+        this.renderChart1();
+      } else {
+        let waitMs = 250;
+        setTimeout(this.renderChart, waitMs);
+      }
+    },
+    renderChart1() {
+      console.log("renderChart1()");
+      //called by BaseChart > mounted() and chartData watcher
+      //console.log("InfluenceDiagram renderChart()");
 
-      var graph = this.graph;
+      // var graph = this.graph;
+      // var label = this.label;
 
       //based on https://bl.ocks.org/mapio/53fed7d84cd1812d6a6639ed7aa83868
-      var graph = {
-        nodes: [],
-        links: []
-      };
 
-      graph.nodes = JSON.parse(JSON.stringify(Object.values(this.storeNodes)));
-      graph.links = JSON.parse(JSON.stringify(Object.values(this.storeLinks)));
+      //console.log("this.storeNodes: ", this.storeNodes);
 
-      var label = {
-        nodes: [],
-        links: []
-      };
+      // graph.nodes = JSON.parse(JSON.stringify(Object.values(this.storeNodes)));
+      // graph.links = JSON.parse(JSON.stringify(Object.values(this.storeLinks)));
+
+      // this.storeNodes.forEach(function(storeNode) {
+      //   graph.nodes.push(
+      //     Object.create(storeNode, { id: { value: storeNode.value } })
+      //   );
+      // });
+      //graph.nodes = this.storeNodes;
+
+      var graph = {};
+      var label = { nodes: [], links: [] };
+      console.log("this.chartData: ", this.chartData);
+      graph.nodes = this.chartData.nodes;
+      graph.links = this.chartData.links;
+      console.log("graph.nodes:  ", graph.nodes);
 
       graph.nodes.forEach(function(d, i) {
         label.nodes.push({ node: d });
@@ -261,14 +281,27 @@ export default BaseChart.extend({
     }
   },
   watch: {
-    storeNodes: function() {
-      //mark each node in graph.nodes as unconfirmed
-      //for each in storeNodes,
-      //copy to graph.nodes if missing
-      //update to graph.nodes if different
-      //remove "unconfirmed" mark
-      //remove unconfirmed nodes in d3Nodes
-    }
+    // storeNodes: function() {
+    //   console.log("storeNodes watcher");
+    //   //mark each node in graph.nodes as unconfirmed
+    //   if (this.graph.nodes.length > 0) {
+    //     this.graph.nodes.forEach(function(graphNode) {
+    //       graphNode.unconfirmed = "true";
+    //     });
+    //   }
+    //   //for each in storeNodes,
+    //   //copy to graph.nodes if missing
+    //   this.storeNodes.forEach(function(storeNode) {
+    //     if (
+    //       this.graph.nodes.filter(graphNode => graphNode.id == storeNode.id)
+    //     ) {
+    //       this.graph.nodes.push(storeNode);
+    //     }
+    //   });
+    //   //update to graph.nodes if different
+    //   //remove "unconfirmed" mark
+    //   //remove unconfirmed nodes in d3Nodes
+    // }
   }
 });
 </script>
