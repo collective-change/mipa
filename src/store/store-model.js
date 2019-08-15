@@ -68,6 +68,12 @@ const actions = {
 };
 
 const getters = {
+  nodes: state => {
+    if (!state.nodes) {
+      return [];
+    }
+    return state.nodes.map(node => ({ ...node, id: node.id }));
+  },
   links: state => {
     //return state.nodes;
     let allLinks = [];

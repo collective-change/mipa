@@ -1,8 +1,14 @@
 <template>
   <div>
-    <p>chartData</p>
-    <pre>{{chartData}}</pre>
-    <svg width="400" height="400" id="viz" class="influence-diagram" />
+    <svg width="400" height="400" id="viz" class="influence-diagram">
+      <g :id="links" />
+      <g :id="nodes" />
+    </svg>
+    <p>storeData</p>
+    <pre>{{storeData}}</pre>
+    <hr />
+    <p>graph</p>
+    <pre>{{graph}}</pre>
   </div>
 </template>
 
@@ -16,295 +22,194 @@ import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 
 export default {
   name: "influence-diagram",
-  props: ["chartData", "chartDataLoaded"],
-  // data() {
-  //   // return {
-  //   //   graph: { nodes: [], links: [] },
-  //   //   label: { nodes: [], links: [] }
-  //   // };
-  // },
-  mounted() {
-    this.renderWhenDataReady();
-    //this.renderChart();
+  props: ["storeData", "storeDataLoaded"],
+  data() {
+    return {
+      graph: { nodes: [], links: [] },
+      simulation: null,
+      //color: d3.scaleOrdinal(d3.schemeCategory20),
+      settings: {
+        strokeColor: "#29B5FF",
+        svgWidth: 960,
+        svgHeight: 600
+      }
+    };
   },
-  methods: {
-    renderWhenDataReady() {
-      if (this.chartData.nodes.length) {
-        //console.log("this.chartDataLoaded: ", this.chartDataLoaded);
-        console.log("renderWhenDataReady()");
-        console.log("this.chartData: ", this.chartData);
-        //variable exists, do what you want
-        this.renderChart();
-      } else {
-        let waitMs = 250;
-        setTimeout(this.renderWhenDataReady, waitMs);
+  mounted: function() {
+    var that = this;
+    console.log("mounted");
+    console.log("this.storeData: ", this.storeData);
+
+    var svg = d3
+      .select("#viz")
+      .attr("width", this.settings.svgWidth)
+      .attr("height", this.settings.svgHeight)
+      .call(responsify);
+
+    // d3.json(this.storeData, function(error, graph) {
+    //   if (error) throw error;
+    //   that.graph = graph;
+    //   console.log("json");
+    that.simulation = d3
+      .forceSimulation(that.graph.nodes)
+      .force(
+        "link",
+        d3
+          .forceLink(that.graph.links)
+          .distance(100)
+          .strength(0.1)
+      )
+      .force("charge", d3.forceManyBody())
+      .force(
+        "center",
+        d3.forceCenter(that.settings.svgWidth / 2, that.settings.svgHeight / 2)
+      );
+    //});
+  },
+  computed: {
+    nodes: function() {
+      console.log("computed/nodes()");
+      var that = this;
+      //if (that.graph) {
+      if (that.graph) {
+        console.log("that.graph: ", that.graph);
+        let nodes = d3
+          .select("svg")
+          .append("g")
+          .attr("class", "nodes")
+          .selectAll("circle")
+          .data(that.graph.nodes)
+          .enter()
+          .append("circle")
+          .attr("r", 20)
+          .attr("fill", function(d, i) {
+            return "steelblue";
+          })
+          .call(
+            d3
+              .drag()
+              .on("start", function dragstarted(d) {
+                if (!d3.event.active)
+                  that.simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+              })
+              .on("drag", function dragged(d) {
+                d.fx = d3.event.x;
+                d.fy = d3.event.y;
+              })
+              .on("end", function dragended(d) {
+                if (!d3.event.active) that.simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+              })
+          );
+        console.log("computed nodes: ", nodes);
+        return nodes;
       }
     },
-    renderChart() {
-      console.log("renderChart()");
-      //called by BaseChart > mounted() and chartData watcher
-      //console.log("InfluenceDiagram renderChart()");
-
-      // var graph = this.graph;
-      // var label = this.label;
-
-      //based on https://bl.ocks.org/mapio/53fed7d84cd1812d6a6639ed7aa83868
-
-      //console.log("this.storeNodes: ", this.storeNodes);
-
-      // graph.nodes = JSON.parse(JSON.stringify(Object.values(this.storeNodes)));
-      // graph.links = JSON.parse(JSON.stringify(Object.values(this.storeLinks)));
-
-      // this.storeNodes.forEach(function(storeNode) {
-      //   graph.nodes.push(
-      //     Object.create(storeNode, { id: { value: storeNode.value } })
-      //   );
-      // });
-      //graph.nodes = this.storeNodes;
-
-      var graph = {};
-      graph.nodes = this.chartData.nodes;
-      graph.links = this.chartData.links;
-
-      var label = { nodes: [], links: [] };
-      graph.nodes.forEach(function(d, i) {
-        label.nodes.push({ node: d });
-        label.nodes.push({ node: d });
-        label.links.push({
-          source: i * 2,
-          target: i * 2 + 1
-        });
-      });
-
-      var width = 1000; //svg view box width
-      var height = 1000;
-      var color = d3.scaleOrdinal(d3.schemeCategory10);
-      //console.log("label size: ", sizeof(label));
-
-      var labelLayout = d3
-        .forceSimulation(label.nodes)
-        .force("charge", d3.forceManyBody().strength(-50))
-        .force(
-          "link",
-          d3
-            .forceLink(label.links)
-            .distance(0)
-            .strength(2)
-        );
-
-      var graphLayout = d3
-        .forceSimulation(graph.nodes)
-        .force("charge", d3.forceManyBody().strength(-3000))
-        .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("x", d3.forceX(width / 2).strength(1))
-        .force("y", d3.forceY(height / 2).strength(1))
-        .force(
-          "link",
-          d3
-            .forceLink(graph.links)
-            .id(function(d) {
-              return d.id;
-            })
-            .distance(50)
-            .strength(1)
-        )
-        .on("tick", ticked);
-
-      var adjlist = [];
-
-      graph.links.forEach(function(d) {
-        adjlist[d.source.index + "-" + d.target.index] = true;
-        adjlist[d.target.index + "-" + d.source.index] = true;
-      });
-
-      var svg = d3
-        .select("#viz")
-        .attr("width", width)
-        .attr("height", height)
-        .call(responsify);
-      var container = svg.append("g");
-
-      svg.call(
-        d3
-          .zoom()
-          .scaleExtent([0.1, 4])
-          .on("zoom", function() {
-            container.attr("transform", d3.event.transform);
-          })
-      );
-
-      var link = container
-        .append("g")
-        .attr("class", "links")
-        .selectAll("line")
-        .data(graph.links)
-        .enter()
-        .append("line")
-        .attr("stroke", "#aaa")
-        .attr("stroke-width", "1px");
-
-      var node = container
-        .append("g")
-        .attr("class", "nodes")
-        .selectAll("g")
-        .data(graph.nodes)
-        .enter()
-        .append("circle")
-        .attr("r", 5)
-        .attr("fill", function(d) {
-          return color(d.group);
-        });
-
-      node.on("mouseover", focus).on("mouseout", unfocus);
-
-      node.call(
-        d3
-          .drag()
-          .on("start", dragstarted)
-          .on("drag", dragged)
-          .on("end", dragended)
-      );
-
-      var labelNode = container
-        .append("g")
-        .attr("class", "labelNodes")
-        .selectAll("text")
-        .data(label.nodes)
-        .enter()
-        .append("text")
-        .text(function(d, i) {
-          return i % 2 == 0 ? "" : d.node.name;
-        })
-        .style("fill", "#555")
-        .style("font-family", "Arial")
-        .style("font-size", 12)
-        .style("pointer-events", "none"); // to prevent mouseover/drag capture
-
-      node.on("mouseover", focus).on("mouseout", unfocus);
-
-      function neigh(a, b) {
-        return a == b || adjlist[a + "-" + b];
-      }
-
-      function ticked() {
-        node.call(updateNode);
-        link.call(updateLink);
-
-        labelLayout.alphaTarget(0.3).restart();
-        labelNode.each(function(d, i) {
-          if (i % 2 == 0) {
-            d.x = d.node.x;
-            d.y = d.node.y;
-          } else {
-            var b = this.getBBox();
-
-            var diffX = d.x - d.node.x;
-            var diffY = d.y - d.node.y;
-
-            var dist = Math.sqrt(diffX * diffX + diffY * diffY);
-
-            var shiftX = (b.width * (diffX - dist)) / (dist * 2);
-            shiftX = Math.max(-b.width, Math.min(0, shiftX));
-            var shiftY = 16;
-            this.setAttribute(
-              "transform",
-              "translate(" + shiftX + "," + shiftY + ")"
-            );
-          }
-        });
-        labelNode.call(updateNode);
-      }
-
-      function fixna(x) {
-        if (isFinite(x)) return x;
-        return 0;
-      }
-
-      function focus(d) {
-        var index = d3.select(d3.event.target).datum().index;
-        node.style("opacity", function(o) {
-          return neigh(index, o.index) ? 1 : 0.1;
-        });
-        labelNode.attr("display", function(o) {
-          return neigh(index, o.node.index) ? "block" : "none";
-        });
-        link.style("opacity", function(o) {
-          return o.source.index == index || o.target.index == index ? 1 : 0.1;
-        });
-      }
-
-      function unfocus() {
-        labelNode.attr("display", "block");
-        node.style("opacity", 1);
-        link.style("opacity", 1);
-      }
-
-      function updateLink(link) {
-        link
-          .attr("x1", function(d) {
-            return fixna(d.source.x);
-          })
-          .attr("y1", function(d) {
-            return fixna(d.source.y);
-          })
-          .attr("x2", function(d) {
-            return fixna(d.target.x);
-          })
-          .attr("y2", function(d) {
-            return fixna(d.target.y);
-          });
-      }
-
-      function updateNode(node) {
-        node.attr("transform", function(d) {
-          return "translate(" + fixna(d.x) + "," + fixna(d.y) + ")";
-        });
-      }
-
-      function dragstarted(d) {
-        d3.event.sourceEvent.stopPropagation();
-        if (!d3.event.active) graphLayout.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-      }
-
-      function dragged(d) {
-        d.fx = d3.event.x;
-        d.fy = d3.event.y;
-      }
-
-      function dragended(d) {
-        if (!d3.event.active) graphLayout.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
+    links: function() {
+      console.log("computed/links()");
+      var that = this;
+      //console.log("that.graph: ", that.graph);
+      if (that.graph) {
+        let links = d3
+          .select("svg")
+          .append("g")
+          .attr("class", "links")
+          .selectAll("line")
+          .data(that.graph.links)
+          .enter()
+          .append("line")
+          .attr("stroke-width", 5);
+        // .attr("stroke-width", function(d) {
+        //   return Math.sqrt(d.value);
+        // });
+        console.log("computed links: ", links);
+        return links;
       }
     }
   },
+  updated: function() {
+    var that = this;
+    that.simulation.nodes(that.graph.nodes).on("tick", function ticked() {
+      that.links
+        .attr("x1", function(d) {
+          return that.graph.nodes.filter(node => {
+            return node.id == d.source;
+          })[0].x;
+          //return that.graph.nodes[d.source].x;
+          return d.source.x;
+        })
+        .attr("y1", function(d) {
+          return that.graph.nodes.filter(node => {
+            return node.id == d.source;
+          })[0].y;
+          //return that.graph.nodes[d.source].y;
+          return d.source.y;
+        })
+        .attr("x2", function(d) {
+          return that.graph.nodes.filter(node => {
+            return node.id == d.target;
+          })[0].x;
+          //return that.graph.nodes[d.target].x;
+          return d.target.x;
+        })
+        .attr("y2", function(d) {
+          return that.graph.nodes.filter(node => {
+            return node.id == d.target;
+          })[0].y;
+          //return that.graph.nodes[d.target].y;
+          return d.target.y;
+        });
+
+      that.nodes
+        .attr("cx", function(d) {
+          return d.x;
+        })
+        .attr("cy", function(d) {
+          return d.y;
+        });
+    });
+  },
   watch: {
-    // storeNodes: function() {
-    //   console.log("storeNodes watcher");
-    //   //mark each node in graph.nodes as unconfirmed
-    //   if (this.graph.nodes.length > 0) {
-    //     this.graph.nodes.forEach(function(graphNode) {
-    //       graphNode.unconfirmed = "true";
-    //     });
-    //   }
-    //   //for each in storeNodes,
-    //   //copy to graph.nodes if missing
-    //   this.storeNodes.forEach(function(storeNode) {
-    //     if (
-    //       this.graph.nodes.filter(graphNode => graphNode.id == storeNode.id)
-    //     ) {
-    //       this.graph.nodes.push(storeNode);
-    //     }
-    //   });
-    //   //update to graph.nodes if different
-    //   //remove "unconfirmed" mark
-    //   //remove unconfirmed nodes in d3Nodes
-    // }
-    chartData: {
-      handler: "renderWhenDataReady",
-      deep: true
+    storeData: function() {
+      var that = this;
+      console.log("watch storeData this: ", this);
+      console.log("storeData watcher");
+      //mark each node in graph.nodes as unconfirmed
+      if (this.graph.nodes.length > 0) {
+        this.graph.nodes.forEach(function(graphNode) {
+          graphNode.unconfirmed = "true";
+        });
+      }
+      let matchedGraphNode = null;
+      //for each in storeNodes,
+      this.storeData.nodes.forEach(function(storeNode) {
+        //if storeNode exists in graph.nodes already
+        if (
+          //declaration inside if conditional intended
+          (matchedGraphNode = that.graph.nodes.filter(
+            graphNode => graphNode.id == storeNode.id
+          )[0])
+        ) {
+          //remove "unconfirmed" mark
+          delete matchedGraphNode.unconfirmed;
+          //update graph node with values from storeNode
+          matchedGraphNode = { ...matchedGraphNode, ...storeNode };
+        } else {
+          // storeNode does not exist in graph; clone it there
+          that.graph.nodes.push(Object.create(storeNode)); //
+          console.log("graph.nodes: ", that.graph.nodes);
+        }
+      });
+      //remove unconfirmed nodes in graph.nodes
+      if (that.graph.nodes.length > 0) {
+        that.graph.nodes = that.graph.nodes.filter(function(node) {
+          return typeof node.unconfirmed === "undefined"; //node does not have 'unconfirmed' property
+        });
+      }
+      console.log("storeData watcher graph: ", that.graph);
     }
   }
 };
@@ -314,5 +219,15 @@ export default {
 .influence-diagram {
   border-color: gray;
   border-width: 1px;
+
+  .links line {
+    stroke: #999;
+    stroke-opacity: 0.6;
+  }
+
+  .nodes circle {
+    stroke: #fff;
+    stroke-width: 1.5px;
+  }
 }
 </style>

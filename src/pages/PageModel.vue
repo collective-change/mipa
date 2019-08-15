@@ -2,7 +2,7 @@
   <q-page padding>
     <h5>{{ $route.params.teamName }}'s Model</h5>
 
-    <influence-diagram :chartData="chartData" :chartDataLoaded="chartDataLoaded"></influence-diagram>
+    <influence-diagram :storeData="storeData" :storeDataLoaded="storeDataLoaded"></influence-diagram>
   </q-page>
 </template>
 
@@ -18,13 +18,13 @@ export default {
   },
   data() {
     return {
-      chartDataLoaded: false
+      storeDataLoaded: false
     };
   },
   computed: {
-    ...mapState("model", ["nodes", "testNodes", "testLinks"]),
-    ...mapGetters("model", ["links"]),
-    chartData() {
+    //...mapState("model", ["nodes", "testNodes", "testLinks"]),
+    ...mapGetters("model", ["nodes", "links"]),
+    storeData() {
       return { nodes: this.nodes, links: this.links };
     }
   },
