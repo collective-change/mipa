@@ -4,11 +4,15 @@
       <g :id="links" />
       <g :id="nodes" />
     </svg>
+    <hr />
+    <p>graph.nodes[0]</p>
+    <pre>{{graph.nodes[0]}}</pre>
+    <hr />
+    <p>graph.links[0]</p>
+    <pre>{{graph.links[0]}}</pre>
+    <hr />
     <p>storeData</p>
     <pre>{{storeData}}</pre>
-    <hr />
-    <p>graph</p>
-    <pre>{{graph}}</pre>
   </div>
 </template>
 
@@ -35,10 +39,11 @@ export default {
       }
     };
   },
+  methods: {},
   mounted: function() {
     var that = this;
     console.log("mounted");
-    console.log("this.storeData: ", this.storeData);
+    //console.log("this.storeData: ", this.storeData);
 
     var svg = d3
       .select("#viz")
@@ -68,11 +73,11 @@ export default {
   },
   computed: {
     nodes: function() {
-      console.log("computed/nodes()");
+      //console.log("computed/nodes()");
       var that = this;
       //if (that.graph) {
       if (that.graph) {
-        console.log("that.graph: ", that.graph);
+        //console.log("that.graph.nodes[0]: ", that.graph.nodes[0]);
         let nodes = d3
           .select("svg")
           .append("g")
@@ -104,12 +109,13 @@ export default {
                 d.fy = null;
               })
           );
+        nodes.exit().remove();
         console.log("computed nodes: ", nodes);
         return nodes;
       }
     },
     links: function() {
-      console.log("computed/links()");
+      //console.log("computed/links()");
       var that = this;
       //console.log("that.graph: ", that.graph);
       if (that.graph) {
@@ -175,8 +181,8 @@ export default {
   watch: {
     storeData: function() {
       var that = this;
-      console.log("watch storeData this: ", this);
-      console.log("storeData watcher");
+      //console.log("watch storeData this: ", this);
+      //console.log("storeData watcher");
       //mark each node in graph.nodes as unconfirmed
       if (this.graph.nodes.length > 0) {
         this.graph.nodes.forEach(function(graphNode) {
@@ -196,11 +202,15 @@ export default {
           //remove "unconfirmed" mark
           delete matchedGraphNode.unconfirmed;
           //update graph node with values from storeNode
-          matchedGraphNode = { ...matchedGraphNode, ...storeNode };
+          //matchedGraphNode = { ...matchedGraphNode, ...storeNode };
+          matchedGraphNode.name = storeNode.name;
         } else {
           // storeNode does not exist in graph; clone it there
-          that.graph.nodes.push(Object.create(storeNode)); //
-          console.log("graph.nodes: ", that.graph.nodes);
+          //that.graph.nodes.push(Object.create(storeNode)); // this does not work
+          //that.graph.nodes.push(JSON.parse(JSON.stringify(storeNode))); //
+          that.graph.nodes.push(Object.assign({}, storeNode)); //
+          console.log("added new node to graph.nodes");
+          //console.log("graph.nodes: ", that.graph.nodes);
         }
       });
       //remove unconfirmed nodes in graph.nodes
@@ -209,7 +219,7 @@ export default {
           return typeof node.unconfirmed === "undefined"; //node does not have 'unconfirmed' property
         });
       }
-      console.log("storeData watcher graph: ", that.graph);
+      //console.log("storeData watcher graph: ", that.graph);
     }
   }
 };
