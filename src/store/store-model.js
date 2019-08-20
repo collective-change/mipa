@@ -116,24 +116,24 @@ const actions = {
 };
 
 const getters = {
-  // nodes: state => {
-  //   if (!state.nodes) {
-  //     return [];
-  //   }
-  //   return state.nodes.map(node => ({ ...node, id: node.id }));
-  // },
-  // links: state => {
-  //   let allLinks = [];
-  //   state.nodes.forEach(function(node) {
-  //     //console.log(node.id);
-  //     if ("influencers" in node) {
-  //       node.influencers.forEach(function(influencer) {
-  //         allLinks.push({ source: influencer, target: node.id });
-  //       });
-  //     }
-  //   });
-  //   return allLinks;
-  // }
+  nodes: state => {
+    if (!state.nodes) {
+      return [];
+    }
+    return state.nodes.map(node => ({ ...node, id: node.id }));
+  },
+  links: state => {
+    let allLinks = [];
+    state.nodes.forEach(function(node) {
+      //console.log(node.id);
+      if ("influencers" in node) {
+        node.influencers.forEach(function(influencer) {
+          allLinks.push({ source: influencer, target: node.id });
+        });
+      }
+    });
+    return allLinks;
+  }
 };
 
 export default {
