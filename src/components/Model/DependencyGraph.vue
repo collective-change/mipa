@@ -1,28 +1,6 @@
 <template>
   <div>
-    <div :style="{ width: width + 'px', height: height + 'px', border: '1px solid black' }">
-      <svg width="100%" height="100%">
-        <defs>
-          <pattern
-            id="innerGrid"
-            :width="innerGridSize"
-            :height="innerGridSize"
-            patternUnits="userSpaceOnUse"
-          >
-            <rect width="100%" height="100%" fill="none" stroke="#CCCCCC7A" stroke-width="0.5" />
-          </pattern>
-          <pattern id="grid" :width="gridSize" :height="gridSize" patternUnits="userSpaceOnUse">
-            <rect
-              width="100%"
-              height="100%"
-              fill="url(#innerGrid)"
-              stroke="#CCCCCC7A"
-              stroke-width="1.5"
-            />
-          </pattern>
-        </defs>
-      </svg>
-    </div>
+    <svg width="500" height="500" />
   </div>
 </template>
 
@@ -40,9 +18,10 @@ export default {
   props: ["storeData"],
   data() {
     return {
-      width: 1024,
-      height: 768,
-      gridSize: 100,
+      width: 500,
+      height: 500,
+      svgWidth: 500,
+      svgHeight: 500,
       selections: {},
       data: { nodes: [], links: [] },
       simulation: null,
@@ -82,9 +61,6 @@ export default {
     };
   },
   computed: {
-    innerGridSize() {
-      return this.gridSize / 10;
-    },
     nodes() {
       return this.data.nodes;
     },
@@ -108,11 +84,6 @@ export default {
     }
   },
   created() {
-    // You can set the component width and height in any way
-    // you prefer. It's responsive! :)
-    this.width = window.innerWidth - 50;
-    this.height = window.innerHeight * 0.5;
-
     this.simulation = d3
       .forceSimulation()
       .force(
@@ -134,6 +105,11 @@ export default {
     this.selections.svg = d3.select(this.$el.querySelector("svg"));
     const svg = this.selections.svg;
 
+    svg
+      .attr("width", this.svgWidth)
+      .attr("height", this.svgHeight)
+      .call(responsify);
+
     // Define the arrow marker
     svg
       .append("svg:defs")
@@ -154,44 +130,13 @@ export default {
     // Add zoom and panning triggers
     this.zoom = d3
       .zoom()
-      .scaleExtent([1 / 4, 4])
+      .scaleExtent([1 / 4, 2])
       .on("zoom", this.zoomed);
     svg.call(this.zoom);
-
-    // A background grid to help user experience
-    // The width and height depends on the minimum scale extent and
-    // the + 10% and negative index to create an infinite grid feel
-    // The precedence of this element is important since you'll have
-    // click events on the elements above the grid
-    this.selections.grid = svg
-      .append("rect")
-      .attr("x", "-10%")
-      .attr("y", "-10%")
-      .attr("width", "410%")
-      .attr("height", "410%")
-      .attr("fill", "url(#grid)");
 
     this.selections.graph = svg.append("g");
     const graph = this.selections.graph;
 
-    // Node and link count is nice :)
-    this.selections.stats = svg
-      .append("text")
-      .attr("x", "1%")
-      .attr("y", "98%")
-      .attr("text-anchor", "left");
-
-    // Some caption
-    this.selections.caption = svg.append("g");
-    this.selections.caption
-      .append("rect")
-      .attr("width", "200")
-      .attr("height", "0")
-      .attr("rx", "10")
-      .attr("ry", "10")
-      .attr("class", "caption");
-
-    // call updataData?
     this.updateData();
   },
   methods: {
@@ -332,23 +277,13 @@ export default {
     },
     zoomed() {
       const transform = d3.event.transform;
-      // The trick here is to move the grid in a way that the user doesn't perceive
-      // that the axis aren't really moving
-      // The actual movement is between 0 and gridSize only for x and y
-      const translate =
-        (transform.x % (this.gridSize * transform.k)) +
-        "," +
-        (transform.y % (this.gridSize * transform.k));
-      this.selections.grid.attr(
-        "transform",
-        "translate(" + translate + ") scale(" + transform.k + ")"
-      );
       this.selections.graph.attr("transform", transform);
 
       // Define some world boundaries based on the graph total size
       // so we don't scroll indefinitely
       const graphBox = this.selections.graph.node().getBBox();
-      const margin = 200;
+      console.log("graphBox: ", graphBox);
+      const margin = 250;
       const worldTopLeft = [graphBox.x - margin, graphBox.y - margin];
       const worldBottomRight = [
         graphBox.x + graphBox.width + margin,
