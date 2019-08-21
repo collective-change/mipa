@@ -1,6 +1,6 @@
 <template>
   <div>
-    <svg width="500" height="500" />
+    <svg width="500" height="500" style="border: black; border-style: solid; border-width: 1px" />
   </div>
 </template>
 
@@ -235,11 +235,11 @@ export default {
       simulation.alpha(1).restart();
     },
     updateForces() {
-      const { simulation, forceProperties, width, height } = this;
+      const { simulation, forceProperties, svgWidth, svgHeight } = this;
       simulation
         .force("center")
-        .x(width * forceProperties.center.x)
-        .y(height * forceProperties.center.y);
+        .x(svgWidth * forceProperties.center.x)
+        .y(svgHeight * forceProperties.center.y);
       simulation
         .force("charge")
         .strength(
@@ -259,13 +259,13 @@ export default {
         .strength(
           forceProperties.forceX.strength * forceProperties.forceX.enabled
         )
-        .x(width * forceProperties.forceX.x);
+        .x(svgWidth * forceProperties.forceX.x);
       simulation
         .force("forceY")
         .strength(
           forceProperties.forceY.strength * forceProperties.forceY.enabled
         )
-        .y(height * forceProperties.forceY.y);
+        .y(svgHeight * forceProperties.forceY.y);
       simulation
         .force("link")
         .distance(forceProperties.link.distance)
@@ -279,17 +279,17 @@ export default {
       const transform = d3.event.transform;
       this.selections.graph.attr("transform", transform);
 
-      // Define some world boundaries based on the graph total size
-      // so we don't scroll indefinitely
-      const graphBox = this.selections.graph.node().getBBox();
-      console.log("graphBox: ", graphBox);
-      const margin = 250;
-      const worldTopLeft = [graphBox.x - margin, graphBox.y - margin];
-      const worldBottomRight = [
-        graphBox.x + graphBox.width + margin,
-        graphBox.y + graphBox.height + margin
-      ];
-      this.zoom.translateExtent([worldTopLeft, worldBottomRight]);
+      // // Define some world boundaries based on the graph total size
+      // // so we don't scroll indefinitely
+      // const graphBox = this.selections.graph.node().getBBox();
+      // console.log("graphBox: ", graphBox);
+      // const margin = 250;
+      // const worldTopLeft = [graphBox.x - margin, graphBox.y - margin];
+      // const worldBottomRight = [
+      //   graphBox.x + graphBox.width + margin,
+      //   graphBox.y + graphBox.height + margin
+      // ];
+      //this.zoom.translateExtent([worldTopLeft, worldBottomRight]);
     },
     nodeDragStarted(d) {
       if (!d3.event.active) {
@@ -527,7 +527,6 @@ circle.selected {
 text {
   font: 10px sans-serif;
   pointer-events: none;
-  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
 }
 
 rect.caption {
