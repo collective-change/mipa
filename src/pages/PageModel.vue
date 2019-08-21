@@ -2,7 +2,14 @@
   <q-page padding>
     <h5>{{ $route.params.teamName }}'s Model</h5>
 
-    <dependency-graph :storeData="data"></dependency-graph>
+    <div class="q-pa-md">
+      <div class="row">
+        <div class="col-12 col-md-9">
+          <dependency-graph :storeData="data"></dependency-graph>
+        </div>
+        <div class="col-12 col-md-3">col-12 col-md-3</div>
+      </div>
+    </div>
   </q-page>
 </template>
 

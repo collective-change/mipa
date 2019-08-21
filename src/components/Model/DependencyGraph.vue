@@ -23,11 +23,6 @@
         </defs>
       </svg>
     </div>
-    <p>nodes</p>
-    <pre>{{nodes}}</pre>
-    <hr />
-    <p>this.data</p>
-    <pre>{{this.data}}</pre>
   </div>
 </template>
 
@@ -227,7 +222,7 @@ export default {
       graph.selectAll("circle").attr("transform", transform);
       graph.selectAll("text").attr("transform", transform);
 
-      this.updateNodeLinkCount();
+      //this.updateNodeLinkCount();
     },
     updateData() {
       console.log("updateData");
@@ -269,7 +264,8 @@ export default {
         )
         .on("mouseover", this.nodeMouseOver)
         .on("mouseout", this.nodeMouseOut)
-        .on("click", this.nodeClick);
+        .on("click", this.nodeClick)
+        .on("contextmenu", this.nodeContextMenu);
 
       graph.selectAll("text").remove();
       graph
@@ -290,7 +286,7 @@ export default {
         .attr("marker-end", "url(#end)");
 
       // Update caption every time data changes
-      this.updateCaption();
+      //this.updateCaption();
       simulation.alpha(1).restart();
     },
     updateForces() {
@@ -333,126 +329,6 @@ export default {
       // updates ignored until this is run
       // restarts the simulation (important if simulation has already slowed down)
       simulation.alpha(1).restart();
-    },
-    updateNodeLinkCount() {
-      let nodeCount = this.nodes.length;
-      let linkCount = this.links.length;
-
-      const highlightedNodes = this.selections.graph.selectAll(
-        "circle.highlight"
-      );
-      const highlightedLinks = this.selections.graph.selectAll(
-        "path.highlight"
-      );
-      if (highlightedNodes.size() > 0 || highlightedLinks.size() > 0) {
-        nodeCount = highlightedNodes.size();
-        linkCount = highlightedLinks.size();
-      }
-      this.selections.stats.text(
-        "Nodes: " + nodeCount + " / Edges: " + linkCount
-      );
-    },
-    updateCaption() {
-      // WARNING: Some gross math will happen here!
-      const lineHeight = 30;
-      const lineMiddle = lineHeight / 2;
-      const captionXPadding = 28;
-      const captionYPadding = 5;
-
-      const caption = this.selections.caption;
-      caption
-        .select("rect")
-        .attr(
-          "height",
-          captionYPadding * 2 +
-            lineHeight * (this.classes.length + this.linkTypes.length)
-        );
-
-      const linkLine = d => {
-        const source = {
-          x: captionXPadding + 13,
-          y:
-            captionYPadding +
-            (lineMiddle + 1) +
-            lineHeight * this.linkTypes.indexOf(d)
-        };
-        const target = {
-          x: captionXPadding - 10
-        };
-        return "M" + source.x + "," + source.y + "H" + target.x;
-      };
-
-      caption.selectAll("g").remove();
-      const linkCaption = caption.append("g");
-      linkCaption
-        .selectAll("path")
-        .data(this.linkTypes)
-        .enter()
-        .append("path")
-        .attr("d", linkLine)
-        .attr("class", d => "link " + d);
-
-      linkCaption
-        .selectAll("text")
-        .data(this.linkTypes)
-        .enter()
-        .append("text")
-        .attr("x", captionXPadding + 20)
-        .attr(
-          "y",
-          d =>
-            captionYPadding +
-            (lineMiddle + 5) +
-            lineHeight * this.linkTypes.indexOf(d)
-        )
-        .attr("class", "caption")
-        .text(d => d);
-
-      const classCaption = caption.append("g");
-      classCaption
-        .selectAll("circle")
-        .data(this.classes)
-        .enter()
-        .append("circle")
-        .attr("r", 10)
-        .attr("cx", captionXPadding - 2)
-        .attr(
-          "cy",
-          d =>
-            captionYPadding +
-            lineMiddle +
-            lineHeight * (this.linkTypes.length + this.classes.indexOf(d))
-        )
-        .attr("class", d => d.toLowerCase());
-
-      classCaption
-        .selectAll("text")
-        .data(this.classes)
-        .enter()
-        .append("text")
-        .attr("x", captionXPadding + 20)
-        .attr(
-          "y",
-          d =>
-            captionYPadding +
-            (lineMiddle + 5) +
-            lineHeight * (this.linkTypes.length + this.classes.indexOf(d))
-        )
-        .attr("class", "caption")
-        .text(d => d);
-
-      const captionWidth = caption.node().getBBox().width;
-      const captionHeight = caption.node().getBBox().height;
-      const paddingX = 18;
-      const paddingY = 12;
-      caption.attr(
-        "transform",
-        "translate(" +
-          (this.width - captionWidth - paddingX) +
-          ", " +
-          (this.height - captionHeight - paddingY) +
-          ")"
-      );
     },
     zoomed() {
       const transform = d3.event.transform;
@@ -548,6 +424,12 @@ export default {
       this.simulation.restart();
     },
     nodeClick(d) {
+      const circle = this.selections.graph.selectAll("circle");
+      circle.classed("selected", false);
+      circle.filter(td => td === d).classed("selected", true);
+    },
+    nodeContextMenu(d) {
+      d3.event.preventDefault();
       const circle = this.selections.graph.selectAll("circle");
       circle.classed("selected", false);
       circle.filter(td => td === d).classed("selected", true);
@@ -693,7 +575,7 @@ circle.init {
 circle.selected {
   stroke: #ff6666ff !important;
   stroke-width: 3px;
-  animation: selected 2s infinite alternate ease-in-out;
+  animation: selected 1.2s infinite alternate ease-in-out;
 }
 
 @keyframes selected {
