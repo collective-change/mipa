@@ -5,6 +5,7 @@
 </template>
 
 <script>
+import { mapActions } from "vuex";
 import * as d3 from "d3";
 import * as sizeof from "object-sizeof";
 import { responsify } from "src/functions/function-responsify-svg";
@@ -18,8 +19,6 @@ export default {
   props: ["storeData"],
   data() {
     return {
-      width: 500,
-      height: 500,
       svgWidth: 500,
       svgHeight: 500,
       selections: {},
@@ -70,14 +69,14 @@ export default {
     // These are needed for captions
     linkTypes() {
       const linkTypes = [];
-      this.links.forEach(link => {
+      this.data.links.forEach(link => {
         if (linkTypes.indexOf(link.type) === -1) linkTypes.push(link.type);
       });
       return linkTypes.sort();
     },
     classes() {
       const classes = [];
-      this.nodes.forEach(node => {
+      this.data.nodes.forEach(node => {
         if (classes.indexOf(node.class) === -1) classes.push(node.class);
       });
       return classes.sort();
@@ -140,6 +139,8 @@ export default {
     this.updateData();
   },
   methods: {
+    ...mapActions("model", ["setSelectedNodeId"]),
+
     tick() {
       // If no data is passed to the Vue component, do nothing
       if (!this.data) {
@@ -171,8 +172,8 @@ export default {
     },
     updateData() {
       console.log("updateData");
-      this.simulation.nodes(this.nodes);
-      this.simulation.force("link").links(this.links);
+      this.simulation.nodes(this.data.nodes);
+      this.simulation.force("link").links(this.data.links);
 
       const simulation = this.simulation;
       const graph = this.selections.graph;
@@ -180,13 +181,13 @@ export default {
       // Links should only exit if not needed anymore
       graph
         .selectAll("path")
-        .data(this.links)
+        .data(this.data.links)
         .exit()
         .remove();
 
       graph
         .selectAll("path")
-        .data(this.links)
+        .data(this.data.links)
         .enter()
         .append("path")
         .attr("class", d => "link " + d.type);
@@ -195,7 +196,7 @@ export default {
       graph.selectAll("circle").remove();
       graph
         .selectAll("circle")
-        .data(this.nodes)
+        .data(this.data.nodes)
         .enter()
         .append("circle")
         .attr("r", 30)
@@ -215,7 +216,7 @@ export default {
       graph.selectAll("text").remove();
       graph
         .selectAll("text")
-        .data(this.nodes)
+        .data(this.data.nodes)
         .enter()
         .append("text")
         .attr("x", 0)
@@ -362,6 +363,12 @@ export default {
       const circle = this.selections.graph.selectAll("circle");
       circle.classed("selected", false);
       circle.filter(td => td === d).classed("selected", true);
+      let correspondingStoreNode = this.storeData.nodes.find(function(
+        storeNode
+      ) {
+        return storeNode.id == d.id;
+      });
+      this.setSelectedNodeId(correspondingStoreNode.id);
     },
     nodeContextMenu(d) {
       d3.event.preventDefault();

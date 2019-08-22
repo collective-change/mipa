@@ -90,7 +90,14 @@ const state = {
     { source: "11K", target: "2B", type: "depends" },
     { source: "11K", target: "3C", type: "needs" }
   ],
+  selectedNodeId: null,
   modelDownloaded: false
+};
+
+const mutations = {
+  setSelectedNodeId(state, nodeId) {
+    state.selectedNodeId = nodeId;
+  }
 };
 
 const actions = {
@@ -112,7 +119,66 @@ const actions = {
 
   unbindNodes: firestoreAction(({ unbindFirestoreRef }) => {
     unbindFirestoreRef("nodes");
-  })
+  }),
+
+  setSelectedNodeId({ commit }, nodeId) {
+    commit("setSelectedNodeId", nodeId);
+  },
+
+  setSelectedNode({ commit }, node) {
+    commit("setSelectedNode", node);
+  },
+
+  // addNode({ }, node) {
+  //   node.createTime = firebase.firestore.FieldValue.serverTimestamp();
+  //   node.createdBy = firebaseAuth.currentUser.uid;
+  //   firebaseDb
+  //     .collection("teams")
+  //     .add(team)
+  //     .then(function () {
+  //       Notify.create("Team added!");
+  //     })
+  //     .catch(function (error) {
+  //       showErrorMessage("Error adding team", error.message);
+  //     });
+  // },
+
+  updateNode({}, payload) {
+    //console.log("payload.teamId: ", payload.teamId);
+    let teamId = payload.teamId;
+    let nodeId = payload.updates.id;
+    payload.updates.updateTime = firebase.firestore.FieldValue.serverTimestamp();
+    payload.updates.updatedBy = firebaseAuth.currentUser.uid;
+    let nodesRef = firebaseDb
+      .collection("teams")
+      .doc(teamId)
+      .collection("nodes");
+    nodesRef
+      .doc(nodeId)
+      .set(payload.updates, { merge: true })
+      .then(function() {
+        let keys = Object.keys(payload.updates);
+        //console.log("keys: ", keys);
+        Notify.create("Node updated!");
+      })
+      .catch(function(error) {
+        showErrorMessage("Error updating node", error.message);
+      });
+  }
+
+  // deleteTeam({ }, id) {
+  //   //let userId = firebaseAuth.currentUser.uid;
+  //   firebaseDb
+  //     .collection("teams")
+  //     .doc(id)
+  //     .delete()
+  //     .then(function () {
+  //       Notify.create("Team deleted!");
+  //     })
+  //     .catch(function (error) {
+  //       showErrorMessage("Error delete team", error.message);
+  //     });
+  // }
 };
 
 const getters = {
@@ -139,6 +205,7 @@ const getters = {
 export default {
   namespaced: true,
   state,
+  mutations,
   actions,
   getters
 };

@@ -7,7 +7,9 @@
         <div class="col-12 col-md-9">
           <dependency-graph :storeData="data"></dependency-graph>
         </div>
-        <div class="col-12 col-md-3">col-12 col-md-3</div>
+        <div class="col-12 col-md-3">
+          <node-summary />
+        </div>
       </div>
     </div>
   </q-page>
@@ -20,7 +22,8 @@ import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 export default {
   name: "app",
   components: {
-    "dependency-graph": require("components/Model/DependencyGraph.vue").default
+    "dependency-graph": require("components/Model/DependencyGraph.vue").default,
+    "node-summary": require("components/Model/NodeSummary.vue").default
   },
   data() {
     return {
@@ -28,7 +31,7 @@ export default {
     };
   },
   computed: {
-    //...mapState("model", ["nodes", "testNodes", "testLinks"]),
+    ...mapState("model", ["selectedNodeId"]),
     ...mapGetters("model", ["nodes", "links"]),
     data() {
       //return { nodes: this.testNodes, links: this.testLinks };

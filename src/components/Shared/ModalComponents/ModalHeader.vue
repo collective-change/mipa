@@ -1,7 +1,7 @@
 <template>
   <q-card-section class="row">
     <div class="text-h6">
-      <slot></slot>
+      <slot name="header"></slot>
     </div>
     <q-space />
     <q-btn v-close-popup flat round dense icon="close" />
