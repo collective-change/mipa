@@ -64,22 +64,6 @@ export default {
     storeData() {
       return { nodes: this.nodes, links: this.links };
     }
-
-    // These are needed for captions
-    // linkTypes() {
-    //   const linkTypes = [];
-    //   this.d3Data.links.forEach(link => {
-    //     if (linkTypes.indexOf(link.type) === -1) linkTypes.push(link.type);
-    //   });
-    //   return linkTypes.sort();
-    // },
-    // classes() {
-    //   const classes = [];
-    //   this.d3Data.nodes.forEach(node => {
-    //     if (classes.indexOf(node.class) === -1) classes.push(node.class);
-    //   });
-    //   return classes.sort();
-    // }
   },
 
   created() {
@@ -169,8 +153,6 @@ export default {
       graph.selectAll("path").attr("d", link);
       graph.selectAll("circle").attr("transform", transform);
       graph.selectAll("text").attr("transform", transform);
-
-      //this.updateNodeLinkCount();
     },
     updateData() {
       console.log("updateData");
@@ -233,8 +215,6 @@ export default {
         .selectAll("path")
         .attr("marker-end", "url(#end)");
 
-      // Update caption every time data changes
-      //this.updateCaption();
       simulation.alpha(1).restart();
     },
     updateForces() {
@@ -281,18 +261,6 @@ export default {
     zoomed() {
       const transform = d3.event.transform;
       this.selections.graph.attr("transform", transform);
-
-      // // Define some world boundaries based on the graph total size
-      // // so we don't scroll indefinitely
-      // const graphBox = this.selections.graph.node().getBBox();
-      // console.log("graphBox: ", graphBox);
-      // const margin = 250;
-      // const worldTopLeft = [graphBox.x - margin, graphBox.y - margin];
-      // const worldBottomRight = [
-      //   graphBox.x + graphBox.width + margin,
-      //   graphBox.y + graphBox.height + margin
-      // ];
-      //this.zoom.translateExtent([worldTopLeft, worldBottomRight]);
     },
     nodeDragStarted(d) {
       if (!d3.event.active) {
@@ -394,33 +362,34 @@ export default {
       },
       deep: true
     },
-    storeData: {
+    // watcher for store nodes
+    nodes: {
       immediate: true,
       deep: true,
-      handler(/*newStoreData, oldStoreData*/) {
+      handler(/*newNodes, oldNodes*/) {
         var that = this;
         //mark each node in data.nodes as unconfirmed
         if (this.d3Data.nodes.length > 0) {
-          this.d3Data.nodes.forEach(function(dataNode) {
-            dataNode.unconfirmed = "true";
+          this.d3Data.nodes.forEach(function(d3Node) {
+            d3Node.unconfirmed = "true";
           });
         }
-        let matchedDataNode = null;
+        let matchedD3Node = null;
         //for each in storeNodes,
         this.storeData.nodes.forEach(function(storeNode) {
           //if storeNode exists in data.nodes already
           if (
             //declaration inside if conditional intended
-            (matchedDataNode = that.d3Data.nodes.filter(
-              dataNode => dataNode.id == storeNode.id
+            (matchedD3Node = that.d3Data.nodes.filter(
+              d3Node => d3Node.id == storeNode.id
             )[0])
           ) {
             //remove "unconfirmed" mark
-            delete matchedDataNode.unconfirmed;
+            delete matchedD3Node.unconfirmed;
             //update data node with values from storeNode
-            matchedDataNode.name = storeNode.name;
-            matchedDataNode.group = storeNode.group;
-            matchedDataNode.class = storeNode.class;
+            matchedD3Node.name = storeNode.name;
+            matchedD3Node.group = storeNode.group;
+            matchedD3Node.class = storeNode.class;
           } else {
             // storeNode does not exist in data; clone it there
             that.d3Data.nodes.push(Object.assign({}, storeNode));
@@ -432,22 +401,28 @@ export default {
             return typeof node.unconfirmed === "undefined"; //node does not have 'unconfirmed' property
           });
         }
-
-        //now handle the links
+      }
+    },
+    // watcher for store links
+    links: {
+      immediate: true,
+      deep: true,
+      handler(/*newLinks, oldLinks*/) {
+        var that = this;
         //mark each link in data.links as unconfirmed
         if (this.d3Data.links.length > 0) {
-          this.d3Data.links.forEach(function(dataLink) {
-            dataLink.unconfirmed = "true";
+          this.d3Data.links.forEach(function(d3Link) {
+            d3Link.unconfirmed = "true";
           });
         }
-        let matchedDataLink = null;
+        let matchedD3Link = null;
         //for each in storeLinks,
         this.storeData.links.forEach(function(storeLink) {
           var filter = { source: storeLink.source, target: storeLink.target };
           //if storeLink exists in data.links already
           if (
             //declaration inside if conditional intended
-            (matchedDataLink = that.d3Data.links.filter(function(item) {
+            (matchedD3Link = that.d3Data.links.filter(function(item) {
               for (var key in filter) {
                 if (item[key] === undefined || item[key] != filter[key])
                   return false;
@@ -455,11 +430,11 @@ export default {
             })[0])
           ) {
             //remove "unconfirmed" mark
-            delete matchedDataLink.unconfirmed;
+            delete matchedD3Link.unconfirmed;
             //update data link with values from storeLink
-            matchedDataLink.source = storeLink.source;
-            matchedDataLink.target = storeLink.target;
-            matchedDataLink.type = storeLink.type;
+            matchedD3Link.source = storeLink.source;
+            matchedD3Link.target = storeLink.target;
+            matchedD3Link.type = storeLink.type;
           } //else storeLink does not exist in data; clone it there
           else {
             that.d3Data.links.push(Object.assign({}, storeLink));
