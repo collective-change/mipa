@@ -22,6 +22,7 @@ export default {
       svgHeight: 500,
       selections: {},
       d3Data: { nodes: [], links: [] },
+      storeDataChangeCount: 0,
       simulation: null,
       forceProperties: {
         center: {
@@ -155,7 +156,7 @@ export default {
       graph.selectAll("text").attr("transform", transform);
     },
     updateData() {
-      console.log("updateData");
+      //console.log("updateData; change count ", this.storeDataChangeCount);
       this.simulation.nodes(this.d3Data.nodes);
       this.simulation.force("link").links(this.d3Data.links);
 
@@ -349,9 +350,9 @@ export default {
   },
 
   watch: {
-    d3Data: {
-      handler(newData) {
-        console.log("watch / data");
+    storeDataChangeCount: {
+      handler(/*newValue, oldValue*/) {
+        //console.log("watch / storeDataChangeCount");
         this.updateData();
       },
       deep: true
@@ -401,6 +402,7 @@ export default {
             return typeof node.unconfirmed === "undefined"; //node does not have 'unconfirmed' property
           });
         }
+        this.storeDataChangeCount++;
       }
     },
     // watcher for store links
@@ -446,6 +448,7 @@ export default {
             return typeof link.unconfirmed === "undefined"; //link does not have 'unconfirmed' property
           });
         }
+        this.storeDataChangeCount++;
       }
     }
   }
