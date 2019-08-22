@@ -498,7 +498,7 @@ circle.input {
 }
 
 circle.selected {
-  stroke: #ff6666ff !important;
+  /*stroke: #ff6666ff !important;*/
   stroke-width: 3px;
   animation: selected 1.2s infinite alternate ease-in-out;
 }
