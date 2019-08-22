@@ -21,7 +21,7 @@ export default {
       svgWidth: 500,
       svgHeight: 500,
       selections: {},
-      data: { nodes: [], links: [] },
+      d3Data: { nodes: [], links: [] },
       simulation: null,
       forceProperties: {
         center: {
@@ -68,14 +68,14 @@ export default {
     // These are needed for captions
     // linkTypes() {
     //   const linkTypes = [];
-    //   this.data.links.forEach(link => {
+    //   this.d3Data.links.forEach(link => {
     //     if (linkTypes.indexOf(link.type) === -1) linkTypes.push(link.type);
     //   });
     //   return linkTypes.sort();
     // },
     // classes() {
     //   const classes = [];
-    //   this.data.nodes.forEach(node => {
+    //   this.d3Data.nodes.forEach(node => {
     //     if (classes.indexOf(node.class) === -1) classes.push(node.class);
     //   });
     //   return classes.sort();
@@ -145,7 +145,7 @@ export default {
 
     tick() {
       // If no data is ready, do nothing
-      if (!this.data) {
+      if (!this.d3Data) {
         return;
       }
       const transform = d => {
@@ -174,8 +174,8 @@ export default {
     },
     updateData() {
       console.log("updateData");
-      this.simulation.nodes(this.data.nodes);
-      this.simulation.force("link").links(this.data.links);
+      this.simulation.nodes(this.d3Data.nodes);
+      this.simulation.force("link").links(this.d3Data.links);
 
       const simulation = this.simulation;
       const graph = this.selections.graph;
@@ -183,13 +183,13 @@ export default {
       // Links should only exit if not needed anymore
       graph
         .selectAll("path")
-        .data(this.data.links)
+        .data(this.d3Data.links)
         .exit()
         .remove();
 
       graph
         .selectAll("path")
-        .data(this.data.links)
+        .data(this.d3Data.links)
         .enter()
         .append("path")
         .attr("class", d => "link " + d.type);
@@ -198,7 +198,7 @@ export default {
       graph.selectAll("circle").remove();
       graph
         .selectAll("circle")
-        .data(this.data.nodes)
+        .data(this.d3Data.nodes)
         .enter()
         .append("circle")
         .attr("r", 30)
@@ -218,7 +218,7 @@ export default {
       graph.selectAll("text").remove();
       graph
         .selectAll("text")
-        .data(this.data.nodes)
+        .data(this.d3Data.nodes)
         .enter()
         .append("text")
         .attr("x", 0)
@@ -381,7 +381,7 @@ export default {
   },
 
   watch: {
-    data: {
+    d3Data: {
       handler(newData) {
         console.log("watch / data");
         this.updateData();
@@ -400,8 +400,8 @@ export default {
       handler(/*newStoreData, oldStoreData*/) {
         var that = this;
         //mark each node in data.nodes as unconfirmed
-        if (this.data.nodes.length > 0) {
-          this.data.nodes.forEach(function(dataNode) {
+        if (this.d3Data.nodes.length > 0) {
+          this.d3Data.nodes.forEach(function(dataNode) {
             dataNode.unconfirmed = "true";
           });
         }
@@ -411,7 +411,7 @@ export default {
           //if storeNode exists in data.nodes already
           if (
             //declaration inside if conditional intended
-            (matchedDataNode = that.data.nodes.filter(
+            (matchedDataNode = that.d3Data.nodes.filter(
               dataNode => dataNode.id == storeNode.id
             )[0])
           ) {
@@ -423,20 +423,20 @@ export default {
             matchedDataNode.class = storeNode.class;
           } else {
             // storeNode does not exist in data; clone it there
-            that.data.nodes.push(Object.assign({}, storeNode));
+            that.d3Data.nodes.push(Object.assign({}, storeNode));
           }
         });
         //remove unconfirmed nodes in data.nodes
-        if (that.data.nodes.length > 0) {
-          that.data.nodes = that.data.nodes.filter(function(node) {
+        if (that.d3Data.nodes.length > 0) {
+          that.d3Data.nodes = that.d3Data.nodes.filter(function(node) {
             return typeof node.unconfirmed === "undefined"; //node does not have 'unconfirmed' property
           });
         }
 
         //now handle the links
         //mark each link in data.links as unconfirmed
-        if (this.data.links.length > 0) {
-          this.data.links.forEach(function(dataLink) {
+        if (this.d3Data.links.length > 0) {
+          this.d3Data.links.forEach(function(dataLink) {
             dataLink.unconfirmed = "true";
           });
         }
@@ -447,7 +447,7 @@ export default {
           //if storeLink exists in data.links already
           if (
             //declaration inside if conditional intended
-            (matchedDataLink = that.data.links.filter(function(item) {
+            (matchedDataLink = that.d3Data.links.filter(function(item) {
               for (var key in filter) {
                 if (item[key] === undefined || item[key] != filter[key])
                   return false;
@@ -462,12 +462,12 @@ export default {
             matchedDataLink.type = storeLink.type;
           } //else storeLink does not exist in data; clone it there
           else {
-            that.data.links.push(Object.assign({}, storeLink));
+            that.d3Data.links.push(Object.assign({}, storeLink));
           }
         });
         //remove unconfirmed links in data.links
-        if (that.data.links.length > 0) {
-          that.data.links = that.data.links.filter(function(link) {
+        if (that.d3Data.links.length > 0) {
+          that.d3Data.links = that.d3Data.links.filter(function(link) {
             return typeof link.unconfirmed === "undefined"; //link does not have 'unconfirmed' property
           });
         }
