@@ -479,18 +479,20 @@ path.link.needs {
 
 circle {
   fill: #ffff99;
-  stroke: #191900;
+  stroke: darkorange;
   stroke-width: 1.5px;
 }
-circle.system {
+circle.state {
   fill: #cce5ff;
   stroke: #003366;
 }
-circle.mount {
-  fill: #ffe5e5;
-  stroke: #660000;
+circle.output {
+  /* fill: #ffe5e5;
+  stroke: #660000; */
+  fill: thistle;
+  stroke: purple;
 }
-circle.init {
+circle.input {
   fill: #b2e8b2;
   stroke: #001900;
 }
