@@ -63,23 +63,23 @@ export default {
     ...mapGetters("model", ["nodes", "links"]),
     storeData() {
       return { nodes: this.nodes, links: this.links };
-    },
+    }
 
     // These are needed for captions
-    linkTypes() {
-      const linkTypes = [];
-      this.data.links.forEach(link => {
-        if (linkTypes.indexOf(link.type) === -1) linkTypes.push(link.type);
-      });
-      return linkTypes.sort();
-    },
-    classes() {
-      const classes = [];
-      this.data.nodes.forEach(node => {
-        if (classes.indexOf(node.class) === -1) classes.push(node.class);
-      });
-      return classes.sort();
-    }
+    // linkTypes() {
+    //   const linkTypes = [];
+    //   this.data.links.forEach(link => {
+    //     if (linkTypes.indexOf(link.type) === -1) linkTypes.push(link.type);
+    //   });
+    //   return linkTypes.sort();
+    // },
+    // classes() {
+    //   const classes = [];
+    //   this.data.nodes.forEach(node => {
+    //     if (classes.indexOf(node.class) === -1) classes.push(node.class);
+    //   });
+    //   return classes.sort();
+    // }
   },
 
   created() {
@@ -144,7 +144,7 @@ export default {
     ...mapActions("model", ["setSelectedNodeId"]),
 
     tick() {
-      // If no data is passed to the Vue component, do nothing
+      // If no data is ready, do nothing
       if (!this.data) {
         return;
       }
