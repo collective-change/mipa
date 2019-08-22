@@ -60,12 +60,6 @@ export default {
     };
   },
   computed: {
-    nodes() {
-      return this.data.nodes;
-    },
-    links() {
-      return this.data.links;
-    },
     // These are needed for captions
     linkTypes() {
       const linkTypes = [];
