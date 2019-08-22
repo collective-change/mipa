@@ -32,18 +32,20 @@ import mixinAddEditNode from "src/mixins/mixin-add-edit-node";
 
 export default {
   mixins: [mixinAddEditNode],
+
   components: {
     "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
       .default,
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default
   },
-  //props: ["node"],
+
   data() {
     return {
       nodeToSubmit: {}
     };
   },
+
   computed: {
     ...mapState("model", ["selectedNodeId"]),
     ...mapGetters("model", ["nodes", "links"]),
@@ -55,6 +57,7 @@ export default {
       });
     }
   },
+
   methods: {
     ...mapActions("model", ["updateNode"]),
     submitNode() {
@@ -65,9 +68,11 @@ export default {
       //this.$emit("close");
     }
   },
+
   mounted() {
     this.nodeToSubmit = Object.assign({}, this.selectedNode);
   },
+
   watch: {
     selectedNode: function(newNode, oldNode) {
       this.nodeToSubmit = Object.assign({}, this.selectedNode);

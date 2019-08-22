@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { mapActions, mapGetters, mapState } from "vuex";
 import * as d3 from "d3";
 import * as sizeof from "object-sizeof";
 import { responsify } from "src/functions/function-responsify-svg";
@@ -16,7 +16,6 @@ import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 
 export default {
   name: "dependency-graph",
-  props: ["storeData"],
   data() {
     return {
       svgWidth: 500,
@@ -59,7 +58,13 @@ export default {
       }
     };
   },
+
   computed: {
+    ...mapGetters("model", ["nodes", "links"]),
+    storeData() {
+      return { nodes: this.nodes, links: this.links };
+    },
+
     // These are needed for captions
     linkTypes() {
       const linkTypes = [];
@@ -76,6 +81,7 @@ export default {
       return classes.sort();
     }
   },
+
   created() {
     this.simulation = d3
       .forceSimulation()
@@ -94,6 +100,7 @@ export default {
     // Call first time to setup default values
     this.updateForces();
   },
+
   mounted() {
     this.selections.svg = d3.select(this.$el.querySelector("svg"));
     const svg = this.selections.svg;
@@ -132,6 +139,7 @@ export default {
 
     this.updateData();
   },
+
   methods: {
     ...mapActions("model", ["setSelectedNodeId"]),
 
@@ -371,6 +379,7 @@ export default {
       circle.filter(td => td === d).classed("selected", true);
     }
   },
+
   watch: {
     data: {
       handler(newData) {

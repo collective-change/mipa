@@ -5,7 +5,7 @@
     <div class="q-pa-md">
       <div class="row">
         <div class="col-12 col-md-9">
-          <dependency-graph :storeData="data"></dependency-graph>
+          <dependency-graph></dependency-graph>
         </div>
         <div class="col-12 col-md-3">
           <node-summary />
@@ -25,19 +25,7 @@ export default {
     "dependency-graph": require("components/Model/DependencyGraph.vue").default,
     "node-summary": require("components/Model/NodeSummary.vue").default
   },
-  data() {
-    return {
-      storeDataLoaded: false
-    };
-  },
-  computed: {
-    ...mapState("model", ["selectedNodeId"]),
-    ...mapGetters("model", ["nodes", "links"]),
-    data() {
-      //return { nodes: this.testNodes, links: this.testLinks };
-      return { nodes: this.nodes, links: this.links };
-    }
-  },
+
   created() {
     (async () => {
       //console.log("waiting for currentUser to be defined");
@@ -48,13 +36,6 @@ export default {
       this.$store.dispatch("model/bindNodes", this.$route.params.teamId);
     })();
     console.log("above code doesn't block main function stack");
-  },
-
-  mounted() {
-    //console.log(firebaseAuth.currentUser.uid);
-    // this.$root.$on("showAddTeam", () => {
-    //   this.showAddTeam = true;
-    // });
   },
 
   beforeDestroy() {
