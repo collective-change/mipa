@@ -35,7 +35,7 @@ export default {
         await new Promise(resolve => setTimeout(resolve, 200));
       this.$store.dispatch("model/bindNodes", this.$route.params.teamId);
     })();
-    console.log("above code doesn't block main function stack");
+    //console.log("above code doesn't block main function stack");
   },
 
   beforeDestroy() {

@@ -3,7 +3,6 @@ import { uid, Notify } from "quasar";
 import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
 import { firestoreAction } from "vuexfire";
 import { showErrorMessage } from "src/functions/function-show-error-message";
-import { mergeShards } from "src/functions/function-shards";
 
 const state = {
   nodes: [],

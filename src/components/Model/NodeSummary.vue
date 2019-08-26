@@ -14,7 +14,8 @@
             ref="nodeName"
           />
           <q-input v-model="nodeToSubmit.units" label="Units" clearable />
-          <q-input v-model="nodeToSubmit.formula" label="Formula" clearable />
+          <q-input v-model="nodeToSubmit.enteredFormula" label="Formula" clearable />
+          <vue-mathjax :formula="'$$'+latexFormula+'$$'"></vue-mathjax>
           <q-input v-model="nodeToSubmit.notes" label="Notes" clearable />
         </q-card-section>
         <modal-buttons />
@@ -27,8 +28,10 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions } from "vuex";
+import { mapActions, mapGetters, mapState } from "vuex";
 import mixinAddEditNode from "src/mixins/mixin-add-edit-node";
+import { parse, format, toTex } from "mathjs";
+import { VueMathjax } from "vue-mathjax";
 
 export default {
   mixins: [mixinAddEditNode],
@@ -37,7 +40,8 @@ export default {
     "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
       .default,
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default
+      .default,
+    "vue-mathjax": VueMathjax
   },
 
   data() {
@@ -55,6 +59,29 @@ export default {
       return this.nodes.find(function(node) {
         return node.id == that.selectedNodeId;
       });
+    },
+
+    //parsedFormula from enteredFormula
+    parsedFormula() {
+      console.log("enteredFormula: ", this.nodeToSubmit.enteredFormula);
+      let parsedFormula = this.nodeToSubmit.enteredFormula
+        ? parse(this.nodeToSubmit.enteredFormula)
+        : "";
+      console.log("parsedFormula: ", parsedFormula);
+      return parsedFormula;
+    },
+
+    //latexFormula from parsedFormula
+    latexFormula() {
+      let parenthesis = "keep";
+      let implicit = "hide";
+      return this.parsedFormula
+        ? this.parsedFormula.toTex({
+            parenthesis: parenthesis,
+            implicit: implicit
+          })
+        : "";
+      console.log("LaTeX expression:", latex);
     }
   },
 
