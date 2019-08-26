@@ -42,6 +42,7 @@ const actions = {
     commit("setCalculationRequestPending", false);
     commit("setLastBaselineCalculationStartTime", new Date());
     //initialize variables
+    //parse formula of all nodes
     //for time points
     //for each dependency level from 0
     //for each variable node
