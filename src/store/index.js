@@ -8,6 +8,7 @@ import tasks from "./store-tasks";
 import teams from "./store-teams";
 import orgs from "./store-orgs";
 import model from "./store-model";
+import calculator from "./store-calculator";
 
 Vue.use(Vuex);
 
@@ -28,7 +29,8 @@ export default function(/* { ssrContext } */) {
       tasks,
       orgs,
       teams,
-      model
+      model,
+      calculator
     },
 
     // enable strict mode (adds overhead!)

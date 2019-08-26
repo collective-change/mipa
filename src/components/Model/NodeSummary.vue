@@ -63,11 +63,11 @@ export default {
 
     //parsedFormula from enteredFormula
     parsedFormula() {
-      console.log("enteredFormula: ", this.nodeToSubmit.enteredFormula);
+      //console.log("enteredFormula: ", this.nodeToSubmit.enteredFormula);
       let parsedFormula = this.nodeToSubmit.enteredFormula
         ? parse(this.nodeToSubmit.enteredFormula)
         : "";
-      console.log("parsedFormula: ", parsedFormula);
+      //console.log("parsedFormula: ", parsedFormula);
       return parsedFormula;
     },
 
