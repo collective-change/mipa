@@ -146,6 +146,7 @@ const actions = {
     //console.log("payload.teamId: ", payload.teamId);
     let teamId = payload.teamId;
     let nodeId = payload.updates.id;
+
     let formulaChanged = false;
     payload.updates.updateTime = firebase.firestore.FieldValue.serverTimestamp();
     payload.updates.updatedBy = firebaseAuth.currentUser.uid;
@@ -161,7 +162,7 @@ const actions = {
         let keys = Object.keys(payload.updates);
         //console.log("keys: ", keys);
         Notify.create("Node updated!");
-        dispatch("calculator/calculateBaseline", null, { root: true });
+        dispatch("calculator/calculateBaseline", teamId, { root: true });
       })
       .catch(function(error) {
         showErrorMessage("Error updating node", error.message);
