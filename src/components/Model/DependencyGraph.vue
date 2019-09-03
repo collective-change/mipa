@@ -402,6 +402,9 @@ export default {
             return typeof node.unconfirmed === "undefined"; //node does not have 'unconfirmed' property
           });
         }
+        // add depedency level to each node
+        
+
         this.storeDataChangeCount++;
       }
     },
