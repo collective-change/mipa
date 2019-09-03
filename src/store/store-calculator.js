@@ -36,7 +36,7 @@ const mutations = {
 
 const actions = {
   calculateBaseline({ rootState, commit }, teamId) {
-    console.log("calculateBaseline");
+    //console.log("calculateBaseline");
     // if already running
     if (state.calculatorIsRunning) {
       commit("setCalculationRequestPending", true);
@@ -50,6 +50,7 @@ const actions = {
 
     //calculate dependency level of each node
     let depLevs = calculateDependencyLevels(rootState.model.nodes);
+    // save dependency level of each node if it has changed
 
     //for time points
 
@@ -65,7 +66,6 @@ const actions = {
 };
 
 function calculateDependencyLevels(nodes) {
-  console.log("calculateDependencyLevels");
   //if a node has an influencer, increase dependencyLevel number to one above influencer
   let depLevsChanging = true;
   let depLevs = {};
@@ -80,15 +80,6 @@ function calculateDependencyLevels(nodes) {
     depLevsChanging = false;
     nodes.forEach(function(node) {
       nodeCount++;
-      console.log(
-        "whileLoopCount:",
-        whileLoopCount,
-        "nodeCount: ",
-        nodeCount,
-        "node.name: ",
-        node.name
-      );
-      //if a node has an influencer, increase dependencyLevel number to one above influencer
       tempDepLevs[node.id] = 0;
       if (node.influencers) {
         node.influencers.forEach(function(influencer) {
@@ -111,13 +102,28 @@ function calculateDependencyLevels(nodes) {
       }
     }, this);
   }
-  //todo: if node has no influencers, then set dependencyLevel to lowest influencee dependencyLevel - 1
-  nodes.forEach(function(node) {
-    //get influencees of node (which nodes have this node as influencer?)
-    //if (!node.influencers) depLevs[node.id] = null;
-  });
 
-  console.log("depLevs: ", depLevs);
+  //if a node has no influencers, then set dependencyLevel to lowest influencee dependencyLevel - 1
+  nodes.forEach(function(node) {
+    if (!node.influencers) {
+      if (
+        typeof node.influencees !== "undefined" &&
+        Array.isArray(node.influencees) &&
+        node.influencees.length > 0
+      ) {
+        let lowestInfluenceeDepLev = Infinity;
+        node.influencees.forEach(function(influencee) {
+          if (depLevs[influencee] < lowestInfluenceeDepLev) {
+            lowestInfluenceeDepLev = depLevs[influencee];
+          }
+        });
+        depLevs[node.id] = lowestInfluenceeDepLev - 1;
+      } else {
+        //node has no influencers and no influencees, we'll say that it has no dependency level
+        depLevs[node.id] = null;
+      }
+    }
+  });
   return depLevs;
 }
 
