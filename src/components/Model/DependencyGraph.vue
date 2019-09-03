@@ -11,6 +11,7 @@ import * as sizeof from "object-sizeof";
 import { responsify } from "src/functions/function-responsify-svg";
 import { sleep } from "src/functions/function-sleep";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
+import { calculateDependencyLevels } from "src/functions/function-calculateDependencyLevels";
 
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
 
@@ -402,8 +403,11 @@ export default {
             return typeof node.unconfirmed === "undefined"; //node does not have 'unconfirmed' property
           });
         }
-        // add depedency level to each node
-        
+        // calculate and add depedency level to each node
+        let depLevs = calculateDependencyLevels(this.storeData.nodes);
+        that.d3Data.nodes.forEach(function(node) {
+          node.depLev = depLevs[node.id];
+        });
 
         this.storeDataChangeCount++;
       }
