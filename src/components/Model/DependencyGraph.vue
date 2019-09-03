@@ -26,15 +26,11 @@ export default {
       storeDataChangeCount: 0,
       simulation: null,
       forceProperties: {
-        center: {
-          x: 0.5,
-          y: 0.5
-        },
         charge: {
           enabled: true,
-          strength: -700,
+          strength: -200,
           distanceMin: 1,
-          distanceMax: 2000
+          distanceMax: 200
         },
         collide: {
           enabled: true,
@@ -44,12 +40,12 @@ export default {
         },
         forceX: {
           enabled: true,
-          strength: 0.05,
-          x: 0.5
+          strength: 0.8
+          //x: 0.5
         },
         forceY: {
           enabled: true,
-          strength: 0.35,
+          strength: 0.1,
           y: 0.5
         },
         link: {
@@ -79,7 +75,6 @@ export default {
       )
       .force("charge", d3.forceManyBody())
       .force("collide", d3.forceCollide())
-      .force("center", d3.forceCenter())
       .force("forceX", d3.forceX())
       .force("forceY", d3.forceY())
       .on("tick", this.tick);
@@ -220,36 +215,33 @@ export default {
       simulation.alpha(1).restart();
     },
     updateForces() {
-      const { simulation, forceProperties, svgWidth, svgHeight } = this;
-      simulation
-        .force("center")
-        .x(svgWidth * forceProperties.center.x)
-        .y(svgHeight * forceProperties.center.y);
+      const { simulation, forceProperties, svgWidth, svgHeight, d3Data } = this;
       simulation
         .force("charge")
-        .strength(
-          forceProperties.charge.strength * forceProperties.charge.enabled
-        )
+        .strength(forceProperties.charge.strength)
         .distanceMin(forceProperties.charge.distanceMin)
         .distanceMax(forceProperties.charge.distanceMax);
       simulation
         .force("collide")
-        .strength(
-          forceProperties.collide.strength * forceProperties.collide.enabled
-        )
+        .strength(forceProperties.collide.strength)
         .radius(forceProperties.collide.radius)
         .iterations(forceProperties.collide.iterations);
       simulation
         .force("forceX")
-        .strength(
-          forceProperties.forceX.strength * forceProperties.forceX.enabled
-        )
-        .x(svgWidth * forceProperties.forceX.x);
+        .strength(forceProperties.forceX.strength)
+        .x(d => {
+          if (d.depLev != null) {
+            return (
+              (svgWidth / d3Data.numDepLevs) * d.depLev +
+              svgWidth / d3Data.numDepLevs / 2
+            );
+          } else {
+            return svgWidth / 2;
+          }
+        });
       simulation
         .force("forceY")
-        .strength(
-          forceProperties.forceY.strength * forceProperties.forceY.enabled
-        )
+        .strength(forceProperties.forceY.strength)
         .y(svgHeight * forceProperties.forceY.y);
       simulation
         .force("link")
@@ -403,11 +395,17 @@ export default {
             return typeof node.unconfirmed === "undefined"; //node does not have 'unconfirmed' property
           });
         }
-        // calculate and add depedency level to each node
+        // calculate and add depedency level to each node,
+        // also save how many dependency levels there are
         let depLevs = calculateDependencyLevels(this.storeData.nodes);
+        let numDepLevs = 0;
         that.d3Data.nodes.forEach(function(node) {
           node.depLev = depLevs[node.id];
+          if (depLevs[node.id] + 1 > numDepLevs) {
+            numDepLevs = depLevs[node.id] + 1;
+          }
         });
+        that.d3Data.numDepLevs = numDepLevs;
 
         this.storeDataChangeCount++;
       }
