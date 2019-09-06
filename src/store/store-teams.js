@@ -49,6 +49,7 @@ const actions = {
   updateTeam({}, payload) {
     payload.updates.updateTime = firebase.firestore.FieldValue.serverTimestamp();
     payload.updates.updatedBy = firebaseAuth.currentUser.uid;
+    payload.updates.nameSlug = slugify(payload.updates.name);
     let teamsRef = firebaseDb.collection("teams");
     teamsRef
       .doc(payload.id)
