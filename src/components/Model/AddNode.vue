@@ -14,10 +14,8 @@
 
 <script>
 import { mapActions } from "vuex";
-//import mixinAddNode from "src/mixins/mixin-add-node";
 
 export default {
-  //mixins: [mixinAddNode],
   components: {
     "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
       .default,

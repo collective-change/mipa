@@ -1,9 +1,9 @@
 <template>
   <div>
     <q-card v-if="selectedNode">
-      <modal-header>
-        <template v-slot:header>{{selectedNode.name}}</template>
-      </modal-header>
+      <q-card-section class="row">
+        <div class="text-h6">{{selectedNode.name}}</div>
+      </q-card-section>
       <q-form @submit.prevent="submitForm">
         <q-card-section>
           <q-input
@@ -28,16 +28,11 @@
 
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
-import mixinEditNode from "src/mixins/mixin-edit-node";
 import { parse, format, toTex } from "mathjs";
 import { VueMathjax } from "vue-mathjax";
 
 export default {
-  mixins: [mixinEditNode],
-
   components: {
-    "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
-      .default,
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
     "vue-mathjax": VueMathjax
@@ -86,6 +81,12 @@ export default {
 
   methods: {
     ...mapActions("model", ["updateNode"]),
+    submitForm() {
+      this.$refs.nodeName.validate();
+      if (!this.$refs.nodeName.hasError) {
+        this.submitNode();
+      }
+    },
     submitNode() {
       this.updateNode({
         teamId: this.$route.params.teamId,
