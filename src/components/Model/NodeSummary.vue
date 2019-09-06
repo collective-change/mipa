@@ -28,12 +28,12 @@
 
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
-import mixinAddEditNode from "src/mixins/mixin-add-edit-node";
+import mixinEditNode from "src/mixins/mixin-edit-node";
 import { parse, format, toTex } from "mathjs";
 import { VueMathjax } from "vue-mathjax";
 
 export default {
-  mixins: [mixinAddEditNode],
+  mixins: [mixinEditNode],
 
   components: {
     "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")

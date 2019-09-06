@@ -128,19 +128,22 @@ const actions = {
     commit("setSelectedNode", node);
   },
 
-  // addNode({ }, node) {
-  //   node.createTime = firebase.firestore.FieldValue.serverTimestamp();
-  //   node.createdBy = firebaseAuth.currentUser.uid;
-  //   firebaseDb
-  //     .collection("teams")
-  //     .add(team)
-  //     .then(function () {
-  //       Notify.create("Team added!");
-  //     })
-  //     .catch(function (error) {
-  //       showErrorMessage("Error adding team", error.message);
-  //     });
-  // },
+  addNode({}, payload) {
+    let node = payload.node;
+    node.createTime = firebase.firestore.FieldValue.serverTimestamp();
+    node.createdBy = firebaseAuth.currentUser.uid;
+    firebaseDb
+      .collection("teams")
+      .doc(payload.teamId)
+      .collection("nodes")
+      .add(node)
+      .then(function() {
+        Notify.create("Node added!");
+      })
+      .catch(function(error) {
+        showErrorMessage("Error adding node", error.message);
+      });
+  },
 
   updateNode({ dispatch }, payload) {
     //console.log("payload.teamId: ", payload.teamId);

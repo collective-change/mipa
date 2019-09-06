@@ -14,10 +14,18 @@
 
 <script>
 import { mapActions } from "vuex";
-import mixinAddEditNode from "src/mixins/mixin-add-edit-node";
+//import mixinAddNode from "src/mixins/mixin-add-node";
 
 export default {
-  mixins: [mixinAddEditNode],
+  //mixins: [mixinAddNode],
+  components: {
+    "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
+      .default,
+    "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
+      .default,
+    "modal-node-name": require("components/Model/Modals/Shared/ModalNodeName.vue")
+      .default
+  },
   data() {
     return {
       nodeToSubmit: {
@@ -29,8 +37,18 @@ export default {
   methods: {
     ...mapActions("model", ["addNode"]),
 
+    submitForm() {
+      this.$refs.modalNodeName.$refs.name.validate();
+      if (!this.$refs.modalNodeName.$refs.name.hasError) {
+        this.submitNode();
+      }
+    },
+
     submitNode() {
-      this.addNode(this.nodeToSubmit);
+      this.addNode({
+        node: this.nodeToSubmit,
+        teamId: this.$route.params.teamId
+      });
       this.$emit("close");
     }
   }
