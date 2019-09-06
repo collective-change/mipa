@@ -70,7 +70,8 @@ module.exports = function(ctx) {
         "QBadge",
         "QBtnDropdown",
         "QBtnGroup",
-        "QOptionGroup"
+        "QOptionGroup",
+        "QMenu"
       ],
 
       directives: ["Ripple", "ClosePopup", "TouchHold"],

@@ -1,6 +1,7 @@
 <template>
   <div>
     <svg width="500" height="500" style="border: black; border-style: solid; border-width: 1px" />
+    <node-context-menu ref="nodeContextMenu" v-bind:nodeContextMenuShowing="nodeContextMenuShowing"></node-context-menu>
   </div>
 </template>
 
@@ -12,11 +13,34 @@ import { responsify } from "src/functions/function-responsify-svg";
 import { sleep } from "src/functions/function-sleep";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { calculateDependencyLevels } from "src/functions/function-calculateDependencyLevels";
+//import "src/functions/d3-context-menu";
 
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
 
+// Define context menu for a node
+var node_menu = [
+  {
+    title: "Item #1",
+    action: function(d, i) {
+      console.log("Item #1 clicked!");
+      console.log("The data for this circle is: " + d);
+    },
+    disabled: false // optional, defaults to false
+  },
+  {
+    title: "Item #2",
+    action: function(d, i) {
+      console.log("You have clicked the second item!");
+      console.log("The data for this circle is: " + d);
+    }
+  }
+];
+
 export default {
   name: "dependency-graph",
+  components: {
+    "node-context-menu": require("components/Model/NodeContextMenu.vue").default
+  },
   data() {
     return {
       svgWidth: 500,
@@ -53,7 +77,8 @@ export default {
           distance: 100,
           iterations: 1
         }
-      }
+      },
+      nodeContextMenuShowing: false
     };
   },
 
@@ -83,6 +108,16 @@ export default {
   },
 
   mounted() {
+    //load d3-context-menu
+    // const plugin = document.createElement("script");
+    // plugin.setAttribute(
+    //   "src",
+    //   "https://raw.githubusercontent.com/patorjk/d3-context-menu/master/js/d3-context-menu.js"
+    // ); //move to assets folder
+    // //plugin.async = true; //we want the script to load right away to be safe
+    // document.head.appendChild(plugin);
+
+    //set up svg
     this.selections.svg = d3.select(this.$el.querySelector("svg"));
     const svg = this.selections.svg;
 
@@ -192,6 +227,7 @@ export default {
         .on("mouseover", this.nodeMouseOver)
         .on("mouseout", this.nodeMouseOut)
         .on("click", this.nodeClick)
+        //.on("contextmenu", d3.contextMenu(node_menu)); // attach menu to element
         .on("contextmenu", this.nodeContextMenu);
 
       graph.selectAll("text").remove();
@@ -336,9 +372,14 @@ export default {
     },
     nodeContextMenu(d) {
       d3.event.preventDefault();
-      const circle = this.selections.graph.selectAll("circle");
-      circle.classed("selected", false);
-      circle.filter(td => td === d).classed("selected", true);
+      var position = d3.mouse(document.body);
+      console.log("position: ", position);
+      this.$refs.nodeContextMenu.$refs.contextMenu.show();
+      d3.select("#node_context_menu")
+        .style("position", "absolute")
+        .style("left", position[0] + "px")
+        .style("top", position[1] + "px")
+        .style("display", "block");
     }
   },
 
@@ -482,7 +523,7 @@ path.link.needs {
   stroke: #7f3f00;
 }
 
-circle {
+circle.unlinked {
   fill: #ffff99;
   stroke: darkorange;
   stroke-width: 1.5px;

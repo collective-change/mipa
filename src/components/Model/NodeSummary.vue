@@ -23,7 +23,6 @@
       <p>selectedNode</p>
       <pre>{{selectedNode}}</pre>
     </q-card>
-    <q-card>Add a node</q-card>
   </div>
 </template>
 
@@ -97,7 +96,17 @@ export default {
   },
 
   mounted() {
-    this.nodeToSubmit = Object.assign({}, this.selectedNode);
+    //load mathjax
+    const plugin = document.createElement("script");
+    plugin.setAttribute(
+      "src",
+      "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS_HTML"
+    );
+    plugin.async = true;
+    document.head.appendChild(plugin);
+
+    //initialize nodeToSubmit
+    //this.nodeToSubmit = Object.assign({}, this.selectedNode);
   },
 
   watch: {
