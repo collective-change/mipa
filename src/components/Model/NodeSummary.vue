@@ -14,8 +14,17 @@
             ref="nodeName"
           />
           <q-input v-model="nodeToSubmit.units" label="Units" clearable />
+          <q-btn
+            @click="showAddInfluencer = true"
+            class="all-pointer-events"
+            color="primary"
+            label="Add influencer"
+          />
+          <q-dialog v-model="showAddInfluencer">
+            <add-influencer @close="showAddInfluencer=false" />
+          </q-dialog>
           <q-input v-model="nodeToSubmit.enteredFormula" label="Formula" clearable />
-          <vue-mathjax :formula="'$$'+latexFormula+'$$'"></vue-mathjax>
+          <vue-mathjax :formula="'$$'+selectedNode.name+'='+latexFormula+'$$'"></vue-mathjax>
           <q-input v-model="nodeToSubmit.notes" label="Notes" clearable />
         </q-card-section>
         <modal-buttons />
@@ -35,12 +44,16 @@ export default {
   components: {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
+    "add-influencer": require("components/Model/Modals/AddInfluencer.vue")
+      .default,
     "vue-mathjax": VueMathjax
   },
 
   data() {
     return {
-      nodeToSubmit: {}
+      showAddInfluencer: false,
+      nodeToSubmit: {},
+      model: null
     };
   },
 

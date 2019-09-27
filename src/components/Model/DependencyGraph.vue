@@ -46,7 +46,12 @@ export default {
       svgWidth: 500,
       svgHeight: 500,
       selections: {},
-      d3Data: { nodes: [], links: [] },
+      d3Data: {
+        nodes: [],
+        links: [],
+        draftLinksToInfluencer: [],
+        draftLinksToInfluencee: []
+      },
       storeDataChangeCount: 0,
       simulation: null,
       forceProperties: {
@@ -158,6 +163,7 @@ export default {
 
   methods: {
     ...mapActions("model", ["setSelectedNodeId"]),
+    ...mapState("model", "[selectedNodeId]"),
 
     tick() {
       // If no data is ready, do nothing
@@ -181,10 +187,31 @@ export default {
         );
       };
 
+      var lineAttributes = {
+        x1: function(d) {
+          return d.x1;
+        },
+        y1: function(d) {
+          return d.y1;
+        },
+        x2: function(d) {
+          return d.x2;
+        },
+        y2: function(d) {
+          return d.y2;
+        }
+      };
+
       const graph = this.selections.graph;
       graph.selectAll("path").attr("d", link);
       graph.selectAll("circle").attr("transform", transform);
       graph.selectAll("text").attr("transform", transform);
+      graph
+        .selectAll("line")
+        .attr("x1", lineAttributes.x1)
+        .attr("y1", lineAttributes.y1)
+        .attr("x2", lineAttributes.x2)
+        .attr("y2", lineAttributes.y2);
     },
     updateData() {
       //console.log("updateData; change count ", this.storeDataChangeCount);
@@ -226,9 +253,9 @@ export default {
         )
         .on("mouseover", this.nodeMouseOver)
         .on("mouseout", this.nodeMouseOut)
-        .on("click", this.nodeClick)
-        //.on("contextmenu", d3.contextMenu(node_menu)); // attach menu to element
-        .on("contextmenu", this.nodeContextMenu);
+        .on("click", this.nodeClick);
+      //.on("contextmenu", d3.contextMenu(node_menu)); // attach menu to element
+      //.on("contextmenu", this.nodeContextMenu);
 
       graph.selectAll("text").remove();
       graph
@@ -369,7 +396,46 @@ export default {
         return storeNode.id == d.id;
       });
       this.setSelectedNodeId(correspondingStoreNode.id);
+      //todo: show draft links to influencer, influencee
+      // this.d3Data.draftLinksToInfluencer[0] = {
+      //   x1: d.x - 100,
+      //   y1: d.y,
+      //   x2: d.x,
+      //   y2: d.y
+      // };
+      // this.showDraftLinkToInfluencer();
     },
+    // showDraftLinkToInfluencer() {
+    //   var lineAttributes = {
+    //     x1: function(d) {
+    //       return d.x1;
+    //     },
+    //     y1: function(d) {
+    //       return d.y1;
+    //     },
+    //     x2: function(d) {
+    //       return d.x2;
+    //     },
+    //     y2: function(d) {
+    //       return d.y2;
+    //     }
+    //   };
+
+    //   // Pointer to the d3 draftLinkToInfluencer
+    //   const svg = d3.select(this.$el.querySelector("svg"));
+    //   var draftLinksToInfluencer = svg
+    //     .selectAll("line")
+    //     .data(this.d3Data.draftLinksToInfluencer)
+    //     .enter()
+    //     .append("line")
+    //     .style("stroke", "lightcoral")
+    //     .style("stroke-width", 10)
+    //     //.attr(lineAttributes);
+    //     .attr("x1", lineAttributes.x1)
+    //     .attr("y1", lineAttributes.y1)
+    //     .attr("x2", lineAttributes.x2)
+    //     .attr("y2", lineAttributes.y2);
+    // },
     nodeContextMenu(d) {
       d3.event.preventDefault();
       var position = d3.mouse(document.body);
@@ -521,6 +587,14 @@ path.link.depends {
 }
 path.link.needs {
   stroke: #7f3f00;
+}
+
+path.link.unusedInFormula {
+  stroke: lightcoral;
+}
+
+path.link.usedInFormula {
+  stroke: #333;
 }
 
 circle.unlinked {

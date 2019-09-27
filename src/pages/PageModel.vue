@@ -34,7 +34,7 @@ export default {
   components: {
     "dependency-graph": require("components/Model/DependencyGraph.vue").default,
     "node-summary": require("components/Model/NodeSummary.vue").default,
-    "add-node": require("components/Model/AddNode.vue").default
+    "add-node": require("components/Model/Modals/AddNode.vue").default
   },
   data() {
     return {
