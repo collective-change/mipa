@@ -4,6 +4,14 @@
       <q-card-section class="row">
         <div class="text-h6">{{selectedNode.name}}</div>
       </q-card-section>
+      <q-card-section class="row justify-end">
+        <q-btn
+          @click="showAddInfluencer = true"
+          class="all-pointer-events"
+          color="primary"
+          label="Add influencer"
+        />
+      </q-card-section>
       <q-form @submit.prevent="submitForm">
         <q-card-section>
           <q-input
@@ -14,15 +22,7 @@
             ref="nodeName"
           />
           <q-input v-model="nodeToSubmit.units" label="Units" clearable />
-          <q-btn
-            @click="showAddInfluencer = true"
-            class="all-pointer-events"
-            color="primary"
-            label="Add influencer"
-          />
-          <q-dialog v-model="showAddInfluencer">
-            <add-influencer @close="showAddInfluencer=false" />
-          </q-dialog>
+
           <q-input v-model="nodeToSubmit.enteredFormula" label="Formula" clearable />
           <vue-mathjax :formula="'$$'+selectedNode.name+'='+latexFormula+'$$'"></vue-mathjax>
           <q-input v-model="nodeToSubmit.notes" label="Notes" clearable />
@@ -32,6 +32,9 @@
       <p>selectedNode</p>
       <pre>{{selectedNode}}</pre>
     </q-card>
+    <q-dialog v-model="showAddInfluencer">
+      <add-influencer :sourceNodeId="selectedNodeId" @close="showAddInfluencer=false" />
+    </q-dialog>
   </div>
 </template>
 

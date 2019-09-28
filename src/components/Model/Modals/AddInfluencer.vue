@@ -19,6 +19,7 @@
 import { mapState, mapActions } from "vuex";
 
 export default {
+  props: ["sourceNodeId"],
   components: {
     "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
       .default,
@@ -30,7 +31,7 @@ export default {
   data() {
     return {
       linkToSubmit: {
-        sourceNodeId: this.selectedNodeId,
+        sourceNodeId: this.sourceNodeId,
         targetNodeId: "",
         targetType: "influencer"
       }
