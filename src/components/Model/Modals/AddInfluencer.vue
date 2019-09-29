@@ -51,7 +51,6 @@ export default {
     },
 
     submitLink() {
-      console.log(this.linkToSubmit);
       this.addLink({
         link: this.linkToSubmit,
         teamId: this.$route.params.teamId
