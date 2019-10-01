@@ -60,6 +60,11 @@ export default {
           distance: 100,
           iterations: 1
         }
+      },
+      linkToSubmit: {
+        sourceNodeId: "",
+        targetNodeId: "",
+        targetType: ""
       }
     };
   },
@@ -108,10 +113,12 @@ export default {
       .append("svg:marker") // This section adds in the arrows
       .attr("id", String)
       .attr("viewBox", "0 -5 10 10")
-      .attr("refX", 43) // Prevents arrowhead from being covered by circle
+      .attr("refX", 28) //43 Prevents arrowhead from being covered by circle
       .attr("refY", 0)
-      .attr("markerWidth", 6)
-      .attr("markerHeight", 6)
+      .attr("markerUnits", "userSpaceOnUse")
+      .attr("markerWidth", 15)
+      .attr("markerHeight", 15)
+      .attr("fill", "#666")
       .attr("orient", "auto")
       .append("svg:path")
       .attr("d", "M0,-5L10,0L0,5");
@@ -130,7 +137,7 @@ export default {
   },
 
   methods: {
-    ...mapActions("model", ["setSelectedNodeId"]),
+    ...mapActions("model", ["setSelectedNodeId", "addLink"]),
     ...mapState("model", "[selectedNodeId]"),
 
     tick() {
@@ -174,14 +181,15 @@ export default {
       graph.selectAll("path").attr("d", link);
       graph.selectAll("circle").attr("transform", transform);
       graph.selectAll("text").attr("transform", transform);
-      graph
-        .selectAll("line")
-        .attr("x1", lineAttributes.x1)
-        .attr("y1", lineAttributes.y1)
-        .attr("x2", lineAttributes.x2)
-        .attr("y2", lineAttributes.y2);
+      // graph
+      //   .selectAll("line")
+      //   .attr("x1", lineAttributes.x1)
+      //   .attr("y1", lineAttributes.y1)
+      //   .attr("x2", lineAttributes.x2)
+      //   .attr("y2", lineAttributes.y2);
     },
     updateData() {
+      var that = this;
       //console.log("updateData; change count ", this.storeDataChangeCount);
       this.simulation.nodes(this.d3Data.nodes);
       this.simulation.force("link").links(this.d3Data.links);
@@ -191,9 +199,25 @@ export default {
       const svg = this.selections.svg;
 
       var nodeContextMenu = this.contextMenu().items(
-        "Add influencer",
-        "Add influencee"
+        {
+          label: "Add influencer",
+          handler: function(a, b) {
+            //"this" is the parameter of handler.call(parameter)
+            console.log("this: ", this);
+            console.log("a: ", a);
+            console.log("b: ", b);
+          }
+        },
+        { label: "Add influencee" }
       );
+
+      var linkContextMenu = this.contextMenu().items({
+        label: "Delete link",
+        handler: function() {
+          //"this" is the parameter of handler.call(parameter)
+          console.log("this: ", this);
+        }
+      });
 
       // Links should only exit if not needed anymore
       graph
@@ -207,7 +231,12 @@ export default {
         .data(this.d3Data.links)
         .enter()
         .append("path")
-        .attr("class", d => "link " + d.type);
+        .attr("class", d => "link " + d.type)
+        .on("contextmenu", function(d) {
+          d3.event.preventDefault();
+          linkContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1]);
+          //that.nodeClick(d);
+        });
 
       // Nodes should always be redrawn to avoid lines above them
       graph.selectAll("circle").remove();
@@ -227,10 +256,10 @@ export default {
         )
         .on("mouseover", this.nodeMouseOver)
         .on("mouseout", this.nodeMouseOut)
-        .on("contextmenu", function() {
+        .on("contextmenu", function(d) {
           d3.event.preventDefault();
           nodeContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1]);
-          //this.nodeClick(d);
+          that.nodeClick(d);
         })
         .on("click", this.nodeClick);
 
@@ -429,12 +458,18 @@ export default {
           })
           .attr("width", width)
           .attr("height", height)
-          .styles(style.rect.mouseout);
+          .styles(style.rect.mouseout)
+          .on("click", function(d) {
+            //console.log(d);
+            var parent = d3.select(this.parentNode);
+            console.log("parent: ", parent);
+            d.handler.call("test", "A", "B");
+          });
 
         d3.selectAll(".menu-entry")
           .append("text")
           .text(function(d) {
-            return d;
+            return d.label;
           })
           .attr("x", x)
           .attr("y", function(d, i) {
@@ -451,7 +486,6 @@ export default {
       }
 
       menu.items = function(e) {
-        console.log("arguments: ", arguments);
         if (!arguments.length) return items;
         for (var i in arguments) items.push(arguments[i]);
         rescale = true;
@@ -467,7 +501,7 @@ export default {
             .enter()
             .append("text")
             .text(function(d) {
-              return d;
+              return d.label;
             })
             .styles(style.text)
             .attr("x", -1000)
@@ -499,6 +533,13 @@ export default {
       }
 
       return menu;
+    },
+    submitLink() {
+      this.addLink({
+        link: this.linkToSubmit,
+        teamId: this.$route.params.teamId
+      });
+      this.$emit("close");
     }
   },
 
@@ -632,7 +673,8 @@ export default {
 path.link {
   fill: none;
   stroke: #666;
-  stroke-width: 1.5px;
+  /*stroke-width: 1.5px;*/
+  stroke-width: 5px;
 }
 path.link.depends {
   stroke: #005900;
@@ -650,10 +692,13 @@ path.link.usedInFormula {
   stroke: #333;
 }
 
+circle {
+  stroke-width: 3px;
+}
 circle.unlinked {
   fill: #ffff99;
   stroke: darkorange;
-  stroke-width: 1.5px;
+  /*stroke-width: 1.5px;*/
 }
 circle.state {
   fill: #cce5ff;
@@ -672,18 +717,18 @@ circle.input {
 
 circle.selected {
   /*stroke: #ff6666ff !important;*/
-  stroke-width: 3px;
-  animation: selected 1.2s infinite alternate ease-in-out;
+  /*stroke-width: 3px;*/
+  animation: selected 1s infinite alternate ease-in-out;
 }
 
 @keyframes selected {
   from {
-    stroke-width: 5px;
-    r: 26;
+    stroke-width: 6px;
+    /*r: 29;*/
   }
   to {
-    stroke-width: 1px;
-    r: 30;
+    stroke-width: 2px;
+    /*r: 31;*/
   }
 }
 
