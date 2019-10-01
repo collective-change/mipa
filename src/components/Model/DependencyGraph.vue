@@ -16,18 +16,6 @@ import { calculateDependencyLevels } from "src/functions/function-calculateDepen
 
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
 
-// Define context menu for a link
-var link_menu = [
-  {
-    title: "Delete link",
-    action: function(d, i) {
-      console.log("Item #1 clicked!");
-      console.log("The data for this circle is: " + d);
-    },
-    disabled: false // optional, defaults to false
-  }
-];
-
 export default {
   name: "dependency-graph",
   components: {},
@@ -102,12 +90,6 @@ export default {
   },
 
   mounted() {
-    //load d3-context-menu
-    // const plugin = document.createElement("script");
-    // plugin.setAttribute("src", "/statics/js/d3ContextMenu.js");
-    // //plugin.async = true; //we want the script to load right away to be safe
-    // document.head.appendChild(plugin);
-
     //set up svg
     this.selections.svg = d3.select(this.$el.querySelector("svg"));
     const svg = this.selections.svg;
@@ -206,11 +188,11 @@ export default {
 
       const simulation = this.simulation;
       const graph = this.selections.graph;
+      const svg = this.selections.svg;
 
-      var menu = this.contextMenu().items(
-        "first item",
-        "second option",
-        "whatever, man"
+      var nodeContextMenu = this.contextMenu().items(
+        "Add influencer",
+        "Add influencee"
       );
 
       // Links should only exit if not needed anymore
@@ -246,9 +228,9 @@ export default {
         .on("mouseover", this.nodeMouseOver)
         .on("mouseout", this.nodeMouseOut)
         .on("contextmenu", function() {
-          console.log("contextMenu");
           d3.event.preventDefault();
-          menu(d3.mouse(this)[0], d3.mouse(this)[1]);
+          nodeContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1]);
+          //this.nodeClick(d);
         })
         .on("click", this.nodeClick);
 
@@ -264,7 +246,6 @@ export default {
         .text(d => d.name);
 
       // Add 'marker-end' attribute to each path
-      const svg = d3.select(this.$el.querySelector("svg"));
       svg
         .selectAll("g")
         .selectAll("path")
@@ -470,11 +451,9 @@ export default {
       }
 
       menu.items = function(e) {
-        //console.log("arguments: ", arguments);
+        console.log("arguments: ", arguments);
         if (!arguments.length) return items;
-        //for (i in arguments) items.push(arguments[i]);
-        items.push("test item");
-        items.push("test item 2");
+        for (var i in arguments) items.push(arguments[i]);
         rescale = true;
         return menu;
       };
@@ -490,31 +469,28 @@ export default {
             .text(function(d) {
               return d;
             })
-            //.style(style.text)
+            .styles(style.text)
             .attr("x", -1000)
             .attr("y", -1000)
             .attr("class", "tmp");
-          console.log(
-            'd3.selectAll(".tmp")._groups[0]: ',
-            d3.selectAll(".tmp")._groups[0]
+          var z = d3
+            .selectAll(".tmp")
+            .nodes()
+            .map(function(x) {
+              return x.getBBox();
+            });
+          width = d3.max(
+            z.map(function(x) {
+              return x.width;
+            })
           );
-          // var z = d3.selectAll(".tmp")._groups[0].map(function(x) {
-          //   return x.getBBox();
-          // });
-          // width = d3.max(
-          //   z.map(function(x) {
-          //     return x.width;
-          //   })
-          // );
-          width = 50;
           margin = margin * width;
           width = width + 2 * margin;
-          // height = d3.max(
-          //   z.map(function(x) {
-          //     return x.height + margin / 2;
-          //   })
-          // );
-          height = 10;
+          height = d3.max(
+            z.map(function(x) {
+              return x.height + margin / 2;
+            })
+          );
 
           // cleanup
           d3.selectAll(".tmp").remove();
