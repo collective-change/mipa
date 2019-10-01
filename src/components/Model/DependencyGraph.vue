@@ -1,46 +1,36 @@
 <template>
   <div>
     <svg width="500" height="500" style="border: black; border-style: solid; border-width: 1px" />
-    <node-context-menu ref="nodeContextMenu" v-bind:nodeContextMenuShowing="nodeContextMenuShowing"></node-context-menu>
   </div>
 </template>
 
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 import * as d3 from "d3";
+import "d3-selection-multi";
 import * as sizeof from "object-sizeof";
 import { responsify } from "src/functions/function-responsify-svg";
 import { sleep } from "src/functions/function-sleep";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { calculateDependencyLevels } from "src/functions/function-calculateDependencyLevels";
-//import "src/functions/d3-context-menu";
 
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
 
-// Define context menu for a node
-var node_menu = [
+// Define context menu for a link
+var link_menu = [
   {
-    title: "Item #1",
+    title: "Delete link",
     action: function(d, i) {
       console.log("Item #1 clicked!");
       console.log("The data for this circle is: " + d);
     },
     disabled: false // optional, defaults to false
-  },
-  {
-    title: "Item #2",
-    action: function(d, i) {
-      console.log("You have clicked the second item!");
-      console.log("The data for this circle is: " + d);
-    }
   }
 ];
 
 export default {
   name: "dependency-graph",
-  components: {
-    "node-context-menu": require("components/Model/NodeContextMenu.vue").default
-  },
+  components: {},
   data() {
     return {
       svgWidth: 500,
@@ -82,8 +72,7 @@ export default {
           distance: 100,
           iterations: 1
         }
-      },
-      nodeContextMenuShowing: false
+      }
     };
   },
 
@@ -115,10 +104,7 @@ export default {
   mounted() {
     //load d3-context-menu
     // const plugin = document.createElement("script");
-    // plugin.setAttribute(
-    //   "src",
-    //   "https://raw.githubusercontent.com/patorjk/d3-context-menu/master/js/d3-context-menu.js"
-    // ); //move to assets folder
+    // plugin.setAttribute("src", "/statics/js/d3ContextMenu.js");
     // //plugin.async = true; //we want the script to load right away to be safe
     // document.head.appendChild(plugin);
 
@@ -221,6 +207,12 @@ export default {
       const simulation = this.simulation;
       const graph = this.selections.graph;
 
+      var menu = this.contextMenu().items(
+        "first item",
+        "second option",
+        "whatever, man"
+      );
+
       // Links should only exit if not needed anymore
       graph
         .selectAll("path")
@@ -253,9 +245,12 @@ export default {
         )
         .on("mouseover", this.nodeMouseOver)
         .on("mouseout", this.nodeMouseOut)
+        .on("contextmenu", function() {
+          console.log("contextMenu");
+          d3.event.preventDefault();
+          menu(d3.mouse(this)[0], d3.mouse(this)[1]);
+        })
         .on("click", this.nodeClick);
-      //.on("contextmenu", d3.contextMenu(node_menu)); // attach menu to element
-      //.on("contextmenu", this.nodeContextMenu);
 
       graph.selectAll("text").remove();
       graph
@@ -396,56 +391,138 @@ export default {
         return storeNode.id == d.id;
       });
       this.setSelectedNodeId(correspondingStoreNode.id);
-      //todo: show draft links to influencer, influencee
-      // this.d3Data.draftLinksToInfluencer[0] = {
-      //   x1: d.x - 100,
-      //   y1: d.y,
-      //   x2: d.x,
-      //   y2: d.y
-      // };
-      // this.showDraftLinkToInfluencer();
     },
-    // showDraftLinkToInfluencer() {
-    //   var lineAttributes = {
-    //     x1: function(d) {
-    //       return d.x1;
-    //     },
-    //     y1: function(d) {
-    //       return d.y1;
-    //     },
-    //     x2: function(d) {
-    //       return d.x2;
-    //     },
-    //     y2: function(d) {
-    //       return d.y2;
-    //     }
-    //   };
+    contextMenu() {
+      var height,
+        width,
+        margin = 0.1, // fraction of width
+        items = [],
+        rescale = false,
+        style = {
+          rect: {
+            mouseout: {
+              fill: "rgb(244,244,244)",
+              stroke: "white",
+              "stroke-width": "1px"
+            },
+            mouseover: {
+              fill: "rgb(200,200,200)"
+            }
+          },
+          text: {
+            fill: "steelblue",
+            "font-size": "13"
+          }
+        };
 
-    //   // Pointer to the d3 draftLinkToInfluencer
-    //   const svg = d3.select(this.$el.querySelector("svg"));
-    //   var draftLinksToInfluencer = svg
-    //     .selectAll("line")
-    //     .data(this.d3Data.draftLinksToInfluencer)
-    //     .enter()
-    //     .append("line")
-    //     .style("stroke", "lightcoral")
-    //     .style("stroke-width", 10)
-    //     //.attr(lineAttributes);
-    //     .attr("x1", lineAttributes.x1)
-    //     .attr("y1", lineAttributes.y1)
-    //     .attr("x2", lineAttributes.x2)
-    //     .attr("y2", lineAttributes.y2);
-    // },
-    nodeContextMenu(d) {
-      d3.event.preventDefault();
-      var position = d3.mouse(document.body);
-      console.log("position: ", position);
-      this.$refs.nodeContextMenu.$refs.contextMenu.show();
-      d3.select("#node_context_menu")
-        .style("position", "absolute")
-        .style("left", position[0] + "px")
-        .style("top", position[1] + "px")
-        .style("display", "block");
+      function menu(x, y) {
+        d3.select(".context-menu").remove();
+        scaleItems();
+
+        // Draw the menu
+        d3.select("svg")
+          .append("g")
+          .attr("class", "context-menu")
+          .selectAll("tmp")
+          .data(items)
+          .enter()
+          .append("g")
+          .attr("class", "menu-entry")
+          .style("cursor", "pointer")
+          .on("mouseover", function() {
+            d3.select(this)
+              .select("rect")
+              .styles(style.rect.mouseover);
+          })
+          .on("mouseout", function() {
+            d3.select(this)
+              .select("rect")
+              .styles(style.rect.mouseout);
+          });
+
+        d3.selectAll(".menu-entry")
+          .append("rect")
+          .attr("x", x)
+          .attr("y", function(d, i) {
+            return y + i * height;
+          })
+          .attr("width", width)
+          .attr("height", height)
+          .styles(style.rect.mouseout);
+
+        d3.selectAll(".menu-entry")
+          .append("text")
+          .text(function(d) {
+            return d;
+          })
+          .attr("x", x)
+          .attr("y", function(d, i) {
+            return y + i * height;
+          })
+          .attr("dy", height - margin / 2)
+          .attr("dx", margin)
+          .styles(style.text);
+
+        // Other interactions
+        d3.select("body").on("click", function() {
+          d3.select(".context-menu").remove();
+        });
+      }
+
+      menu.items = function(e) {
+        //console.log("arguments: ", arguments);
+        if (!arguments.length) return items;
+        //for (i in arguments) items.push(arguments[i]);
+        items.push("test item");
+        items.push("test item 2");
+        rescale = true;
+        return menu;
+      };
+
+      // Automatically set width, height, and margin;
+      function scaleItems() {
+        if (rescale) {
+          d3.select("svg")
+            .selectAll("tmp")
+            .data(items)
+            .enter()
+            .append("text")
+            .text(function(d) {
+              return d;
+            })
+            //.style(style.text)
+            .attr("x", -1000)
+            .attr("y", -1000)
+            .attr("class", "tmp");
+          console.log(
+            'd3.selectAll(".tmp")._groups[0]: ',
+            d3.selectAll(".tmp")._groups[0]
+          );
+          // var z = d3.selectAll(".tmp")._groups[0].map(function(x) {
+          //   return x.getBBox();
+          // });
+          // width = d3.max(
+          //   z.map(function(x) {
+          //     return x.width;
+          //   })
+          // );
+          width = 50;
+          margin = margin * width;
+          width = width + 2 * margin;
+          // height = d3.max(
+          //   z.map(function(x) {
+          //     return x.height + margin / 2;
+          //   })
+          // );
+          height = 10;
+
+          // cleanup
+          d3.selectAll(".tmp").remove();
+          rescale = false;
+        }
+      }
+
+      return menu;
     }
   },
 
