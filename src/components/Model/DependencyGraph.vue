@@ -26,9 +26,9 @@ export default {
       selections: {},
       d3Data: {
         nodes: [],
-        links: [],
-        draftLinksToInfluencer: [],
-        draftLinksToInfluencee: []
+        links: []
+        // draftLinksToInfluencer: [],
+        // draftLinksToInfluencee: []
       },
       storeDataChangeCount: 0,
       simulation: null,
@@ -113,7 +113,7 @@ export default {
       .append("svg:marker") // This section adds in the arrows
       .attr("id", String)
       .attr("viewBox", "0 -5 10 10")
-      .attr("refX", 28) //43 Prevents arrowhead from being covered by circle
+      .attr("refX", 28) //Prevents arrowhead from being covered by circle
       .attr("refY", 0)
       .attr("markerUnits", "userSpaceOnUse")
       .attr("markerWidth", 15)
@@ -272,7 +272,8 @@ export default {
         .attr("x", 0)
         .attr("y", ".31em")
         .attr("text-anchor", "middle")
-        .text(d => d.name);
+        .text(d => d.name)
+        .call(this.wrap, 60);
 
       // Add 'marker-end' attribute to each path
       svg
@@ -534,6 +535,43 @@ export default {
 
       return menu;
     },
+    wrap(text, width) {
+      text.each(function() {
+        var text = d3.select(this),
+          words = text
+            .text()
+            .split(/\s+/)
+            .reverse(),
+          word,
+          line = [],
+          lineNumber = 0,
+          lineHeight = 1.1, // ems
+          x = text.attr("x"),
+          y = text.attr("y"),
+          dy = 0, //parseFloat(text.attr("dy")),
+          tspan = text
+            .text(null)
+            .append("tspan")
+            .attr("x", x)
+            .attr("y", y)
+            .attr("dy", dy + "em");
+        while ((word = words.pop())) {
+          line.push(word);
+          tspan.text(line.join(" "));
+          if (tspan.node().getComputedTextLength() > width) {
+            line.pop();
+            tspan.text(line.join(" "));
+            line = [word];
+            tspan = text
+              .append("tspan")
+              .attr("x", x)
+              .attr("y", y)
+              .attr("dy", ++lineNumber * lineHeight + dy + "em")
+              .text(word);
+          }
+        }
+      });
+    },
     submitLink() {
       this.addLink({
         link: this.linkToSubmit,
@@ -665,6 +703,7 @@ export default {
 .faded {
   opacity: 0.1;
   transition: 0.3s opacity;
+  background-color: white;
 }
 .highlight {
   opacity: 1;
@@ -694,6 +733,12 @@ path.link.usedInFormula {
 
 circle {
   stroke-width: 3px;
+  /* stuff below for text wrapping */
+  height: 100%;
+  border-radius: 100%;
+  text-align: center;
+  line-height: 200px;
+  font-size: 30px;
 }
 circle.unlinked {
   fill: #ffff99;
@@ -724,11 +769,9 @@ circle.selected {
 @keyframes selected {
   from {
     stroke-width: 6px;
-    /*r: 29;*/
   }
   to {
     stroke-width: 2px;
-    /*r: 31;*/
   }
 }
 
