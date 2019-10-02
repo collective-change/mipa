@@ -544,6 +544,7 @@ export default {
             .reverse(),
           word,
           line = [],
+          lines = [],
           lineNumber = 0,
           lineHeight = 1.1, // ems
           x = text.attr("x"),
@@ -560,15 +561,21 @@ export default {
           tspan.text(line.join(" "));
           if (tspan.node().getComputedTextLength() > width) {
             line.pop();
-            tspan.text(line.join(" "));
+            lines.push(line.join(" "));
             line = [word];
-            tspan = text
-              .append("tspan")
-              .attr("x", x)
-              .attr("y", y)
-              .attr("dy", ++lineNumber * lineHeight + dy + "em")
-              .text(word);
           }
+        }
+        lines.push(line.join(" "));
+        tspan.text(null);
+        lines = lines.reverse();
+        dy = -0.5 - lines.length / 2;
+        while ((line = lines.pop())) {
+          tspan = text
+            .append("tspan")
+            .attr("x", x)
+            .attr("y", y)
+            .attr("dy", ++lineNumber * lineHeight + dy + "em")
+            .text(line);
         }
       });
     },
