@@ -4,14 +4,7 @@
       <q-card-section class="row">
         <div class="text-h6">{{selectedNode.name}}</div>
       </q-card-section>
-      <q-card-section class="row justify-end">
-        <q-btn
-          @click="showAddInfluencer = true"
-          class="all-pointer-events"
-          color="primary"
-          label="Add influencer"
-        />
-      </q-card-section>
+      <q-card-section class="row justify-end"></q-card-section>
       <q-form @submit.prevent="submitForm">
         <q-card-section>
           <q-input
@@ -32,9 +25,6 @@
       <p>selectedNode</p>
       <pre>{{selectedNode}}</pre>
     </q-card>
-    <q-dialog v-model="showAddInfluencer">
-      <add-influencer :sourceNodeId="selectedNodeId" @close="showAddInfluencer=false" />
-    </q-dialog>
   </div>
 </template>
 
@@ -47,14 +37,11 @@ export default {
   components: {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
-    "add-influencer": require("components/Model/Modals/AddInfluencer.vue")
-      .default,
     "vue-mathjax": VueMathjax
   },
 
   data() {
     return {
-      showAddInfluencer: false,
       nodeToSubmit: {},
       model: null
     };

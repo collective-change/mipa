@@ -1,6 +1,9 @@
 <template>
   <div>
     <svg width="500" height="500" style="border: black; border-style: solid; border-width: 1px" />
+    <q-dialog v-model="showAddInfluencer">
+      <add-influencer :sourceNodeId="selectedNodeId" @close="showAddInfluencer=false" />
+    </q-dialog>
   </div>
 </template>
 
@@ -18,9 +21,13 @@ import { calculateDependencyLevels } from "src/functions/function-calculateDepen
 
 export default {
   name: "dependency-graph",
-  components: {},
+  components: {
+    "add-influencer": require("components/Model/Modals/AddInfluencer.vue")
+      .default
+  },
   data() {
     return {
+      showAddInfluencer: false,
       svgWidth: 500,
       svgHeight: 500,
       selections: {},
@@ -70,6 +77,7 @@ export default {
   },
 
   computed: {
+    ...mapState("ui", ["selectedNodeId"]),
     ...mapGetters("model", ["nodes", "links"]),
     storeData() {
       return { nodes: this.nodes, links: this.links };
@@ -139,7 +147,6 @@ export default {
   methods: {
     ...mapActions("model", ["addLink"]),
     ...mapActions("ui", ["setSelectedNodeId"]),
-    ...mapState("ui", ["selectedNodeId"]),
 
     tick() {
       // If no data is ready, do nothing
@@ -202,11 +209,8 @@ export default {
       var nodeContextMenu = this.contextMenu().items(
         {
           label: "Add influencer",
-          handler: function(a, b) {
-            //"this" is the parameter of handler.call(parameter)
-            console.log("this: ", this);
-            console.log("a: ", a);
-            console.log("b: ", b);
+          handler: function() {
+            that.showAddInfluencer = true;
           }
         },
         { label: "Add influencee" }
@@ -216,7 +220,7 @@ export default {
         label: "Delete link",
         handler: function() {
           //"this" is the parameter of handler.call(parameter)
-          console.log("this: ", this);
+          console.log("that.selectedLink: ", "todo");
         }
       });
 
@@ -236,7 +240,7 @@ export default {
         .on("contextmenu", function(d) {
           d3.event.preventDefault();
           linkContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1]);
-          //that.nodeClick(d);
+          //that.linkClick(d);
         });
 
       // Nodes should always be redrawn to avoid lines above them
@@ -406,6 +410,7 @@ export default {
     },
     contextMenu() {
       var height,
+        that = this,
         width,
         margin = 0.1, // fraction of width
         items = [],
@@ -462,10 +467,7 @@ export default {
           .attr("height", height)
           .styles(style.rect.mouseout)
           .on("click", function(d) {
-            //console.log(d);
-            var parent = d3.select(this.parentNode);
-            console.log("parent: ", parent);
-            d.handler.call("test", "A", "B");
+            d.handler.call();
           });
 
         d3.selectAll(".menu-entry")
