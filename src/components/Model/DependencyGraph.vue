@@ -1,6 +1,7 @@
 <template>
   <div>
     <svg width="500" height="500" style="border: black; border-style: solid; border-width: 1px" />
+    <p>Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.</p>
     <q-dialog v-model="showAddInfluencer">
       <add-influencer :sourceNodeId="selectedNodeId" @close="showAddInfluencer=false" />
     </q-dialog>
@@ -138,6 +139,11 @@ export default {
       .on("zoom", this.zoomed);
     svg.call(this.zoom);
 
+    //require ctrlKey in addition to mouse
+    this.zoom.filter(function() {
+      return d3.event.ctrlKey;
+    });
+
     this.selections.graph = svg.append("g");
     const graph = this.selections.graph;
 
@@ -145,7 +151,7 @@ export default {
   },
 
   methods: {
-    ...mapActions("model", ["addLink"]),
+    ...mapActions("model", ["addLink", "deleteLink"]),
     ...mapActions("ui", ["setSelectedNodeId"]),
 
     tick() {
@@ -189,12 +195,6 @@ export default {
       graph.selectAll("path").attr("d", link);
       graph.selectAll("circle").attr("transform", transform);
       graph.selectAll("text").attr("transform", transform);
-      // graph
-      //   .selectAll("line")
-      //   .attr("x1", lineAttributes.x1)
-      //   .attr("y1", lineAttributes.y1)
-      //   .attr("x2", lineAttributes.x2)
-      //   .attr("y2", lineAttributes.y2);
     },
     updateData() {
       var that = this;
@@ -219,8 +219,16 @@ export default {
       var linkContextMenu = this.contextMenu().items({
         label: "Delete link",
         handler: function() {
-          //"this" is the parameter of handler.call(parameter)
-          console.log("that.selectedLink: ", "todo");
+          //"this" is the parameter of handler.call(parameter); a link in this case
+          //console.log("delete link this.target.id: ", this.target.id);
+          //console.log("teamId: ", that.$route.params.teamId);
+          that.deleteLink({
+            link: {
+              influencerNodeId: this.source.id,
+              influenceeNodeId: this.target.id
+            },
+            teamId: that.$route.params.teamId
+          });
         }
       });
 
@@ -239,8 +247,8 @@ export default {
         .attr("class", d => "link " + d.type)
         .on("contextmenu", function(d) {
           d3.event.preventDefault();
-          linkContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1]);
           //that.linkClick(d);
+          linkContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
         });
 
       // Nodes should always be redrawn to avoid lines above them
@@ -263,8 +271,8 @@ export default {
         .on("mouseout", this.nodeMouseOut)
         .on("contextmenu", function(d) {
           d3.event.preventDefault();
-          nodeContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1]);
           that.nodeClick(d);
+          nodeContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
         })
         .on("click", this.nodeClick);
 
@@ -408,7 +416,19 @@ export default {
       });
       this.setSelectedNodeId(correspondingStoreNode.id);
     },
-    contextMenu() {
+    // linkClick(d) {
+    //   console.log("linkClick>d: ", d);
+    //   const path = this.selections.graph.selectAll("path");
+    //   //path.classed("selected", false);
+    //   path.filter(td => td === d).classed("selected", true);
+    //   let correspondingStoreNode = this.storeData.nodes.find(function(
+    //     storeNode
+    //   ) {
+    //     return storeNode.id == d.id;
+    //   });
+    //   //this.setSelectedNodeId(correspondingStoreNode.id);
+    // },
+    contextMenu(hostD) {
       var height,
         that = this,
         width,
@@ -432,7 +452,7 @@ export default {
           }
         };
 
-      function menu(x, y) {
+      function menu(x, y, hostD) {
         d3.select(".context-menu").remove();
         scaleItems();
 
@@ -467,7 +487,7 @@ export default {
           .attr("height", height)
           .styles(style.rect.mouseout)
           .on("click", function(d) {
-            d.handler.call();
+            d.handler.call(hostD);
           });
 
         d3.selectAll(".menu-entry")

@@ -108,20 +108,54 @@ const actions = {
       .commit()
       .then(function() {
         Notify.create("Link added!");
+        //update class of source and target nodes
+        dispatch("reDetermineNodeClass", {
+          teamId: payload.teamId,
+          nodeId: link.sourceNodeId
+        });
+        dispatch("reDetermineNodeClass", {
+          teamId: payload.teamId,
+          nodeId: link.targetNodeId
+        });
       })
       .catch(function(error) {
         showErrorMessage("Error adding link", error.message);
       });
+  },
 
-    //update class of source and target nodes
-    dispatch("reDetermineNodeClass", {
-      teamId: payload.teamId,
-      nodeId: link.sourceNodeId
+  deleteLink({ dispatch }, payload) {
+    let link = payload.link;
+    let influencerNodeId = link.influencerNodeId;
+    let influenceeNodeId = link.influenceeNodeId;
+
+    var nodesRef = firebaseDb
+      .collection("teams")
+      .doc(payload.teamId)
+      .collection("nodes");
+    var batch = firebaseDb.batch();
+    batch.update(nodesRef.doc(influencerNodeId), {
+      influencees: firebase.firestore.FieldValue.arrayRemove(influenceeNodeId)
     });
-    dispatch("reDetermineNodeClass", {
-      teamId: payload.teamId,
-      nodeId: link.targetNodeId
+    batch.update(nodesRef.doc(influenceeNodeId), {
+      influencers: firebase.firestore.FieldValue.arrayRemove(influencerNodeId)
     });
+    batch
+      .commit()
+      .then(function() {
+        Notify.create("Link deleted!");
+        //update class of influencer and influencee nodes
+        dispatch("reDetermineNodeClass", {
+          teamId: payload.teamId,
+          nodeId: link.influencerNodeId
+        });
+        dispatch("reDetermineNodeClass", {
+          teamId: payload.teamId,
+          nodeId: link.influenceeNodeId
+        });
+      })
+      .catch(function(error) {
+        showErrorMessage("Error deleting link", error.message);
+      });
   },
 
   reDetermineNodeClass({}, payload) {
@@ -134,7 +168,7 @@ const actions = {
 
     firebaseDb
       .runTransaction(function(transaction) {
-        // This code may get re-run multiple times if there are conflicts.
+        // This code may get re-run multiple times and generate POST 400 errors if there are conflicts.
         return transaction.get(nodeDocRef).then(function(nodeDoc) {
           if (!nodeDoc.exists) {
             throw "Node document does not exist!";
