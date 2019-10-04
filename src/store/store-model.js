@@ -52,7 +52,7 @@ const actions = {
     let teamId = payload.teamId;
     let nodeId = payload.updates.id;
 
-    let formulaChanged = false;
+    //let formulaChanged = false;
     payload.updates.updateTime = firebase.firestore.FieldValue.serverTimestamp();
     payload.updates.updatedBy = firebaseAuth.currentUser.uid;
 
@@ -70,6 +70,24 @@ const actions = {
       })
       .catch(function(error) {
         showErrorMessage("Error updating node", error.message);
+      });
+  },
+
+  deleteNode({}, payload) {
+    let teamId = payload.teamId;
+    let node = payload.node;
+    let nodeRef = firebaseDb
+      .collection("teams")
+      .doc(teamId)
+      .collection("nodes")
+      .doc(node.id);
+    nodeRef
+      .delete()
+      .then(function() {
+        Notify.create("Node deleted!");
+      })
+      .catch(function(error) {
+        showErrorMessage("Error deleting node", error.message);
       });
   },
 

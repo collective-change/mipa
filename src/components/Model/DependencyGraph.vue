@@ -13,6 +13,9 @@
     <q-dialog v-model="showAddNode">
       <add-node @close="showAddNode=false" />
     </q-dialog>
+    <q-dialog v-model="showDeleteNode">
+      <delete-node :node="selectedNode" @close="showDeleteNode=false" />
+    </q-dialog>
     <q-dialog v-model="showAddInfluencer">
       <add-influencer :sourceNodeId="selectedNodeId" @close="showAddInfluencer=false" />
     </q-dialog>
@@ -35,12 +38,14 @@ export default {
   name: "dependency-graph",
   components: {
     "add-node": require("components/Model/Modals/AddNode.vue").default,
+    "delete-node": require("components/Model/Modals/DeleteNode.vue").default,
     "add-influencer": require("components/Model/Modals/AddInfluencer.vue")
       .default
   },
   data() {
     return {
       showAddNode: false,
+      showDeleteNode: false,
       showAddInfluencer: false,
       svgWidth: 500,
       svgHeight: 500,
@@ -91,6 +96,12 @@ export default {
   computed: {
     ...mapState("ui", ["selectedNodeId"]),
     ...mapGetters("model", ["nodes", "links"]),
+    selectedNode() {
+      let that = this;
+      return this.nodes.find(function(node) {
+        return node.id == that.selectedNodeId;
+      });
+    },
     storeData() {
       return { nodes: this.nodes, links: this.links };
     }
@@ -209,7 +220,13 @@ export default {
             that.showAddInfluencer = true;
           }
         },
-        { label: "Add influencee" }
+        { label: "Add influencee" },
+        {
+          label: "Delete node",
+          handler: function() {
+            that.showDeleteNode = true;
+          }
+        }
       );
 
       var linkContextMenu = this.contextMenu().items({
