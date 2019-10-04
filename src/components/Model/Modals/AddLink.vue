@@ -1,7 +1,7 @@
 <template>
   <q-card>
     <modal-header>
-      <template v-slot:header>Add Influencer</template>
+      <template v-slot:header>Add {{linkToSubmit.targetType}}</template>
     </modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
@@ -19,7 +19,7 @@
 import { mapState, mapActions } from "vuex";
 
 export default {
-  props: ["sourceNodeId"],
+  props: ["sourceNodeId", "linkToSubmit"],
   components: {
     "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
       .default,
@@ -27,15 +27,6 @@ export default {
       .default,
     "modal-node-selection": require("components/Model/Modals/Shared/ModalNodeSelection.vue")
       .default
-  },
-  data() {
-    return {
-      linkToSubmit: {
-        sourceNodeId: this.sourceNodeId,
-        targetNodeId: "",
-        targetType: "influencer"
-      }
-    };
   },
   computed: {
     ...mapState("model", ["selectedNodeId"])

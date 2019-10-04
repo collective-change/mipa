@@ -16,8 +16,12 @@
     <q-dialog v-model="showDeleteNode">
       <delete-node :node="selectedNode" @close="showDeleteNode=false" />
     </q-dialog>
-    <q-dialog v-model="showAddInfluencer">
-      <add-influencer :sourceNodeId="selectedNodeId" @close="showAddInfluencer=false" />
+    <q-dialog v-model="showAddLink">
+      <add-link
+        :sourceNodeId="selectedNodeId"
+        :linkToSubmit="linkToSubmit"
+        @close="showAddLink=false"
+      />
     </q-dialog>
   </div>
 </template>
@@ -39,14 +43,14 @@ export default {
   components: {
     "add-node": require("components/Model/Modals/AddNode.vue").default,
     "delete-node": require("components/Model/Modals/DeleteNode.vue").default,
-    "add-influencer": require("components/Model/Modals/AddInfluencer.vue")
-      .default
+    "add-link": require("components/Model/Modals/AddLink.vue").default
   },
   data() {
     return {
       showAddNode: false,
       showDeleteNode: false,
-      showAddInfluencer: false,
+      showAddLink: false,
+      linkTargetType: "",
       svgWidth: 500,
       svgHeight: 500,
       selections: {},
@@ -217,10 +221,21 @@ export default {
         {
           label: "Add influencer",
           handler: function() {
-            that.showAddInfluencer = true;
+            that.showAddLink = true;
+            that.linkToSubmit.sourceNodeId = that.selectedNodeId;
+            that.linkToSubmit.targetNodeId = "";
+            that.linkToSubmit.targetType = "influencer";
           }
         },
-        { label: "Add influencee" },
+        {
+          label: "Add influencee",
+          handler: function() {
+            that.showAddLink = true;
+            that.linkToSubmit.sourceNodeId = that.selectedNodeId;
+            that.linkToSubmit.targetNodeId = "";
+            that.linkToSubmit.targetType = "influencee";
+          }
+        },
         {
           label: "Delete node",
           handler: function() {

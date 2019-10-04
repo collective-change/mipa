@@ -2,7 +2,7 @@
   <div class="row q-mb-sm">
     <q-select
       filled
-      label="Influencer"
+      label="Node"
       style="width: 250px"
       autofocus
       :value="targetNodeId"
