@@ -8,20 +8,9 @@
         </div>
         <div class="col-12 col-md-3">
           <node-summary />
-          <div class="absolute-bottom text-center q-mb-lg no-pointer-events">
-            <q-btn
-              @click="showAddNode = true"
-              class="all-pointer-events"
-              color="primary"
-              label="Add node"
-            />
-          </div>
         </div>
       </div>
     </div>
-    <q-dialog v-model="showAddNode">
-      <add-node @close="showAddNode=false" />
-    </q-dialog>
   </q-page>
 </template>
 
@@ -33,13 +22,10 @@ export default {
   name: "app",
   components: {
     "dependency-graph": require("components/Model/DependencyGraph.vue").default,
-    "node-summary": require("components/Model/NodeSummary.vue").default,
-    "add-node": require("components/Model/Modals/AddNode.vue").default
+    "node-summary": require("components/Model/NodeSummary.vue").default
   },
   data() {
-    return {
-      showAddNode: false
-    };
+    return {};
   },
   created() {
     (async () => {
@@ -52,11 +38,7 @@ export default {
     })();
     //console.log("above code doesn't block main function stack");
   },
-  mounted() {
-    this.$root.$on("showAddNode", () => {
-      this.showAddNode = true;
-    });
-  },
+  mounted() {},
   beforeDestroy() {
     this.$store.dispatch("model/unbindNodes");
   }

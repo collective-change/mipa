@@ -2,6 +2,17 @@
   <div>
     <svg width="500" height="500" style="border: black; border-style: solid; border-width: 1px" />
     <p>Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.</p>
+    <div class="text-center q-mb-lg no-pointer-events">
+      <q-btn
+        @click="showAddNode = true"
+        class="all-pointer-events"
+        color="primary"
+        label="Add node"
+      />
+    </div>
+    <q-dialog v-model="showAddNode">
+      <add-node @close="showAddNode=false" />
+    </q-dialog>
     <q-dialog v-model="showAddInfluencer">
       <add-influencer :sourceNodeId="selectedNodeId" @close="showAddInfluencer=false" />
     </q-dialog>
@@ -23,11 +34,13 @@ import { calculateDependencyLevels } from "src/functions/function-calculateDepen
 export default {
   name: "dependency-graph",
   components: {
+    "add-node": require("components/Model/Modals/AddNode.vue").default,
     "add-influencer": require("components/Model/Modals/AddInfluencer.vue")
       .default
   },
   data() {
     return {
+      showAddNode: false,
       showAddInfluencer: false,
       svgWidth: 500,
       svgHeight: 500,
@@ -35,8 +48,6 @@ export default {
       d3Data: {
         nodes: [],
         links: []
-        // draftLinksToInfluencer: [],
-        // draftLinksToInfluencee: []
       },
       storeDataChangeCount: 0,
       simulation: null,
