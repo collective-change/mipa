@@ -16,7 +16,7 @@ export function calculateDependencyLevels(nodes) {
     nodes.forEach(function(node) {
       nodeCount++;
       tempDepLevs[node.id] = 0;
-      if (node.influencers) {
+      if (node.influencers && node.influencers.length) {
         node.influencers.forEach(function(influencer) {
           influencerTempDepLev =
             typeof tempDepLevs[influencer] === "undefined"
@@ -40,7 +40,7 @@ export function calculateDependencyLevels(nodes) {
 
   //if a node has no influencers, then set dependencyLevel to lowest influencee dependencyLevel - 1
   nodes.forEach(function(node) {
-    if (!node.influencers) {
+    if (!node.influencers || !node.influencers.length) {
       if (
         typeof node.influencees !== "undefined" &&
         Array.isArray(node.influencees) &&

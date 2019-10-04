@@ -413,18 +413,7 @@ export default {
       });
       this.setSelectedNodeId(correspondingStoreNode.id);
     },
-    // linkClick(d) {
-    //   console.log("linkClick>d: ", d);
-    //   const path = this.selections.graph.selectAll("path");
-    //   //path.classed("selected", false);
-    //   path.filter(td => td === d).classed("selected", true);
-    //   let correspondingStoreNode = this.storeData.nodes.find(function(
-    //     storeNode
-    //   ) {
-    //     return storeNode.id == d.id;
-    //   });
-    //   //this.setSelectedNodeId(correspondingStoreNode.id);
-    // },
+
     contextMenu(hostD) {
       var height,
         that = this,
