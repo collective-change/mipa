@@ -137,8 +137,9 @@ export default {
   },
 
   methods: {
-    ...mapActions("model", ["setSelectedNodeId", "addLink"]),
-    ...mapState("model", "[selectedNodeId]"),
+    ...mapActions("model", ["addLink"]),
+    ...mapActions("ui", ["setSelectedNodeId"]),
+    ...mapState("ui", ["selectedNodeId"]),
 
     tick() {
       // If no data is ready, do nothing

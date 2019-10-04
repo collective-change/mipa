@@ -61,7 +61,7 @@ export default {
   },
 
   computed: {
-    ...mapState("model", ["selectedNodeId"]),
+    ...mapState("ui", ["selectedNodeId"]),
     ...mapGetters("model", ["nodes", "links"]),
 
     selectedNode() {

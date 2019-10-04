@@ -5,15 +5,10 @@ import { firestoreAction } from "vuexfire";
 import { showErrorMessage } from "src/functions/function-show-error-message";
 
 const state = {
-  nodes: [],
-  selectedNodeId: null
+  nodes: []
 };
 
-const mutations = {
-  setSelectedNodeId(state, nodeId) {
-    state.selectedNodeId = nodeId;
-  }
-};
+const mutations = {};
 
 const actions = {
   bindNodes: firestoreAction(({ bindFirestoreRef }, teamId) => {
@@ -35,10 +30,6 @@ const actions = {
   unbindNodes: firestoreAction(({ unbindFirestoreRef }) => {
     unbindFirestoreRef("nodes");
   }),
-
-  setSelectedNodeId({ commit }, nodeId) {
-    commit("setSelectedNodeId", nodeId);
-  },
 
   addNode({}, payload) {
     let node = payload.node;
