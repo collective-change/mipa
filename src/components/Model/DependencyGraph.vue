@@ -245,7 +245,7 @@ export default {
         .data(this.d3Data.nodes)
         .enter()
         .append("circle")
-        .attr("r", 30)
+        .attr("r", 30) // circle radius 30 pixels
         .attr("class", d => d.class)
         .call(
           d3
@@ -273,7 +273,7 @@ export default {
         .attr("y", ".31em")
         .attr("text-anchor", "middle")
         .text(d => d.name)
-        .call(this.wrap, 60);
+        .call(this.wrap, 60); // wrap the text in <= 60 pixels
 
       // Add 'marker-end' attribute to each path
       svg
