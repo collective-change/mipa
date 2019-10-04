@@ -176,21 +176,6 @@ export default {
         );
       };
 
-      // var lineAttributes = {
-      //   x1: function(d) {
-      //     return d.x1;
-      //   },
-      //   y1: function(d) {
-      //     return d.y1;
-      //   },
-      //   x2: function(d) {
-      //     return d.x2;
-      //   },
-      //   y2: function(d) {
-      //     return d.y2;
-      //   }
-      // };
-
       const graph = this.selections.graph;
       graph.selectAll("path").attr("d", link);
       graph.selectAll("circle").attr("transform", transform);
