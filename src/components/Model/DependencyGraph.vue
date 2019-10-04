@@ -220,8 +220,6 @@ export default {
         label: "Delete link",
         handler: function() {
           //"this" is the parameter of handler.call(parameter); a link in this case
-          //console.log("delete link this.target.id: ", this.target.id);
-          //console.log("teamId: ", that.$route.params.teamId);
           that.deleteLink({
             link: {
               influencerNodeId: this.source.id,
@@ -247,7 +245,6 @@ export default {
         .attr("class", d => "link " + d.type)
         .on("contextmenu", function(d) {
           d3.event.preventDefault();
-          //that.linkClick(d);
           linkContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
         });
 
