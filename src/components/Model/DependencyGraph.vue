@@ -34,7 +34,7 @@ import * as sizeof from "object-sizeof";
 import { responsify } from "src/functions/function-responsify-svg";
 import { sleep } from "src/functions/function-sleep";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-import { calculateDependencyLevels } from "src/functions/function-calculateDependencyLevels";
+import { calculateGraphLevels } from "src/functions/function-calculateGraphLevels";
 
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
 
@@ -148,7 +148,7 @@ export default {
       .append("svg:marker") // This section adds in the arrows
       .attr("id", String)
       .attr("viewBox", "0 -5 10 10")
-      .attr("refX", 28) //Prevents arrowhead from being covered by circle
+      .attr("refX", 27) //Prevents arrowhead from being covered by circle
       .attr("refY", 0)
       .attr("markerUnits", "userSpaceOnUse")
       .attr("markerWidth", 15)
@@ -311,6 +311,7 @@ export default {
         .attr("y", ".31em")
         .attr("text-anchor", "middle")
         .text(d => d.name)
+        //.text(d => d.name + " " + d.graphLev)
         .call(this.wrap, 60); // wrap the text in <= 60 pixels
 
       // Add 'marker-end' attribute to each path
@@ -337,10 +338,10 @@ export default {
         .force("forceX")
         .strength(forceProperties.forceX.strength)
         .x(d => {
-          if (d.depLev != null) {
+          if (d.graphLev != null) {
             return (
-              (svgWidth / d3Data.numDepLevs) * d.depLev +
-              svgWidth / d3Data.numDepLevs / 2
+              (svgWidth / d3Data.numGraphLevs) * d.graphLev +
+              svgWidth / d3Data.numGraphLevs / 2
             );
           } else {
             return svgWidth / 2;
@@ -684,17 +685,17 @@ export default {
             return typeof node.unconfirmed === "undefined"; //node does not have 'unconfirmed' property
           });
         }
-        // calculate and add depedency level to each node,
-        // also save how many dependency levels there are
-        let depLevs = calculateDependencyLevels(this.storeData.nodes);
-        let numDepLevs = 0;
+        // calculate and add graph level to each node,
+        // also save how many graph levels there are
+        let graphLevs = calculateGraphLevels(this.storeData.nodes);
+        let numGraphLevs = 0;
         that.d3Data.nodes.forEach(function(node) {
-          node.depLev = depLevs[node.id];
-          if (depLevs[node.id] + 1 > numDepLevs) {
-            numDepLevs = depLevs[node.id] + 1;
+          node.graphLev = graphLevs[node.id];
+          if (graphLevs[node.id] + 1 > numGraphLevs) {
+            numGraphLevs = graphLevs[node.id] + 1;
           }
         });
-        that.d3Data.numDepLevs = numDepLevs;
+        that.d3Data.numGraphLevs = numGraphLevs;
 
         this.storeDataChangeCount++;
       }
@@ -752,7 +753,7 @@ export default {
 <style>
 .faded {
   opacity: 0.1;
-  transition: 0.3s opacity;
+  transition: 0.5s opacity;
   background-color: white;
 }
 .highlight {

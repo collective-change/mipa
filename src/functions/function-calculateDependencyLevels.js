@@ -11,10 +11,10 @@ export function calculateDependencyLevels(nodes) {
   let whileLoopCount = 0;
   while (depLevsChanging) {
     whileLoopCount++;
-    let nodeCount = 0;
+    //let nodeCount = 0;
     depLevsChanging = false;
     nodes.forEach(function(node) {
-      nodeCount++;
+      //nodeCount++;
       tempDepLevs[node.id] = 0;
       if (node.influencers && node.influencers.length) {
         node.influencers.forEach(function(influencer) {
