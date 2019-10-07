@@ -219,7 +219,7 @@ export default {
 
       var nodeContextMenu = this.contextMenu().items(
         {
-          label: "Add influencer",
+          label: "Link to influencer",
           handler: function() {
             that.showAddLink = true;
             that.linkToSubmit.sourceNodeId = that.selectedNodeId;
@@ -228,7 +228,7 @@ export default {
           }
         },
         {
-          label: "Add influencee",
+          label: "Link to influencee",
           handler: function() {
             that.showAddLink = true;
             that.linkToSubmit.sourceNodeId = that.selectedNodeId;

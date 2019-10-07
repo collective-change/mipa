@@ -1,7 +1,7 @@
 <template>
   <q-card>
     <modal-header>
-      <template v-slot:header>Add {{linkToSubmit.targetType}}</template>
+      <template v-slot:header>Add link to {{linkToSubmit.targetType}}</template>
     </modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
