@@ -581,6 +581,7 @@ export default {
             .reverse(),
           word,
           line = [],
+          lineWordCount = 0,
           lines = [],
           lineNumber = 0,
           lineHeight = 1.1, // ems
@@ -595,11 +596,16 @@ export default {
             .attr("dy", dy + "em");
         while ((word = words.pop())) {
           line.push(word);
+          lineWordCount++;
           tspan.text(line.join(" "));
-          if (tspan.node().getComputedTextLength() > width) {
+          if (
+            tspan.node().getComputedTextLength() > width &&
+            lineWordCount > 1
+          ) {
             line.pop();
             lines.push(line.join(" "));
             line = [word];
+            lineWordCount = 1;
           }
         }
         lines.push(line.join(" "));
