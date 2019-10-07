@@ -42,7 +42,6 @@ export default {
     ...mapState("ui", ["selectedNodeId"]),
     ...mapGetters("model", ["nodes"]),
     nodeOptions() {
-      console.log(this.selectedNodeId);
       return this.nodes.filter(node => node.id != this.selectedNodeId);
     }
   },

@@ -776,7 +776,7 @@ path.link.usedInFormula {
 }
 
 circle {
-  stroke-width: 3px;
+  stroke-width: 0px;
   /* stuff below for text wrapping */
   height: 100%;
   border-radius: 100%;
@@ -785,12 +785,12 @@ circle {
   font-size: 30px;
 }
 circle.unlinked {
-  fill: #ffff99;
+  fill: #f8c471;
   stroke: darkorange;
   /*stroke-width: 1.5px;*/
 }
 circle.state {
-  fill: #cce5ff;
+  fill: #a9cce3;
   stroke: #003366;
 }
 circle.output {
@@ -800,7 +800,7 @@ circle.output {
   stroke: purple;
 }
 circle.input {
-  fill: #b2e8b2;
+  fill: #b2e48a;
   stroke: #001900;
 }
 
