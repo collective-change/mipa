@@ -29,8 +29,8 @@
         </q-card-section>
         <modal-buttons />
       </q-form>
-      <p>selectedNode</p>
-      <pre>{{selectedNode}}</pre>
+      <!-- <p>selectedNode</p> 
+      <pre>{{selectedNode}}</pre>-->
     </q-card>
   </div>
 </template>
