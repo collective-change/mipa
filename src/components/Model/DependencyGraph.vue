@@ -1,15 +1,14 @@
 <template>
   <div>
+    <q-btn
+      @click="showAddNode = true"
+      class="all-pointer-events"
+      style="position: relative; top: 40px; left: 4px;"
+      color="primary"
+      label="Add node"
+    />
     <svg width="500" height="500" style="border: black; border-style: solid; border-width: 1px" />
     <p>Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.</p>
-    <div class="text-center q-mb-lg no-pointer-events">
-      <q-btn
-        @click="showAddNode = true"
-        class="all-pointer-events"
-        color="primary"
-        label="Add node"
-      />
-    </div>
     <q-dialog v-model="showAddNode">
       <add-node @close="showAddNode=false" />
     </q-dialog>
