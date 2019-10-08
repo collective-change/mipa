@@ -35,6 +35,7 @@ import { responsify } from "src/functions/function-responsify-svg";
 import { sleep } from "src/functions/function-sleep";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { calculateGraphLevels } from "src/functions/function-calculateGraphLevels";
+import { getNodeLinkEndPoints } from "src/functions/function-getNodeLinkEndPoints";
 
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
 
@@ -148,7 +149,7 @@ export default {
       .append("svg:marker") // This section adds in the arrows
       .attr("id", String)
       .attr("viewBox", "0 -5 10 10")
-      .attr("refX", 27) //Prevents arrowhead from being covered by circle
+      .attr("refX", 5) //Prevents arrowhead from being covered by circle
       .attr("refY", 0)
       .attr("markerUnits", "userSpaceOnUse")
       .attr("markerWidth", 15)
@@ -190,16 +191,27 @@ export default {
       };
 
       const link = d => {
+        const linkEndPoints = getNodeLinkEndPoints(d, 30, 3);
         return (
           "M" +
-          d.source.x +
+          linkEndPoints.sx +
           "," +
-          d.source.y +
+          linkEndPoints.sy +
           " L" +
-          d.target.x +
+          linkEndPoints.tx +
           "," +
-          d.target.y
+          linkEndPoints.ty
         );
+        // return (
+        //   "M" +
+        //   d.source.x +
+        //   "," +
+        //   d.source.y +
+        //   " L" +
+        //   d.target.x +
+        //   "," +
+        //   d.target.y
+        // );
       };
 
       const graph = this.selections.graph;
