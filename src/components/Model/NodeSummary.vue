@@ -1,6 +1,6 @@
 <template>
   <div>
-    <q-card v-if="selectedNode">
+    <!-- <q-card v-if="selectedNode">
       <q-card-section class="row">
         <div class="text-h6">{{selectedNode.name}}</div>
       </q-card-section>
@@ -23,15 +23,40 @@
           />
           <q-input v-model="enteredFormula" label="enteredFormula" />
           <q-input v-model="nodeToSubmit.sysFormula" label="sysFormula" clearable />
-          <!-- <p>symbolFormula: {{symbolFormula}}</p> -->
           <vue-mathjax :formula="'$$'+selectedNode.symbol+'='+latexFormula+'$$'"></vue-mathjax>
           <q-input v-model="nodeToSubmit.notes" label="Notes" clearable />
         </q-card-section>
         <modal-buttons />
       </q-form>
-      <!-- <p>selectedNode</p> 
-      <pre>{{selectedNode}}</pre>-->
-    </q-card>
+    </q-card>-->
+    <div v-if="selectedNode">
+      <div class="text-h6">{{selectedNode.name}}</div>
+
+      <q-form @submit.prevent="submitForm">
+        <q-input
+          v-model="nodeToSubmit.name"
+          label="Name"
+          :rules="[val => !!val || 'Field is required']"
+          clearable
+          ref="nodeName"
+        />
+        <q-input v-model="nodeToSubmit.units" label="Units" clearable />
+        <q-input
+          v-model="nodeToSubmit.symbol"
+          label="symbol"
+          :rules="[val => !!val || 'Field is required']"
+          clearable
+        />
+        <q-input v-model="enteredFormula" label="enteredFormula" />
+        <q-input v-model="nodeToSubmit.sysFormula" label="sysFormula" clearable />
+        <vue-mathjax :formula="'$$'+selectedNode.symbol+'='+latexFormula+'$$'"></vue-mathjax>
+        <q-input v-model="nodeToSubmit.notes" label="Notes" clearable />
+
+        <modal-buttons />
+      </q-form>
+    </div>
+    <!-- <p>selectedNode</p> 
+    <pre>{{selectedNode}}</pre>-->
   </div>
 </template>
 

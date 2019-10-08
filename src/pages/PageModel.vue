@@ -1,12 +1,12 @@
 <template>
-  <q-page padding>
-    <div class="text-h5">{{ $route.params.teamName }}'s Model</div>
+  <q-page>
     <div class="q-pa-md">
+      <div class="row text-h5">{{ $route.params.teamName }}'s Model</div>
       <div class="row q-col-gutter-md">
-        <div class="col-12 col-md-8">
+        <div class="col-8">
           <dependency-graph></dependency-graph>
         </div>
-        <div class="col-12 col-md-4">
+        <div class="col-4">
           <node-summary />
         </div>
       </div>
