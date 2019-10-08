@@ -2,7 +2,7 @@
   <q-page>
     <div class="q-pa-md absolute full-width full-height column">
       <template v-if="teams!=null">
-        <div class="text-h6">Teams</div>
+        <div class="text-h6">My Teams</div>
         <no-teams v-if="!Object.keys(teams).length" />
         <teams :teams="teams" />
         <div class="absolute-bottom text-center q-mb-lg no-pointer-events">

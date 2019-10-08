@@ -1,6 +1,6 @@
 <template>
   <q-card>
-    <modal-header>Add a new team</modal-header>
+    <modal-header v-slot:header>Add a new team</modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
         <modal-team-name :name.sync="teamToSubmit.name" ref="modalTeamName" />
@@ -10,7 +10,7 @@
           :rules="[val => !!val || 'Field is required']"
           clearable
         />
-        <q-select v-model="teamToSubmit.teamType" :options="options" emit-value label="Type" />
+        <!-- <q-select v-model="teamToSubmit.teamType" :options="options" emit-value label="Type" /> -->
       </q-card-section>
       <modal-buttons />
     </q-form>
