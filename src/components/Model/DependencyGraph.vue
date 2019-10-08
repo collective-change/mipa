@@ -154,7 +154,7 @@ export default {
       .attr("markerUnits", "userSpaceOnUse")
       .attr("markerWidth", 15)
       .attr("markerHeight", 15)
-      .attr("fill", "#666")
+      .attr("fill", "#888")
       .attr("orient", "auto")
       .append("svg:path")
       .attr("d", "M0,-5L10,0L0,5");
@@ -766,7 +766,6 @@ export default {
 .faded {
   opacity: 0.1;
   transition: 0.5s opacity;
-  background-color: white;
 }
 .highlight {
   opacity: 1;
@@ -774,9 +773,15 @@ export default {
 
 path.link {
   fill: none;
-  stroke: #666;
+  stroke: #888;
   /*stroke-width: 1.5px;*/
   stroke-width: 5px;
+}
+path.link.faded {
+  opacity: 0.07;
+}
+path.link.highlight {
+  opacity: 1;
 }
 path.link.depends {
   stroke: #005900;
@@ -816,11 +821,11 @@ circle.output {
   /* fill: #ffe5e5;
   stroke: #660000; */
   fill: thistle;
-  stroke: purple;
+  stroke: #60006d;
 }
 circle.input {
   fill: #b2e48a;
-  stroke: #001900;
+  stroke: #005000;
 }
 
 circle.selected {
