@@ -68,20 +68,22 @@ export default {
     },
 
     symbolFormula() {
-      var nodes = this.nodes;
-      var influencerNode = {};
-      var symbolFormula = this.nodeToSubmit.sysFormula;
-      //for each influencer, replace id in formula with symbol
-      this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
-        influencerNode = nodes.find(function(node) {
-          return node.id == influencerNodeId;
+      if (this.nodeToSubmit.sysFormula) {
+        var nodes = this.nodes;
+        var influencerNode = {};
+        var symbolFormula = this.nodeToSubmit.sysFormula;
+        //for each influencer, replace id in formula with symbol
+        this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
+          influencerNode = nodes.find(function(node) {
+            return node.id == influencerNodeId;
+          });
+          symbolFormula = symbolFormula.replace(
+            influencerNode.id,
+            influencerNode.symbol
+          );
         });
-        symbolFormula = symbolFormula.replace(
-          influencerNode.id,
-          influencerNode.symbol
-        );
-      });
-      return symbolFormula;
+        return symbolFormula;
+      } else return "";
     },
 
     //parse symbol formula

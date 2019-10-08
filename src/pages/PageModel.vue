@@ -1,6 +1,6 @@
 <template>
   <q-page padding>
-    <h5>{{ $route.params.teamName }}'s Model</h5>
+    <div class="text-h5">{{ $route.params.teamName }}'s Model</div>
     <div class="q-pa-md">
       <div class="row q-col-gutter-md">
         <div class="col-12 col-md-8">
