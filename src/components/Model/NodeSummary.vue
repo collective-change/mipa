@@ -15,9 +15,16 @@
             ref="nodeName"
           />
           <q-input v-model="nodeToSubmit.units" label="Units" clearable />
-
-          <q-input v-model="nodeToSubmit.enteredFormula" label="Formula" clearable />
-          <vue-mathjax :formula="'$$'+selectedNode.name+'='+latexFormula+'$$'"></vue-mathjax>
+          <q-input
+            v-model="nodeToSubmit.symbol"
+            label="symbol"
+            :rules="[val => !!val || 'Field is required']"
+            clearable
+          />
+          <q-input v-model="enteredFormula" label="enteredFormula" />
+          <q-input v-model="nodeToSubmit.sysFormula" label="sysFormula" clearable />
+          <!-- <p>symbolFormula: {{symbolFormula}}</p> -->
+          <vue-mathjax :formula="'$$'+selectedNode.symbol+'='+latexFormula+'$$'"></vue-mathjax>
           <q-input v-model="nodeToSubmit.notes" label="Notes" clearable />
         </q-card-section>
         <modal-buttons />
@@ -32,6 +39,7 @@
 import { mapActions, mapGetters, mapState } from "vuex";
 import { parse, format, toTex } from "mathjs";
 import { VueMathjax } from "vue-mathjax";
+import { getAcronym } from "src/functions/function-getAcronym";
 
 export default {
   components: {
@@ -43,6 +51,7 @@ export default {
   data() {
     return {
       nodeToSubmit: {},
+      enteredFormula: "",
       model: null
     };
   },
@@ -58,22 +67,37 @@ export default {
       });
     },
 
-    //parsedFormula from enteredFormula
-    parsedFormula() {
-      //console.log("enteredFormula: ", this.nodeToSubmit.enteredFormula);
-      let parsedFormula = this.nodeToSubmit.enteredFormula
-        ? parse(this.nodeToSubmit.enteredFormula)
-        : "";
-      //console.log("parsedFormula: ", parsedFormula);
-      return parsedFormula;
+    symbolFormula() {
+      var nodes = this.nodes;
+      var influencerNode = {};
+      var symbolFormula = this.nodeToSubmit.sysFormula;
+      //for each influencer, replace id in formula with symbol
+      this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
+        influencerNode = nodes.find(function(node) {
+          return node.id == influencerNodeId;
+        });
+        symbolFormula = symbolFormula.replace(
+          influencerNode.id,
+          influencerNode.symbol
+        );
+      });
+      return symbolFormula;
     },
 
-    //latexFormula from parsedFormula
+    //parse symbol formula
+    parsedSymbolFormula() {
+      let parsedSymbolFormula = this.symbolFormula
+        ? parse(this.symbolFormula)
+        : "";
+      return parsedSymbolFormula;
+    },
+
+    //latexFormula from parsedSymbolFormula
     latexFormula() {
       let parenthesis = "keep";
       let implicit = "hide";
-      return this.parsedFormula
-        ? this.parsedFormula.toTex({
+      return this.parsedSymbolFormula
+        ? this.parsedSymbolFormula.toTex({
             parenthesis: parenthesis,
             implicit: implicit
           })
