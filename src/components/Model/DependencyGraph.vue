@@ -7,7 +7,7 @@
       color="primary"
       label="Add node"
     />
-    <svg width="500" height="500" style="border: black; border-style: solid; border-width: 1px" />
+    <svg width="500" height="500" style="border: black; border-style: solid; border-width: 0px" />
     <p>Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.</p>
     <q-dialog v-model="showAddNode">
       <add-node @close="showAddNode=false" />
