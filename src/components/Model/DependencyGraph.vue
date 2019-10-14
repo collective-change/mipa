@@ -771,12 +771,6 @@ path.link.usedInFormula {
 
 circle {
   stroke-width: 0px;
-  /* stuff below for text wrapping */
-  height: 100%;
-  border-radius: 100%;
-  text-align: center;
-  line-height: 200px;
-  /*font-size: 20px;*/
 }
 circle.unlinked {
   fill: #f8c471;
