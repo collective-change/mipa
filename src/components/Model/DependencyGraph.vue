@@ -1,7 +1,7 @@
 <template>
   <div>
     <q-btn
-      @click="showAddNode = true"
+      @click="showAddNode = true; addNodeProps.newNodeRole=''"
       class="all-pointer-events"
       style="position: relative; top: 40px; left: 4px;"
       color="primary"
@@ -80,7 +80,7 @@ export default {
           enabled: true,
           strength: -200,
           distanceMin: 1,
-          distanceMax: 500
+          distanceMax: 400
         },
         collide: {
           enabled: true,
@@ -95,7 +95,7 @@ export default {
         }
       },
       addNodeProps: {
-        sourceNodeId: "aba",
+        sourceNodeId: "",
         newNodeRole: ""
       },
       linkToSubmit: {

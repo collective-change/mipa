@@ -1,7 +1,7 @@
 <template>
   <q-card>
     <modal-header>
-      <template v-slot:header>Add new {{newNodeRole}}</template>
+      <template v-slot:header>Add {{newNodeRole ? 'new '+newNodeRole : 'node' }}</template>
     </modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
