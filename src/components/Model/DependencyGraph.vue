@@ -7,7 +7,11 @@
       color="primary"
       label="Add node"
     />
-    <svg width="500" height="500" style="border: black; border-style: solid; border-width: 0px" />
+    <svg
+      :width="svgWidth"
+      :height="svgHeight"
+      style="border: black; border-style: solid; border-width: 0px"
+    />
     <p>Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.</p>
     <q-dialog v-model="showAddNode">
       <add-node @close="showAddNode=false" />
@@ -33,10 +37,11 @@ import * as sizeof from "object-sizeof";
 import { responsify } from "src/functions/function-responsify-svg";
 import { sleep } from "src/functions/function-sleep";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-import { calculateGraphLevels } from "src/functions/function-calculateGraphLevels";
 import { getNodeLinkEndPoints } from "src/functions/function-getNodeLinkEndPoints";
 
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
+
+var nodeRadius = 30;
 
 export default {
   name: "dependency-graph",
@@ -51,8 +56,8 @@ export default {
       showDeleteNode: false,
       showAddLink: false,
       linkTargetType: "",
-      svgWidth: 500,
-      svgHeight: 500,
+      svgWidth: 1000,
+      svgHeight: 1000,
       selections: {},
       d3Data: {
         nodes: [],
@@ -65,27 +70,17 @@ export default {
           enabled: true,
           strength: -200,
           distanceMin: 1,
-          distanceMax: 200
+          distanceMax: 1000
         },
         collide: {
           enabled: true,
           strength: 0.7,
           iterations: 1,
-          radius: 35
-        },
-        forceX: {
-          enabled: true,
-          strength: 0.8
-          //x: 0.5
-        },
-        forceY: {
-          enabled: true,
-          strength: 0.1,
-          y: 0.5
+          radius: 30
         },
         link: {
           enabled: true,
-          distance: 100,
+          distance: 90,
           iterations: 1
         }
       },
@@ -120,10 +115,12 @@ export default {
           return d.id;
         })
       )
+      //.force("gravity", d3.forceManyBody())
       .force("charge", d3.forceManyBody())
       .force("collide", d3.forceCollide())
-      .force("forceX", d3.forceX())
-      .force("forceY", d3.forceY())
+      .force("center", d3.forceCenter(this.svgWidth / 2, this.svgHeight / 2))
+      // .force("forceX", d3.forceX())
+      // .force("forceY", d3.forceY())
       .on("tick", this.tick);
     // Call first time to setup default values
     this.updateForces();
@@ -190,7 +187,7 @@ export default {
       };
 
       const link = d => {
-        const linkEndPoints = getNodeLinkEndPoints(d, 30, 3);
+        const linkEndPoints = getNodeLinkEndPoints(d, nodeRadius, 3);
         return (
           "M" +
           linkEndPoints.sx +
@@ -201,16 +198,6 @@ export default {
           "," +
           linkEndPoints.ty
         );
-        // return (
-        //   "M" +
-        //   d.source.x +
-        //   "," +
-        //   d.source.y +
-        //   " L" +
-        //   d.target.x +
-        //   "," +
-        //   d.target.y
-        // );
       };
 
       const graph = this.selections.graph;
@@ -294,7 +281,7 @@ export default {
         .data(this.d3Data.nodes)
         .enter()
         .append("circle")
-        .attr("r", 30) // circle radius 30 pixels
+        .attr("r", nodeRadius)
         .attr("class", d => d.class)
         .call(
           d3
@@ -323,7 +310,7 @@ export default {
         .attr("text-anchor", "middle")
         .text(d => d.name)
         //.text(d => d.name + " " + d.graphLev)
-        .call(this.wrap, 60); // wrap the text in <= 60 pixels
+        .call(this.wrap, nodeRadius * 2); // wrap the text in <= node diameter
 
       // Add 'marker-end' attribute to each path
       svg
@@ -345,23 +332,6 @@ export default {
         .strength(forceProperties.collide.strength)
         .radius(forceProperties.collide.radius)
         .iterations(forceProperties.collide.iterations);
-      simulation
-        .force("forceX")
-        .strength(forceProperties.forceX.strength)
-        .x(d => {
-          if (d.graphLev != null) {
-            return (
-              (svgWidth / d3Data.numGraphLevs) * d.graphLev +
-              svgWidth / d3Data.numGraphLevs / 2
-            );
-          } else {
-            return svgWidth / 2;
-          }
-        });
-      simulation
-        .force("forceY")
-        .strength(forceProperties.forceY.strength)
-        .y(svgHeight * forceProperties.forceY.y);
       simulation
         .force("link")
         .distance(forceProperties.link.distance)
@@ -696,17 +666,6 @@ export default {
             return typeof node.unconfirmed === "undefined"; //node does not have 'unconfirmed' property
           });
         }
-        // calculate and add graph level to each node,
-        // also save how many graph levels there are
-        let graphLevs = calculateGraphLevels(this.storeData.nodes);
-        let numGraphLevs = 0;
-        that.d3Data.nodes.forEach(function(node) {
-          node.graphLev = graphLevs[node.id];
-          if (graphLevs[node.id] + 1 > numGraphLevs) {
-            numGraphLevs = graphLevs[node.id] + 1;
-          }
-        });
-        that.d3Data.numGraphLevs = numGraphLevs;
 
         this.storeDataChangeCount++;
       }
@@ -805,7 +764,7 @@ circle {
   border-radius: 100%;
   text-align: center;
   line-height: 200px;
-  font-size: 30px;
+  /*font-size: 20px;*/
 }
 circle.unlinked {
   fill: #f8c471;
