@@ -66,17 +66,23 @@ export default {
       storeDataChangeCount: 0,
       simulation: null,
       forceProperties: {
+        gravity: {
+          enabled: true,
+          strength: 80,
+          distanceMin: 1,
+          distanceMax: 1000
+        },
         charge: {
           enabled: true,
           strength: -200,
           distanceMin: 1,
-          distanceMax: 1000
+          distanceMax: 500
         },
         collide: {
           enabled: true,
           strength: 0.7,
           iterations: 1,
-          radius: 30
+          radius: nodeRadius
         },
         link: {
           enabled: true,
@@ -115,12 +121,13 @@ export default {
           return d.id;
         })
       )
-      //.force("gravity", d3.forceManyBody())
+      .force("gravity", d3.forceManyBody())
       .force("charge", d3.forceManyBody())
       .force("collide", d3.forceCollide())
       .force("center", d3.forceCenter(this.svgWidth / 2, this.svgHeight / 2))
       // .force("forceX", d3.forceX())
       // .force("forceY", d3.forceY())
+      .velocityDecay(0.2)
       .on("tick", this.tick);
     // Call first time to setup default values
     this.updateForces();
@@ -323,6 +330,11 @@ export default {
     updateForces() {
       const { simulation, forceProperties, svgWidth, svgHeight, d3Data } = this;
       simulation
+        .force("gravity")
+        .strength(forceProperties.gravity.strength)
+        .distanceMin(forceProperties.gravity.distanceMin)
+        .distanceMax(forceProperties.gravity.distanceMax);
+      simulation
         .force("charge")
         .strength(forceProperties.charge.strength)
         .distanceMin(forceProperties.charge.distanceMin)
@@ -330,7 +342,7 @@ export default {
       simulation
         .force("collide")
         .strength(forceProperties.collide.strength)
-        .radius(forceProperties.collide.radius)
+        .radius(forceProperties.collide.radius * (1 - simulation.alpha))
         .iterations(forceProperties.collide.iterations);
       simulation
         .force("link")
