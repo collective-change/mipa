@@ -1,7 +1,7 @@
 <template>
   <q-card>
     <modal-header>
-      <template v-slot:header>Add Node</template>
+      <template v-slot:header>Add new {{newNodeRole}}</template>
     </modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
@@ -16,6 +16,7 @@
 import { mapActions } from "vuex";
 
 export default {
+  props: ["sourceNodeId", "newNodeRole"],
   components: {
     "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
       .default,
@@ -45,6 +46,8 @@ export default {
     submitNode() {
       this.addNode({
         node: this.nodeToSubmit,
+        sourceNodeId: this.sourceNodeId,
+        newNodeRole: this.newNodeRole,
         teamId: this.$route.params.teamId
       });
       this.$emit("close");

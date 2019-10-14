@@ -31,7 +31,7 @@ const actions = {
     unbindFirestoreRef("nodes");
   }),
 
-  addNode({}, payload) {
+  addNode({ dispatch }, payload) {
     let node = payload.node;
     node.createTime = firebase.firestore.FieldValue.serverTimestamp();
     node.createdBy = firebaseAuth.currentUser.uid;
@@ -40,8 +40,27 @@ const actions = {
       .doc(payload.teamId)
       .collection("nodes")
       .add(node)
-      .then(function() {
-        Notify.create("Node added!");
+      .then(function(docRef) {
+        Notify.create("Node added! ");
+        if (payload.newNodeRole == "influencer") {
+          dispatch("addLink", {
+            teamId: payload.teamId,
+            link: {
+              sourceNodeId: payload.sourceNodeId,
+              targetNodeId: docRef.id,
+              targetType: "influencer"
+            }
+          });
+        } else if (payload.newNodeRole == "influencee") {
+          dispatch("addLink", {
+            teamId: payload.teamId,
+            link: {
+              sourceNodeId: payload.sourceNodeId,
+              targetNodeId: docRef.id,
+              targetType: "influencee"
+            }
+          });
+        }
       })
       .catch(function(error) {
         showErrorMessage("Error adding node", error.message);

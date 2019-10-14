@@ -14,7 +14,11 @@
     />
     <p>Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.</p>
     <q-dialog v-model="showAddNode">
-      <add-node @close="showAddNode=false" />
+      <add-node
+        :sourceNodeId="addNodeProps.sourceNodeId"
+        :newNodeRole="addNodeProps.newNodeRole"
+        @close="showAddNode=false"
+      />
     </q-dialog>
     <q-dialog v-model="showDeleteNode">
       <delete-node :node="selectedNode" @close="showDeleteNode=false" />
@@ -89,6 +93,10 @@ export default {
           distance: 90,
           iterations: 1
         }
+      },
+      addNodeProps: {
+        sourceNodeId: "aba",
+        newNodeRole: ""
       },
       linkToSubmit: {
         sourceNodeId: "",
@@ -224,6 +232,22 @@ export default {
 
       var nodeContextMenu = this.contextMenu().items(
         {
+          label: "Add new influencer",
+          handler: function() {
+            that.showAddNode = true;
+            that.addNodeProps.sourceNodeId = that.selectedNodeId;
+            that.addNodeProps.newNodeRole = "influencer";
+          }
+        },
+        {
+          label: "Add new influencee",
+          handler: function() {
+            that.showAddNode = true;
+            that.addNodeProps.sourceNodeId = that.selectedNodeId;
+            that.addNodeProps.newNodeRole = "influencee";
+          }
+        },
+        {
           label: "Link to influencer",
           handler: function() {
             that.showAddLink = true;
@@ -316,7 +340,6 @@ export default {
         .attr("y", ".31em")
         .attr("text-anchor", "middle")
         .text(d => d.name)
-        //.text(d => d.name + " " + d.graphLev)
         .call(this.wrap, nodeRadius * 2); // wrap the text in <= node diameter
 
       // Add 'marker-end' attribute to each path
@@ -456,7 +479,7 @@ export default {
           },
           text: {
             fill: "steelblue",
-            "font-size": "13"
+            "font-size": "18"
           }
         };
 
