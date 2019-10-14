@@ -744,7 +744,6 @@ export default {
 path.link {
   fill: none;
   stroke: #888;
-  /*stroke-width: 1.5px;*/
   stroke-width: 5px;
 }
 path.link.faded {
@@ -775,15 +774,12 @@ circle {
 circle.unlinked {
   fill: #f8c471;
   stroke: darkorange;
-  /*stroke-width: 1.5px;*/
 }
 circle.state {
   fill: #a9cce3;
   stroke: #003366;
 }
 circle.output {
-  /* fill: #ffe5e5;
-  stroke: #660000; */
   fill: thistle;
   stroke: #60006d;
 }
@@ -793,8 +789,6 @@ circle.input {
 }
 
 circle.selected {
-  /*stroke: #ff6666ff !important;*/
-  /*stroke-width: 3px;*/
   animation: selected 1s infinite alternate ease-in-out;
 }
 
