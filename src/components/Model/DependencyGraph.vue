@@ -60,8 +60,8 @@ export default {
       showDeleteNode: false,
       showAddLink: false,
       linkTargetType: "",
-      svgWidth: 1000,
-      svgHeight: 1000,
+      svgWidth: 800,
+      svgHeight: 800,
       selections: {},
       d3Data: {
         nodes: [],
@@ -84,7 +84,7 @@ export default {
         },
         collide: {
           enabled: true,
-          strength: 0.7,
+          strength: 10,
           iterations: 1,
           radius: nodeRadius
         },
@@ -479,7 +479,7 @@ export default {
           },
           text: {
             fill: "steelblue",
-            "font-size": "18"
+            "font-size": "15"
           }
         };
 
