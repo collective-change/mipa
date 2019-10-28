@@ -110,8 +110,8 @@ module.exports = function(ctx) {
       // workboxPluginMode: 'InjectManifest',
       // workboxOptions: {}, // only for NON InjectManifest
       manifest: {
-        // name: 'MIPA',
-        // short_name: 'MIPA',
+        // name: 'mipa',
+        // short_name: 'mipa',
         // description: 'A strategic management app',
         display: "standalone",
         orientation: "portrait",
@@ -173,7 +173,7 @@ module.exports = function(ctx) {
 
       builder: {
         // https://www.electron.build/configuration/configuration
-        // appId: 'MIPA'
+        // appId: 'mipa'
       }
     }
   };
