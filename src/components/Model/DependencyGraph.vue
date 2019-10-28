@@ -46,6 +46,8 @@ import { getNodeLinkEndPoints } from "src/functions/function-getNodeLinkEndPoint
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
 
 var nodeRadius = 30;
+const svgWidth = 800;
+const svgHeight = 800;
 
 export default {
   name: "dependency-graph",
@@ -60,8 +62,8 @@ export default {
       showDeleteNode: false,
       showAddLink: false,
       linkTargetType: "",
-      svgWidth: 800,
-      svgHeight: 800,
+      svgWidth: svgWidth,
+      svgHeight: svgWidth,
       selections: {},
       d3Data: {
         nodes: [],
@@ -71,25 +73,29 @@ export default {
       simulation: null,
       forceProperties: {
         gravity: {
-          enabled: true,
           strength: 80,
           distanceMin: 1,
           distanceMax: 1000
         },
         charge: {
-          enabled: true,
           strength: -200,
           distanceMin: 1,
           distanceMax: 400
         },
         collide: {
-          enabled: true,
           strength: 0.7,
           iterations: 1,
           radius: nodeRadius
         },
+        forceX: {
+          strength: 0.03,
+          x: svgWidth / 2
+        },
+        forceY: {
+          strength: 0.03,
+          y: svgHeight / 2
+        },
         link: {
-          enabled: true,
           distance: 90,
           iterations: 1
         }
@@ -133,8 +139,8 @@ export default {
       .force("charge", d3.forceManyBody())
       .force("collide", d3.forceCollide())
       .force("center", d3.forceCenter(this.svgWidth / 2, this.svgHeight / 2))
-      // .force("forceX", d3.forceX())
-      // .force("forceY", d3.forceY())
+      .force("forceX", d3.forceX())
+      .force("forceY", d3.forceY())
       .velocityDecay(0.2)
       .on("tick", this.tick);
     // Call first time to setup default values
@@ -372,6 +378,27 @@ export default {
         .strength(forceProperties.collide.strength)
         //.radius(forceProperties.collide.radius)
         .iterations(forceProperties.collide.iterations);
+      simulation
+        .force("forceX")
+        .x(forceProperties.forceX.x)
+        .strength(function(d) {
+          if (d.class == "unlinked") {
+            return forceProperties.forceX.strength;
+          } else {
+            return 0;
+          }
+        });
+      simulation
+        .force("forceY")
+        .y(forceProperties.forceY.y)
+        .strength(d => {
+          if (d.class == "unlinked") {
+            return forceProperties.forceX.strength;
+            //return 0;
+          } else {
+            return 0;
+          }
+        });
       simulation
         .force("link")
         .distance(forceProperties.link.distance)
@@ -633,7 +660,7 @@ export default {
         lines.push(line.join(" "));
         tspan.text(null);
         lines = lines.reverse();
-        dy = -0.5 - lines.length / 2;
+        dy = -0.5 - lines.length / 2 - 0.1;
         while ((line = lines.pop())) {
           tspan = text
             .append("tspan")
