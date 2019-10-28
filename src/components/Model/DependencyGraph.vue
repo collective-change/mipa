@@ -84,7 +84,7 @@ export default {
         },
         collide: {
           enabled: true,
-          strength: 10,
+          strength: 0.7,
           iterations: 1,
           radius: nodeRadius
         },
@@ -197,6 +197,11 @@ export default {
       if (!this.d3Data) {
         return;
       }
+
+      this.simulation
+        .force("collide")
+        .radius(nodeRadius * (1 - this.simulation.alpha()));
+
       const transform = d => {
         return "translate(" + d.x + "," + d.y + ")";
       };
@@ -365,7 +370,7 @@ export default {
       simulation
         .force("collide")
         .strength(forceProperties.collide.strength)
-        .radius(forceProperties.collide.radius * (1 - simulation.alpha))
+        //.radius(forceProperties.collide.radius)
         .iterations(forceProperties.collide.iterations);
       simulation
         .force("link")
