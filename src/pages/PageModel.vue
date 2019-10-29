@@ -3,7 +3,7 @@
     <div class="text-h5">{{ $route.params.teamName }}'s Model</div>
     <div class="q-pa-md">
       <div class="row q-col-gutter-md">
-        <div class="col-12 col-md-2">placeholder for model folders</div>
+        <div class="col-12 col-md-2">placeholder for model bookmarks and folders</div>
         <div class="col-12 col-md-7">
           <dependency-graph></dependency-graph>
         </div>
@@ -27,6 +27,9 @@ export default {
   },
   data() {
     return {};
+  },
+  computed: {
+    ...mapState("teams", ["teams"])
   },
   created() {
     (async () => {

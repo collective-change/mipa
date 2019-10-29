@@ -17,7 +17,11 @@ const actions = {
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "teams",
-      firebaseDb.collection("teams").where("users", "array-contains", userId),
+      firebaseDb
+        .collection("teams")
+        .where("users", "array-contains", userId)
+        .orderBy("name", "asc")
+        .orderBy("goal", "asc"),
       {
         reset: false,
         maxRefDepth: 1
@@ -27,6 +31,19 @@ const actions = {
 
   unbindTeams: firestoreAction(({ unbindFirestoreRef }) => {
     unbindFirestoreRef("teams");
+  }),
+
+  bindCurrentTeam: firestoreAction(({ bindFirestoreRef }, teamId) => {
+    let userId = firebaseAuth.currentUser.uid;
+    // return the promise returned by `bindFirestoreRef`
+    return bindFirestoreRef(
+      "currentTeam",
+      firebaseDb.collection("teams").doc(teamId)
+    );
+  }),
+
+  unbindCurrentTeam: firestoreAction(({ unbindFirestoreRef }) => {
+    unbindFirestoreRef("currentTeam");
   }),
 
   addTeam({}, team) {

@@ -26,8 +26,8 @@
         <modal-buttons />
       </q-form>
     </div>
-    <p>selectedNode</p>
-    <pre>{{selectedNode}}</pre>
+    <!--<p>selectedNode</p>
+    <pre>{{selectedNode}}</pre>-->
   </div>
 </template>
 
