@@ -230,7 +230,7 @@ export default {
       graph.selectAll("path").attr("d", link);
       graph.selectAll("circle").attr("transform", transform);
       graph.selectAll("text").attr("transform", transform);
-      //console.log("alpha: ", this.simulation.alpha());
+      console.log("alpha: ", this.simulation.alpha());
     },
     updateData() {
       var that = this;
@@ -708,7 +708,6 @@ export default {
       handler(/*newNodes, oldNodes*/) {
         console.log("nodes handler running");
         var that = this;
-        console.log("original node count: ", that.d3Data.nodes.length);
         var dataChanged = false;
         //mark each node in d3Data.nodes as unconfirmed
         if (this.d3Data.nodes.length > 0) {
@@ -726,24 +725,20 @@ export default {
               d3Node => d3Node.id == storeNode.id
             )[0])
           ) {
-            console.log("node matched");
             //remove "unconfirmed" flag
             delete matchedD3Node.unconfirmed;
             //update d3Data node with values from storeNode
             if (matchedD3Node.name != storeNode.name) {
               matchedD3Node.name = storeNode.name;
               dataChanged = true;
-              console.log("node name changed");
             }
             if (matchedD3Node.group != storeNode.group) {
               matchedD3Node.group = storeNode.group;
               dataChanged = true;
-              console.log("node group changed");
             }
             if (matchedD3Node.class != storeNode.class) {
               matchedD3Node.class = storeNode.class;
               dataChanged = true;
-              console.log("node class changed");
             }
           } else {
             // storeNode does not exist in d3Data; clone it there
@@ -759,11 +754,9 @@ export default {
           });
           if (that.d3Data.nodes.length != originalNodeCount) {
             dataChanged = true;
-            console.log("node removed");
           }
         }
-        console.log("new node count: ", that.d3Data.nodes.length);
-
+        console.log("finished handling nodes; starting on links");
         //     this.storeDataChangeCount++;
         //   }
         // },
@@ -775,7 +768,6 @@ export default {
         // var that = this;
 
         //now do the links
-        console.log("original link count: ", that.d3Data.links.length);
         //mark each link in data.links as unconfirmed
         if (this.d3Data.links.length > 0) {
           this.d3Data.links.forEach(function(d3Link) {
@@ -808,7 +800,6 @@ export default {
                 d3Link.target.id == storeLink.target
             )[0])
           ) {
-            console.log("link matched");
             //remove "unconfirmed" mark
             delete matchedD3Link.unconfirmed;
             //update data link with values from storeLink
@@ -817,7 +808,6 @@ export default {
           else {
             that.d3Data.links.push(Object.assign({}, storeLink));
             dataChanged = true;
-            console.log("link added");
           }
         });
         //remove unconfirmed links in data.links
@@ -828,19 +818,13 @@ export default {
           });
           if (that.d3Data.links.length != originalLinkCount) {
             dataChanged = true;
-            console.log(
-              "link removed ",
-              originalLinkCount,
-              "->",
-              that.d3Data.links.length
-            );
           }
         }
-        console.log("new link count: ", that.d3Data.links.length);
         if (dataChanged) {
           console.log("incrementing storeDataChangeCount");
           this.storeDataChangeCount++;
         }
+        console.log("nodes handler finished");
       }
     }
   }
