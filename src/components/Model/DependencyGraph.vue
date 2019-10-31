@@ -230,10 +230,17 @@ export default {
       graph.selectAll("path").attr("d", link);
       graph.selectAll("circle").attr("transform", transform);
       graph.selectAll("text").attr("transform", transform);
+      //console.log("alpha: ", this.simulation.alpha());
     },
     updateData() {
       var that = this;
-      //console.log("updateData; change count ", this.storeDataChangeCount);
+      console.log(
+        "updateData; change count ",
+        this.storeDataChangeCount,
+        "****************"
+      );
+      // stop the previous simulation if it is still running
+      this.simulation.stop();
       this.simulation.nodes(this.d3Data.nodes);
       this.simulation.force("link").links(this.d3Data.links);
 
@@ -699,8 +706,11 @@ export default {
       immediate: true,
       deep: true,
       handler(/*newNodes, oldNodes*/) {
+        console.log("nodes handler running");
         var that = this;
-        //mark each node in data.nodes as unconfirmed
+        console.log("original node count: ", that.d3Data.nodes.length);
+        var dataChanged = false;
+        //mark each node in d3Data.nodes as unconfirmed
         if (this.d3Data.nodes.length > 0) {
           this.d3Data.nodes.forEach(function(d3Node) {
             d3Node.unconfirmed = "true";
@@ -709,40 +719,63 @@ export default {
         let matchedD3Node = null;
         //for each in storeNodes,
         this.storeData.nodes.forEach(function(storeNode) {
-          //if storeNode exists in data.nodes already
+          //if storeNode exists in d3Data.nodes already
           if (
             //declaration inside if conditional intended
             (matchedD3Node = that.d3Data.nodes.filter(
               d3Node => d3Node.id == storeNode.id
             )[0])
           ) {
-            //remove "unconfirmed" mark
+            console.log("node matched");
+            //remove "unconfirmed" flag
             delete matchedD3Node.unconfirmed;
-            //update data node with values from storeNode
-            matchedD3Node.name = storeNode.name;
-            matchedD3Node.group = storeNode.group;
-            matchedD3Node.class = storeNode.class;
+            //update d3Data node with values from storeNode
+            if (matchedD3Node.name != storeNode.name) {
+              matchedD3Node.name = storeNode.name;
+              dataChanged = true;
+              console.log("node name changed");
+            }
+            if (matchedD3Node.group != storeNode.group) {
+              matchedD3Node.group = storeNode.group;
+              dataChanged = true;
+              console.log("node group changed");
+            }
+            if (matchedD3Node.class != storeNode.class) {
+              matchedD3Node.class = storeNode.class;
+              dataChanged = true;
+              console.log("node class changed");
+            }
           } else {
-            // storeNode does not exist in data; clone it there
+            // storeNode does not exist in d3Data; clone it there
             that.d3Data.nodes.push(Object.assign({}, storeNode));
+            dataChanged = true;
           }
         });
         //remove unconfirmed nodes in data.nodes
         if (that.d3Data.nodes.length > 0) {
+          var originalNodeCount = that.d3Data.nodes.length;
           that.d3Data.nodes = that.d3Data.nodes.filter(function(node) {
             return typeof node.unconfirmed === "undefined"; //node does not have 'unconfirmed' property
           });
+          if (that.d3Data.nodes.length != originalNodeCount) {
+            dataChanged = true;
+            console.log("node removed");
+          }
         }
+        console.log("new node count: ", that.d3Data.nodes.length);
 
-        this.storeDataChangeCount++;
-      }
-    },
-    // watcher for store links
-    links: {
-      immediate: true,
-      deep: true,
-      handler(/*newLinks, oldLinks*/) {
-        var that = this;
+        //     this.storeDataChangeCount++;
+        //   }
+        // },
+        // // watcher for store links
+        // links: {
+        //   immediate: true,
+        //   deep: true,
+        //   handler(/*newLinks, oldLinks*/) {
+        // var that = this;
+
+        //now do the links
+        console.log("original link count: ", that.d3Data.links.length);
         //mark each link in data.links as unconfirmed
         if (this.d3Data.links.length > 0) {
           this.d3Data.links.forEach(function(d3Link) {
@@ -752,35 +785,62 @@ export default {
         let matchedD3Link = null;
         //for each in storeLinks,
         this.storeData.links.forEach(function(storeLink) {
-          var filter = { source: storeLink.source, target: storeLink.target };
+          var filterPattern = {
+            source: storeLink.source,
+            target: storeLink.target
+            //type: storeLink.type
+          };
           //if storeLink exists in data.links already
+          // if (
+          //   //declaration inside if conditional intended
+          //   (matchedD3Link = that.d3Data.links.filter(function(item) {
+          //     for (var key in filterPattern) {
+          //       console.log("key: ", key, " ", filterPattern[key]);
+          //       if (item[key] === undefined || item[key] != filterPattern[key])
+          //         return false;
+          //     }
+          //   })[0])
+          // )
           if (
-            //declaration inside if conditional intended
-            (matchedD3Link = that.d3Data.links.filter(function(item) {
-              for (var key in filter) {
-                if (item[key] === undefined || item[key] != filter[key])
-                  return false;
-              }
-            })[0])
+            (matchedD3Link = that.d3Data.links.filter(
+              d3Link =>
+                d3Link.source.id == storeLink.source &&
+                d3Link.target.id == storeLink.target
+            )[0])
           ) {
+            console.log("link matched");
             //remove "unconfirmed" mark
             delete matchedD3Link.unconfirmed;
             //update data link with values from storeLink
-            matchedD3Link.source = storeLink.source;
-            matchedD3Link.target = storeLink.target;
-            matchedD3Link.type = storeLink.type;
+            // matchedD3Link.derivative = storeLink.derivative;
           } //else storeLink does not exist in data; clone it there
           else {
             that.d3Data.links.push(Object.assign({}, storeLink));
+            dataChanged = true;
+            console.log("link added");
           }
         });
         //remove unconfirmed links in data.links
         if (that.d3Data.links.length > 0) {
+          var originalLinkCount = that.d3Data.links.length;
           that.d3Data.links = that.d3Data.links.filter(function(link) {
             return typeof link.unconfirmed === "undefined"; //link does not have 'unconfirmed' property
           });
+          if (that.d3Data.links.length != originalLinkCount) {
+            dataChanged = true;
+            console.log(
+              "link removed ",
+              originalLinkCount,
+              "->",
+              that.d3Data.links.length
+            );
+          }
         }
-        this.storeDataChangeCount++;
+        console.log("new link count: ", that.d3Data.links.length);
+        if (dataChanged) {
+          console.log("incrementing storeDataChangeCount");
+          this.storeDataChangeCount++;
+        }
       }
     }
   }
