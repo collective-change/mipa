@@ -194,6 +194,13 @@ export default {
     this.updateData();
   },
 
+  beforeUpdate() {
+    console.log("beforeUpdate()");
+  },
+  updated() {
+    console.log("updated()");
+  },
+
   methods: {
     ...mapActions("model", ["addLink", "deleteLink"]),
     ...mapActions("ui", ["setSelectedNodeId"]),
@@ -230,7 +237,7 @@ export default {
       graph.selectAll("path").attr("d", link);
       graph.selectAll("circle").attr("transform", transform);
       graph.selectAll("text").attr("transform", transform);
-      console.log("alpha: ", this.simulation.alpha());
+      //console.log("alpha: ", this.simulation.alpha());
     },
     updateData() {
       var that = this;
