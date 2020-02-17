@@ -7,6 +7,7 @@ import { slugify } from "src/functions/function-slugify";
 
 const state = {
   teams: null,
+  currentTeam: null,
   teamsDownloaded: false
 };
 

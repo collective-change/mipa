@@ -1,6 +1,9 @@
 <template>
   <q-page padding>
-    <div class="text-h5">{{ $route.params.teamName }}'s Model</div>
+    <div class="text-h5">
+      {{ $route.params.teamName }}'s goal:
+      <span v-if="currentTeam">{{currentTeam.goal}}</span>
+    </div>
     <div class="q-pa-md">
       <div class="row q-col-gutter-md">
         <div class="col-12 col-md-2">placeholder for model bookmarks and folders</div>
@@ -29,7 +32,7 @@ export default {
     return {};
   },
   computed: {
-    ...mapState("teams", ["teams"])
+    ...mapState("teams", ["teams", "currentTeam"])
   },
   created() {
     (async () => {
@@ -38,12 +41,14 @@ export default {
         !firebaseAuth.currentUser // define the condition as you like
       )
         await new Promise(resolve => setTimeout(resolve, 200));
+      this.$store.dispatch("teams/bindCurrentTeam", this.$route.params.teamId);
       this.$store.dispatch("model/bindNodes", this.$route.params.teamId);
     })();
     //console.log("above code doesn't block main function stack");
   },
   mounted() {},
   beforeDestroy() {
+    this.$store.dispatch("teams/unbindCurrentTeam");
     this.$store.dispatch("model/unbindNodes");
   }
 };
