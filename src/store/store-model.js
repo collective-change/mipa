@@ -22,7 +22,6 @@ const actions = {
         .collection("nodes"),
       {
         reset: true,
-        //wait: true, //to try, to avoid double-loading when a node changes
         maxRefDepth: 1
       }
     );
