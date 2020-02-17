@@ -35,11 +35,12 @@ const actions = {
   }),
 
   bindCurrentTeam: firestoreAction(({ bindFirestoreRef }, teamId) => {
-    let userId = firebaseAuth.currentUser.uid;
-    // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "currentTeam",
-      firebaseDb.collection("teams").doc(teamId)
+      firebaseDb.collection("teams").doc(teamId),
+      {
+        maxRefDepth: 1
+      }
     );
   }),
 

@@ -32,7 +32,7 @@ export default {
     return {};
   },
   computed: {
-    ...mapState("teams", ["teams", "currentTeam"])
+    ...mapState("teams", ["currentTeam"])
   },
   created() {
     (async () => {
