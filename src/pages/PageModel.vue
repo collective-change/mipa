@@ -6,7 +6,9 @@
     </div>
     <div class="q-pa-md">
       <div class="row q-col-gutter-md">
-        <div class="col-12 col-md-2">placeholder for model bookmarks and folders</div>
+        <div class="col-12 col-md-2">
+          <q-tree :nodes="exampleTree" node-key="label" />
+        </div>
         <div class="col-12 col-md-7">
           <dependency-graph></dependency-graph>
         </div>
@@ -29,7 +31,51 @@ export default {
     "node-summary": require("components/Model/NodeSummary.vue").default
   },
   data() {
-    return {};
+    return {
+      exampleTree: [
+        {
+          label: "AC usage",
+          children: [{ label: "overall" }, { label: "AC efficiency" }]
+        },
+        {
+          label: "some model shared w/ public",
+          icon: "public",
+          iconColor: "orange-4",
+          children: [{ label: "one" }, { label: "two" }]
+        },
+        {
+          label: "global warming",
+          icon: "public",
+          iconColor: "blue-4",
+          children: [
+            {
+              label: "ESCiMO",
+              //icon: "folder",
+              children: [
+                { label: "top level" },
+                { label: "sub-model 1" },
+                { label: "sub-model 2" }
+              ]
+            },
+            {
+              label: "Planetary Boundaries",
+              //icon: "folder",
+              //disabled: true,
+              children: [{ label: "..." }, { label: "..." }]
+            },
+            {
+              label: "17 SDGs",
+              //icon: "folder",
+              children: [
+                { label: "overall" },
+                { label: "1 No Poverty" },
+                { label: "2 Zero Hunger" }
+              ]
+            }
+          ]
+        }
+      ]
+    };
   },
   computed: {
     ...mapState("teams", ["currentTeam"])

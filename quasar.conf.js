@@ -72,7 +72,8 @@ module.exports = function(ctx) {
         "QBtnGroup",
         "QOptionGroup",
         "QMenu",
-        "QRadio"
+        "QRadio",
+        "QTree"
       ],
 
       directives: ["Ripple", "ClosePopup", "TouchHold"],
