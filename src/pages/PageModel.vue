@@ -8,6 +8,7 @@
       <div class="row q-col-gutter-md">
         <div class="col-12 col-md-2">
           <q-tree :nodes="exampleTree" node-key="label" />
+          <q-tree :nodes="exampleTree" node-key="label" />
         </div>
         <div class="col-12 col-md-7">
           <dependency-graph></dependency-graph>
