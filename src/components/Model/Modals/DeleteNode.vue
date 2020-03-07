@@ -26,7 +26,7 @@
 
 <script>
 import { mapActions } from "vuex";
-import { showErrorMessage } from "src/functions/function-show-error-message";
+import { showErrorMessage } from "src/utils/function-show-error-message";
 
 export default {
   components: {

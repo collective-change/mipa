@@ -2,7 +2,7 @@ import Vue from "vue";
 import { uid, Notify } from "quasar";
 import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
 import { firestoreAction } from "vuexfire";
-import { calculateDependencyLevels } from "src/functions/function-calculateDependencyLevels";
+import { calculateDependencyLevels } from "src/utils/function-calculateDependencyLevels";
 
 const state = {
   calculatorIsRunning: false,
