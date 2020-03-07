@@ -2,8 +2,8 @@
 import { Notify } from "quasar";
 import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
 import { firestoreAction } from "vuexfire";
-import { showErrorMessage } from "src/utils/function-show-error-message";
-import { slugify } from "src/utils/function-slugify";
+import { showErrorMessage } from "src/utils/util-show-error-message";
+import { slugify } from "src/utils/util-slugify";
 
 const state = {
   teams: null,

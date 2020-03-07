@@ -35,7 +35,7 @@
 import { mapActions, mapGetters, mapState } from "vuex";
 import { parse, format, toTex } from "mathjs";
 import { VueMathjax } from "vue-mathjax";
-import { getAcronym } from "src/utils/function-getAcronym";
+import { getAcronym } from "src/utils/util-getAcronym";
 
 export default {
   components: {

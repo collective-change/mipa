@@ -1,8 +1,8 @@
 import Vue from "vue";
 import { uid, Notify } from "quasar";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-import { showErrorMessage } from "src/utils/function-show-error-message";
-import { slugify } from "src/utils/function-slugify";
+import { showErrorMessage } from "src/utils/util-show-error-message";
+import { slugify } from "src/utils/util-slugify";
 
 const state = {
   orgs: {

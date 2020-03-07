@@ -2,7 +2,7 @@ import Vue from "vue";
 import { uid, Notify } from "quasar";
 import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
 import { firestoreAction } from "vuexfire";
-import { showErrorMessage } from "src/utils/function-show-error-message";
+import { showErrorMessage } from "src/utils/util-show-error-message";
 
 const state = {
   nodes: []

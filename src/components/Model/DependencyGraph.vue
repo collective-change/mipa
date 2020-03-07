@@ -38,10 +38,10 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import * as d3 from "d3";
 import "d3-selection-multi";
 import * as sizeof from "object-sizeof";
-import { responsify } from "src/utils/function-responsify-svg";
-import { sleep } from "src/utils/function-sleep";
+import { responsify } from "src/utils/util-responsify-svg";
+import { sleep } from "src/utils/util-sleep";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-import { getNodeLinkEndPoints } from "src/utils/function-getNodeLinkEndPoints";
+import { getNodeLinkEndPoints } from "src/utils/util-getNodeLinkEndPoints";
 
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
 

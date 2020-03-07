@@ -5,7 +5,7 @@ import * as firebase from "firebase/app";
 import "firebase/auth";
 import "firebase/firestore";
 
-import { showErrorMessage } from "src/utils/function-show-error-message";
+import { showErrorMessage } from "src/utils/util-show-error-message";
 
 // Your web app's Firebase configuration
 var firebaseConfig = {
