@@ -7,6 +7,7 @@
     <div class="q-pa-md">
       <div class="row q-col-gutter-md">
         <div class="col-12 col-md-2">
+          <q-select borderless v-model="currentModel" :options="modelOptions" label="Model" />
           <q-tree :nodes="exampleTree" node-key="label" />
         </div>
         <div class="col-12 col-md-7">
@@ -32,7 +33,10 @@ export default {
   },
   data() {
     return {
+      modelOptions: ["Tzu Chi", "Human-Earth system model"],
       exampleTree: [
+        { label: "Goal" },
+        { label: "Total cost" },
         {
           label: "AC usage",
           children: [{ label: "overall" }, { label: "AC efficiency" }]
