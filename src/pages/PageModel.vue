@@ -6,7 +6,7 @@
     </div>
     <div class="q-pa-md">
       <div class="row q-col-gutter-md">
-        <div class="col-12 col-md-2">
+        <div class="col-12 col-md-2 print-hide">
           <q-select borderless v-model="currentModel" :options="modelOptions" label="Model" />
           <q-tree :nodes="exampleTree" node-key="label" />
         </div>

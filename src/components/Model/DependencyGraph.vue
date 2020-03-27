@@ -2,7 +2,7 @@
   <div>
     <q-btn
       @click="showAddNode = true; addNodeProps.newNodeRole=''"
-      class="all-pointer-events"
+      class="all-pointer-events print-hide"
       style="position: relative; top: 40px; left: 4px;"
       color="primary"
       label="Add node"
@@ -12,7 +12,7 @@
       :height="svgHeight"
       style="border: black; border-style: solid; border-width: 0px"
     />
-    <p>Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.</p>
+    <p class="print-hide">Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.</p>
     <q-dialog v-model="showAddNode">
       <add-node
         :sourceNodeId="addNodeProps.sourceNodeId"

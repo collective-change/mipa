@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <q-header elevated class="bg-white text-grey-8 q-py-none">
+    <q-header elevated class="bg-white text-grey-8 q-py-none print-hide">
       <q-toolbar>
         <q-btn flat no-caps no-wrap class="q-ml-xs" v-if="$q.screen.gt.xs" clickable to="/">
           <q-toolbar-title shrink class="text-weight-bold text-primary">mipa</q-toolbar-title>
@@ -82,6 +82,7 @@
       show-if-above
       content-class="bg-grey-2"
       :width="240"
+      class="print-hide"
     >
       <q-scroll-area class="fit">
         <q-list padding>
