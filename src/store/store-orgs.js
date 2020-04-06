@@ -7,33 +7,14 @@ import { slugify } from "src/utils/util-slugify";
 
 const state = {
   orgs: null
-  //detachUserOrgsListener: null
 };
 
 const mutations = {
-  //synchronous
-  /*updateOrg(state, payload) {
-    Object.assign(state.orgs[payload.id], payload.updates);
-  },*/
-  /*deleteOrg(state, id) {
-    Vue.delete(state.orgs, id);
-  },*/
-  /*addOrg(state, payload) {
-    Vue.set(state.orgs, payload.id, payload.org);
-  },*/
   clearOrgs(state) {
     state.orgs = {};
-  },
-  setSearch(state, value) {
-    state.search = value;
-  },
-  setSort(state, value) {
-    state.sort = value;
   }
 };
 const actions = {
-  //may be asynchronous or synchronous
-
   updateOrg({ dispatch }, payload) {
     let orgsRef = firebaseDb.collection("orgs");
     orgsRef
@@ -51,8 +32,8 @@ const actions = {
   deleteOrg({ dispatch }, orgId) {
     //let userId = firebaseAuth.currentUser.uid;
     console.log(orgId);
-    let orgsRef = firebaseDb.collection("orgs");
-    orgsRef
+    firebaseDb
+      .collection("orgs")
       .doc(orgId)
       .delete()
       .then(function() {
@@ -69,10 +50,8 @@ const actions = {
     org.createTime = firebase.firestore.FieldValue.serverTimestamp();
     org.createdBy = firebaseAuth.currentUser.uid;
     org.nameSlug = slugify(org.name);
-    let orgsRef = firebaseDb.collection("orgs");
-    orgsRef
-      //.doc(payload.id)
-      //.set(payload.org)
+    firebaseDb
+      .collection("orgs")
       .add(org)
       .then(function() {
         Notify.create("Organization added!");
