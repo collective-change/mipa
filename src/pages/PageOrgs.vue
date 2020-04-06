@@ -41,7 +41,7 @@ export default {
 
   computed: {
     ...mapGetters("settings", ["settings"]),
-    ...mapState("orgs", ["orgs", "orgsDownloaded"])
+    ...mapState("orgs", ["orgs"])
   },
 
   actions: {},

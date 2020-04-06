@@ -6,8 +6,7 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 import { slugify } from "src/utils/util-slugify";
 
 const state = {
-  orgs: [],
-  orgsDownloaded: false,
+  orgs: null,
   detachUserOrgsListener: null
 };
 
@@ -30,9 +29,6 @@ const mutations = {
   },
   setSort(state, value) {
     state.sort = value;
-  },
-  setOrgsDownloaded(state, value) {
-    state.orgsDownloaded = value;
   }
 };
 const actions = {
@@ -114,13 +110,12 @@ const actions = {
         .orderBy("name", "asc")
         .orderBy("goal", "asc"),
       {
-        reset: false,
         maxRefDepth: 1
       }
     );
   }),
   unbindOrgs: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("orgs");
+    unbindFirestoreRef("orgs", false); //don't reset data when unbinding
   })
 };
 
