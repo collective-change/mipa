@@ -6,21 +6,21 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 import { slugify } from "src/utils/util-slugify";
 
 const state = {
-  orgs: null,
-  detachUserOrgsListener: null
+  orgs: null
+  //detachUserOrgsListener: null
 };
 
 const mutations = {
   //synchronous
-  updateOrg(state, payload) {
+  /*updateOrg(state, payload) {
     Object.assign(state.orgs[payload.id], payload.updates);
-  },
-  deleteOrg(state, id) {
+  },*/
+  /*deleteOrg(state, id) {
     Vue.delete(state.orgs, id);
-  },
-  addOrg(state, payload) {
+  },*/
+  /*addOrg(state, payload) {
     Vue.set(state.orgs, payload.id, payload.org);
-  },
+  },*/
   clearOrgs(state) {
     state.orgs = {};
   },

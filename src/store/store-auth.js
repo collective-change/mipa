@@ -62,10 +62,10 @@ const actions = {
         commit("setLoggedIn", false);
         LocalStorage.set("loggedIn", false);
         this.$router.replace("/auth");
-        commit("tasks/clearTasks", null, { root: true });
-        commit("tasks/setTasksDownloaded", false, { root: true });
+        //commit("tasks/clearTasks", null, { root: true });
+        //commit("tasks/setTasksDownloaded", false, { root: true });
         commit("orgs/clearOrgs", null, { root: true });
-        commit("orgs/setOrgsDownloaded", false, { root: true });
+        //commit("orgs/setOrgsDownloaded", false, { root: true });
       }
     });
   }
