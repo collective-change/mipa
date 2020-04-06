@@ -11,13 +11,17 @@ const state = {
 
 const mutations = {
   clearOrgs(state) {
-    state.orgs = {};
+    state.orgs = null;
   }
 };
 const actions = {
   updateOrg({ dispatch }, payload) {
-    let orgsRef = firebaseDb.collection("orgs");
-    orgsRef
+    console.log(payload);
+    if (payload.updates.name) {
+      payload.updates.nameSlug = slugify(payload.updates.name);
+    }
+    firebaseDb
+      .collection("orgs")
       .doc(payload.id)
       .set(payload.updates, { merge: true })
       .then(function() {
