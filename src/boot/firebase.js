@@ -22,6 +22,8 @@ let firebaseApp = firebase.initializeApp(firebaseConfig);
 let firebaseAuth = firebaseApp.auth();
 let firebaseDb = firebaseApp.firestore();
 
+/*
+// enable offline persistence
 firebase
   .firestore()
   .enablePersistence({ synchronizeTabs: true })
@@ -38,6 +40,7 @@ firebase
       );
     }
   });
+  */
 
 // Export types that exists in Firestore
 // This is not always necessary, but it's used in other examples in Vuexfire docs
