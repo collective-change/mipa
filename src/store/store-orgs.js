@@ -35,7 +35,18 @@ const actions = {
   //may be asynchronous or synchronous
 
   updateOrg({ dispatch }, payload) {
-    dispatch("fbUpdateOrg", payload);
+    let orgsRef = firebaseDb.collection("orgs");
+    orgsRef
+      .doc(payload.id)
+      .set(payload.updates, { merge: true })
+      .then(function() {
+        let keys = Object.keys(payload.updates);
+        //console.log("keys: ", keys);
+        Notify.create("Organization updated!");
+      })
+      .catch(function(error) {
+        showErrorMessage("Error updating organization", error.message);
+      });
   },
   deleteOrg({ dispatch }, orgId) {
     //let userId = firebaseAuth.currentUser.uid;
@@ -68,35 +79,6 @@ const actions = {
       })
       .catch(function(error) {
         showErrorMessage("Error adding organization", error.message);
-      });
-  },
-  fbAddOrg({}, payload) {
-    //let userId = firebaseAuth.currentUser.uid;
-    let orgsRef = firebaseDb.collection("orgs");
-    orgsRef
-      //.doc(payload.id)
-      //.set(payload.org)
-      .add(payload.org)
-      .then(function() {
-        Notify.create("Organization added!");
-      })
-      .catch(function(error) {
-        showErrorMessage("Error adding organization", error.message);
-      });
-  },
-  fbUpdateOrg({}, payload) {
-    //let userId = firebaseAuth.currentUser.uid;
-    let orgsRef = firebaseDb.collection("orgs");
-    orgsRef
-      .doc(payload.id)
-      .set(payload.updates, { merge: true })
-      .then(function() {
-        let keys = Object.keys(payload.updates);
-        //console.log("keys: ", keys);
-        Notify.create("Organization updated!");
-      })
-      .catch(function(error) {
-        showErrorMessage("Error updating organization", error.message);
       });
   },
   bindOrgs: firestoreAction(({ bindFirestoreRef }) => {

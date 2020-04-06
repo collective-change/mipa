@@ -1,6 +1,6 @@
 <template>
   <q-card>
-    <modal-header>Add a new organization</modal-header>
+    <modal-header v-slot:header>Add a new organization</modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
         <modal-org-name :name.sync="orgToSubmit.name" ref="modalOrgName" />
