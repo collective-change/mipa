@@ -15,11 +15,11 @@
 
     <q-card-actions align="right">
       <div class="row">
-        <q-btn to="/model/model" flat round dense icon="people">
-          <q-tooltip>Org</q-tooltip>
+        <q-btn :to="`/org/${org.nameSlug}/details/${id}`" flat round dense icon="people">
+          <q-tooltip>Organization details</q-tooltip>
         </q-btn>
         <q-btn
-          :to="`/Org/${org.nameSlug}/model/${id}`"
+          :to="`/org/${org.nameSlug}/model/${id}`"
           flat
           round
           dense
@@ -37,8 +37,12 @@
         <q-btn to="/model/model" flat round dense icon="whatshot">
           <q-tooltip>Achieve</q-tooltip>
         </q-btn>
-        <q-btn @click.stop="showEditOrgModal" flat round dense color="primary" icon="edit" />
-        <q-btn @click.stop="promptToDelete(id)" flat round dense color="red-4" icon="delete" />
+        <q-btn @click.stop="showEditOrgModal" flat round dense color="primary" icon="edit">
+          <q-tooltip>Edit organization</q-tooltip>
+        </q-btn>
+        <q-btn @click.stop="promptToDelete(id)" flat round dense color="red-4" icon="delete">
+          <q-tooltip>Delete organization</q-tooltip>
+        </q-btn>
       </div>
     </q-card-actions>
 
