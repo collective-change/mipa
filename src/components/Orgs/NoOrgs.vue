@@ -8,7 +8,7 @@
       <template v-slot:avatar>
         <q-icon name="people" color="primary" />
       </template>
-      A team is a group of people with a goal. Add a team to get started!
+      An organization is a group of people with a goal. Add an organization to get started!
       <template
         v-slot:action
       >
