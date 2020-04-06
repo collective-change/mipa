@@ -66,7 +66,7 @@ export default {
     showEditOrgModal() {
       this.showEditOrg = true;
     },
-    promptToDelete(id) {
+    promptToDelete(orgId) {
       this.$q
         .dialog({
           title: "Confirm",
@@ -75,7 +75,7 @@ export default {
           persistent: true
         })
         .onOk(() => {
-          this.deleteOrg(id);
+          this.deleteOrg(orgId);
         });
     }
   },

@@ -44,9 +44,7 @@ export default {
     ...mapState("orgs", ["orgs", "orgsDownloaded"])
   },
 
-  actions: {
-    //...mapActions("orgs", ["fbReadData", "detachUserOrgsListenerAction"])
-  },
+  actions: {},
 
   created() {
     (async () => {
