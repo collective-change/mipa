@@ -16,10 +16,10 @@
     <q-card-actions align="right">
       <div class="row">
         <q-btn to="/model/model" flat round dense icon="people">
-          <q-tooltip>Team</q-tooltip>
+          <q-tooltip>Org</q-tooltip>
         </q-btn>
         <q-btn
-          :to="`/team/${org.nameSlug}/model/${id}`"
+          :to="`/Org/${org.nameSlug}/model/${id}`"
           flat
           round
           dense

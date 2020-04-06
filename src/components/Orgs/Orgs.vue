@@ -5,7 +5,7 @@
     leave-active-class="animated zoomOut absolute-top"
   >
     <div class="q-pa-md row items-start q-gutter-md">
-      <orgCard v-for="(org, key) in orgs" :key="key" :org="org" :id="key"></orgCard>
+      <orgCard v-for="(org, key) in orgs" :key="key" :org="org" :id="org.id"></orgCard>
     </div>
   </transition>
 </template>

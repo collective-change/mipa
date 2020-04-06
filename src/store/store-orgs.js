@@ -1,6 +1,7 @@
 import Vue from "vue";
 import { uid, Notify } from "quasar";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
+import { firestoreAction } from "vuexfire";
 import { showErrorMessage } from "src/utils/util-show-error-message";
 import { slugify } from "src/utils/util-slugify";
 
@@ -50,8 +51,19 @@ const actions = {
   updateOrg({ dispatch }, payload) {
     dispatch("fbUpdateOrg", payload);
   },
-  deleteOrg({ dispatch }, id) {
-    dispatch("fbDeleteOrg", id);
+  deleteOrg({ dispatch }, orgId) {
+    //let userId = firebaseAuth.currentUser.uid;
+    console.log(orgId);
+    let orgsRef = firebaseDb.collection("orgs");
+    orgsRef
+      .doc(orgId)
+      .delete()
+      .then(function() {
+        Notify.create("Org deleted!");
+      })
+      .catch(function(error) {
+        showErrorMessage("Error deleting organization", error.message);
+      });
   },
   addOrg({ dispatch }, org) {
     org.users = [firebaseAuth.currentUser.uid];
@@ -74,7 +86,7 @@ const actions = {
   detachUserOrgsListenerAction() {
     this.detachUserOrgsListener();
   },
-  fbReadData({ commit }) {
+  /*fbReadData({ commit }) {
     //console.log("start reading data from Firebase");
     //console.log(firebaseAuth.currentUser.uid);
     let userId = firebaseAuth.currentUser.uid;
@@ -117,7 +129,7 @@ const actions = {
         }
       });
     });
-  },
+  }, */
   fbAddOrg({}, payload) {
     //let userId = firebaseAuth.currentUser.uid;
     let orgsRef = firebaseDb.collection("orgs");
@@ -147,19 +159,25 @@ const actions = {
         showErrorMessage("Error updating organization", error.message);
       });
   },
-  fbDeleteOrg({}, orgId) {
+  bindOrgs: firestoreAction(({ bindFirestoreRef }) => {
     let userId = firebaseAuth.currentUser.uid;
-    let orgsRef = firebaseDb.collection("orgs");
-    orgsRef
-      .doc(orgId)
-      .delete()
-      .then(function() {
-        Notify.create("Org deleted!");
-      })
-      .catch(function(error) {
-        showErrorMessage("Error removing organization", error.message);
-      });
-  }
+    // return the promise returned by `bindFirestoreRef`
+    return bindFirestoreRef(
+      "orgs",
+      firebaseDb
+        .collection("orgs")
+        .where("users", "array-contains", userId)
+        .orderBy("name", "asc")
+        .orderBy("goal", "asc"),
+      {
+        reset: false,
+        maxRefDepth: 1
+      }
+    );
+  }),
+  unbindOrgs: firestoreAction(({ unbindFirestoreRef }) => {
+    unbindFirestoreRef("orgs");
+  })
 };
 
 export default {

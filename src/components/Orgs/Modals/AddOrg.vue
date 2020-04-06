@@ -1,6 +1,6 @@
 <template>
   <q-card>
-    <modal-header>Add a new team</modal-header>
+    <modal-header>Add a new organization</modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
         <modal-org-name :name.sync="orgToSubmit.name" ref="modalOrgName" />
@@ -10,7 +10,7 @@
           :rules="[val => !!val || 'Field is required']"
           clearable
         />
-        <q-select v-model="orgToSubmit.teamType" :options="options" emit-value label="Type" />
+        <q-select v-model="orgToSubmit.orgType" :options="options" emit-value label="Type" />
       </q-card-section>
       <modal-buttons />
     </q-form>
@@ -38,7 +38,7 @@ export default {
       orgToSubmit: {
         name: "",
         goal: "",
-        teamType: ""
+        orgType: ""
       }
     };
   },
