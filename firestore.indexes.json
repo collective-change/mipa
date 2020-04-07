@@ -1,0 +1,39 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "orgs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "users",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "goal",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "nodeValuesShards",
+      "fieldPath": "calculationStartTime",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "nodeValuesShards",
+      "fieldPath": "nodeValues",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "nodeValuesShards",
+      "fieldPath": "timestamps",
+      "indexes": []
+    }
+  ]
+}
