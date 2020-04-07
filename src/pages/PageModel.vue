@@ -1,8 +1,8 @@
 <template>
   <q-page padding>
     <div class="text-h5">
-      {{ $route.params.teamName }}'s goal:
-      <span v-if="currentTeam">{{currentTeam.goal}}</span>
+      {{ $route.params.orgName }}'s goal:
+      <span v-if="currentOrg">{{currentOrg.goal}}</span>
     </div>
     <div class="q-pa-md">
       <div class="row q-col-gutter-md">
@@ -33,6 +33,7 @@ export default {
   },
   data() {
     return {
+      currentModel: null,
       modelOptions: ["Tzu Chi", "Human-Earth system model"],
       exampleTree: [
         { label: "Goal" },
@@ -65,7 +66,7 @@ export default {
               label: "Planetary Boundaries",
               //icon: "folder",
               //disabled: true,
-              children: [{ label: "..." }, { label: "..." }]
+              children: [{ label: "child 1" }, { label: "child 2" }]
             },
             {
               label: "17 SDGs",
@@ -82,7 +83,7 @@ export default {
     };
   },
   computed: {
-    ...mapState("teams", ["currentTeam"])
+    ...mapState("orgs", ["currentOrg"])
   },
   created() {
     (async () => {
@@ -91,8 +92,8 @@ export default {
         !firebaseAuth.currentUser // define the condition as you like
       )
         await new Promise(resolve => setTimeout(resolve, 200));
-      this.$store.dispatch("teams/bindCurrentTeam", this.$route.params.teamId);
-      this.$store.dispatch("model/bindNodes", this.$route.params.teamId);
+      this.$store.dispatch("orgs/bindCurrentOrg", this.$route.params.orgId);
+      this.$store.dispatch("model/bindNodes", this.$route.params.orgId);
     })();
     //console.log("above code doesn't block main function stack");
   },

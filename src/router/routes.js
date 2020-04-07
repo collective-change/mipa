@@ -15,7 +15,7 @@ const routes = [
         component: () => import("pages/PagePlaceholder.vue")
       },
       {
-        path: "/team/:teamName/model/:teamId",
+        path: "/org/:orgName/model/:orgId",
         component: () => import("pages/PageModel.vue")
       }
     ]
