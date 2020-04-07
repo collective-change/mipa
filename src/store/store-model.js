@@ -11,14 +11,14 @@ const state = {
 const mutations = {};
 
 const actions = {
-  bindNodes: firestoreAction(({ bindFirestoreRef }, teamId) => {
+  bindNodes: firestoreAction(({ bindFirestoreRef }, modelId) => {
     let userId = firebaseAuth.currentUser.uid;
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "nodes",
       firebaseDb
-        .collection("teams")
-        .doc(teamId)
+        .collection("models")
+        .doc(modelId)
         .collection("nodes"),
       {
         reset: true,
@@ -36,15 +36,15 @@ const actions = {
     node.createTime = firebase.firestore.FieldValue.serverTimestamp();
     node.createdBy = firebaseAuth.currentUser.uid;
     firebaseDb
-      .collection("teams")
-      .doc(payload.teamId)
+      .collection("models")
+      .doc(payload.modelId)
       .collection("nodes")
       .add(node)
       .then(function(docRef) {
         Notify.create("Node added! ");
         if (payload.newNodeRole == "influencer") {
           dispatch("addLink", {
-            teamId: payload.teamId,
+            modelId: payload.modelId,
             link: {
               sourceNodeId: payload.sourceNodeId,
               targetNodeId: docRef.id,
@@ -53,7 +53,7 @@ const actions = {
           });
         } else if (payload.newNodeRole == "influencee") {
           dispatch("addLink", {
-            teamId: payload.teamId,
+            modelId: payload.modelId,
             link: {
               sourceNodeId: payload.sourceNodeId,
               targetNodeId: docRef.id,
@@ -68,7 +68,7 @@ const actions = {
   },
 
   updateNode({ dispatch }, payload) {
-    let teamId = payload.teamId;
+    let modelId = payload.modelId;
     let nodeId = payload.updates.id;
 
     //let formulaChanged = false;
@@ -76,8 +76,8 @@ const actions = {
     payload.updates.updatedBy = firebaseAuth.currentUser.uid;
 
     let nodesRef = firebaseDb
-      .collection("teams")
-      .doc(teamId)
+      .collection("models")
+      .doc(modelId)
       .collection("nodes");
     nodesRef
       .doc(nodeId)
@@ -85,7 +85,7 @@ const actions = {
       .then(function() {
         let keys = Object.keys(payload.updates);
         Notify.create("Node updated!");
-        dispatch("calculator/calculateBaseline", teamId, { root: true });
+        //dispatch("calculator/calculateBaseline", orgId, { root: true });
       })
       .catch(function(error) {
         showErrorMessage("Error updating node", error.message);
@@ -93,11 +93,11 @@ const actions = {
   },
 
   deleteNode({}, payload) {
-    let teamId = payload.teamId;
+    let modelId = payload.modelId;
     let node = payload.node;
     let nodeRef = firebaseDb
-      .collection("teams")
-      .doc(teamId)
+      .collection("models")
+      .doc(modelId)
       .collection("nodes")
       .doc(node.id);
     nodeRef
@@ -131,8 +131,8 @@ const actions = {
     }
 
     var nodesRef = firebaseDb
-      .collection("teams")
-      .doc(payload.teamId)
+      .collection("models")
+      .doc(payload.modelId)
       .collection("nodes");
     var batch = firebaseDb.batch();
     batch.update(nodesRef.doc(influencerNodeId), {
@@ -147,11 +147,11 @@ const actions = {
         Notify.create("Link added!");
         //update class of source and target nodes
         dispatch("reDetermineNodeClass", {
-          teamId: payload.teamId,
+          modelId: payload.modelId,
           nodeId: link.sourceNodeId
         });
         dispatch("reDetermineNodeClass", {
-          teamId: payload.teamId,
+          modelId: payload.modelId,
           nodeId: link.targetNodeId
         });
       })
@@ -166,8 +166,8 @@ const actions = {
     let influenceeNodeId = link.influenceeNodeId;
 
     var nodesRef = firebaseDb
-      .collection("teams")
-      .doc(payload.teamId)
+      .collection("models")
+      .doc(payload.modelId)
       .collection("nodes");
     var batch = firebaseDb.batch();
     batch.update(nodesRef.doc(influencerNodeId), {
@@ -182,11 +182,11 @@ const actions = {
         Notify.create("Link deleted!");
         //update class of influencer and influencee nodes
         dispatch("reDetermineNodeClass", {
-          teamId: payload.teamId,
+          modelId: payload.modelId,
           nodeId: link.influencerNodeId
         });
         dispatch("reDetermineNodeClass", {
-          teamId: payload.teamId,
+          modelId: payload.modelId,
           nodeId: link.influenceeNodeId
         });
       })
@@ -198,8 +198,8 @@ const actions = {
   reDetermineNodeClass({}, payload) {
     // Create a reference to the node doc.
     var nodeDocRef = firebaseDb
-      .collection("teams")
-      .doc(payload.teamId)
+      .collection("models")
+      .doc(payload.modelId)
       .collection("nodes")
       .doc(payload.nodeId);
 
