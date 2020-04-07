@@ -11,6 +11,27 @@ const state = {
 const mutations = {};
 
 const actions = {
+  addModel({ dispatch }, payload) {
+    console.log("payload: ", payload);
+    console.log("id: ", payload.orgId);
+    let model = {};
+    model.isPublic = false;
+    model.owners = { users: [firebaseAuth.currentUser.uid] };
+    model.editors = { users: [firebaseAuth.currentUser.uid] };
+    model.viewers = { org: [payload.orgId] };
+    model.unwrittenChanges = [];
+    firebaseDb
+      .collection("models")
+      .doc(payload.orgId) //use orgId as the model's id
+      .set(model)
+      .then(function(docRef) {
+        //Notify.create("Node added! ");
+      })
+      .catch(function(error) {
+        showErrorMessage("Error creating model", error.message);
+      });
+  },
+
   bindNodes: firestoreAction(({ bindFirestoreRef }, modelId) => {
     let userId = firebaseAuth.currentUser.uid;
     // return the promise returned by `bindFirestoreRef`

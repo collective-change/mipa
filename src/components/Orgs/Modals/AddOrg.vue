@@ -47,7 +47,7 @@ export default {
 
     submitOrg() {
       this.addOrg(this.orgToSubmit);
-      console.log(this.orgToSubmit);
+      //console.log(this.orgToSubmit);
       this.$emit("close");
     }
   }

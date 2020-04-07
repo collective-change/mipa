@@ -35,7 +35,6 @@ const actions = {
   },
   deleteOrg({ dispatch }, orgId) {
     //let userId = firebaseAuth.currentUser.uid;
-    console.log(orgId);
     firebaseDb
       .collection("orgs")
       .doc(orgId)
@@ -48,6 +47,7 @@ const actions = {
       });
   },
   addOrg({ dispatch }, org) {
+    //add organization and its main model
     org.users = [firebaseAuth.currentUser.uid];
     org.superAdmins = [firebaseAuth.currentUser.uid];
     //let timestampNow = firebase.firestore.FieldValue.serverTimestamp();
@@ -57,7 +57,9 @@ const actions = {
     firebaseDb
       .collection("orgs")
       .add(org)
-      .then(function() {
+      .then(function(docRef) {
+        //console.log(docRef.id);
+        dispatch("model/addModel", { orgId: docRef.id }, { root: true });
         Notify.create("Organization added!");
       })
       .catch(function(error) {
