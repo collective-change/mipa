@@ -48,7 +48,6 @@ export default {
         node: this.nodeToSubmit,
         sourceNodeId: this.sourceNodeId,
         newNodeRole: this.newNodeRole,
-        orgId: this.$route.params.orgId,
         modelId: this.$route.params.modelId
       });
       this.$emit("close");

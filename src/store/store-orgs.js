@@ -6,13 +6,13 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 import { slugify } from "src/utils/util-slugify";
 
 const state = {
-  orgs: null
+  orgs: null,
 };
 
 const mutations = {
   clearOrgs(state) {
     state.orgs = null;
-  }
+  },
 };
 const actions = {
   updateOrg({ dispatch }, payload) {
@@ -24,12 +24,12 @@ const actions = {
       .collection("orgs")
       .doc(payload.id)
       .set(payload.updates, { merge: true })
-      .then(function() {
+      .then(function () {
         let keys = Object.keys(payload.updates);
         //console.log("keys: ", keys);
         Notify.create("Organization updated!");
       })
-      .catch(function(error) {
+      .catch(function (error) {
         showErrorMessage("Error updating organization", error.message);
       });
   },
@@ -39,10 +39,10 @@ const actions = {
       .collection("orgs")
       .doc(orgId)
       .delete()
-      .then(function() {
+      .then(function () {
         Notify.create("Org deleted!");
       })
-      .catch(function(error) {
+      .catch(function (error) {
         showErrorMessage("Error deleting organization", error.message);
       });
   },
@@ -57,12 +57,16 @@ const actions = {
     firebaseDb
       .collection("orgs")
       .add(org)
-      .then(function(docRef) {
+      .then(function (docRef) {
         //console.log(docRef.id);
-        dispatch("model/addModel", { orgId: docRef.id }, { root: true });
+        dispatch(
+          "model/addModel",
+          { orgId: docRef.id, modelId: docRef.id },
+          { root: true }
+        );
         Notify.create("Organization added!");
       })
-      .catch(function(error) {
+      .catch(function (error) {
         showErrorMessage("Error adding organization", error.message);
       });
   },
@@ -77,18 +81,18 @@ const actions = {
         .orderBy("name", "asc")
         .orderBy("goal", "asc"),
       {
-        maxRefDepth: 1
+        maxRefDepth: 1,
       }
     );
   }),
   unbindOrgs: firestoreAction(({ unbindFirestoreRef }) => {
     unbindFirestoreRef("orgs", false); //don't reset data when unbinding
-  })
+  }),
 };
 
 export default {
   namespaced: true,
   state,
   mutations,
-  actions
+  actions,
 };
