@@ -307,7 +307,7 @@ export default {
               influencerNodeId: this.source.id,
               influenceeNodeId: this.target.id
             },
-            teamId: that.$route.params.teamId
+            modelId: that.$route.params.modelId
           });
         }
       });
@@ -688,7 +688,7 @@ export default {
     submitLink() {
       this.addLink({
         link: this.linkToSubmit,
-        teamId: this.$route.params.teamId
+        modelId: this.$route.params.modelId
       });
       this.$emit("close");
     }
