@@ -18,6 +18,10 @@ const routes = [
         path: "/org/:orgName/model/:orgId/:modelId",
         component: () => import("pages/PageModel.vue"),
       },
+      {
+        path: "/org/:orgName/ideate/:orgId",
+        component: () => import("pages/PageIdeate.vue"),
+      },
     ],
   },
 ];
