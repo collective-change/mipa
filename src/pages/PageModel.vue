@@ -110,7 +110,7 @@ export default {
   },
   mounted() {},
   beforeDestroy() {
-    this.$store.dispatch("teams/unbindCurrentTeam");
+    //this.$store.dispatch("teams/unbindCurrentTeam");
     this.$store.dispatch("model/unbindNodes");
   }
 };

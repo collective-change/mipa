@@ -2,7 +2,7 @@
   <q-page padding>
     <div class="text-h5">
       {{ $route.params.orgName }}'s goal:
-      <span v-if="currentOrg">{{ currentOrg.goal }}</span>
+      <!-- <span v-if="currentOrg">{{ currentOrg.goal }}</span> -->
     </div>
     <div class="q-pa-md">
       <div class="row q-col-gutter-md">
@@ -13,13 +13,26 @@
         </div>
         -->
         <div class="col-12 col-md-7">
-          <dependency-graph></dependency-graph>
+          <!--<dependency-graph></dependency-graph>-->
         </div>
         <div class="col-12 col-md-3">
-          <node-summary />
+          <!--<node-summary />-->
         </div>
       </div>
     </div>
+    <div class="absolute-bottom text-center q-mb-lg no-pointer-events">
+      <q-btn
+        @click="showAddIssue = true"
+        round
+        class="all-pointer-events"
+        color="primary"
+        size="24px"
+        icon="add"
+      />
+    </div>
+    <q-dialog v-model="showAddIssue">
+      <add-issue @close="showAddIssue=false" />
+    </q-dialog>
   </q-page>
 </template>
 
@@ -30,87 +43,35 @@ import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 export default {
   name: "app",
   components: {
-    "dependency-graph": require("components/Model/DependencyGraph.vue").default,
-    "node-summary": require("components/Model/NodeSummary.vue").default
+    //"no-issues": require("components/Issues/NoIssues.vue").default,
+    //"issues-todo": require("components/Issues/IssuesTodo.vue").default,
+    //"issues-completed": require("components/Issues/IssuesCompleted.vue").default,
+    "add-issue": require("components/Issues/Modals/AddIssue.vue").default
+    //search: require("components/Issues/Tools/Search.vue").default,
+    //sort: require("components/Issues/Tools/Sort.vue").default
   },
   data() {
     return {
-      models: null,
-      //currentModel: null,
-      modelOptions: ["Tzu Chi", "Human-Earth system model"],
-      exampleTree: [
-        { label: "Goal" },
-        { label: "Total cost" },
-        {
-          label: "AC usage",
-          children: [{ label: "overall" }, { label: "AC efficiency" }]
-        },
-        {
-          label: "some model shared w/ public",
-          icon: "public",
-          iconColor: "orange-4",
-          children: [{ label: "one" }, { label: "two" }]
-        },
-        {
-          label: "global warming",
-          icon: "public",
-          iconColor: "blue-4",
-          children: [
-            {
-              label: "ESCiMO",
-              //icon: "folder",
-              children: [
-                { label: "top level" },
-                { label: "sub-model 1" },
-                { label: "sub-model 2" }
-              ]
-            },
-            {
-              label: "Planetary Boundaries",
-              //icon: "folder",
-              //disabled: true,
-              children: [{ label: "child 1" }, { label: "child 2" }]
-            },
-            {
-              label: "17 SDGs",
-              //icon: "folder",
-              children: [
-                { label: "overall" },
-                { label: "1 No Poverty" },
-                { label: "2 Zero Hunger" }
-              ]
-            }
-          ]
-        }
-      ]
+      showAddIssue: false,
+      models: null
     };
   },
   computed: {
-    ...mapState("orgs", ["currentOrg"])
+    //...mapState("orgs", ["currentOrg"])
   },
   created() {
     (async () => {
-      //console.log("waiting for currentUser to be defined");
       while (
         !firebaseAuth.currentUser // define the condition as you like
       )
         await new Promise(resolve => setTimeout(resolve, 200));
-      //bind to list of models the org-user can view
-      //(user is in model's owners, editors, or viewers)
-      //this.$store.dispatch("orgs/bindReadableModels", this.$route.params.orgId);
-      let modelId = this.$route.params.orgId;
-      //this.$store.dispatch("model/bindCurrentModel", modelId);
-      this.$store.dispatch("model/bindNodes", modelId);
 
-      //bind to currentModel's nodes
-      //this.$store.dispatch("orgs/bindCurrentOrg", this.$route.params.orgId);
-      //this.$store.dispatch("model/bindNodes", this.$route.params.orgId);
+      let modelId = this.$route.params.orgId;
+      this.$store.dispatch("model/bindNodes", modelId);
     })();
-    //console.log("above code doesn't block main function stack");
   },
   mounted() {},
   beforeDestroy() {
-    this.$store.dispatch("teams/unbindCurrentTeam");
     this.$store.dispatch("model/unbindNodes");
   }
 };

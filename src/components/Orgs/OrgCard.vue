@@ -28,7 +28,14 @@
         >
           <q-tooltip>Model</q-tooltip>
         </q-btn>
-        <q-btn to="/model/model" flat round dense icon="wb_incandescent" class="flip-vertical">
+        <q-btn
+          :to="`/org/${org.nameSlug}/ideate/${id}`"
+          flat
+          round
+          dense
+          icon="wb_incandescent"
+          class="flip-vertical"
+        >
           <q-tooltip>Ideate</q-tooltip>
         </q-btn>
         <q-btn to="/model/model" flat round dense icon="poll">
