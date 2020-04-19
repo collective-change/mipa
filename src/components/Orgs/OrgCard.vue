@@ -19,7 +19,7 @@
           <q-tooltip>Organization details</q-tooltip>
         </q-btn>
         <q-btn
-          :to="`/org/${org.nameSlug}/model/${id}`"
+          :to="`/org/${org.nameSlug}/model/${id}/${id}`"
           flat
           round
           dense

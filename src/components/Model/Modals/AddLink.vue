@@ -44,7 +44,7 @@ export default {
     submitLink() {
       this.addLink({
         link: this.linkToSubmit,
-        teamId: this.$route.params.teamId
+        modelId: this.$route.params.modelId
       });
       this.$emit("close");
     }

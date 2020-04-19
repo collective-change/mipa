@@ -60,7 +60,8 @@ export default {
       if (this.nodeReadyToDelete) {
         this.deleteNode({
           node: this.node,
-          teamId: this.$route.params.teamId
+          orgId: this.$route.params.orgId,
+          modelId: this.$route.params.modelId
         });
         this.$emit("close");
       } else {

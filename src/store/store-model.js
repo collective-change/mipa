@@ -5,7 +5,8 @@ import { firestoreAction } from "vuexfire";
 import { showErrorMessage } from "src/utils/util-show-error-message";
 
 const state = {
-  nodes: []
+  currentModel: null,
+  nodes: [],
 };
 
 const mutations = {};
@@ -24,26 +25,40 @@ const actions = {
       .collection("models")
       .doc(payload.orgId) //use orgId as the model's id
       .set(model)
-      .then(function(docRef) {
+      .then(function (docRef) {
         //Notify.create("Node added! ");
       })
-      .catch(function(error) {
+      .catch(function (error) {
         showErrorMessage("Error creating model", error.message);
       });
   },
+
+  bindCurrentModel: firestoreAction(({ bindFirestoreRef }, modelId) => {
+    let userId = firebaseAuth.currentUser.uid;
+    // return the promise returned by `bindFirestoreRef`
+    return bindFirestoreRef(
+      "currentModel",
+      firebaseDb.collection("models").doc(modelId),
+      {
+        reset: true,
+        maxRefDepth: 1,
+      }
+    );
+  }),
+
+  unbindCurrentModel: firestoreAction(({ unbindFirestoreRef }) => {
+    unbindFirestoreRef("currentModel");
+  }),
 
   bindNodes: firestoreAction(({ bindFirestoreRef }, modelId) => {
     let userId = firebaseAuth.currentUser.uid;
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "nodes",
-      firebaseDb
-        .collection("models")
-        .doc(modelId)
-        .collection("nodes"),
+      firebaseDb.collection("models").doc(modelId).collection("nodes"),
       {
         reset: true,
-        maxRefDepth: 1
+        maxRefDepth: 1,
       }
     );
   }),
@@ -53,6 +68,7 @@ const actions = {
   }),
 
   addNode({ dispatch }, payload) {
+    console.log(payload);
     let node = payload.node;
     node.createTime = firebase.firestore.FieldValue.serverTimestamp();
     node.createdBy = firebaseAuth.currentUser.uid;
@@ -61,7 +77,7 @@ const actions = {
       .doc(payload.modelId)
       .collection("nodes")
       .add(node)
-      .then(function(docRef) {
+      .then(function (docRef) {
         Notify.create("Node added! ");
         if (payload.newNodeRole == "influencer") {
           dispatch("addLink", {
@@ -69,8 +85,8 @@ const actions = {
             link: {
               sourceNodeId: payload.sourceNodeId,
               targetNodeId: docRef.id,
-              targetType: "influencer"
-            }
+              targetType: "influencer",
+            },
           });
         } else if (payload.newNodeRole == "influencee") {
           dispatch("addLink", {
@@ -78,12 +94,12 @@ const actions = {
             link: {
               sourceNodeId: payload.sourceNodeId,
               targetNodeId: docRef.id,
-              targetType: "influencee"
-            }
+              targetType: "influencee",
+            },
           });
         }
       })
-      .catch(function(error) {
+      .catch(function (error) {
         showErrorMessage("Error adding node", error.message);
       });
   },
@@ -103,12 +119,12 @@ const actions = {
     nodesRef
       .doc(nodeId)
       .set(payload.updates, { merge: true })
-      .then(function() {
+      .then(function () {
         let keys = Object.keys(payload.updates);
         Notify.create("Node updated!");
         //dispatch("calculator/calculateBaseline", orgId, { root: true });
       })
-      .catch(function(error) {
+      .catch(function (error) {
         showErrorMessage("Error updating node", error.message);
       });
   },
@@ -123,10 +139,10 @@ const actions = {
       .doc(node.id);
     nodeRef
       .delete()
-      .then(function() {
+      .then(function () {
         Notify.create("Node deleted!");
       })
-      .catch(function(error) {
+      .catch(function (error) {
         showErrorMessage("Error deleting node", error.message);
       });
   },
@@ -157,26 +173,26 @@ const actions = {
       .collection("nodes");
     var batch = firebaseDb.batch();
     batch.update(nodesRef.doc(influencerNodeId), {
-      influencees: firebase.firestore.FieldValue.arrayUnion(influenceeNodeId)
+      influencees: firebase.firestore.FieldValue.arrayUnion(influenceeNodeId),
     });
     batch.update(nodesRef.doc(influenceeNodeId), {
-      influencers: firebase.firestore.FieldValue.arrayUnion(influencerNodeId)
+      influencers: firebase.firestore.FieldValue.arrayUnion(influencerNodeId),
     });
     batch
       .commit()
-      .then(function() {
+      .then(function () {
         Notify.create("Link added!");
         //update class of source and target nodes
         dispatch("reDetermineNodeClass", {
           modelId: payload.modelId,
-          nodeId: link.sourceNodeId
+          nodeId: link.sourceNodeId,
         });
         dispatch("reDetermineNodeClass", {
           modelId: payload.modelId,
-          nodeId: link.targetNodeId
+          nodeId: link.targetNodeId,
         });
       })
-      .catch(function(error) {
+      .catch(function (error) {
         showErrorMessage("Error adding link", error.message);
       });
   },
@@ -192,26 +208,26 @@ const actions = {
       .collection("nodes");
     var batch = firebaseDb.batch();
     batch.update(nodesRef.doc(influencerNodeId), {
-      influencees: firebase.firestore.FieldValue.arrayRemove(influenceeNodeId)
+      influencees: firebase.firestore.FieldValue.arrayRemove(influenceeNodeId),
     });
     batch.update(nodesRef.doc(influenceeNodeId), {
-      influencers: firebase.firestore.FieldValue.arrayRemove(influencerNodeId)
+      influencers: firebase.firestore.FieldValue.arrayRemove(influencerNodeId),
     });
     batch
       .commit()
-      .then(function() {
+      .then(function () {
         Notify.create("Link deleted!");
         //update class of influencer and influencee nodes
         dispatch("reDetermineNodeClass", {
           modelId: payload.modelId,
-          nodeId: link.influencerNodeId
+          nodeId: link.influencerNodeId,
         });
         dispatch("reDetermineNodeClass", {
           modelId: payload.modelId,
-          nodeId: link.influenceeNodeId
+          nodeId: link.influenceeNodeId,
         });
       })
-      .catch(function(error) {
+      .catch(function (error) {
         showErrorMessage("Error deleting link", error.message);
       });
   },
@@ -225,9 +241,9 @@ const actions = {
       .doc(payload.nodeId);
 
     firebaseDb
-      .runTransaction(function(transaction) {
+      .runTransaction(function (transaction) {
         // This code may get re-run multiple times and generate POST 400 errors if there are conflicts.
-        return transaction.get(nodeDocRef).then(function(nodeDoc) {
+        return transaction.get(nodeDocRef).then(function (nodeDoc) {
           if (!nodeDoc.exists) {
             throw "Node document does not exist!";
           }
@@ -261,34 +277,34 @@ const actions = {
           }
         });
       })
-      .then(function() {
+      .then(function () {
         //console.log("Transaction successfully committed!");
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log("reDetermineNodeClass failed: ", error);
       });
-  }
+  },
 };
 
 const getters = {
-  nodes: state => {
+  nodes: (state) => {
     if (!state.nodes) {
       return [];
     }
-    return state.nodes.map(node => ({ ...node, id: node.id }));
+    return state.nodes.map((node) => ({ ...node, id: node.id }));
   },
-  links: state => {
+  links: (state) => {
     let allLinks = [];
-    state.nodes.forEach(function(node) {
+    state.nodes.forEach(function (node) {
       //console.log(node.id);
       if ("influencers" in node) {
-        node.influencers.forEach(function(influencer) {
+        node.influencers.forEach(function (influencer) {
           allLinks.push({ source: influencer, target: node.id });
         });
       }
     });
     return allLinks;
-  }
+  },
 };
 
 export default {
@@ -296,5 +312,5 @@ export default {
   state,
   mutations,
   actions,
-  getters
+  getters,
 };

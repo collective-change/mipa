@@ -6,17 +6,18 @@ service cloud.firestore {
       //allow read, write
       allow read, write: if request.auth.uid == userId;
     }
-    match /orgs/{document=**} {
+    match /orgs/{org} {
       //allow read, write
       allow create: if request.auth.uid != null;
       allow read, update: if request.auth.uid in resource.data.users;
       allow delete: if request.auth.uid in resource.data.superAdmins;
     }
-    match /models/{document=**} {
-      //allow read, write
+    // Match any model
+    match /models/{model} {
       allow create: if request.auth.uid != null;
       allow read, update: if request.auth.uid in resource.data.editors.users;
       allow delete: if request.auth.uid in resource.data.superAdmins;
+      allow read: if resource.data.isPublic == true;
     }
     // Match any document in the 'teams' collection
     match /teams/{team} {

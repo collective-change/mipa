@@ -2,14 +2,16 @@
   <q-page padding>
     <div class="text-h5">
       {{ $route.params.orgName }}'s goal:
-      <span v-if="currentOrg">{{currentOrg.goal}}</span>
+      <span v-if="currentOrg">{{ currentOrg.goal }}</span>
     </div>
     <div class="q-pa-md">
       <div class="row q-col-gutter-md">
+        <!--
         <div class="col-12 col-md-2 print-hide">
           <q-select borderless v-model="currentModel" :options="modelOptions" label="Model" />
           <q-tree :nodes="exampleTree" node-key="label" />
         </div>
+        -->
         <div class="col-12 col-md-7">
           <dependency-graph></dependency-graph>
         </div>
@@ -33,7 +35,8 @@ export default {
   },
   data() {
     return {
-      currentModel: null,
+      models: null,
+      //currentModel: null,
       modelOptions: ["Tzu Chi", "Human-Earth system model"],
       exampleTree: [
         { label: "Goal" },
@@ -92,8 +95,16 @@ export default {
         !firebaseAuth.currentUser // define the condition as you like
       )
         await new Promise(resolve => setTimeout(resolve, 200));
-      this.$store.dispatch("orgs/bindCurrentOrg", this.$route.params.orgId);
-      this.$store.dispatch("model/bindNodes", this.$route.params.orgId);
+      //bind to list of models the org-user can view
+      //(user is in model's owners, editors, or viewers)
+      //this.$store.dispatch("orgs/bindReadableModels", this.$route.params.orgId);
+      let modelId = this.$route.params.orgId;
+      //this.$store.dispatch("model/bindCurrentModel", modelId);
+      this.$store.dispatch("model/bindNodes", modelId);
+
+      //bind to currentModel's nodes
+      //this.$store.dispatch("orgs/bindCurrentOrg", this.$route.params.orgId);
+      //this.$store.dispatch("model/bindNodes", this.$route.params.orgId);
     })();
     //console.log("above code doesn't block main function stack");
   },
@@ -104,4 +115,3 @@ export default {
   }
 };
 </script>
-

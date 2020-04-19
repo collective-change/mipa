@@ -114,7 +114,7 @@ export default {
     },
     submitNode() {
       this.updateNode({
-        teamId: this.$route.params.teamId,
+        modelId: this.$route.params.modelId,
         updates: this.nodeToSubmit
       });
       //this.$emit("close");
