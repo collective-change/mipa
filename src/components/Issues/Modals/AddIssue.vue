@@ -13,10 +13,8 @@
 
 <script>
 import { mapActions } from "vuex";
-import mixinAddEditIssue from "src/mixins/mixin-add-edit-issue";
 
 export default {
-  mixins: [mixinAddEditIssue],
   data() {
     return {
       issueToSubmit: {
@@ -34,7 +32,24 @@ export default {
     submitIssue() {
       this.addIssue(this.issueToSubmit);
       this.$emit("close");
+    },
+
+    submitForm() {
+      this.$refs.modalIssueName.$refs.name.validate();
+      if (!this.$refs.modalIssueName.$refs.name.hasError) {
+        this.submitIssue();
+      }
     }
+  },
+  components: {
+    "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
+      .default,
+    "modal-issue-name": require("components/Issues/Modals/Shared/ModalIssueName.vue")
+      .default,
+    //"modal-due-date": require("components/Issues/Modals/Shared/ModalDueDate.vue").default,
+    //"modal-due-time": require("components/Issues/Modals/Shared/ModalDueTime.vue").default,
+    "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
+      .default
   }
 };
 </script>

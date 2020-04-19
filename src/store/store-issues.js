@@ -5,7 +5,7 @@ import { firestoreAction } from "vuexfire";
 import { showErrorMessage } from "src/utils/util-show-error-message";
 
 const state = {
-  issues: null,
+  issues: [],
   search: "",
   sort: "name",
 };
