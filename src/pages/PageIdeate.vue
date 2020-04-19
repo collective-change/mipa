@@ -14,6 +14,7 @@
         -->
         <div class="col-12 col-md-7">
           <!--<dependency-graph></dependency-graph>-->
+          <pre>{{ issues}}</pre>
         </div>
         <div class="col-12 col-md-3">
           <!--<node-summary />-->
@@ -57,7 +58,7 @@ export default {
     };
   },
   computed: {
-    //...mapState("orgs", ["currentOrg"])
+    ...mapState("issues", ["issues"])
   },
   created() {
     (async () => {
@@ -66,13 +67,13 @@ export default {
       )
         await new Promise(resolve => setTimeout(resolve, 200));
 
-      let modelId = this.$route.params.orgId;
-      this.$store.dispatch("model/bindNodes", modelId);
+      let orgId = this.$route.params.orgId;
+      this.$store.dispatch("issues/bindIssues", orgId);
     })();
   },
   mounted() {},
   beforeDestroy() {
-    this.$store.dispatch("model/unbindNodes");
+    this.$store.dispatch("issues/unbindIssues");
   }
 };
 </script>

@@ -1,6 +1,7 @@
 import Vue from "vue";
 import { uid, Notify } from "quasar";
 import { firebaseDb, firebaseAuth } from "boot/firebase";
+import { firestoreAction } from "vuexfire";
 import { showErrorMessage } from "src/utils/util-show-error-message";
 
 const state = {
@@ -49,8 +50,6 @@ const actions = {
     let userId = firebaseAuth.currentUser.uid;
     firebaseDb
       .collection("issues")
-      .doc(userId)
-      .collection("oneUsersIssues")
       .doc(issueId)
       .delete()
       .then(function () {
@@ -61,18 +60,12 @@ const actions = {
       });
   },
   addIssue({ dispatch }, issue) {
-    let issueID = uid();
-    let payload = {
-      id: issueID,
-      issue: issue,
-    };
-    let userId = firebaseAuth.currentUser.uid;
+    //let userId = firebaseAuth.currentUser.uid;
+
+    issue.initiator = firebaseAuth.currentUser.uid;
     firebaseDb
       .collection("issues")
-      .doc(userId)
-      .collection("oneUsersIssues")
-      .doc(payload.id)
-      .set(payload.issue)
+      .add(issue)
       .then(function () {
         Notify.create("Issue added!");
       })
@@ -80,17 +73,15 @@ const actions = {
         showErrorMessage("Error adding issue", error.message);
       });
   },
-  bindIssues: firestoreAction(({ bindFirestoreRef }) => {
+  bindIssues: firestoreAction(({ bindFirestoreRef }, orgId) => {
     let userId = firebaseAuth.currentUser.uid;
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "issues",
-      firebaseDb
-        .collection("issues")
-        .where("org", "array-contains", orgId)
-        //.where("users", "array-contains", userId)
-        .orderBy("name", "asc")
-        .orderBy("goal", "asc"),
+      firebaseDb.collection("issues").where("orgId", "==", orgId),
+      //.where("users", "array-contains", userId)
+      //.orderBy("name", "asc"),
+      //.orderBy("goal", "asc"),
       {
         maxRefDepth: 1,
       }

@@ -21,8 +21,9 @@ export default {
     return {
       issueToSubmit: {
         name: "",
-        dueDate: "",
-        dueTime: "",
+        //dueDate: "",
+        //dueTime: "",
+        orgId: this.$route.params.orgId,
         completed: false
       }
     };
