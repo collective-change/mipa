@@ -13,11 +13,11 @@
         </div>
         -->
         <div class="col-12 col-md-7">
-          <!--<dependency-graph></dependency-graph>-->
-          <pre>{{ issues}}</pre>
+          <issues-list></issues-list>
+          <!-- <pre>{{ issues}}</pre> -->
         </div>
         <div class="col-12 col-md-3">
-          <!--<node-summary />-->
+          <!--<issue-summary />-->
         </div>
       </div>
     </div>
@@ -47,6 +47,7 @@ export default {
     //"no-issues": require("components/Issues/NoIssues.vue").default,
     //"issues-todo": require("components/Issues/IssuesTodo.vue").default,
     //"issues-completed": require("components/Issues/IssuesCompleted.vue").default,
+    "issues-list": require("components/Issues/IssuesList.vue").default,
     "add-issue": require("components/Issues/Modals/AddIssue.vue").default
     //search: require("components/Issues/Tools/Search.vue").default,
     //sort: require("components/Issues/Tools/Sort.vue").default
