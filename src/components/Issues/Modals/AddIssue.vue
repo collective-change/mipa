@@ -5,6 +5,7 @@
     <q-form @submit.prevent="submitForm">
       <q-card-section>
         <modal-issue-name :name.sync="issueToSubmit.name" ref="modalIssueName" />
+        <modal-issue-type :type.sync="issueToSubmit.type" ref="modalIssueType" />
       </q-card-section>
       <modal-buttons />
     </q-form>
@@ -19,6 +20,7 @@ export default {
     return {
       issueToSubmit: {
         name: "",
+        type: "action",
         //dueDate: "",
         //dueTime: "",
         orgId: this.$route.params.orgId,
@@ -45,6 +47,8 @@ export default {
     "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
       .default,
     "modal-issue-name": require("components/Issues/Modals/Shared/ModalIssueName.vue")
+      .default,
+    "modal-issue-type": require("components/Issues/Modals/Shared/ModalIssueType.vue")
       .default,
     //"modal-due-date": require("components/Issues/Modals/Shared/ModalDueDate.vue").default,
     //"modal-due-time": require("components/Issues/Modals/Shared/ModalDueTime.vue").default,

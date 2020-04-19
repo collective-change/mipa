@@ -48,10 +48,10 @@ export default {
           sortable: true
         },
         {
-          name: "completed",
+          name: "type",
           align: "left",
-          label: "Completed",
-          field: "completed",
+          label: "Type",
+          field: "type",
           sortable: true
         }
       ]
