@@ -24,7 +24,6 @@
             label="Outstanding cost"
             type="number"
             suffix="XDR"
-            :rules="[(val) => val >= 0 || 'Should be at least 0']"
             filled
             style="max-width: 150px;"
             readonly
@@ -54,7 +53,9 @@
             v-model.number="issue.effortCompletionPercentage"
             type="number"
             suffix="% complete"
-            :rules="[(val) => val >= 0 || 'Should be at least 0']"
+            :rules="[
+              (val) => val == null || val >= 0 || 'Should be at least 0',
+            ]"
             filled
             style="max-width: 150px;"
           />
@@ -72,7 +73,9 @@
             label="Est. purchase cost"
             type="number"
             suffix="XDR"
-            :rules="[(val) => val >= 0 || 'Should be at least 0']"
+            :rules="[
+              (val) => val == null || val >= 0 || 'Should be at least 0',
+            ]"
             filled
             style="max-width: 150px;"
           />
@@ -81,7 +84,9 @@
             label="Purchased amount"
             type="number"
             suffix="XDR"
-            :rules="[(val) => val >= 0 || 'Should be at least 0']"
+            :rules="[
+              (val) => val == null || val >= 0 || 'Should be at least 0',
+            ]"
             filled
             style="max-width: 150px;"
           />
@@ -137,9 +142,17 @@ export default {
       let outstandingEffortCost =
         this.issue.estEffortCostXdr * (1 - effortCompletionPercentage / 100);
 
+      let estPurchaseCostXdr = this.issue.estPurchaseCostXdr
+        ? this.issue.estPurchaseCostXdr
+        : 0;
+
+      let purchasedAmount = this.issue.purchasedAmount
+        ? this.issue.purchasedAmount
+        : 0;
+
       let outstandingPurchaseCost = Math.max(
         0,
-        this.issue.estPurchaseCostXdr - this.issue.purchasedAmount
+        estPurchaseCostXdr - purchasedAmount
       );
       let outstandingCost = outstandingEffortCost + outstandingPurchaseCost;
       return outstandingCost;
