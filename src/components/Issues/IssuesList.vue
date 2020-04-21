@@ -37,7 +37,14 @@ export default {
     return {
       loading: false,
       filter: "",
-      rowCount: 10, //only used in sample code; delete when not needed anymore
+      //rowCount: 10, //only used in sample code; delete when not needed anymore
+      pagination: {
+        sortBy: "estRoi",
+        descending: true,
+        page: 1,
+        rowsPerPage: 10
+        // rowsNumber: xx if getting data from a server
+      },
       columns: [
         {
           name: "name",
@@ -54,6 +61,14 @@ export default {
           label: "Type",
           field: "type",
           sortable: true
+        },
+        {
+          name: "estRoi",
+          align: "left",
+          label: "ROI",
+          field: "estRoi",
+          sortable: true,
+          sortBy: "desc"
         }
       ]
     };

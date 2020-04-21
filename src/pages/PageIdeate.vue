@@ -17,7 +17,6 @@
           <!-- <pre>{{ issues}}</pre> -->
         </div>
         <div class="col-12 col-md-3">
-          <p>test</p>
           <issue-summary />
         </div>
       </div>

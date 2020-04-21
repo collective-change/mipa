@@ -78,6 +78,7 @@ module.exports = function (ctx) {
         "QTh",
         "QTr",
         "QTd",
+        "QSlider",
       ],
 
       directives: ["Ripple", "ClosePopup", "TouchHold"],
