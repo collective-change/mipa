@@ -7,6 +7,7 @@
       row-key="id"
       :filter="filter"
       :loading="loading"
+      @row-click="onRowClick"
     >
       <template v-slot:top>
         <q-btn color="primary" :disable="loading" label="Add row" @click="addRow" />
@@ -36,7 +37,7 @@ export default {
     return {
       loading: false,
       filter: "",
-      rowCount: 10,
+      rowCount: 10, //only used in sample code; delete when not needed anymore
       columns: [
         {
           name: "name",
@@ -64,6 +65,10 @@ export default {
   },
 
   methods: {
+    onRowClick(evt, row) {
+      console.log("clicked on", row.id);
+      this.$store.dispatch("ui/setSelectedIssueId", row.id);
+    },
     // emulate fetching data from server
     addRow() {
       this.loading = true;

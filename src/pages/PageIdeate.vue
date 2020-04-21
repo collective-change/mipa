@@ -17,7 +17,8 @@
           <!-- <pre>{{ issues}}</pre> -->
         </div>
         <div class="col-12 col-md-3">
-          <!--<issue-summary />-->
+          <p>test</p>
+          <issue-summary />
         </div>
       </div>
     </div>
@@ -48,7 +49,8 @@ export default {
     //"issues-todo": require("components/Issues/IssuesTodo.vue").default,
     //"issues-completed": require("components/Issues/IssuesCompleted.vue").default,
     "issues-list": require("components/Issues/IssuesList.vue").default,
-    "add-issue": require("components/Issues/Modals/AddIssue.vue").default
+    "add-issue": require("components/Issues/Modals/AddIssue.vue").default,
+    "issue-summary": require("components/Issues/IssueSummary.vue").default
     //search: require("components/Issues/Tools/Search.vue").default,
     //sort: require("components/Issues/Tools/Sort.vue").default
   },

@@ -32,8 +32,6 @@ const actions = {
     let userId = firebaseAuth.currentUser.uid;
     firebaseDb
       .collection("issues")
-      .doc(userId)
-      .collection("oneUsersIssues")
       .doc(payload.id)
       .set(payload.updates, { merge: true })
       .then(function () {
