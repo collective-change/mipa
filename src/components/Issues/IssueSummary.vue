@@ -5,46 +5,100 @@
         <q-input
           class="text-h6"
           v-model="issue.name"
-          :rules="[val => !!val || 'Field is required']"
+          :rules="[(val) => !!val || 'Field is required']"
           ref="issueName"
         />
         <div class="q-gutter-md row items-start">
           <q-input
             v-model.number="issue.estTotalBenefitXdr"
-            label="Estimated total benefit"
+            label="Est. total benefit"
             type="number"
-            prefix="XDR"
-            :rules="[val => val >= 0 || 'Should be at least 0']"
+            suffix="XDR"
+            :rules="[(val) => val >= 0 || 'Should be at least 0']"
             filled
-            style="max-width: 200px"
+            style="max-width: 150px;"
           />
+
           <q-input
-            v-model.number="issue.estTotalCostXdr"
-            label="Estimated total cost"
+            v-model.number="issue.outstandingCost"
+            label="Outstanding cost"
             type="number"
-            prefix="XDR"
-            :rules="[val => val >= 0 || 'Should be at least 0']"
+            suffix="XDR"
+            :rules="[(val) => val >= 0 || 'Should be at least 0']"
             filled
-            style="max-width: 200px"
+            style="max-width: 150px;"
+            readonly
           />
 
           <q-input
             v-model.number="issue.estRoi"
-            label="Estimated ROI"
+            label="Est. ROI"
             type="number"
             filled
-            style="max-width: 200px"
+            style="max-width: 150px;"
             readonly
           />
         </div>
-        <q-slider v-model="issue.completionPercentage" :min="0" :max="100" label />
-        <q-input v-model="issue.details" label="Details" type="textarea" filled />
+
+        <div class="q-gutter-md q-mt-md row items-start">
+          <q-input
+            v-model.number="issue.estEffortCostXdr"
+            label="Est. effort cost"
+            type="number"
+            suffix="XDR"
+            :rules="[(val) => val >= 0 || 'Should be at least 0']"
+            filled
+            style="max-width: 150px;"
+          />
+          <q-input
+            v-model.number="issue.effortCompletionPercentage"
+            type="number"
+            suffix="% complete"
+            :rules="[(val) => val >= 0 || 'Should be at least 0']"
+            filled
+            style="max-width: 150px;"
+          />
+          <q-slider
+            v-model="issue.effortCompletionPercentage"
+            :min="0"
+            :max="100"
+            label
+          />
+        </div>
+
+        <div class="q-gutter-md q-mt-md row items-start">
+          <q-input
+            v-model.number="issue.estPurchaseCostXdr"
+            label="Est. purchase cost"
+            type="number"
+            suffix="XDR"
+            :rules="[(val) => val >= 0 || 'Should be at least 0']"
+            filled
+            style="max-width: 150px;"
+          />
+          <q-input
+            v-model.number="issue.purchasedAmount"
+            label="Purchased amount"
+            type="number"
+            suffix="XDR"
+            :rules="[(val) => val >= 0 || 'Should be at least 0']"
+            filled
+            style="max-width: 150px;"
+          />
+        </div>
+
+        <q-input
+          v-model="issue.details"
+          label="Details"
+          type="textarea"
+          filled
+        />
 
         <modal-buttons />
       </q-form>
     </div>
-    <p>selectedIssueId: {{selectedIssueId}}</p>
-    <pre>{{selectedIssue}}</pre>
+    <p>selectedIssueId: {{ selectedIssueId }}</p>
+    <pre>{{ selectedIssue }}</pre>
   </div>
 </template>
 
@@ -54,13 +108,13 @@ import { mapActions, mapGetters, mapState } from "vuex";
 export default {
   components: {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default
+      .default,
   },
 
   data() {
     return {
       issue: {},
-      estimatedRoi: null
+      estimatedRoi: null,
       //model: null
     };
   },
@@ -71,25 +125,34 @@ export default {
 
     selectedIssue() {
       let that = this;
-      return this.issues.find(function(issue) {
+      return this.issues.find(function (issue) {
         return issue.id == that.selectedIssueId;
       });
     },
 
-    estRoi() {
-      let completionPercentage = this.issue.completionPercentage
-        ? this.issue.completionPercentage
+    outstandingCost() {
+      let effortCompletionPercentage = this.issue.effortCompletionPercentage
+        ? this.issue.effortCompletionPercentage
         : 0;
-      console.log("completionPercentage", completionPercentage);
-      let outstandingCost =
-        this.issue.estTotalCostXdr * (1 - completionPercentage / 100);
-      //if (outstandingCost==0) return null;
+      let outstandingEffortCost =
+        this.issue.estEffortCostXdr * (1 - effortCompletionPercentage / 100);
+
+      let outstandingPurchaseCost = Math.max(
+        0,
+        this.issue.estPurchaseCostXdr - this.issue.purchasedAmount
+      );
+      let outstandingCost = outstandingEffortCost + outstandingPurchaseCost;
+      return outstandingCost;
+    },
+
+    estRoi() {
+      let outstandingCost = this.outstandingCost;
       let benefit = this.issue.estTotalBenefitXdr;
       let roi = (benefit - outstandingCost) / outstandingCost;
       let precision = Math.ceil(Math.log10(Math.abs(roi)));
       let roundedRoi = (roi / 10 ** precision).toFixed(2) * 10 ** precision;
       return roundedRoi;
-    }
+    },
   },
 
   methods: {
@@ -103,7 +166,7 @@ export default {
     submitIssue() {
       let payload = {
         id: this.selectedIssueId,
-        updates: this.issue
+        updates: this.issue,
       };
       this.$store.dispatch("issues/updateIssue", payload);
       /*this.updateIssue({
@@ -111,18 +174,21 @@ export default {
         updates: this.issue
       });*/
       //this.$emit("close");
-    }
+    },
   },
 
   mounted() {},
 
   watch: {
-    selectedIssue: function(newIssue, oldIssue) {
+    selectedIssue: function (newIssue, oldIssue) {
       this.issue = Object.assign({}, this.selectedIssue);
     },
-    estRoi: function(newValue, oldValue) {
+    outstandingCost: function () {
+      this.issue.outstandingCost = this.outstandingCost;
+    },
+    estRoi: function (newValue, oldValue) {
       this.issue.estRoi = this.estRoi;
-    }
-  }
+    },
+  },
 };
 </script>

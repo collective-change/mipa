@@ -4,7 +4,7 @@
       {{ $route.params.orgName }}'s goal:
       <!-- <span v-if="currentOrg">{{ currentOrg.goal }}</span> -->
     </div>
-    <div class="q-pa-md">
+    <div class="q-pa-xs">
       <div class="row q-col-gutter-md">
         <!--
         <div class="col-12 col-md-2 print-hide">
@@ -32,7 +32,7 @@
       />
     </div>
     <q-dialog v-model="showAddIssue">
-      <add-issue @close="showAddIssue=false" />
+      <add-issue @close="showAddIssue = false" />
     </q-dialog>
   </q-page>
 </template>
@@ -49,25 +49,25 @@ export default {
     //"issues-completed": require("components/Issues/IssuesCompleted.vue").default,
     "issues-list": require("components/Issues/IssuesList.vue").default,
     "add-issue": require("components/Issues/Modals/AddIssue.vue").default,
-    "issue-summary": require("components/Issues/IssueSummary.vue").default
+    "issue-summary": require("components/Issues/IssueSummary.vue").default,
     //search: require("components/Issues/Tools/Search.vue").default,
     //sort: require("components/Issues/Tools/Sort.vue").default
   },
   data() {
     return {
       showAddIssue: false,
-      models: null
+      models: null,
     };
   },
   computed: {
-    ...mapState("issues", ["issues"])
+    ...mapState("issues", ["issues"]),
   },
   created() {
     (async () => {
       while (
         !firebaseAuth.currentUser // define the condition as you like
       )
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
 
       let orgId = this.$route.params.orgId;
       this.$store.dispatch("issues/bindIssues", orgId);
@@ -76,6 +76,6 @@ export default {
   mounted() {},
   beforeDestroy() {
     this.$store.dispatch("issues/unbindIssues");
-  }
+  },
 };
 </script>

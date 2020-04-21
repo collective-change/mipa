@@ -1,5 +1,5 @@
 <template>
-  <div class="q-pa-md">
+  <div>
     <q-table
       title="Issues"
       :data="issues"
@@ -7,10 +7,16 @@
       row-key="id"
       :filter="filter"
       :loading="loading"
+      :pagination.sync="pagination"
       @row-click="onRowClick"
     >
       <template v-slot:top>
-        <q-btn color="primary" :disable="loading" label="Add row" @click="addRow" />
+        <q-btn
+          color="primary"
+          :disable="loading"
+          label="Add row"
+          @click="addRow"
+        />
         <q-btn
           class="q-ml-sm"
           color="primary"
@@ -19,7 +25,13 @@
           @click="removeRow"
         />
         <q-space />
-        <q-input borderless dense debounce="300" color="primary" v-model="filter">
+        <q-input
+          borderless
+          dense
+          debounce="300"
+          color="primary"
+          v-model="filter"
+        >
           <template v-slot:append>
             <q-icon name="search" />
           </template>
@@ -39,44 +51,59 @@ export default {
       filter: "",
       //rowCount: 10, //only used in sample code; delete when not needed anymore
       pagination: {
-        sortBy: "estRoi",
+        sortBy: "roi",
         descending: true,
         page: 1,
-        rowsPerPage: 10
+        rowsPerPage: 10,
         // rowsNumber: xx if getting data from a server
       },
       columns: [
+        {
+          name: "roi",
+          required: true,
+          align: "right",
+          label: "ROI",
+          field: "estRoi",
+          sortable: true,
+          sortBy: "desc",
+        },
         {
           name: "name",
           required: true,
           label: "Issue",
           align: "left",
-          field: row => row.name,
-          format: val => `${val}`,
-          sortable: true
+          field: (row) => row.name,
+          format: (val) => `${val}`,
+          sortable: true,
         },
         {
           name: "type",
           align: "left",
           label: "Type",
           field: "type",
-          sortable: true
+          sortable: true,
         },
         {
-          name: "estRoi",
-          align: "left",
-          label: "ROI",
-          field: "estRoi",
+          name: "benefit",
+          align: "right",
+          label: "Total benefit",
+          field: "estTotalBenefitXdr",
           sortable: true,
-          sortBy: "desc"
-        }
-      ]
+        },
+        {
+          name: "totalCost",
+          align: "right",
+          label: "Total cost",
+          field: "estTotalCostXdr",
+          sortable: true,
+        },
+      ],
     };
   },
 
   computed: {
     //...mapGetters("settings", ["settings"]),
-    ...mapState("issues", ["issues"])
+    ...mapState("issues", ["issues"]),
   },
 
   methods: {
@@ -98,7 +125,7 @@ export default {
         this.data = [
           ...this.data.slice(0, index),
           addRow,
-          ...this.data.slice(index)
+          ...this.data.slice(index),
         ];
         this.loading = false;
       }, 500);
@@ -110,11 +137,11 @@ export default {
         const index = Math.floor(Math.random() * this.data.length);
         this.data = [
           ...this.data.slice(0, index),
-          ...this.data.slice(index + 1)
+          ...this.data.slice(index + 1),
         ];
         this.loading = false;
       }, 500);
-    }
-  }
+    },
+  },
 };
 </script>
