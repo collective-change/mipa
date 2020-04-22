@@ -4,8 +4,14 @@
 
     <q-form @submit.prevent="submitForm">
       <q-card-section>
-        <modal-issue-name :name.sync="issueToSubmit.name" ref="modalIssueName" />
-        <modal-issue-type :type.sync="issueToSubmit.type" ref="modalIssueType" />
+        <modal-issue-title
+          :title.sync="issueToSubmit.title"
+          ref="modalIssueTitle"
+        />
+        <modal-issue-type
+          :type.sync="issueToSubmit.type"
+          ref="modalIssueType"
+        />
       </q-card-section>
       <modal-buttons />
     </q-form>
@@ -19,13 +25,13 @@ export default {
   data() {
     return {
       issueToSubmit: {
-        name: "",
+        title: "",
         type: "action",
         //dueDate: "",
         //dueTime: "",
         orgId: this.$route.params.orgId,
-        completed: false
-      }
+        completed: false,
+      },
     };
   },
   methods: {
@@ -37,23 +43,23 @@ export default {
     },
 
     submitForm() {
-      this.$refs.modalIssueName.$refs.name.validate();
-      if (!this.$refs.modalIssueName.$refs.name.hasError) {
+      this.$refs.modalIssueTitle.$refs.title.validate();
+      if (!this.$refs.modalIssueTitle.$refs.title.hasError) {
         this.submitIssue();
       }
-    }
+    },
   },
   components: {
     "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
       .default,
-    "modal-issue-name": require("components/Issues/Modals/Shared/ModalIssueName.vue")
+    "modal-issue-title": require("components/Issues/Modals/Shared/ModalIssueTitle.vue")
       .default,
     "modal-issue-type": require("components/Issues/Modals/Shared/ModalIssueType.vue")
       .default,
     //"modal-due-date": require("components/Issues/Modals/Shared/ModalDueDate.vue").default,
     //"modal-due-time": require("components/Issues/Modals/Shared/ModalDueTime.vue").default,
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default
-  }
+      .default,
+  },
 };
 </script>

@@ -4,9 +4,9 @@
       <q-form @submit.prevent="submitForm">
         <q-input
           class="text-h6"
-          v-model="issue.name"
+          v-model="issue.title"
           :rules="[(val) => !!val || 'Field is required']"
-          ref="issueName"
+          ref="issueTitle"
         />
         <div class="q-gutter-md row items-start">
           <q-input
@@ -14,7 +14,6 @@
             label="預估總效益"
             type="number"
             suffix="XDR"
-            :rules="[(val) => val >= 0 || 'Should be at least 0']"
             filled
             style="max-width: 150px;"
           />
@@ -52,7 +51,9 @@
             label="預估人力成本"
             type="number"
             suffix="XDR"
-            :rules="[(val) => val >= 0 || 'Should be at least 0']"
+            :rules="[
+              (val) => val == null || val >= 0 || 'Should be at least 0',
+            ]"
             filled
             style="max-width: 150px;"
           />
@@ -173,7 +174,9 @@ export default {
 
     estRoi() {
       let outstandingCostXdr = this.outstandingCostXdr;
-      let benefit = this.issue.estTotalBenefitXdr;
+      let benefit = this.issue.estTotalBenefitXdr
+        ? this.issue.estTotalBenefitXdr
+        : 0;
       let roi = (benefit - outstandingCostXdr) / outstandingCostXdr;
       return Number(roi.toPrecision(2));
     },
@@ -182,8 +185,8 @@ export default {
   methods: {
     ...mapActions("model", ["updateIssue"]),
     submitForm() {
-      this.$refs.issueName.validate();
-      if (!this.$refs.issueName.hasError) {
+      this.$refs.issueTitle.validate();
+      if (!this.$refs.issueTitle.hasError) {
         this.submitIssue();
       }
     },

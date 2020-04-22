@@ -14,16 +14,6 @@
         -->
         <div class="col-12 col-md-7">
           <issues-list></issues-list>
-          <div class="text-center q-my-lg no-pointer-events">
-            <q-btn
-              @click="showAddIssue = true"
-              round
-              class="all-pointer-events"
-              color="primary"
-              size="18px"
-              icon="add"
-            />
-          </div>
           <!-- <pre>{{ issues}}</pre> -->
         </div>
         <div class="col-12 col-md-3">
@@ -31,10 +21,6 @@
         </div>
       </div>
     </div>
-
-    <q-dialog v-model="showAddIssue">
-      <add-issue @close="showAddIssue = false" />
-    </q-dialog>
   </q-page>
 </template>
 
@@ -49,14 +35,14 @@ export default {
     //"issues-todo": require("components/Issues/IssuesTodo.vue").default,
     //"issues-completed": require("components/Issues/IssuesCompleted.vue").default,
     "issues-list": require("components/Issues/IssuesList.vue").default,
-    "add-issue": require("components/Issues/Modals/AddIssue.vue").default,
+    //"add-issue": require("components/Issues/Modals/AddIssue.vue").default,
     "issue-summary": require("components/Issues/IssueSummary.vue").default,
     //search: require("components/Issues/Tools/Search.vue").default,
     //sort: require("components/Issues/Tools/Sort.vue").default
   },
   data() {
     return {
-      showAddIssue: false,
+      //showAddIssue: false,
       models: null,
     };
   },

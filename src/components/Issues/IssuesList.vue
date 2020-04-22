@@ -11,7 +11,23 @@
       @row-click="onRowClick"
     >
       <template v-slot:top>
-        <div class="col-2 q-table__title">項目</div>
+        <div class="col-2 q-table__title">事項</div>
+
+        <!-- <q-btn
+          @click="showAddIssue = true"
+          round
+          class="all-pointer-events"
+          color="primary"
+          size="16px"
+          icon="add"
+        /> -->
+        <q-btn
+          color="primary"
+          :disable="loading"
+          label="新增"
+          @click="showAddIssue = true"
+        />
+
         <!--
         <q-btn
           color="primary"
@@ -35,6 +51,9 @@
         </q-input>
       </template>
     </q-table>
+    <q-dialog v-model="showAddIssue">
+      <add-issue @close="showAddIssue = false" />
+    </q-dialog>
   </div>
 </template>
 
@@ -42,8 +61,12 @@
 import { mapGetters, mapState } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 export default {
+  components: {
+    "add-issue": require("components/Issues/Modals/AddIssue.vue").default,
+  },
   data() {
     return {
+      showAddIssue: false,
       loading: false,
       filter: "",
       //rowCount: 10, //only used in sample code; delete when not needed anymore
@@ -61,16 +84,17 @@ export default {
           align: "right",
           label: "SROI",
           field: "estRoi",
-          format: (val) => `${val.toLocaleString()}`,
+          format: (val) =>
+            `${typeof val !== "undefined" ? val.toLocaleString() : ""}`,
           sortable: true,
           sortBy: "desc",
         },
         {
-          name: "name",
+          name: "title",
           required: true,
-          label: "項目",
+          label: "標題",
           align: "left",
-          field: (row) => row.name,
+          field: (row) => row.title,
           sortable: true,
         },
         {
@@ -85,7 +109,8 @@ export default {
           align: "right",
           label: "總效益 (XDR)",
           field: "estTotalBenefitXdr",
-          format: (val) => `${val.toLocaleString()}`,
+          format: (val) =>
+            `${typeof val !== "undefined" ? val.toLocaleString() : ""}`,
           sortable: true,
         },
         {
@@ -93,7 +118,8 @@ export default {
           align: "right",
           label: "總成本 (XDR)",
           field: "estTotalCostXdr",
-          format: (val) => `${val.toLocaleString()}`,
+          format: (val) =>
+            `${typeof val !== "undefined" ? val.toLocaleString() : ""}`,
           sortable: true,
         },
       ],
