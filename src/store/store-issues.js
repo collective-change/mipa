@@ -44,7 +44,7 @@ const actions = {
         showErrorMessage("Error updating issue", error.message);
       });
   },
-  deleteIssue({ dispatch }, id) {
+  deleteIssue({ dispatch }, issueId) {
     let userId = firebaseAuth.currentUser.uid;
     firebaseDb
       .collection("issues")

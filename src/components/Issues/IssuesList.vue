@@ -61,6 +61,7 @@ export default {
           align: "right",
           label: "SROI",
           field: "estRoi",
+          format: (val) => `${val.toLocaleString()}`,
           sortable: true,
           sortBy: "desc",
         },
@@ -70,7 +71,6 @@ export default {
           label: "項目",
           align: "left",
           field: (row) => row.name,
-          format: (val) => `${val}`,
           sortable: true,
         },
         {
@@ -85,6 +85,7 @@ export default {
           align: "right",
           label: "總效益 (XDR)",
           field: "estTotalBenefitXdr",
+          format: (val) => `${val.toLocaleString()}`,
           sortable: true,
         },
         {
@@ -92,6 +93,7 @@ export default {
           align: "right",
           label: "總成本 (XDR)",
           field: "estTotalCostXdr",
+          format: (val) => `${val.toLocaleString()}`,
           sortable: true,
         },
       ],

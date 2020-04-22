@@ -11,7 +11,7 @@
         <div class="q-gutter-md row items-start">
           <q-input
             v-model.number="issue.estTotalBenefitXdr"
-            label="Est. total benefit"
+            label="預估總效益"
             type="number"
             suffix="XDR"
             :rules="[(val) => val >= 0 || 'Should be at least 0']"
@@ -20,20 +20,27 @@
           />
 
           <q-input
-            v-model.number="issue.outstandingCost"
-            label="Outstanding cost"
+            v-model.number="issue.estTotalCostXdr"
+            label="預估總成本"
             type="number"
             suffix="XDR"
-            filled
+            style="max-width: 150px;"
+            readonly
+          />
+
+          <q-input
+            v-model.number="issue.outstandingCostXdr"
+            label="需再付出成本"
+            type="number"
+            suffix="XDR"
             style="max-width: 150px;"
             readonly
           />
 
           <q-input
             v-model.number="issue.estRoi"
-            label="Est. ROI"
+            label="估計 SROI"
             type="number"
-            filled
             style="max-width: 150px;"
             readonly
           />
@@ -42,7 +49,7 @@
         <div class="q-gutter-md q-mt-md row items-start">
           <q-input
             v-model.number="issue.estEffortCostXdr"
-            label="Est. effort cost"
+            label="預估人力成本"
             type="number"
             suffix="XDR"
             :rules="[(val) => val >= 0 || 'Should be at least 0']"
@@ -52,7 +59,7 @@
           <q-input
             v-model.number="issue.effortCompletionPercentage"
             type="number"
-            suffix="% complete"
+            suffix="% 完成"
             :rules="[
               (val) => val == null || val >= 0 || 'Should be at least 0',
             ]"
@@ -70,7 +77,7 @@
         <div class="q-gutter-md q-mt-md row items-start">
           <q-input
             v-model.number="issue.estPurchaseCostXdr"
-            label="Est. purchase cost"
+            label="預估採購金額"
             type="number"
             suffix="XDR"
             :rules="[
@@ -81,7 +88,7 @@
           />
           <q-input
             v-model.number="issue.purchasedAmount"
-            label="Purchased amount"
+            label="已採購金額"
             type="number"
             suffix="XDR"
             :rules="[
@@ -92,12 +99,7 @@
           />
         </div>
 
-        <q-input
-          v-model="issue.details"
-          label="Details"
-          type="textarea"
-          filled
-        />
+        <q-input v-model="issue.notes" label="筆記" type="textarea" filled />
 
         <modal-buttons />
       </q-form>
@@ -135,7 +137,18 @@ export default {
       });
     },
 
-    outstandingCost() {
+    estTotalCostXdr() {
+      let estEffortCostXdr = this.issue.estEffortCostXdr
+        ? this.issue.estEffortCostXdr
+        : 0;
+      let estPurchaseCostXdr = this.issue.estPurchaseCostXdr
+        ? this.issue.estPurchaseCostXdr
+        : 0;
+      let estTotalCostXdr = estEffortCostXdr + estPurchaseCostXdr;
+      return estTotalCostXdr;
+    },
+
+    outstandingCostXdr() {
       let effortCompletionPercentage = this.issue.effortCompletionPercentage
         ? this.issue.effortCompletionPercentage
         : 0;
@@ -154,17 +167,15 @@ export default {
         0,
         estPurchaseCostXdr - purchasedAmount
       );
-      let outstandingCost = outstandingEffortCost + outstandingPurchaseCost;
-      return outstandingCost;
+      let outstandingCostXdr = outstandingEffortCost + outstandingPurchaseCost;
+      return Math.round(outstandingCostXdr);
     },
 
     estRoi() {
-      let outstandingCost = this.outstandingCost;
+      let outstandingCostXdr = this.outstandingCostXdr;
       let benefit = this.issue.estTotalBenefitXdr;
-      let roi = (benefit - outstandingCost) / outstandingCost;
-      let precision = Math.ceil(Math.log10(Math.abs(roi)));
-      let roundedRoi = (roi / 10 ** precision).toFixed(2) * 10 ** precision;
-      return roundedRoi;
+      let roi = (benefit - outstandingCostXdr) / outstandingCostXdr;
+      return Number(roi.toPrecision(2));
     },
   },
 
@@ -196,8 +207,11 @@ export default {
     selectedIssue: function (newIssue, oldIssue) {
       this.issue = Object.assign({}, this.selectedIssue);
     },
-    outstandingCost: function () {
-      this.issue.outstandingCost = this.outstandingCost;
+    estTotalCostXdr: function () {
+      this.issue.estTotalCostXdr = this.estTotalCostXdr;
+    },
+    outstandingCostXdr: function () {
+      this.issue.outstandingCostXdr = this.outstandingCostXdr;
     },
     estRoi: function (newValue, oldValue) {
       this.issue.estRoi = this.estRoi;
