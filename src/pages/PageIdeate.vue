@@ -1,7 +1,7 @@
 <template>
   <q-page padding>
     <div class="text-h5">
-      {{ $route.params.orgName }}'s goal:
+      <!-- {{ $route.params.orgName }}'s goal: -->
       <!-- <span v-if="currentOrg">{{ currentOrg.goal }}</span> -->
     </div>
     <div class="q-pa-xs">
@@ -14,6 +14,16 @@
         -->
         <div class="col-12 col-md-7">
           <issues-list></issues-list>
+          <div class="text-center q-my-lg no-pointer-events">
+            <q-btn
+              @click="showAddIssue = true"
+              round
+              class="all-pointer-events"
+              color="primary"
+              size="18px"
+              icon="add"
+            />
+          </div>
           <!-- <pre>{{ issues}}</pre> -->
         </div>
         <div class="col-12 col-md-3">
@@ -21,16 +31,7 @@
         </div>
       </div>
     </div>
-    <div class="absolute-bottom text-center q-mb-lg no-pointer-events">
-      <q-btn
-        @click="showAddIssue = true"
-        round
-        class="all-pointer-events"
-        color="primary"
-        size="24px"
-        icon="add"
-      />
-    </div>
+
     <q-dialog v-model="showAddIssue">
       <add-issue @close="showAddIssue = false" />
     </q-dialog>

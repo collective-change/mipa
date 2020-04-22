@@ -1,26 +1,27 @@
 <template>
   <div>
     <div v-if="selectedNode">
-      <div class="text-h6">{{selectedNode.name}}</div>
+      <div class="text-h6">{{ selectedNode.name }}</div>
 
       <q-form @submit.prevent="submitForm">
         <q-input
           v-model="nodeToSubmit.name"
           label="Name"
-          :rules="[val => !!val || 'Field is required']"
+          :rules="[(val) => !!val || 'Field is required']"
           clearable
           ref="nodeName"
         />
         <q-input v-model="nodeToSubmit.units" label="Units" clearable />
+        <q-input v-model="nodeToSubmit.symbol" label="symbol" clearable />
+        <q-input v-model="enteredFormula" label="enteredFormula" />
         <q-input
-          v-model="nodeToSubmit.symbol"
-          label="symbol"
-          :rules="[val => !!val || 'Field is required']"
+          v-model="nodeToSubmit.sysFormula"
+          label="sysFormula"
           clearable
         />
-        <q-input v-model="enteredFormula" label="enteredFormula" />
-        <q-input v-model="nodeToSubmit.sysFormula" label="sysFormula" clearable />
-        <vue-mathjax :formula="'$$'+selectedNode.symbol+'='+latexFormula+'$$'"></vue-mathjax>
+        <vue-mathjax
+          :formula="'$$' + selectedNode.symbol + '=' + latexFormula + '$$'"
+        ></vue-mathjax>
         <q-input v-model="nodeToSubmit.notes" label="Notes" clearable />
 
         <modal-buttons />
@@ -41,14 +42,14 @@ export default {
   components: {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
-    "vue-mathjax": VueMathjax
+    "vue-mathjax": VueMathjax,
   },
 
   data() {
     return {
       nodeToSubmit: {},
       enteredFormula: "",
-      model: null
+      model: null,
     };
   },
 
@@ -58,7 +59,7 @@ export default {
 
     selectedNode() {
       let that = this;
-      return this.nodes.find(function(node) {
+      return this.nodes.find(function (node) {
         return node.id == that.selectedNodeId;
       });
     },
@@ -69,8 +70,8 @@ export default {
         var influencerNode = {};
         var symbolFormula = this.nodeToSubmit.sysFormula;
         //for each influencer, replace id in formula with symbol
-        this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
-          influencerNode = nodes.find(function(node) {
+        this.nodeToSubmit.influencers.forEach(function (influencerNodeId) {
+          influencerNode = nodes.find(function (node) {
             return node.id == influencerNodeId;
           });
           symbolFormula = symbolFormula.replace(
@@ -97,11 +98,11 @@ export default {
       return this.parsedSymbolFormula
         ? this.parsedSymbolFormula.toTex({
             parenthesis: parenthesis,
-            implicit: implicit
+            implicit: implicit,
           })
         : "";
       console.log("LaTeX expression:", latex);
-    }
+    },
   },
 
   methods: {
@@ -115,10 +116,10 @@ export default {
     submitNode() {
       this.updateNode({
         modelId: this.$route.params.modelId,
-        updates: this.nodeToSubmit
+        updates: this.nodeToSubmit,
       });
       //this.$emit("close");
-    }
+    },
   },
 
   mounted() {
@@ -136,9 +137,9 @@ export default {
   },
 
   watch: {
-    selectedNode: function(newNode, oldNode) {
+    selectedNode: function (newNode, oldNode) {
       this.nodeToSubmit = Object.assign({}, this.selectedNode);
-    }
-  }
+    },
+  },
 };
 </script>

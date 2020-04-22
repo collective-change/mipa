@@ -6,12 +6,16 @@
     </div>
     <div class="q-pa-md">
       <div class="row q-col-gutter-md">
-        <!--
         <div class="col-12 col-md-2 print-hide">
-          <q-select borderless v-model="currentModel" :options="modelOptions" label="Model" />
+          <q-select
+            borderless
+            v-model="currentModel"
+            :options="modelOptions"
+            label="Model"
+          />
           <q-tree :nodes="exampleTree" node-key="label" />
         </div>
-        -->
+
         <div class="col-12 col-md-7">
           <dependency-graph></dependency-graph>
         </div>
@@ -31,7 +35,7 @@ export default {
   name: "app",
   components: {
     "dependency-graph": require("components/Model/DependencyGraph.vue").default,
-    "node-summary": require("components/Model/NodeSummary.vue").default
+    "node-summary": require("components/Model/NodeSummary.vue").default,
   },
   data() {
     return {
@@ -43,13 +47,13 @@ export default {
         { label: "Total cost" },
         {
           label: "AC usage",
-          children: [{ label: "overall" }, { label: "AC efficiency" }]
+          children: [{ label: "overall" }, { label: "AC efficiency" }],
         },
         {
           label: "some model shared w/ public",
           icon: "public",
           iconColor: "orange-4",
-          children: [{ label: "one" }, { label: "two" }]
+          children: [{ label: "one" }, { label: "two" }],
         },
         {
           label: "global warming",
@@ -62,14 +66,14 @@ export default {
               children: [
                 { label: "top level" },
                 { label: "sub-model 1" },
-                { label: "sub-model 2" }
-              ]
+                { label: "sub-model 2" },
+              ],
             },
             {
               label: "Planetary Boundaries",
               //icon: "folder",
               //disabled: true,
-              children: [{ label: "child 1" }, { label: "child 2" }]
+              children: [{ label: "child 1" }, { label: "child 2" }],
             },
             {
               label: "17 SDGs",
@@ -77,16 +81,16 @@ export default {
               children: [
                 { label: "overall" },
                 { label: "1 No Poverty" },
-                { label: "2 Zero Hunger" }
-              ]
-            }
-          ]
-        }
-      ]
+                { label: "2 Zero Hunger" },
+              ],
+            },
+          ],
+        },
+      ],
     };
   },
   computed: {
-    ...mapState("orgs", ["currentOrg"])
+    ...mapState("orgs", ["currentOrg"]),
   },
   created() {
     (async () => {
@@ -94,7 +98,7 @@ export default {
       while (
         !firebaseAuth.currentUser // define the condition as you like
       )
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
       //bind to list of models the org-user can view
       //(user is in model's owners, editors, or viewers)
       //this.$store.dispatch("orgs/bindReadableModels", this.$route.params.orgId);
@@ -112,6 +116,6 @@ export default {
   beforeDestroy() {
     //this.$store.dispatch("teams/unbindCurrentTeam");
     this.$store.dispatch("model/unbindNodes");
-  }
+  },
 };
 </script>

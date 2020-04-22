@@ -102,8 +102,8 @@
         <modal-buttons />
       </q-form>
     </div>
-    <p>selectedIssueId: {{ selectedIssueId }}</p>
-    <pre>{{ selectedIssue }}</pre>
+    <!-- <p>selectedIssueId: {{ selectedIssueId }}</p>
+    <pre>{{ selectedIssue }}</pre> -->
   </div>
 </template>
 

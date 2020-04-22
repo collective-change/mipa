@@ -11,6 +11,8 @@
       @row-click="onRowClick"
     >
       <template v-slot:top>
+        <div class="col-2 q-table__title">項目</div>
+        <!--
         <q-btn
           color="primary"
           :disable="loading"
@@ -24,14 +26,9 @@
           label="Remove row"
           @click="removeRow"
         />
+        -->
         <q-space />
-        <q-input
-          borderless
-          dense
-          debounce="300"
-          color="primary"
-          v-model="filter"
-        >
+        <q-input dense debounce="300" color="primary" v-model="filter">
           <template v-slot:append>
             <q-icon name="search" />
           </template>
@@ -62,7 +59,7 @@ export default {
           name: "roi",
           required: true,
           align: "right",
-          label: "ROI",
+          label: "SROI",
           field: "estRoi",
           sortable: true,
           sortBy: "desc",
@@ -70,7 +67,7 @@ export default {
         {
           name: "name",
           required: true,
-          label: "Issue",
+          label: "項目",
           align: "left",
           field: (row) => row.name,
           format: (val) => `${val}`,
@@ -79,21 +76,21 @@ export default {
         {
           name: "type",
           align: "left",
-          label: "Type",
+          label: "種類",
           field: "type",
           sortable: true,
         },
         {
           name: "benefit",
           align: "right",
-          label: "Total benefit",
+          label: "總效益 (XDR)",
           field: "estTotalBenefitXdr",
           sortable: true,
         },
         {
           name: "totalCost",
           align: "right",
-          label: "Total cost",
+          label: "總成本 (XDR)",
           field: "estTotalCostXdr",
           sortable: true,
         },
