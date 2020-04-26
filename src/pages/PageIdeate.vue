@@ -13,7 +13,13 @@
         </div>
         -->
         <div class="col-12 col-md-7">
-          <issues-list></issues-list>
+          <q-toggle v-model="useRoi" label="分析優先順序" />
+          <div v-if="useRoi">
+            <issues-list></issues-list>
+          </div>
+          <div v-else>
+            <unprioritized-issues-list></unprioritized-issues-list>
+          </div>
           <!-- <pre>{{ issues}}</pre> -->
         </div>
         <div class="col-12 col-md-3">
@@ -35,6 +41,8 @@ export default {
     //"issues-todo": require("components/Issues/IssuesTodo.vue").default,
     //"issues-completed": require("components/Issues/IssuesCompleted.vue").default,
     "issues-list": require("components/Issues/IssuesList.vue").default,
+    "unprioritized-issues-list": require("components/Issues/UnprioritizedIssuesList.vue")
+      .default,
     //"add-issue": require("components/Issues/Modals/AddIssue.vue").default,
     "issue-summary": require("components/Issues/IssueSummary.vue").default,
     //search: require("components/Issues/Tools/Search.vue").default,
@@ -43,6 +51,7 @@ export default {
   data() {
     return {
       //showAddIssue: false,
+      useRoi: true,
       models: null,
     };
   },

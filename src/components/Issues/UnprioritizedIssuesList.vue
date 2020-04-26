@@ -71,55 +71,17 @@ export default {
       filter: "",
       //rowCount: 10, //only used in sample code; delete when not needed anymore
       pagination: {
-        sortBy: "roi",
-        descending: true,
         page: 1,
         rowsPerPage: 20,
         // rowsNumber: xx if getting data from a server
       },
       columns: [
         {
-          name: "roi",
-          required: true,
-          align: "right",
-          label: "SROI",
-          field: "estRoi",
-          format: (val) =>
-            `${typeof val !== "undefined" ? val.toLocaleString() : ""}`,
-          sortable: true,
-          sortBy: "desc",
-        },
-        {
           name: "title",
           required: true,
           label: "標題",
           align: "left",
           field: (row) => row.title,
-          sortable: true,
-        },
-        {
-          name: "type",
-          align: "center",
-          label: "種類",
-          field: "type",
-          sortable: true,
-        },
-        {
-          name: "benefit",
-          align: "right",
-          label: "總效益 (XDR)",
-          field: "estTotalBenefitXdr",
-          format: (val) =>
-            `${typeof val !== "undefined" ? val.toLocaleString() : ""}`,
-          sortable: true,
-        },
-        {
-          name: "totalCost",
-          align: "right",
-          label: "總成本 (XDR)",
-          field: "estTotalCostXdr",
-          format: (val) =>
-            `${typeof val !== "undefined" ? val.toLocaleString() : ""}`,
           sortable: true,
         },
         {

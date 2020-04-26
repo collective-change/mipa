@@ -99,9 +99,17 @@
             style="max-width: 150px;"
           />
         </div>
+        <div class="q-gutter-md q-mt-md items-start">
+          <q-input
+            v-model="issue.dueDate"
+            filled
+            type="date"
+            label="截止日期"
+            style="max-width: 160px;"
+          />
 
-        <q-input v-model="issue.notes" label="筆記" type="textarea" filled />
-
+          <q-input v-model="issue.notes" label="筆記" type="textarea" filled />
+        </div>
         <modal-buttons />
       </q-form>
     </div>
