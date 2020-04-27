@@ -14,7 +14,7 @@
         <q-input v-model="nodeToSubmit.units" label="Units" clearable />
         <q-input v-model="nodeToSubmit.symbol" label="symbol" clearable />
         <q-input v-model="nodeToSubmit.symbolFormula" label="symbolFormula" />
-        <q-input v-model="nodeToSubmit.sysFormula" label="sysFormula" clearable />
+        <q-input v-model="nodeToSubmit.parsedSysFormula" label="parsedSysFormula" readonly />
         <vue-mathjax :formula="'$$' + selectedNode.symbol + '=' + latexFormula + '$$'"></vue-mathjax>
         <q-input v-model="nodeToSubmit.notes" label="Notes" clearable />
 
@@ -91,7 +91,7 @@ export default {
             });
             sysFormula = sysFormula.replace(
               influencerNode.symbol,
-              influencerNode.id
+              " " + influencerNode.id + " "
             );
           });
         }
@@ -115,7 +115,7 @@ export default {
       return parsedSysFormula;
     },
 
-    //replace ids in system formula back to symbols
+    //replace ids in parsedSysFormula back to symbols
 
     //latexFormula from parsedSymbolFormula
     latexFormula() {
@@ -166,10 +166,9 @@ export default {
     },
     sysFormula: function() {
       this.nodeToSubmit.sysFormula = this.sysFormula;
-      console.log(
-        "this.nodeToSubmit.sysFormula: ",
-        this.nodeToSubmit.sysFormula
-      );
+    },
+    parsedSysFormula: function() {
+      this.nodeToSubmit.parsedSysFormula = this.parsedSysFormula;
     }
   }
 };
