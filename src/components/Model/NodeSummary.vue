@@ -13,15 +13,9 @@
         />
         <q-input v-model="nodeToSubmit.units" label="Units" clearable />
         <q-input v-model="nodeToSubmit.symbol" label="symbol" clearable />
-        <q-input v-model="enteredFormula" label="enteredFormula" />
-        <q-input
-          v-model="nodeToSubmit.sysFormula"
-          label="sysFormula"
-          clearable
-        />
-        <vue-mathjax
-          :formula="'$$' + selectedNode.symbol + '=' + latexFormula + '$$'"
-        ></vue-mathjax>
+        <q-input v-model="nodeToSubmit.symbolFormula" label="symbolFormula" />
+        <q-input v-model="nodeToSubmit.sysFormula" label="sysFormula" clearable />
+        <vue-mathjax :formula="'$$' + selectedNode.symbol + '=' + latexFormula + '$$'"></vue-mathjax>
         <q-input v-model="nodeToSubmit.notes" label="Notes" clearable />
 
         <modal-buttons />
@@ -42,14 +36,14 @@ export default {
   components: {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
-    "vue-mathjax": VueMathjax,
+    "vue-mathjax": VueMathjax
   },
 
   data() {
     return {
       nodeToSubmit: {},
-      enteredFormula: "",
-      model: null,
+      //enteredFormula: "",
+      model: null
     };
   },
 
@@ -59,19 +53,19 @@ export default {
 
     selectedNode() {
       let that = this;
-      return this.nodes.find(function (node) {
+      return this.nodes.find(function(node) {
         return node.id == that.selectedNodeId;
       });
     },
-
+    /*
     symbolFormula() {
       if (this.nodeToSubmit.sysFormula) {
         var nodes = this.nodes;
         var influencerNode = {};
         var symbolFormula = this.nodeToSubmit.sysFormula;
         //for each influencer, replace id in formula with symbol
-        this.nodeToSubmit.influencers.forEach(function (influencerNodeId) {
-          influencerNode = nodes.find(function (node) {
+        this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
+          influencerNode = nodes.find(function(node) {
             return node.id == influencerNodeId;
           });
           symbolFormula = symbolFormula.replace(
@@ -82,27 +76,57 @@ export default {
         return symbolFormula;
       } else return "";
     },
+    */
+
+    sysFormula() {
+      if (this.nodeToSubmit.symbolFormula) {
+        var nodes = this.nodes;
+        var influencerNode = {};
+        var sysFormula = this.nodeToSubmit.symbolFormula;
+        //for each influencer, replace symbol in formula with id
+        if (typeof this.nodeToSubmit.influencers !== "undefined") {
+          this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
+            influencerNode = nodes.find(function(node) {
+              return node.id == influencerNodeId;
+            });
+            sysFormula = sysFormula.replace(
+              influencerNode.symbol,
+              influencerNode.id
+            );
+          });
+        }
+        return sysFormula;
+      } else return "";
+    },
 
     //parse symbol formula
     parsedSymbolFormula() {
-      let parsedSymbolFormula = this.symbolFormula
-        ? parse(this.symbolFormula)
+      let parsedSymbolFormula = this.nodeToSubmit.symbolFormula
+        ? parse(this.nodeToSubmit.symbolFormula)
         : "";
       return parsedSymbolFormula;
     },
 
+    //parse system formula
+    parsedSysFormula() {
+      let parsedSysFormula = this.nodeToSubmit.sysFormula
+        ? parse(this.nodeToSubmit.sysFormula)
+        : "";
+      return parsedSysFormula;
+    },
+
+    //replace ids in system formula back to symbols
+
     //latexFormula from parsedSymbolFormula
     latexFormula() {
-      let parenthesis = "keep";
-      let implicit = "hide";
       return this.parsedSymbolFormula
         ? this.parsedSymbolFormula.toTex({
-            parenthesis: parenthesis,
-            implicit: implicit,
+            parenthesis: "keep",
+            implicit: "hide"
           })
         : "";
       console.log("LaTeX expression:", latex);
-    },
+    }
   },
 
   methods: {
@@ -116,10 +140,10 @@ export default {
     submitNode() {
       this.updateNode({
         modelId: this.$route.params.modelId,
-        updates: this.nodeToSubmit,
+        updates: this.nodeToSubmit
       });
       //this.$emit("close");
-    },
+    }
   },
 
   mounted() {
@@ -137,9 +161,16 @@ export default {
   },
 
   watch: {
-    selectedNode: function (newNode, oldNode) {
+    selectedNode: function(newNode, oldNode) {
       this.nodeToSubmit = Object.assign({}, this.selectedNode);
     },
-  },
+    sysFormula: function() {
+      this.nodeToSubmit.sysFormula = this.sysFormula;
+      console.log(
+        "this.nodeToSubmit.sysFormula: ",
+        this.nodeToSubmit.sysFormula
+      );
+    }
+  }
 };
 </script>
