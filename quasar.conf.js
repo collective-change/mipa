@@ -109,7 +109,7 @@ module.exports = function(ctx) {
     animations: ["zoomIn", "zoomOut"],
 
     ssr: {
-      pwa: false
+      pwa: true
     },
 
     pwa: {
