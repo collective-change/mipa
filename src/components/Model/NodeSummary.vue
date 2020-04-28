@@ -20,8 +20,8 @@
         <modal-buttons />
       </q-form>
     </div>
-    <!--<p>selectedNode</p>
-    <pre>{{selectedNode}}</pre>-->
+    <p>selectedNode</p>
+    <pre>{{selectedNode}}</pre>
   </div>
 </template>
 
@@ -89,15 +89,28 @@ export default {
           symbol: this.nodeToSubmit.symbol,
           id: this.nodeToSubmit.id
         });
-        this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
-          influencerNode = nodes.find(function(node) {
-            return node.id == influencerNodeId;
+        if (this.nodeToSubmit.influencers)
+          this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
+            influencerNode = nodes.find(function(node) {
+              return node.id == influencerNodeId;
+            });
+            potentials.push({
+              symbol: influencerNode.symbol,
+              id: influencerNodeId
+            });
           });
-          potentials.push({
-            symbol: influencerNode.symbol,
-            id: influencerNodeId
+        if (this.nodeToSubmit.feedbackInfluencers)
+          this.nodeToSubmit.feedbackInfluencers.forEach(function(
+            influencerNodeId
+          ) {
+            influencerNode = nodes.find(function(node) {
+              return node.id == influencerNodeId;
+            });
+            potentials.push({
+              symbol: influencerNode.symbol,
+              id: influencerNodeId
+            });
           });
-        });
         potentials.sort(function(a, b) {
           return a.symbol.length - b.symbol.length;
         });

@@ -107,7 +107,8 @@ export default {
       linkToSubmit: {
         sourceNodeId: "",
         targetNodeId: "",
-        targetType: ""
+        targetType: "",
+        type: ""
       }
     };
   },
@@ -279,6 +280,7 @@ export default {
             that.linkToSubmit.sourceNodeId = that.selectedNodeId;
             that.linkToSubmit.targetNodeId = "";
             that.linkToSubmit.targetType = "influencer";
+            that.linkToSubmit.type = "forward";
           }
         },
         {
@@ -288,6 +290,17 @@ export default {
             that.linkToSubmit.sourceNodeId = that.selectedNodeId;
             that.linkToSubmit.targetNodeId = "";
             that.linkToSubmit.targetType = "influencee";
+            that.linkToSubmit.type = "forward";
+          }
+        },
+        {
+          label: "Link to feedback influencee",
+          handler: function() {
+            that.showAddLink = true;
+            that.linkToSubmit.sourceNodeId = that.selectedNodeId;
+            that.linkToSubmit.targetNodeId = "";
+            that.linkToSubmit.targetType = "feedback influencee";
+            that.linkToSubmit.type = "back";
           }
         },
         {
@@ -786,8 +799,8 @@ export default {
         this.storeData.links.forEach(function(storeLink) {
           var filterPattern = {
             source: storeLink.source,
-            target: storeLink.target
-            //type: storeLink.type
+            target: storeLink.target,
+            type: storeLink.type
           };
           //if storeLink exists in data.links already
           // if (
