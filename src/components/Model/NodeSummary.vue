@@ -14,7 +14,6 @@
         <q-input v-model="nodeToSubmit.units" label="Units" clearable />
         <q-input v-model="nodeToSubmit.symbol" label="symbol" clearable />
         <q-input v-model="nodeToSubmit.symbolFormula" label="symbolFormula" />
-        <q-input v-model="nodeToSubmit.parsedSysFormula" label="parsedSysFormula" readonly />
         <vue-mathjax :formula="'$$' + selectedNode.symbol + '=' + latexFormula + '$$'"></vue-mathjax>
         <q-input v-model="nodeToSubmit.notes" label="Notes" clearable />
 
@@ -107,14 +106,6 @@ export default {
       return parsedSymbolFormula;
     },
 
-    //parse system formula
-    parsedSysFormula() {
-      let parsedSysFormula = this.nodeToSubmit.sysFormula
-        ? parse(this.nodeToSubmit.sysFormula)
-        : "";
-      return parsedSysFormula;
-    },
-
     //replace ids in parsedSysFormula back to symbols
 
     //latexFormula from parsedSymbolFormula
@@ -166,9 +157,6 @@ export default {
     },
     sysFormula: function() {
       this.nodeToSubmit.sysFormula = this.sysFormula;
-    },
-    parsedSysFormula: function() {
-      this.nodeToSubmit.parsedSysFormula = this.parsedSysFormula;
     }
   }
 };

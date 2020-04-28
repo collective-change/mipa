@@ -9,30 +9,41 @@ onmessage = function(e) {
 
   let nodes = e.data.modelNodes.map(simplifyForSort);
   //console.log("nodes: ", nodes);
+  let sortedNodes = [];
 
-  let sortedNodes = topoSort(nodes);
+  try {
+    sortedNodes = topoSort(nodes);
+  } catch (err) {
+    this.postMessage(err);
+  }
 
-  const expr = e.data.expr;
-  let result = null;
+  //prepare results object
+  let result = {};
+  sortedNodes.forEach(function(node, index) {
+    result[node.id] = [];
+  });
   let err = null;
   let scope = {};
   let formulasArray = [];
 
   try {
     // gather up formulas from nodes into an array ordered by calculation order
-    // i.e. do topological sorting
-    formulasArray = [];
+    sortedNodes.forEach(function(node, index) {});
+    formulasArray = sortedNodes.map(node => node.id + " = " + node.sysFormula);
+    console.log(formulasArray);
 
-    // evaluate the expression
-    result = parser.evaluate(expr);
+    // evaluate the formulas
     math.evaluate(formulasArray, scope);
-  } catch (e) {
-    // return the error
-    err = e;
+    console.log("scope: ", scope);
+    //save scope into results object
+    sortedNodes.forEach(function(node, index) {
+      result[node.id].push(scope[node.id]);
+    });
+  } catch (err) {
+    this.postMessage(err);
   }
 
   //console.log("Posting message back to main script");
-  console.log("result ", result);
   postMessage(result);
 };
 
@@ -64,8 +75,8 @@ function topoSort(nodes) {
   }
   //if number of sorted nodes is not the same as incoming nodes, then graph has at least one cycle
   if (unvisitedNodes.length) {
-    //console.log("unvisitedNodes: ", unvisitedNodes);
-    return "Graph has at least one cycle";
+    console.log("unvisitedNodes: ", unvisitedNodes);
+    throw "Circular dependency detected.";
   } else {
     //console.log("L: ", L);
     return L;
@@ -78,6 +89,8 @@ function simplifyForSort(node) {
     name: node.name,
     inDegree:
       typeof node.influencers !== "undefined" ? node.influencers.length : 0,
-    influencees: node.influencees !== "undefined" ? node.influencees : []
+    influencees:
+      typeof node.influencees !== "undefined" ? node.influencees : [],
+    sysFormula: typeof node.sysFormula !== "undefined" ? node.sysFormula : ""
   };
 }
