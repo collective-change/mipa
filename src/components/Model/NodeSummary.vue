@@ -8,14 +8,14 @@
           v-model="nodeToSubmit.name"
           label="Name"
           :rules="[(val) => !!val || 'Field is required']"
-          clearable
           ref="nodeName"
         />
-        <q-input v-model="nodeToSubmit.units" label="Units" clearable />
-        <q-input v-model="nodeToSubmit.symbol" label="symbol" clearable />
+        <q-input v-model="nodeToSubmit.units" label="Units" />
+        <q-input v-model="nodeToSubmit.currentValue" label="Current value" />
+        <q-input v-model="nodeToSubmit.symbol" label="symbol" />
         <q-input v-model="nodeToSubmit.symbolFormula" label="symbolFormula" />
-        <vue-mathjax :formula="'$$' + selectedNode.symbol + '=' + latexFormula + '$$'"></vue-mathjax>
-        <q-input v-model="nodeToSubmit.notes" label="Notes" clearable />
+        <vue-mathjax :formula="'$$' + nodeToSubmit.symbol + '=' + latexFormula + '$$'"></vue-mathjax>
+        <q-input v-model="nodeToSubmit.notes" label="Notes" />
 
         <modal-buttons />
       </q-form>
@@ -82,18 +82,31 @@ export default {
         var nodes = this.nodes;
         var influencerNode = {};
         var sysFormula = this.nodeToSubmit.symbolFormula;
-        //for each influencer, replace symbol in formula with id
-        if (typeof this.nodeToSubmit.influencers !== "undefined") {
-          this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
-            influencerNode = nodes.find(function(node) {
-              return node.id == influencerNodeId;
-            });
-            sysFormula = sysFormula.replace(
-              influencerNode.symbol,
-              " " + influencerNode.id + " "
-            );
+        //todo: replace symbols starting with longest symbols
+        //gather up ids of self, influencers, and their symbols
+        var potentials = [];
+        potentials.push({
+          symbol: this.nodeToSubmit.symbol,
+          id: this.nodeToSubmit.id
+        });
+        this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
+          influencerNode = nodes.find(function(node) {
+            return node.id == influencerNodeId;
           });
-        }
+          potentials.push({
+            symbol: influencerNode.symbol,
+            id: influencerNodeId
+          });
+        });
+        potentials.sort(function(a, b) {
+          return a.symbol.length - b.symbol.length;
+        });
+        console.log("potentials: ", potentials);
+
+        potentials.forEach(function(node) {
+          sysFormula = sysFormula.replace(node.symbol, " " + node.id + " ");
+        });
+
         return sysFormula;
       } else return "";
     },

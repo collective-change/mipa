@@ -23,12 +23,16 @@ onmessage = function(e) {
     result[node.id] = [];
   });
   let err = null;
-  let scope = {};
+  let scope = { deltaT: 0.1 }; //todo: load with current or historical values
   let formulasArray = [];
 
   try {
+    // gather up current values from nodes into scope
+    sortedNodes.forEach(function(node, index) {
+      scope[node.id] = node.currentValue;
+    });
+    console.log("initial scope: ", scope);
     // gather up formulas from nodes into an array ordered by calculation order
-    sortedNodes.forEach(function(node, index) {});
     formulasArray = sortedNodes.map(node => node.id + " = " + node.sysFormula);
     console.log(formulasArray);
 
@@ -91,6 +95,8 @@ function simplifyForSort(node) {
       typeof node.influencers !== "undefined" ? node.influencers.length : 0,
     influencees:
       typeof node.influencees !== "undefined" ? node.influencees : [],
-    sysFormula: typeof node.sysFormula !== "undefined" ? node.sysFormula : ""
+    sysFormula: typeof node.sysFormula !== "undefined" ? node.sysFormula : "",
+    currentValue:
+      typeof node.currentValue !== "undefined" ? node.currentValue : ""
   };
 }
