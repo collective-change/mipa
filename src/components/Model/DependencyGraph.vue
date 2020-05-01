@@ -41,7 +41,10 @@ import * as sizeof from "object-sizeof";
 import { responsify } from "src/utils/util-responsify-svg";
 import { sleep } from "src/utils/util-sleep";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-import { getNodeLinkEndPoints } from "src/utils/util-getNodeLinkEndPoints";
+import {
+  getNodeLinkEndPoints,
+  getDistance
+} from "src/utils/util-getNodeLinkEndPoints";
 
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
 
@@ -232,6 +235,27 @@ export default {
           "," +
           linkEndPoints.ty
         );
+        /*const arcRadius = getDistance(d) * 0.6;
+        return (
+          "M" +
+          d.source.x +
+          "," +
+          d.source.y +
+          " A " +
+          arcRadius +
+          "," +
+          arcRadius +
+          "," +
+          0 +
+          "," +
+          0 +
+          "," +
+          0 +
+          "," +
+          d.target.x +
+          "," +
+          d.target.y
+        );*/
       };
 
       const graph = this.selections.graph;

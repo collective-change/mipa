@@ -1,4 +1,6 @@
-export function getNodeLinkEndPoints(d, radius, targetOffset) {
+export { getNodeLinkEndPoints, getDistance };
+
+function getNodeLinkEndPoints(d, radius, targetOffset) {
   var dx = d.target.x - d.source.x;
   var dy = d.target.y - d.source.y;
 
@@ -11,4 +13,10 @@ export function getNodeLinkEndPoints(d, radius, targetOffset) {
   var sy = d.source.y - Math.sin(s_gamma) * radius;
 
   return { sx: sx, sy: sy, tx: tx, ty: ty };
+}
+
+function getDistance(d) {
+  var dx = d.target.x - d.source.x;
+  var dy = d.target.y - d.source.y;
+  return Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
 }
