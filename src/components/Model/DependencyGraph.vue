@@ -258,6 +258,30 @@ export default {
         );*/
       };
 
+      const backLink = d => {
+        const arcRadius = getDistance(d) * 0.6;
+        return (
+          "M" +
+          d.source.x +
+          "," +
+          d.source.y +
+          " A " +
+          arcRadius +
+          "," +
+          arcRadius +
+          "," +
+          0 +
+          "," +
+          0 +
+          "," +
+          0 +
+          "," +
+          d.target.x +
+          "," +
+          d.target.y
+        );
+      };
+
       const graph = this.selections.graph;
       graph.selectAll("path").attr("d", link);
       graph.selectAll("circle").attr("transform", transform);
