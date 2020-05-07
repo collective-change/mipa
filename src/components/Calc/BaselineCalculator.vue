@@ -1,7 +1,7 @@
 <template>
   <div class="q-pa-md">
     <q-btn
-      @click="showBaselineCalculator = true; startBaselineCalculation()"
+      @click="showBaselineCalculator = true; calculateBaseline()"
       class="all-pointer-events print-hide"
       color="primary"
       label="Calculate basesline"
@@ -34,8 +34,9 @@ export default {
     return {
       showBaselineCalculator: false,
       baselineCalcWorker: null,
-      calculationProgress: 0.25,
-      calculationProgressLabel: "25%"
+      calculationProgress: 0,
+      calculationProgressLabel: "0%",
+      baseline: null
     };
   },
   computed: {
@@ -43,7 +44,8 @@ export default {
     ...mapGetters("model", ["nodes"])
   },
   methods: {
-    startBaselineCalculation() {
+    calculateBaseline() {
+      let that = this;
       /*if (!window.Worker) {
         console.log(
           "Web worker not supported by browser. Aborting calculations."
@@ -58,8 +60,15 @@ export default {
       console.log("Message posted to worker");
 
       this.baselineCalcWorker.onmessage = function(e) {
-        //result.textContent = e.data;
-        console.log("Message received from worker: ", e.data);
+        if ("timeSPoints" in e.data) {
+          that.baseline = e.data;
+          //todo: save into cloud storage file
+        } else if ("progressValue" in e.data) {
+          that.calculationProgress = e.data.progressValue;
+          that.calculationProgressLabel = e.data.progressValue * 100 + "%";
+        } else {
+          console.log("Message received from worker: ", e.data);
+        }
       };
     }
   },

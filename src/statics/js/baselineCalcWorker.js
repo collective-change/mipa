@@ -60,6 +60,7 @@ onmessage = function(e) {
         scope.timeSeries[node.id].push(scope[node.id]);
       });
       scope.timeS = scope.timeS + scope.deltaT.toNumber("seconds");
+      this.postMessage({ progressValue: completedLoops / 5 });
       completedLoops++;
     }
   } catch (err) {
