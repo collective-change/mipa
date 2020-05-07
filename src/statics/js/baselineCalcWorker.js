@@ -17,38 +17,56 @@ onmessage = function(e) {
     this.postMessage(err);
   }
 
-  //prepare results object
-  let result = {};
+  //import custom functions
+  delay.rawArgs = true;
+  math.import({
+    delay: delay
+  });
+
+  //prepare scope object
+  let initialTimeS = Math.floor(Date.now() / 1000);
+  //let initialDate = new Date(initialTimeS * 1000);
+  //console.log({ initialDate });
+
+  let scope = {
+    timeS: initialTimeS,
+    deltaT: math.unit("1 day"),
+    timeSeries: { timeSPoints: [] }
+  }; //todo: load timeSeries with current or historical values
   sortedNodes.forEach(function(node, index) {
-    result[node.id] = [];
+    scope.timeSeries[node.id] = [];
   });
   let err = null;
-  let scope = { deltaT: 0.1 }; //todo: load with current or historical values
   let formulasArray = [];
+  let completedLoops = 0;
 
   try {
     // gather up current values from nodes into scope
     sortedNodes.forEach(function(node, index) {
       scope[node.id] = node.currentValue;
     });
-    console.log("initial scope: ", scope);
     // gather up formulas from nodes into an array ordered by calculation order
     formulasArray = sortedNodes.map(node => node.id + " = " + node.sysFormula);
-    console.log(formulasArray);
+    //console.log(formulasArray);
 
-    // evaluate the formulas
-    math.evaluate(formulasArray, scope);
-    console.log("scope: ", scope);
-    //save scope into results object
-    sortedNodes.forEach(function(node, index) {
-      result[node.id].push(scope[node.id]);
-    });
+    console.log({ scope });
+    while (completedLoops <= 5) {
+      // evaluate the formulas
+      math.evaluate(formulasArray, scope);
+
+      //save time and node values into results object
+      scope.timeSeries.timeSPoints.push(scope.timeS);
+      sortedNodes.forEach(function(node, index) {
+        scope.timeSeries[node.id].push(scope[node.id]);
+      });
+      scope.timeS = scope.timeS + scope.deltaT.toNumber("seconds");
+      completedLoops++;
+    }
   } catch (err) {
     this.postMessage(err);
   }
-
   //console.log("Posting message back to main script");
-  postMessage(result);
+  postMessage(scope.timeSeries);
 };
 
 function topoSort(nodes) {
@@ -99,4 +117,67 @@ function simplifyForSort(node) {
     currentValue:
       typeof node.currentValue !== "undefined" ? node.currentValue : ""
   };
+}
+
+function delay(args, math, scope) {
+  let symbol = args[0].name;
+  let delayTime = args[1].compile().evaluate(scope);
+  //console.log("symbol:", symbol);
+  //console.log("delayTime:", delayTime);
+
+  let values = scope.timeSeries[symbol];
+  let timeSPoints = scope.timeSeries.timeSPoints;
+  let defaultValue = scope[symbol];
+  let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
+  //let date = new Date(targetTimeS * 1000);
+  //console.log({ date });
+
+  //interpolate value of symbol at t-delayTime
+  return interpolate(timeSPoints, values, targetTimeS, defaultValue);
+}
+
+function interpolate(rawTimeSPoints, rawValues, targetTimeS, defaultValue) {
+  let timeSPoints = [];
+  let values = [];
+  //extract only available data points
+  for (var i = 0; i < rawTimeSPoints.length; i++) {
+    if (typeof rawValues[i] == "number");
+    {
+      timeSPoints.push(rawTimeSPoints[i]);
+      values.push(rawValues[i]);
+    }
+  }
+  //console.log("timeSPoints", timeSPoints);
+  //console.log("values", values);
+
+  //if symbol has no history, then return default value
+  if (values.length == 0) return defaultValue;
+  //else if history starts after current time, then return default value if available, or first value
+  else if (timeSPoints[0] > targetTimeS)
+    return typeof defaultValue == "number" ? defaultValue : values[0];
+  //else if history ends before current time, then return last value
+  else if (timeSPoints[timeSPoints.length - 1] < targetTimeS)
+    return values[values.length - 1];
+  //else interpolate
+  else {
+    return interpolateFromLookup(timeSPoints, values, targetTimeS);
+  }
+}
+
+function interpolateFromLookup(timeSPoints, values, targetTimeS) {
+  console.log({ timeSPoints, values, targetTimeS });
+
+  var i = 0;
+  //find index when targetTimeS equals or exceeds position in timeSPoints
+  while (timeSPoints[i] < targetTimeS) {
+    i++;
+  }
+  if (i == 0) return values[0];
+  let t0 = timeSPoints[i - 1];
+  let t1 = timeSPoints[i];
+  let v0 = values[i - 1];
+  let v1 = values[i];
+  let vt = v0 + ((targetTimeS - t0) * (v1 - v0)) / (t1 - t0);
+  console.log({ i, t0, t1, v0, v1, targetTimeS, vt });
+  return vt;
 }
