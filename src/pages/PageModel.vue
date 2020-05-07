@@ -7,7 +7,12 @@
     <div class="q-pa-md">
       <div class="row q-col-gutter-md">
         <div class="col-12 col-md-2 print-hide">
-          <q-select borderless v-model="currentModel" :options="modelOptions" label="Model" />
+          <q-select
+            borderless
+            v-model="currentModel"
+            :options="modelOptions"
+            label="Model"
+          />
           <baseline-calculator />
           <q-tree :nodes="exampleTree" node-key="label" />
         </div>
@@ -103,6 +108,7 @@ export default {
       let modelId = this.$route.params.orgId;
       //this.$store.dispatch("model/bindCurrentModel", modelId);
       this.$store.dispatch("model/bindNodes", modelId);
+      this.$store.dispatch("calcResults/bindBaseline", modelId);
 
       //bind to currentModel's nodes
       //this.$store.dispatch("orgs/bindCurrentOrg", this.$route.params.orgId);
@@ -114,6 +120,7 @@ export default {
   beforeDestroy() {
     //this.$store.dispatch("teams/unbindCurrentTeam");
     this.$store.dispatch("model/unbindNodes");
+    this.$store.dispatch("calcResults/unbindBaseline");
   }
 };
 </script>

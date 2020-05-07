@@ -7,21 +7,27 @@
         <q-input
           v-model="nodeToSubmit.name"
           label="Name"
-          :rules="[(val) => !!val || 'Field is required']"
+          :rules="[val => !!val || 'Field is required']"
           ref="nodeName"
         />
         <q-input v-model="nodeToSubmit.units" label="Units" />
         <q-input v-model="nodeToSubmit.currentValue" label="Current value" />
         <q-input v-model="nodeToSubmit.symbol" label="symbol" />
         <q-input v-model="nodeToSubmit.symbolFormula" label="symbolFormula" />
-        <vue-mathjax :formula="'$$' + nodeToSubmit.symbol + '=' + latexFormula + '$$'"></vue-mathjax>
+        <vue-mathjax
+          :formula="'$$' + nodeToSubmit.symbol + '=' + latexFormula + '$$'"
+        ></vue-mathjax>
         <q-input v-model="nodeToSubmit.notes" label="Notes" />
-
         <modal-buttons />
       </q-form>
+      <gchart type="LineChart" :data="chartData" :options="chartOptions" />
+      <p>nodeBaseline</p>
+      <pre>{{ nodeBaseline }}</pre>
+      <p>baseline</p>
+      <pre>{{ baseline }}</pre>
     </div>
     <p>selectedNode</p>
-    <pre>{{selectedNode}}</pre>
+    <pre>{{ selectedNode }}</pre>
   </div>
 </template>
 
@@ -30,21 +36,27 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import { parse, format, toTex } from "mathjs";
 import { VueMathjax } from "vue-mathjax";
 import { getAcronym } from "src/utils/util-getAcronym";
+import { GChart } from "vue-google-charts";
 
 export default {
   components: {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
-    //sparkline: require("components/Charts/Sparkline.vue").default,
+    gchart: GChart,
     "vue-mathjax": VueMathjax
   },
 
   data() {
     return {
       nodeToSubmit: {},
-      nodeBaseline: null,
+      //nodeBaseline: null,
       //enteredFormula: "",
-      model: null
+      model: null,
+
+      chartData: [],
+      chartOptions: {
+        legend: { position: "none" }
+      }
     };
   },
 
@@ -183,11 +195,16 @@ export default {
   watch: {
     selectedNode: function(newNode, oldNode) {
       this.nodeToSubmit = Object.assign({}, this.selectedNode);
-      this.nodeBaseline = {
-        timeSPoints: this.baseline.timeSPoints,
-        values: this.baseline[this.selectedNode.id]
-      };
+      //load baseline for this node
+      let timeSPoints = this.baseline.timeSPoints;
+      let values = this.baseline.nodes[this.selectedNode.id];
+      this.chartData = [];
+      this.chartData.push(["time", "value"]);
+      for (var i = 0; i < timeSPoints.length; i++) {
+        this.chartData.push([new Date(timeSPoints[i] * 1000), values[i]]);
+      }
     },
+
     sysFormula: function() {
       this.nodeToSubmit.sysFormula = this.sysFormula;
     }

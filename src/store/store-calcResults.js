@@ -41,7 +41,27 @@ const actions = {
       .catch(function(error) {
         showErrorMessage("Error updating baseline", error.message);
       });
-  }
+  },
+  bindBaseline: firestoreAction(({ bindFirestoreRef }, modelId) => {
+    let userId = firebaseAuth.currentUser.uid;
+    // return the promise returned by `bindFirestoreRef`
+    return bindFirestoreRef(
+      "baseline",
+      firebaseDb
+        .collection("models")
+        .doc(modelId)
+        .collection("calcResults")
+        .doc("baseline"),
+      {
+        reset: true,
+        maxRefDepth: 1
+      }
+    );
+  }),
+
+  unbindBaseline: firestoreAction(({ unbindFirestoreRef }) => {
+    unbindFirestoreRef("baseline");
+  })
 };
 
 const getters = {};
