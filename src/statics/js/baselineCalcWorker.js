@@ -147,25 +147,41 @@ function interpolate(rawTimeSPoints, rawValues, targetTimeS, defaultValue) {
       values.push(rawValues[i]);
     }
   }
-  //console.log("timeSPoints", timeSPoints);
-  //console.log("values", values);
-
+  //console.log(timeSPoints[0], timeSPoints[timeSPoints.length - 1], targetTimeS);
   //if symbol has no history, then return default value
-  if (values.length == 0) return defaultValue;
-  //else if history starts after current time, then return default value if available, or first value
-  else if (timeSPoints[0] > targetTimeS)
+  if (values.length == 0) {
+    console.log("No history; using default value.");
+    return defaultValue;
+  }
+  //else if history starts after target time, then return default (current) value if available, or first value
+  else if (timeSPoints[0] > targetTimeS) {
+    console.log(
+      "History starts after target time; using default value if available, else first value in history."
+    );
+    //todo: if currentValue is available, then interpolate using currentValue and beginning of history
     return typeof defaultValue == "number" ? defaultValue : values[0];
-  //else if history ends before current time, then return last value
-  else if (timeSPoints[timeSPoints.length - 1] < targetTimeS)
+  }
+  //else if history ends before target time, then return last value
+  else if (timeSPoints[timeSPoints.length - 1] < targetTimeS) {
+    console.log("History ends before target time; using last value.");
+    //todo: if currentValue is available, then interpolate using 2 end points of history,
+    //or currentValue and end of history
     return values[values.length - 1];
+  }
+  //else if history is only one point (should be at targetTimeS) then return its value
+  else if (timeSPoints.length == 1) {
+    console.log("History is only one point; using it.");
+    return values[0];
+  }
   //else interpolate
   else {
+    console.log("Going to interpolate.");
     return interpolateFromLookup(timeSPoints, values, targetTimeS);
   }
 }
 
 function interpolateFromLookup(timeSPoints, values, targetTimeS) {
-  console.log({ timeSPoints, values, targetTimeS });
+  //console.log({ timeSPoints, values, targetTimeS });
 
   var i = 0;
   //find index when targetTimeS equals or exceeds position in timeSPoints
@@ -178,6 +194,6 @@ function interpolateFromLookup(timeSPoints, values, targetTimeS) {
   let v0 = values[i - 1];
   let v1 = values[i];
   let vt = v0 + ((targetTimeS - t0) * (v1 - v0)) / (t1 - t0);
-  console.log({ i, t0, t1, v0, v1, targetTimeS, vt });
+  //console.log({ i, t0, t1, v0, v1, targetTimeS, vt });
   return vt;
 }
