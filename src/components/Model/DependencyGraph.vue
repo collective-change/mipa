@@ -235,27 +235,6 @@ export default {
           "," +
           linkEndPoints.ty
         );
-        /*const arcRadius = getDistance(d) * 0.6;
-        return (
-          "M" +
-          d.source.x +
-          "," +
-          d.source.y +
-          " A " +
-          arcRadius +
-          "," +
-          arcRadius +
-          "," +
-          0 +
-          "," +
-          0 +
-          "," +
-          0 +
-          "," +
-          d.target.x +
-          "," +
-          d.target.y
-        );*/
       };
 
       const backLink = d => {
@@ -923,7 +902,8 @@ path.link.depends {
   stroke: #005900;
   stroke-dasharray: 5, 2;
 }
-path.link.needs {
+
+path.link.back {
   stroke: #7f3f00;
 }
 
