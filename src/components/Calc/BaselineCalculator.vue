@@ -35,13 +35,14 @@ export default {
       showBaselineCalculator: false,
       baselineCalcWorker: null,
       calculationProgress: 0,
-      calculationProgressLabel: "0%",
-      baseline: null
+      calculationProgressLabel: "0%"
+      //baseline: null
     };
   },
   computed: {
     //...mapState("orgs", ["currentOrg"]),
     ...mapGetters("model", ["nodes"])
+    //...mapState("calcResults", ["baseline"])
   },
   methods: {
     calculateBaseline() {
@@ -61,7 +62,8 @@ export default {
 
       this.baselineCalcWorker.onmessage = function(e) {
         if ("timeSPoints" in e.data) {
-          that.baseline = e.data;
+          //that.baseline = e.data;
+          that.$store.dispatch("calcResults/setBaseline", e.data);
           //todo: save into cloud storage file
         } else if ("progressValue" in e.data) {
           that.calculationProgress = e.data.progressValue;

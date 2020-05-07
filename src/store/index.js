@@ -10,6 +10,7 @@ import orgs from "./store-orgs";
 import model from "./store-model";
 import issues from "./store-issues";
 import calculator from "./store-calculator";
+import calcResults from "./store-calcResults";
 import ui from "./store-ui";
 
 Vue.use(Vuex);
@@ -19,11 +20,11 @@ Vue.use(Vuex);
  * directly export the Store instantiation
  */
 
-export default function (/* { ssrContext } */) {
+export default function(/* { ssrContext } */) {
   const Store = new Vuex.Store({
     mutations: {
       // other mutations
-      ...vuexfireMutations,
+      ...vuexfireMutations
     },
     modules: {
       auth,
@@ -34,12 +35,13 @@ export default function (/* { ssrContext } */) {
       model,
       issues,
       calculator,
-      ui,
+      calcResults,
+      ui
     },
 
     // enable strict mode (adds overhead!)
     // for dev mode only
-    strict: process.env.DEV,
+    strict: process.env.DEV
   });
 
   return Store;

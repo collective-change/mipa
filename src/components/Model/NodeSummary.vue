@@ -35,12 +35,14 @@ export default {
   components: {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
+    //sparkline: require("components/Charts/Sparkline.vue").default,
     "vue-mathjax": VueMathjax
   },
 
   data() {
     return {
       nodeToSubmit: {},
+      nodeBaseline: null,
       //enteredFormula: "",
       model: null
     };
@@ -48,6 +50,7 @@ export default {
 
   computed: {
     ...mapState("ui", ["selectedNodeId"]),
+    ...mapState("calcResults", ["baseline"]),
     ...mapGetters("model", ["nodes", "links"]),
 
     selectedNode() {
@@ -180,6 +183,10 @@ export default {
   watch: {
     selectedNode: function(newNode, oldNode) {
       this.nodeToSubmit = Object.assign({}, this.selectedNode);
+      this.nodeBaseline = {
+        timeSPoints: this.baseline.timeSPoints,
+        values: this.baseline[this.selectedNode.id]
+      };
     },
     sysFormula: function() {
       this.nodeToSubmit.sysFormula = this.sysFormula;
