@@ -63,7 +63,9 @@ export default {
       this.baselineCalcWorker.onmessage = function(e) {
         if ("timeSPoints" in e.data) {
           //that.baseline = e.data;
-          that.$store.dispatch("calcResults/setBaseline", e.data);
+
+          let payload = { modelId: that.$route.params.modelId, data: e.data };
+          that.$store.dispatch("calcResults/setBaseline", payload);
           //todo: save into cloud storage file
         } else if ("progressValue" in e.data) {
           that.calculationProgress = e.data.progressValue;

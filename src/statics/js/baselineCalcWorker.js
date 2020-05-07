@@ -31,10 +31,10 @@ onmessage = function(e) {
   let scope = {
     timeS: initialTimeS,
     deltaT: math.unit("1 day"),
-    timeSeries: { timeSPoints: [] }
+    timeSeries: { timeSPoints: [], nodes: {} }
   }; //todo: load timeSeries with current or historical values
   sortedNodes.forEach(function(node, index) {
-    scope.timeSeries[node.id] = [];
+    scope.timeSeries.nodes[node.id] = [];
   });
   let err = null;
   let formulasArray = [];
@@ -57,7 +57,7 @@ onmessage = function(e) {
       //save time and node values into results object
       scope.timeSeries.timeSPoints.push(scope.timeS);
       sortedNodes.forEach(function(node, index) {
-        scope.timeSeries[node.id].push(scope[node.id]);
+        scope.timeSeries.nodes[node.id].push(scope[node.id]);
       });
       scope.timeS = scope.timeS + scope.deltaT.toNumber("seconds");
       this.postMessage({ progressValue: completedLoops / 5 });
@@ -67,6 +67,7 @@ onmessage = function(e) {
     this.postMessage(err);
   }
   //console.log("Posting message back to main script");
+  console.log(scope.timeSeries);
   postMessage(scope.timeSeries);
 };
 
@@ -126,7 +127,7 @@ function delay(args, math, scope) {
   //console.log("symbol:", symbol);
   //console.log("delayTime:", delayTime);
 
-  let values = scope.timeSeries[symbol];
+  let values = scope.timeSeries.nodes[symbol];
   let timeSPoints = scope.timeSeries.timeSPoints;
   let defaultValue = scope[symbol];
   let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
