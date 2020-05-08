@@ -6,36 +6,87 @@ import { calculateDependencyLevels } from "src/utils/util-calculateDependencyLev
 
 const state = {
   calculatorIsRunning: false,
-  calculationRequestPending: false,
-  lastBaselineCalculationStartTime: null,
-  lastBaselineCalculationEndedWithoutError: null,
-  lastBaselineCalculationEndTime: null,
-  calculationProgress: 0
+  calculationProgress: 0,
+  calculationProgressLabel: ""
 };
 
 const mutations = {
   setCalculatorIsRunning(state, value) {
     state.calculatorIsRunning = value;
   },
-  setCalculationRequestPending(state, value) {
-    state.calculationRequestPending = value;
-  },
-  setLastBaselineCalculationStartTime(state, value) {
-    state.lastBaselineCalculationStartTime = value;
-  },
-  setLastBaselineCalculationEndedWithoutError(state, value) {
-    state.lastBaselineCalculationEndedWithoutError = value;
-  },
-  setLastBaselineCalculationEndTime(state, value) {
-    state.lastBaselineCalculationEndTime = value;
-  },
   setCalculationProgress(state, value) {
     state.calculationProgress = value;
+  },
+  setCalculationProgressLabel(state, value) {
+    state.calculationProgressLabel = value;
   }
 };
 
 const actions = {
-  calculateBaseline({ rootState, commit }, teamId) {
+  calculateBaseline({ commit, dispatch }, payload) {
+    if (!window.Worker) {
+      showErrorMessage(
+        "Web worker not supported by browser. Aborting calculations.",
+        ""
+      );
+
+      console.log(
+        "Web worker not supported by browser. Aborting calculations."
+      );
+      return;
+    }
+    // if already running
+    if (state.calculatorIsRunning) {
+      showErrorMessage(
+        "Error updating Calculator is currently busy. Please retry in a bit.",
+        ""
+      );
+      //Notify.create("Calculator is currently busy. Please retry in a bit.");
+      return;
+    }
+    commit("setCalculatorIsRunning", true);
+    commit("setCalculationProgress", 0);
+    commit("setCalculationProgressLabel", "0%");
+    let startTime = new Date();
+
+    //let that = this;
+
+    let baselineCalcWorker = new Worker("statics/js/baselineCalcWorker.js");
+    baselineCalcWorker.postMessage({
+      modelNodes: payload.nodes
+      //expr: "12 / (2.3 + 0.7)"
+    });
+    console.log("Message posted to worker");
+
+    baselineCalcWorker.onmessage = function(e) {
+      if ("timeSPoints" in e.data) {
+        //that.baseline = e.data;
+
+        let payload2 = {
+          modelId: payload.modelId,
+          data: e.data
+        };
+        //this.$store.dispatch("calcResults/setBaseline", payload2);
+        dispatch("calcResults/setBaseline", payload2, { root: true });
+        //dispatch("calcResults/setBaseline", payload2);
+        //todo: save into cloud storage file
+        //commit("setLastBaselineCalculationEndTime", new Date());
+        //commit("setLastBaselineCalculationEndedWithoutError", true);
+        baselineCalcWorker.terminate();
+        commit("setCalculatorIsRunning", false);
+        let endTime = new Date();
+        let calcDurationSec = (endTime - startTime) / 1000;
+        Notify.create("Calculation took " + calcDurationSec + " seconds.");
+      } else if ("progressValue" in e.data) {
+        commit("setCalculationProgress", e.data.progressValue);
+        commit("setCalculationProgressLabel", e.data.progressValue * 100 + "%");
+      } else {
+        console.log("Message received from worker: ", e.data);
+        showErrorMessage("Message received from worker: ", e.data);
+      }
+    };
+  },
+  calculateBaselineOld({ rootState, commit }, teamId) {
     //console.log("calculateBaseline");
     // if already running
     if (state.calculatorIsRunning) {

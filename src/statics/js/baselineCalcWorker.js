@@ -177,7 +177,7 @@ function interpolate(rawTimeSPoints, rawValues, targetTimeS, defaultValue) {
   }
   //else interpolate
   else {
-    console.log("Going to interpolate.");
+    //console.log("Going to interpolate.");
     return interpolateFromLookup(timeSPoints, values, targetTimeS);
   }
 }
