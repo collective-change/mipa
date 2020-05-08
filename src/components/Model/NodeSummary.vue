@@ -21,13 +21,9 @@
         <modal-buttons />
       </q-form>
       <gchart type="LineChart" :data="chartData" :options="chartOptions" />
-      <p>nodeBaseline</p>
-      <pre>{{ nodeBaseline }}</pre>
-      <p>baseline</p>
-      <pre>{{ baseline }}</pre>
+      <p>selectedNode</p>
+      <pre>{{ selectedNode }}</pre>
     </div>
-    <p>selectedNode</p>
-    <pre>{{ selectedNode }}</pre>
   </div>
 </template>
 
@@ -175,6 +171,16 @@ export default {
         updates: this.nodeToSubmit
       });
       //this.$emit("close");
+    },
+    updateChartData() {
+      //load baseline for this node
+      let timeSPoints = this.baseline.timeSPoints;
+      let values = this.baseline.nodes[this.selectedNode.id];
+      this.chartData = [];
+      this.chartData.push(["time", "value"]);
+      for (var i = 0; i < timeSPoints.length; i++) {
+        this.chartData.push([new Date(timeSPoints[i] * 1000), values[i]]);
+      }
     }
   },
 
@@ -195,16 +201,11 @@ export default {
   watch: {
     selectedNode: function(newNode, oldNode) {
       this.nodeToSubmit = Object.assign({}, this.selectedNode);
-      //load baseline for this node
-      let timeSPoints = this.baseline.timeSPoints;
-      let values = this.baseline.nodes[this.selectedNode.id];
-      this.chartData = [];
-      this.chartData.push(["time", "value"]);
-      for (var i = 0; i < timeSPoints.length; i++) {
-        this.chartData.push([new Date(timeSPoints[i] * 1000), values[i]]);
-      }
+      this.updateChartData();
     },
-
+    baseline: function() {
+      this.updateChartData();
+    },
     sysFormula: function() {
       this.nodeToSubmit.sysFormula = this.sysFormula;
     }
