@@ -13,6 +13,7 @@ onmessage = function(e) {
 
   try {
     sortedNodes = topoSort(nodes);
+    //console.log(JSON.stringify(sortedNodes));
   } catch (err) {
     this.postMessage(err);
   }
@@ -122,19 +123,17 @@ function simplifyForSort(node) {
 }
 
 function delay(args, math, scope) {
-  let symbol = args[0].name;
+  let nodeId = args[0].name;
   let delayTime = args[1].compile().evaluate(scope);
-  //console.log("symbol:", symbol);
-  //console.log("delayTime:", delayTime);
 
-  let values = scope.timeSeries.nodes[symbol];
+  let values = scope.timeSeries.nodes[nodeId];
   let timeSPoints = scope.timeSeries.timeSPoints;
-  let defaultValue = scope[symbol];
+  let defaultValue = scope[nodeId];
   let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
   //let date = new Date(targetTimeS * 1000);
   //console.log({ date });
 
-  //interpolate value of symbol at t-delayTime
+  //interpolate value at targetTimeS
   return interpolate(timeSPoints, values, targetTimeS, defaultValue);
 }
 
@@ -187,15 +186,19 @@ function interpolateFromLookup(timeSPoints, values, targetTimeS) {
 
   var i = 0;
   //find index when targetTimeS equals or exceeds position in timeSPoints
-  while (timeSPoints[i] < targetTimeS) {
-    i++;
+  try {
+    while (timeSPoints[i] < targetTimeS) {
+      i++;
+    }
+    if (i == 0) return values[0];
+    let t0 = timeSPoints[i - 1];
+    let t1 = timeSPoints[i];
+    let v0 = values[i - 1];
+    let v1 = values[i];
+    let vt = v0 + ((targetTimeS - t0) * (v1 - v0)) / (t1 - t0);
+    return vt;
+  } catch (err) {
+    console.log(err);
   }
-  if (i == 0) return values[0];
-  let t0 = timeSPoints[i - 1];
-  let t1 = timeSPoints[i];
-  let v0 = values[i - 1];
-  let v1 = values[i];
-  let vt = v0 + ((targetTimeS - t0) * (v1 - v0)) / (t1 - t0);
   //console.log({ i, t0, t1, v0, v1, targetTimeS, vt });
-  return vt;
 }

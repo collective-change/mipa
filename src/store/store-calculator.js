@@ -81,8 +81,11 @@ const actions = {
         commit("setCalculationProgress", e.data.progressValue);
         commit("setCalculationProgressLabel", e.data.progressValue * 100 + "%");
       } else {
-        console.log("Message received from worker: ", e.data);
-        showErrorMessage("Message received from worker: ", e.data);
+        console.log("Error message received from worker: ", e.data);
+        showErrorMessage(
+          "Error message received from worker. Please see console log.",
+          ""
+        );
       }
     };
   }
