@@ -181,9 +181,11 @@ export default {
       let timeSPoints = this.baseline.timeSPoints;
       let values = this.baseline.nodes[this.selectedNode.id];
       this.chartData = [];
-      this.chartData.push(["time", "value"]);
-      for (var i = 0; i < timeSPoints.length; i++) {
-        this.chartData.push([new Date(timeSPoints[i] * 1000), values[i]]);
+      if (timeSPoints.length > 0) {
+        this.chartData.push(["time", "value"]);
+        for (var i = 0; i < timeSPoints.length; i++) {
+          this.chartData.push([new Date(timeSPoints[i] * 1000), values[i]]);
+        }
       }
     }
   },
