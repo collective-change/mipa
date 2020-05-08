@@ -37,6 +37,7 @@ onmessage = function(e) {
   sortedNodes.forEach(function(node, index) {
     scope.timeSeries.nodes[node.id] = [];
   });
+  console.log({ sortedNodes });
   let err = null;
   let formulasArray = [];
   let completedLoops = 0;
@@ -44,11 +45,14 @@ onmessage = function(e) {
   try {
     // gather up current values from nodes into scope
     sortedNodes.forEach(function(node, index) {
-      scope[node.id] = node.currentValue;
+      scope["$" + node.id] = node.currentValue;
     });
+    console.log({ scope });
     // gather up formulas from nodes into an array ordered by calculation order
-    formulasArray = sortedNodes.map(node => node.id + " = " + node.sysFormula);
-    //console.log(formulasArray);
+    formulasArray = sortedNodes.map(
+      node => "$" + node.id + " = " + node.sysFormula
+    );
+    console.log({ formulasArray });
 
     console.log({ scope });
     while (completedLoops <= 5) {
@@ -58,7 +62,7 @@ onmessage = function(e) {
       //save time and node values into results object
       scope.timeSeries.timeSPoints.push(scope.timeS);
       sortedNodes.forEach(function(node, index) {
-        scope.timeSeries.nodes[node.id].push(scope[node.id]);
+        scope.timeSeries.nodes[node.id].push(scope["$" + node.id]);
       });
       scope.timeS = scope.timeS + scope.deltaT.toNumber("seconds");
       this.postMessage({ progressValue: completedLoops / 5 });
@@ -123,12 +127,13 @@ function simplifyForSort(node) {
 }
 
 function delay(args, math, scope) {
-  let nodeId = args[0].name;
+  let $nodeId = args[0].name;
+  let nodeId = $nodeId.substr(1);
   let delayTime = args[1].compile().evaluate(scope);
 
   let values = scope.timeSeries.nodes[nodeId];
   let timeSPoints = scope.timeSeries.timeSPoints;
-  let defaultValue = scope[nodeId];
+  let defaultValue = scope[$nodeId];
   let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
   //let date = new Date(targetTimeS * 1000);
   //console.log({ date });

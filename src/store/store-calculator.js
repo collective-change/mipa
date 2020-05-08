@@ -66,13 +66,11 @@ const actions = {
           modelId: payload.modelId,
           data: e.data
         };
-        //this.$store.dispatch("calcResults/setBaseline", payload2);
+
         dispatch("calcResults/setBaseline", payload2, { root: true });
-        //dispatch("calcResults/setBaseline", payload2);
-        //todo: save into cloud storage file
-        //commit("setLastBaselineCalculationEndTime", new Date());
-        //commit("setLastBaselineCalculationEndedWithoutError", true);
-        baselineCalcWorker.terminate();
+
+        //baselineCalcWorker.terminate();
+
         commit("setCalculatorIsRunning", false);
         let endTime = new Date();
         let calcDurationSec = (endTime - startTime) / 1000;

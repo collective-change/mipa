@@ -92,7 +92,8 @@ export default {
       if (this.nodeToSubmit.symbolFormula) {
         var nodes = this.nodes;
         var influencerNode = {};
-        var sysFormula = this.nodeToSubmit.symbolFormula;
+        var symbolFormula = this.nodeToSubmit.symbolFormula;
+        var sysFormula = "";
         //todo: replace symbols starting with longest symbols
         //gather up ids of self, influencers, and their symbols
         var potentials = [];
@@ -125,10 +126,13 @@ export default {
         potentials.sort(function(a, b) {
           return a.symbol.length - b.symbol.length;
         });
-        console.log("potentials: ", potentials);
+        //console.log("potentials: ", potentials);
 
+        sysFormula = symbolFormula;
         potentials.forEach(function(node) {
-          sysFormula = sysFormula.replace(node.symbol, " " + node.id + " ");
+          //console.log("replacing ", node.symbol);
+          sysFormula = sysFormula.replace(node.symbol, " $" + node.id + " ");
+          //console.log({ sysFormula });
         });
 
         return sysFormula;
