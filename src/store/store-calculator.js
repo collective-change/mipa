@@ -1,8 +1,8 @@
 import Vue from "vue";
 import { uid, Notify } from "quasar";
-import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
-import { firestoreAction } from "vuexfire";
-import { calculateDependencyLevels } from "src/utils/util-calculateDependencyLevels";
+import { showErrorMessage } from "src/utils/util-show-error-message";
+//import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
+//import { firestoreAction } from "vuexfire";
 
 const state = {
   calculatorIsRunning: false,
@@ -85,34 +85,6 @@ const actions = {
         showErrorMessage("Message received from worker: ", e.data);
       }
     };
-  },
-  calculateBaselineOld({ rootState, commit }, teamId) {
-    //console.log("calculateBaseline");
-    // if already running
-    if (state.calculatorIsRunning) {
-      commit("setCalculationRequestPending", true);
-      return;
-    }
-    commit("setCalculatorIsRunning", true);
-    commit("setCalculationRequestPending", false);
-    commit("setLastBaselineCalculationStartTime", new Date());
-
-    //parse formula of all nodes
-
-    //calculate dependency level of each node
-    let depLevs = calculateDependencyLevels(rootState.model.nodes);
-    // save dependency level of each node if it has changed
-
-    //for time points
-
-    //for each dependency level from 0
-    //for each variable node
-    //calculate value at time point
-    //update progress bar
-    //save results to nodeValuesShards
-    commit("setLastBaselineCalculationEndTime", new Date());
-    commit("setLastBaselineCalculationEndedWithoutError", true);
-    commit("setCalculatorIsRunning", false);
   }
 };
 
