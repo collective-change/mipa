@@ -90,6 +90,7 @@ export default {
     },
     */
 
+    /*
     sysFormula() {
       if (this.nodeToSubmit.symbolFormula != "") {
         var nodes = this.nodes;
@@ -138,7 +139,7 @@ export default {
         console.log({ sysFormula });
         return sysFormula;
       } else return "";
-    },
+    },*/
 
     //parse symbol formula
     parsedSymbolFormula() {
@@ -212,12 +213,11 @@ export default {
       this.nodeToSubmit = Object.assign({}, this.selectedNode);
       this.updateChartData();
     },
+
     baseline: function() {
       this.updateChartData();
     },
-    /*sysFormula: function() {
-      this.nodeToSubmit.sysFormula = this.sysFormula;
-    }*/
+
     nodeToSubmit: function(newVersion, oldVersion) {
       //update sysFormula
       if (newVersion.symbolFormula == "") {
@@ -237,12 +237,10 @@ export default {
           "influencers" in this.nodeToSubmit &&
           this.nodeToSubmit.influencers.length > 0
         ) {
-          console.log("influeners exist");
           this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
             influencerNode = nodes.find(function(node) {
               return node.id == influencerNodeId;
             });
-            //console.log({ influencerNode });
             potentials.push({
               symbol: influencerNode.symbol,
               id: influencerNodeId
@@ -253,14 +251,12 @@ export default {
           "feedbackInfluencers" in this.nodeToSubmit &&
           this.nodeToSubmit.feedbackInfluencers.length > 0
         ) {
-          console.log("feedbackInfluencers exist");
           this.nodeToSubmit.feedbackInfluencers.forEach(function(
             influencerNodeId
           ) {
             influencerNode = nodes.find(function(node) {
               return node.id == influencerNodeId;
             });
-            console.log({ influencerNode });
             potentials.push({
               symbol: influencerNode.symbol,
               id: influencerNodeId
@@ -270,15 +266,11 @@ export default {
         potentials.sort(function(a, b) {
           return a.symbol.length - b.symbol.length;
         });
-        //console.log("potentials: ", potentials);
 
         sysFormula = symbolFormula;
         potentials.forEach(function(node) {
-          //console.log("replacing ", node.symbol);
           sysFormula = sysFormula.replace(node.symbol, " $" + node.id + " ");
-          //console.log({ sysFormula });
         });
-        console.log({ sysFormula });
         this.nodeToSubmit.sysFormula = sysFormula;
       }
     }

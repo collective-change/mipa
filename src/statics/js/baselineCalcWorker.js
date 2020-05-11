@@ -18,6 +18,10 @@ onmessage = function(e) {
     this.postMessage(err);
   }
 
+  /*
+  math.config({
+    predictable: false,
+  })*/
   //import custom functions
   delay.rawArgs = true;
   math.import({
@@ -46,12 +50,13 @@ onmessage = function(e) {
   let err = null;
   let formulasArray = [];
   let completedLoops = 0;
+  let maxLoops = 365;
 
   try {
     // gather up current values from nodes into scope
     console.log("begin loading");
     sortedNodes.forEach(function(node, index) {
-      console.log({ node });
+      //console.log({ node });
       if ("currentValue" in node && node.currentValue != "") {
         //console.log("yay");
         scope["$" + node.id] = math.unit(Number(node.currentValue), node.unit);
@@ -61,19 +66,33 @@ onmessage = function(e) {
     //console.log({ scope });
 
     // gather up formulas from nodes into an array ordered by calculation order
-    formulasArray = sortedNodes.map(
-      node => "$" + node.id + " = " + node.sysFormula
-    );
-    console.log({ formulasArray });
+    formulasArray = sortedNodes.map(function(node) {
+      //if formula includes a variable then save it
+      if (node.sysFormula.includes("$")) {
+        return "$" + node.id + " = " + node.sysFormula;
+      } else {
+        //else set as value and units
+        return (
+          "$" + node.id + " = unit(" + node.sysFormula + ",'" + node.unit + "')"
+        );
+      }
+    });
+    //console.log({ formulasArray });
 
-    console.log({ scope });
+    //console.log({ scope });
 
-    while (completedLoops <= 5) {
+    while (completedLoops < maxLoops) {
+      //console.log("starting loop ", completedLoops + 1);
       // evaluate the formulas
-      //todo: if formula does not include a variable,
-      //then set as value and units.
-      //todo: else check result of evaluation against units expected by user.
-      math.evaluate(formulasArray, scope);
+      //todo: check result of evaluation against units expected by user.
+      formulasArray.forEach(function(formula, index) {
+        //console.log({ scope });
+        //console.log("evaluating formula", formula);
+        math.evaluate(formula, scope);
+        //console.log("evaluation done", { scope });
+      });
+
+      //math.evaluate(formulasArray, scope);
 
       //save time and node values into results object
       scope.timeSeries.timeSPoints.push(scope.timeS);
@@ -81,16 +100,33 @@ onmessage = function(e) {
         scope.timeSeries.nodes[node.id].push(scope["$" + node.id]);
       });
       scope.timeS = scope.timeS + scope.dt.toNumber("seconds");
-      this.postMessage({ progressValue: completedLoops / 5 });
       completedLoops++;
+      this.postMessage({ progressValue: completedLoops / maxLoops });
+      //console.log("completed loop ", completedLoops);
     }
   } catch (err) {
     this.postMessage(err);
   }
+
+  //clean up scope.timeSeries for posting back to main script
+  console.log(scope);
+  let resultTimeSeriesNodesValues = {};
+  sortedNodes.forEach(function(node, index) {
+    let nodeValues = scope.timeSeries.nodes[node.id].map(function(m) {
+      //get only the numeric value of each value entry in the array
+      return m.toNumber(node.unit);
+    });
+    resultTimeSeriesNodesValues[node.id] = nodeValues;
+  });
+
+  let outputTimeSeries = {
+    timeSPoints: scope.timeSeries.timeSPoints,
+    nodes: resultTimeSeriesNodesValues
+  };
   //console.log("Posting message back to main script");
   //console.log({ scope });
-  console.log(scope.timeSeries);
-  postMessage(scope.timeSeries);
+  console.log(outputTimeSeries);
+  postMessage(outputTimeSeries);
 };
 
 function topoSort(nodes) {
@@ -153,8 +189,6 @@ function delay(args, math, scope) {
   let timeSPoints = scope.timeSeries.timeSPoints;
   let defaultValue = scope[$nodeId];
   let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
-  //let date = new Date(targetTimeS * 1000);
-  //console.log({ date });
 
   //interpolate value at targetTimeS
   return interpolate(timeSPoints, values, targetTimeS, defaultValue);
@@ -164,30 +198,28 @@ function interpolate(rawTimeSPoints, rawValues, targetTimeS, defaultValue) {
   let timeSPoints = [];
   let values = [];
   //extract only available data points
+  //todo: only extract data points surrounding targetTimeS
   for (var i = 0; i < rawTimeSPoints.length; i++) {
-    if (typeof rawValues[i] == "number");
-    {
-      timeSPoints.push(rawTimeSPoints[i]);
-      values.push(rawValues[i]);
-    }
+    //if (typeof rawValuesWithUnits[i] == "number") {
+    timeSPoints.push(rawTimeSPoints[i]);
+    values.push(rawValues[i]);
+    //}
   }
   //console.log(timeSPoints[0], timeSPoints[timeSPoints.length - 1], targetTimeS);
   //if symbol has no history, then return default value
   if (values.length == 0) {
-    console.log("No history; using default value.");
+    //console.log("No history; using default value.");
     return defaultValue;
   }
   //else if history starts after target time, then return default (current) value if available, or first value
   else if (timeSPoints[0] > targetTimeS) {
-    console.log(
-      "History starts after target time; using default value if available, else first value in history."
-    );
+    //console.log("History starts after target time; using default value if available, else first value in history.");
     //todo: if currentValue is available, then interpolate using currentValue and beginning of history
     return typeof defaultValue == "number" ? defaultValue : values[0];
   }
   //else if history ends before target time, then return last value
   else if (timeSPoints[timeSPoints.length - 1] < targetTimeS) {
-    console.log("History ends before target time; using last value.");
+    //console.log("History ends before target time; using last value.");
     //todo: if history has 2 points, then interpolate using 2 end points of history,
     //else history has only 1 point,
     //  if currentValue available then interpolate
@@ -196,7 +228,7 @@ function interpolate(rawTimeSPoints, rawValues, targetTimeS, defaultValue) {
   }
   //else if history is only one point (should be at targetTimeS) then return its value
   else if (timeSPoints.length == 1) {
-    console.log("History is only one point; using it.");
+    //console.log("History is only one point; using it.");
     return values[0];
   }
   //else interpolate
@@ -220,10 +252,17 @@ function interpolateFromLookup(timeSPoints, values, targetTimeS) {
     let t1 = timeSPoints[i];
     let v0 = values[i - 1];
     let v1 = values[i];
-    let vt = v0 + ((targetTimeS - t0) * (v1 - v0)) / (t1 - t0);
+    //let vt = v0 + ((targetTimeS - t0) * (v1 - v0)) / (t1 - t0);
+    let vt = math.add(
+      v0,
+      math.divide(
+        math.multiply(targetTimeS - t0, math.subtract(v1, v0)),
+        t1 - t0
+      )
+    );
+    //console.log({ t0, t1, v0, v1, targetTimeS, vt });
     return vt;
   } catch (err) {
     console.log(err);
   }
-  //console.log({ i, t0, t1, v0, v1, targetTimeS, vt });
 }
