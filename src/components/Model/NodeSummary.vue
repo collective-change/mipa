@@ -17,14 +17,17 @@
           label="symbol"
           :rules="[val => !!val || 'Field is required']"
         />
-        <q-input v-model="nodeToSubmit.symbolFormula" label="symbolFormula" />
-        <vue-mathjax :formula="'$$' + nodeToSubmit.symbol + '=' + latexFormula + '$$'"></vue-mathjax>
-        <q-input v-model="nodeToSubmit.notes" label="Notes" type="textarea" />
+        <q-input v-model="nodeToSubmit.symbolFormula" label="symbolFormula" autogrow />
+        <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
+        <gchart :v-if="chartData != []" type="LineChart" :data="chartData" :options="chartOptions" />
+
+        <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
       </q-form>
-      <gchart :v-if="chartData != []" type="LineChart" :data="chartData" :options="chartOptions" />
-      <p>selectedNode</p>
-      <pre>{{ selectedNode }}</pre>
+      <p>parsedSymbolFormula</p>
+      <pre></pre>
+      <p>nodeToSubmit {{ nodeToSubmit.id }}</p>
+      <pre>{{ nodeToSubmit }}</pre>
     </div>
   </div>
 </template>
@@ -35,6 +38,7 @@ import { parse, format, toTex } from "mathjs";
 import { VueMathjax } from "vue-mathjax";
 import { getAcronym } from "src/utils/util-getAcronym";
 import { GChart } from "vue-google-charts";
+import { showErrorMessage } from "src/utils/util-show-error-message";
 
 export default {
   components: {
@@ -143,10 +147,15 @@ export default {
 
     //parse symbol formula
     parsedSymbolFormula() {
-      let parsedSymbolFormula = this.nodeToSubmit.symbolFormula
-        ? parse(this.nodeToSubmit.symbolFormula)
-        : "";
-      return parsedSymbolFormula;
+      try {
+        let parsedSymbolFormula = this.nodeToSubmit.symbolFormula
+          ? parse(this.nodeToSubmit.symbolFormula)
+          : "";
+        return parsedSymbolFormula;
+      } catch (err) {
+        console.log(err);
+        showErrorMessage("Error parsing formula", err.message);
+      }
     },
 
     //replace ids in parsedSysFormula back to symbols
@@ -266,10 +275,14 @@ export default {
         potentials.sort(function(a, b) {
           return a.symbol.length - b.symbol.length;
         });
-
         var sysFormula = symbolFormula;
         potentials.forEach(function(node) {
-          sysFormula = sysFormula.replace(node.symbol, " $" + node.id + " ");
+          //console.log("replacing", node.symbol, node.id);
+          sysFormula = sysFormula.replace(
+            new RegExp(node.symbol, "g"), //global replacement
+            " $" + node.id + " "
+          );
+          //console.log({ sysFormula });
         });
         this.nodeToSubmit.sysFormula = sysFormula;
       }

@@ -90,6 +90,8 @@ onmessage = function(e) {
         //console.log({ scope });
         //console.log("evaluating formula", formula);
         //todo: if timeS == initialTimeS then evaluate current value
+        if (formula.substring(1, 2) == "Aqe4KCH1ZyjAJde7ZRd6")
+          console.log({ formula });
         math.evaluate(formula, scope);
         //console.log("evaluation done", { scope });
       });
@@ -107,16 +109,21 @@ onmessage = function(e) {
       //console.log("completed loop ", completedLoops);
     }
   } catch (err) {
+    console.log(err);
     this.postMessage(err);
   }
 
   //clean up scope.timeSeries for posting back to main script
-  console.log(scope);
+  //console.log(scope);
   let resultTimeSeriesNodesValues = {};
   sortedNodes.forEach(function(node, index) {
-    let nodeValues = scope.timeSeries.nodes[node.id].map(function(m) {
+    let nodeValues = scope.timeSeries.nodes[node.id].map(function(val) {
       //get only the numeric value of each value entry in the array
-      return m.toNumber(node.unit);
+      if (typeof val == "number") {
+        return val;
+      } else {
+        return val.toNumber(node.unit);
+      }
     });
     resultTimeSeriesNodesValues[node.id] = nodeValues;
   });
@@ -127,7 +134,7 @@ onmessage = function(e) {
   };
   //console.log("Posting message back to main script");
   //console.log({ scope });
-  console.log(outputTimeSeries);
+  //console.log(outputTimeSeries);
   postMessage(outputTimeSeries);
 };
 
