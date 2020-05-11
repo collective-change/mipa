@@ -4,6 +4,7 @@ importScripts("https://unpkg.com/mathjs@6.6.4/dist/math.min.js");
 const parser = self.math.parser();
 
 onmessage = function(e) {
+  let startTime = new Date();
   //console.log("Message received from main script");
   //console.log(e.data);
 
@@ -85,18 +86,11 @@ onmessage = function(e) {
     while (completedLoops < maxLoops) {
       //console.log("starting loop ", completedLoops + 1);
       // evaluate the formulas
-      //todo: check result of evaluation against units expected by user.
       formulasArray.forEach(function(formula, index) {
-        //console.log({ scope });
-        //console.log("evaluating formula", formula);
         //todo: if timeS == initialTimeS then evaluate current value
-        if (formula.substring(1, 2) == "Aqe4KCH1ZyjAJde7ZRd6")
-          console.log({ formula });
         math.evaluate(formula, scope);
-        //console.log("evaluation done", { scope });
+        //todo: check result of evaluation against units expected by user.
       });
-
-      //math.evaluate(formulasArray, scope);
 
       //save time and node values into results object
       scope.timeSeries.timeSPoints.push(scope.timeS);
@@ -132,6 +126,8 @@ onmessage = function(e) {
     timeSPoints: scope.timeSeries.timeSPoints,
     nodes: resultTimeSeriesNodesValues
   };
+  let endTime = new Date();
+  console.log("calcTime:", endTime - startTime, "ms");
   //console.log("Posting message back to main script");
   //console.log({ scope });
   //console.log(outputTimeSeries);

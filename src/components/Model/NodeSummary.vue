@@ -25,7 +25,7 @@
         <modal-buttons />
       </q-form>
       <p>parsedSymbolFormula</p>
-      <pre></pre>
+      <pre>{{parsedSymbolFormula}}</pre>
       <p>nodeToSubmit {{ nodeToSubmit.id }}</p>
       <pre>{{ nodeToSubmit }}</pre>
     </div>
@@ -234,7 +234,6 @@ export default {
       } else {
         var nodes = this.nodes;
         var influencerNode = {};
-        var symbolFormula = this.nodeToSubmit.symbolFormula;
 
         //gather up ids of self, influencers, and their symbols
         var potentials = [];
@@ -275,14 +274,12 @@ export default {
         potentials.sort(function(a, b) {
           return a.symbol.length - b.symbol.length;
         });
-        var sysFormula = symbolFormula;
+        var sysFormula = this.nodeToSubmit.symbolFormula;
         potentials.forEach(function(node) {
-          //console.log("replacing", node.symbol, node.id);
           sysFormula = sysFormula.replace(
             new RegExp(node.symbol, "g"), //global replacement
             " $" + node.id + " "
           );
-          //console.log({ sysFormula });
         });
         this.nodeToSubmit.sysFormula = sysFormula;
       }
