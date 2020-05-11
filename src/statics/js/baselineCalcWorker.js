@@ -24,6 +24,11 @@ onmessage = function(e) {
     delay: delay
   });
 
+  //create custom units
+  math.createUnit({
+    person: { baseName: "person", aliases: ["persons", "people"] }
+  });
+
   //prepare scope object
   let initialTimeS = Math.floor(Date.now() / 1000);
   //let initialDate = new Date(initialTimeS * 1000);
@@ -31,7 +36,7 @@ onmessage = function(e) {
 
   let scope = {
     timeS: initialTimeS,
-    deltaT: math.unit("1 day"),
+    dt: math.unit("1 day"), //delta time
     timeSeries: { timeSPoints: [], nodes: {} }
   }; //todo: load timeSeries with current or historical values
   sortedNodes.forEach(function(node, index) {
@@ -44,10 +49,17 @@ onmessage = function(e) {
 
   try {
     // gather up current values from nodes into scope
+    console.log("begin loading");
     sortedNodes.forEach(function(node, index) {
-      scope["$" + node.id] = node.currentValue;
+      console.log({ node });
+      if ("currentValue" in node && node.currentValue != "") {
+        //console.log("yay");
+        scope["$" + node.id] = math.unit(Number(node.currentValue), node.unit);
+        //console.log("in");
+      }
     });
-    console.log({ scope });
+    //console.log({ scope });
+
     // gather up formulas from nodes into an array ordered by calculation order
     formulasArray = sortedNodes.map(
       node => "$" + node.id + " = " + node.sysFormula
@@ -55,8 +67,12 @@ onmessage = function(e) {
     console.log({ formulasArray });
 
     console.log({ scope });
+
     while (completedLoops <= 5) {
       // evaluate the formulas
+      //todo: if formula does not include a variable,
+      //then set as value and units.
+      //todo: else check result of evaluation against units expected by user.
       math.evaluate(formulasArray, scope);
 
       //save time and node values into results object
@@ -64,7 +80,7 @@ onmessage = function(e) {
       sortedNodes.forEach(function(node, index) {
         scope.timeSeries.nodes[node.id].push(scope["$" + node.id]);
       });
-      scope.timeS = scope.timeS + scope.deltaT.toNumber("seconds");
+      scope.timeS = scope.timeS + scope.dt.toNumber("seconds");
       this.postMessage({ progressValue: completedLoops / 5 });
       completedLoops++;
     }
@@ -72,6 +88,7 @@ onmessage = function(e) {
     this.postMessage(err);
   }
   //console.log("Posting message back to main script");
+  //console.log({ scope });
   console.log(scope.timeSeries);
   postMessage(scope.timeSeries);
 };
@@ -121,6 +138,7 @@ function simplifyForSort(node) {
     influencees:
       typeof node.influencees !== "undefined" ? node.influencees : [],
     sysFormula: typeof node.sysFormula !== "undefined" ? node.sysFormula : "",
+    unit: typeof node.unit !== "undefined" ? node.unit : "",
     currentValue:
       typeof node.currentValue !== "undefined" ? node.currentValue : ""
   };
@@ -170,8 +188,10 @@ function interpolate(rawTimeSPoints, rawValues, targetTimeS, defaultValue) {
   //else if history ends before target time, then return last value
   else if (timeSPoints[timeSPoints.length - 1] < targetTimeS) {
     console.log("History ends before target time; using last value.");
-    //todo: if currentValue is available, then interpolate using 2 end points of history,
-    //or currentValue and end of history
+    //todo: if history has 2 points, then interpolate using 2 end points of history,
+    //else history has only 1 point,
+    //  if currentValue available then interpolate
+    //  else return history's only value
     return values[values.length - 1];
   }
   //else if history is only one point (should be at targetTimeS) then return its value

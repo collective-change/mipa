@@ -1,7 +1,9 @@
 <template>
   <q-card>
     <modal-header>
-      <template v-slot:header>Add {{newNodeRole ? 'new '+newNodeRole : 'node' }}</template>
+      <template v-slot:header
+        >Add {{ newNodeRole ? "new " + newNodeRole : "node" }}</template
+      >
     </modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
@@ -14,6 +16,7 @@
 
 <script>
 import { mapActions } from "vuex";
+import { camelize } from "src/utils/util-camelize";
 
 export default {
   props: ["sourceNodeId", "newNodeRole"],
@@ -33,6 +36,7 @@ export default {
       }
     };
   },
+
   methods: {
     ...mapActions("model", ["addNode"]),
 
@@ -44,6 +48,7 @@ export default {
     },
 
     submitNode() {
+      this.nodeToSubmit.symbol = camelize(this.nodeToSubmit.name);
       this.addNode({
         node: this.nodeToSubmit,
         sourceNodeId: this.sourceNodeId,
