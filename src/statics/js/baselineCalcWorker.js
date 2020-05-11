@@ -39,18 +39,19 @@ onmessage = function(e) {
   //console.log({ initialDate });
 
   let scope = {
-    timeS: initialTimeS,
+    initialTimeS: initialTimeS, //this will remain constant throughout the simulation
+    timeS: initialTimeS, //timeS will increment with each iteration
     dt: math.unit("1 day"), //delta time
     timeSeries: { timeSPoints: [], nodes: {} }
   }; //todo: load timeSeries with current or historical values
   sortedNodes.forEach(function(node, index) {
     scope.timeSeries.nodes[node.id] = [];
   });
-  console.log({ sortedNodes });
-  let err = null;
+  //console.log({ sortedNodes });
+
   let formulasArray = [];
   let completedLoops = 0;
-  let maxLoops = 365;
+  let maxLoops = 10;
 
   try {
     // gather up current values from nodes into scope
@@ -88,6 +89,7 @@ onmessage = function(e) {
       formulasArray.forEach(function(formula, index) {
         //console.log({ scope });
         //console.log("evaluating formula", formula);
+        //todo: if timeS == initialTimeS then evaluate current value
         math.evaluate(formula, scope);
         //console.log("evaluation done", { scope });
       });

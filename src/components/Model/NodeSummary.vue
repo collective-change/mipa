@@ -218,15 +218,15 @@ export default {
       this.updateChartData();
     },
 
-    nodeToSubmit: function(newVersion, oldVersion) {
+    parsedSymbolFormula: function(newVersion, oldVersion) {
       //update sysFormula
-      if (newVersion.symbolFormula == "") {
+      if (this.nodeToSubmit.symbolFormula == "") {
         this.nodeToSubmit.sysFormula = "";
       } else {
         var nodes = this.nodes;
         var influencerNode = {};
         var symbolFormula = this.nodeToSubmit.symbolFormula;
-        var sysFormula = "";
+
         //gather up ids of self, influencers, and their symbols
         var potentials = [];
         potentials.push({
@@ -267,7 +267,7 @@ export default {
           return a.symbol.length - b.symbol.length;
         });
 
-        sysFormula = symbolFormula;
+        var sysFormula = symbolFormula;
         potentials.forEach(function(node) {
           sysFormula = sysFormula.replace(node.symbol, " $" + node.id + " ");
         });
