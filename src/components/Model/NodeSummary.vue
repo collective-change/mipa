@@ -13,7 +13,8 @@
         <q-input v-model="nodeToSubmit.unit" label="Unit" />
         <q-input v-model="nodeToSubmit.currentValue" label="Current value" />
         <q-input
-          v-model="nodeToSubmit.symbol"
+          :value="nodeToSubmit.symbol"
+          @change="e => {nodeToSubmit.symbol = e.target.value}"
           label="symbol"
           :rules="[val => !!val || 'Field is required']"
         />
