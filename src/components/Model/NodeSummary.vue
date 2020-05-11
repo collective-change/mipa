@@ -17,7 +17,12 @@
           label="symbol"
           :rules="[val => !!val || 'Field is required']"
         />
-        <q-input v-model="nodeToSubmit.symbolFormula" label="symbolFormula" autogrow />
+        <q-input
+          :value="nodeToSubmit.symbolFormula"
+          @change="e => {nodeToSubmit.symbolFormula = e.target.value}"
+          label="symbolFormula"
+          autogrow
+        />
         <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
         <gchart :v-if="chartData != []" type="LineChart" :data="chartData" :options="chartOptions" />
 
@@ -73,77 +78,6 @@ export default {
         return node.id == that.selectedNodeId;
       });
     },
-    /*
-    symbolFormula() {
-      if (this.nodeToSubmit.sysFormula) {
-        var nodes = this.nodes;
-        var influencerNode = {};
-        var symbolFormula = this.nodeToSubmit.sysFormula;
-        //for each influencer, replace id in formula with symbol
-        this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
-          influencerNode = nodes.find(function(node) {
-            return node.id == influencerNodeId;
-          });
-          symbolFormula = symbolFormula.replace(
-            influencerNode.id,
-            influencerNode.symbol
-          );
-        });
-        return symbolFormula;
-      } else return "";
-    },
-    */
-
-    /*
-    sysFormula() {
-      if (this.nodeToSubmit.symbolFormula != "") {
-        var nodes = this.nodes;
-        var influencerNode = {};
-        var symbolFormula = this.nodeToSubmit.symbolFormula;
-        var sysFormula = "";
-        //gather up ids of self, influencers, and their symbols
-        var potentials = [];
-        potentials.push({
-          symbol: this.nodeToSubmit.symbol,
-          id: this.nodeToSubmit.id
-        });
-        if (this.nodeToSubmit.influencers)
-          this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
-            influencerNode = nodes.find(function(node) {
-              return node.id == influencerNodeId;
-            });
-            potentials.push({
-              symbol: influencerNode.symbol,
-              id: influencerNodeId
-            });
-          });
-        if (this.nodeToSubmit.feedbackInfluencers)
-          this.nodeToSubmit.feedbackInfluencers.forEach(function(
-            influencerNodeId
-          ) {
-            influencerNode = nodes.find(function(node) {
-              return node.id == influencerNodeId;
-            });
-            potentials.push({
-              symbol: influencerNode.symbol,
-              id: influencerNodeId
-            });
-          });
-        potentials.sort(function(a, b) {
-          return a.symbol.length - b.symbol.length;
-        });
-        //console.log("potentials: ", potentials);
-
-        sysFormula = symbolFormula;
-        potentials.forEach(function(node) {
-          //console.log("replacing ", node.symbol);
-          sysFormula = sysFormula.replace(node.symbol, " $" + node.id + " ");
-          //console.log({ sysFormula });
-        });
-        console.log({ sysFormula });
-        return sysFormula;
-      } else return "";
-    },*/
 
     //parse symbol formula
     parsedSymbolFormula() {
@@ -157,8 +91,6 @@ export default {
         showErrorMessage("Error parsing formula", err.message);
       }
     },
-
-    //replace ids in parsedSysFormula back to symbols
 
     //latexFormula from parsedSymbolFormula
     latexFormula() {
