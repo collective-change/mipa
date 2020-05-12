@@ -89,7 +89,7 @@ onmessage = function(e) {
       compiledExpressions.forEach(function(code, index) {
         //todo: if timeS == initialTimeS then evaluate current value
         code.evaluate(scope);
-        //todo: check result of evaluation against units expected by user.
+        //todo: if on first few loops, check result of evaluation against units expected by user.
       });
 
       //save time and node values into results object
