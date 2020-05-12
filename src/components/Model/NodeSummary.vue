@@ -208,12 +208,14 @@ export default {
           return a.symbol.length - b.symbol.length;
         });
         var sysFormula = this.nodeToSubmit.symbolFormula;
-        potentials.forEach(function(node) {
-          sysFormula = sysFormula.replace(
-            new RegExp(node.symbol, "g"), //global replacement
-            " $" + node.id + " "
-          );
-        });
+        if (sysFormula) {
+          potentials.forEach(function(node) {
+            sysFormula = sysFormula.replace(
+              new RegExp(node.symbol, "g"), //global replacement
+              " $" + node.id + " "
+            );
+          });
+        }
         this.nodeToSubmit.sysFormula = sysFormula;
       }
     }
