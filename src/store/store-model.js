@@ -317,8 +317,12 @@ const getters = {
     state.nodes.forEach(function(node) {
       //console.log(node.id);
       if ("influencers" in node) {
-        node.influencers.forEach(function(influencer) {
-          allLinks.push({ source: influencer, target: node.id });
+        node.influencers.forEach(function(influencerId) {
+          allLinks.push({
+            source: influencerId,
+            target: node.id,
+            hasReciprocal: node.influencees.includes(influencerId)
+          });
         });
       }
     });
