@@ -59,9 +59,14 @@ const actions = {
     console.log("Message posted to worker");
 
     baselineCalcWorker.onmessage = function(e) {
-      if ("timeSPoints" in e.data) {
-        //that.baseline = e.data;
-
+      //console.log(e.data);
+      if (typeof e.data == "string") {
+        console.log("Error message received from worker: ", e.data);
+        showErrorMessage(
+          "Error message received from worker. Please see console log.",
+          ""
+        );
+      } else if ("timeSPoints" in e.data) {
         let payload2 = {
           modelId: payload.modelId,
           data: e.data
@@ -69,7 +74,7 @@ const actions = {
 
         dispatch("calcResults/setBaseline", payload2, { root: true });
 
-        //baselineCalcWorker.terminate();
+        baselineCalcWorker.terminate();
 
         commit("setCalculatorIsRunning", false);
         let endTime = new Date();

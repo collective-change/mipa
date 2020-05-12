@@ -10,19 +10,8 @@ onmessage = function(e) {
 
   let nodes = e.data.modelNodes.map(simplifyForSort);
   //console.log("nodes: ", nodes);
-  let sortedNodes = [];
+  let sortedNodes = topoSort(nodes);
 
-  try {
-    sortedNodes = topoSort(nodes);
-    //console.log(JSON.stringify(sortedNodes));
-  } catch (err) {
-    this.postMessage(err);
-  }
-
-  /*
-  math.config({
-    predictable: false,
-  })*/
   //import custom functions
   delay.rawArgs = true;
   math.import({
@@ -160,14 +149,18 @@ function topoSort(nodes) {
       }
     });
   }
-  //if number of sorted nodes is not the same as incoming nodes, then graph has at least one cycle
-  if (unvisitedNodes.length) {
-    console.log("unvisitedNodes: ", unvisitedNodes);
-    throw "Circular dependency detected.";
-  } else {
-    //console.log("L: ", L);
-    return L;
+
+  try {
+    //if there are unvisited nodes, then graph has at least one cycle
+    if (unvisitedNodes.length) {
+      console.log("unvisitedNodes: ", unvisitedNodes);
+      throw "Circular dependency detected.";
+    }
+  } catch (err) {
+    console.log(err);
+    this.postMessage(err);
   }
+  return L;
 }
 
 function simplifyForSort(node) {

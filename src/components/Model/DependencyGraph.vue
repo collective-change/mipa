@@ -237,7 +237,7 @@ export default {
         );
       };
 
-      const backLink = d => {
+      const alink = d => {
         const arcRadius = getDistance(d) * 0.6;
         return (
           "M" +
@@ -320,7 +320,7 @@ export default {
             that.linkToSubmit.type = "forward";
           }
         },
-        {
+        /*{
           label: "Link to feedback influencee",
           handler: function() {
             that.showAddLink = true;
@@ -329,7 +329,7 @@ export default {
             that.linkToSubmit.targetType = "feedback influencee";
             that.linkToSubmit.type = "back";
           }
-        },
+        },*/
         {
           label: "Delete node",
           handler: function() {
