@@ -844,7 +844,8 @@ export default {
             (matchedD3Link = that.d3Data.links.filter(
               d3Link =>
                 d3Link.source.id == storeLink.source &&
-                d3Link.target.id == storeLink.target
+                d3Link.target.id == storeLink.target &&
+                d3Link.hasReciprocal == storeLink.hasReciprocal
             )[0])
           ) {
             //remove "unconfirmed" mark
