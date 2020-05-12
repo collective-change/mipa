@@ -50,7 +50,6 @@ onmessage = function(e) {
   });
   //console.log({ sortedNodes });
 
-  let formulasArray = [];
   let completedLoops = 0;
   let maxLoops = 10;
 
@@ -68,7 +67,7 @@ onmessage = function(e) {
     //console.log({ scope });
 
     // gather up formulas from nodes into an array ordered by calculation order
-    formulasArray = sortedNodes.map(function(node) {
+    let expressionsArray = sortedNodes.map(function(node) {
       //if formula includes a variable then save it
       if (node.sysFormula.includes("$")) {
         return "$" + node.id + " = " + node.sysFormula;
@@ -79,16 +78,21 @@ onmessage = function(e) {
         );
       }
     });
-    //console.log({ formulasArray });
 
-    //console.log({ scope });
+    let parsedExpressions = expressionsArray.map(function(expression) {
+      return math.parse(expression);
+    });
+
+    let compiledExpressions = parsedExpressions.map(function(parsedExpression) {
+      return parsedExpression.compile();
+    });
 
     while (completedLoops < maxLoops) {
       //console.log("starting loop ", completedLoops + 1);
       // evaluate the formulas
-      formulasArray.forEach(function(formula, index) {
+      compiledExpressions.forEach(function(code, index) {
         //todo: if timeS == initialTimeS then evaluate current value
-        math.evaluate(formula, scope);
+        code.evaluate(scope);
         //todo: check result of evaluation against units expected by user.
       });
 
