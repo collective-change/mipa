@@ -79,12 +79,8 @@ onmessage = function(e) {
       }
     });
 
-    let parsedExpressions = expressionsArray.map(function(expression) {
-      return math.parse(expression);
-    });
-
-    let compiledExpressions = parsedExpressions.map(function(parsedExpression) {
-      return parsedExpression.compile();
+    let compiledExpressions = expressionsArray.map(function(expression) {
+      return math.parse(expression).compile();
     });
 
     while (completedLoops < maxLoops) {
