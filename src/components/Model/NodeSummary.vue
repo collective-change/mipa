@@ -10,13 +10,17 @@
           :rules="[val => !!val || 'Field is required']"
           ref="nodeName"
         />
-        <q-input v-model="nodeToSubmit.unit" label="Unit" />
-        <q-input v-model="nodeToSubmit.currentValue" label="Current value" />
+        <q-input
+          v-model="nodeToSubmit.unit"
+          label="Unit"
+          :rules="[val => isNaN(parseInt(val.substring(0,1))) || 'Cannot start with a number']"
+        />
+        <q-input v-model="nodeToSubmit.currentValue" label="Current value" type="number" />
         <q-input
           :value="nodeToSubmit.symbol"
           @change="e => {nodeToSubmit.symbol = e.target.value}"
           label="symbol"
-          :rules="[val => !!val || 'Field is required']"
+          :rules="[val => !!val || 'Field is required', val => isNaN(parseInt(val.substring(0,1))) || 'Cannot start with a number']"
         />
         <q-input
           :value="nodeToSubmit.symbolFormula"
