@@ -1,9 +1,7 @@
 <template>
   <q-card>
     <modal-header>
-      <template v-slot:header
-        >Add {{ newNodeRole ? "new " + newNodeRole : "node" }}</template
-      >
+      <template v-slot:header>Add {{ newNodeRole ? "new " + newNodeRole : "node" }}</template>
     </modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
@@ -49,6 +47,7 @@ export default {
 
     submitNode() {
       this.nodeToSubmit.symbol = camelize(this.nodeToSubmit.name);
+      this.nodeToSubmit.symbolFormula = "";
       this.addNode({
         node: this.nodeToSubmit,
         sourceNodeId: this.sourceNodeId,

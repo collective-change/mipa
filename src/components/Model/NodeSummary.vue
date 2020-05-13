@@ -13,29 +13,32 @@
         <q-input
           v-model="nodeToSubmit.unit"
           label="Unit"
-          :rules="[val => (val=='' || isNaN(parseInt(val.substring(0,1)))) || 'Cannot start with a number']"
+          :rules="[val => (val=='' || val!='' && isNaN(parseInt(val.substring(0,1)))) || 'Cannot start with a number']"
         />
         <q-input v-model="nodeToSubmit.currentValue" label="Current value" type="number" />
         <q-input
           :value="nodeToSubmit.symbol"
           @change="e => {nodeToSubmit.symbol = e.target.value}"
-          label="symbol"
+          label="Symbol"
           :rules="[val => !!val || 'Field is required', val => isNaN(parseInt(val.substring(0,1))) || 'Cannot start with a number']"
         />
         <q-input
           :value="nodeToSubmit.symbolFormula"
-          @change="e => {nodeToSubmit.symbolFormula = e.target.value}"
-          label="symbolFormula"
-          autogrow
+          @change="e => { nodeToSubmit.symbolFormula = e.target.value }"
+          label="(symbol) Formula"
         />
         <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
         <gchart :v-if="chartData != []" type="LineChart" :data="chartData" :options="chartOptions" />
 
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
-      </q-form>
+      </q-form>parsedSymbolFormula
+      <pre>{{nodeToSubmit.symbolFormula}}</pre>
       <p>parsedSymbolFormula</p>
       <pre>{{parsedSymbolFormula}}</pre>
+      <p>sysFormula</p>
+      <pre>{{nodeToSubmit.sysFormula}}</pre>
+
       <p>nodeToSubmit {{ nodeToSubmit.id }}</p>
       <pre>{{ nodeToSubmit }}</pre>
     </div>
@@ -168,8 +171,7 @@ export default {
     },
 
     parsedSymbolFormula: function(newVersion, oldVersion) {
-      //update sysFormula
-      if (this.nodeToSubmit.symbolFormula == "") {
+      if (newVersion.toString() == "") {
         this.nodeToSubmit.sysFormula = "";
       } else {
         var nodes = this.nodes;
@@ -195,26 +197,11 @@ export default {
             });
           });
         }
-        if (
-          "feedbackInfluencers" in this.nodeToSubmit &&
-          this.nodeToSubmit.feedbackInfluencers.length > 0
-        ) {
-          this.nodeToSubmit.feedbackInfluencers.forEach(function(
-            influencerNodeId
-          ) {
-            influencerNode = nodes.find(function(node) {
-              return node.id == influencerNodeId;
-            });
-            potentials.push({
-              symbol: influencerNode.symbol,
-              id: influencerNodeId
-            });
-          });
-        }
+
         potentials.sort(function(a, b) {
           return a.symbol.length - b.symbol.length;
         });
-        var sysFormula = this.nodeToSubmit.symbolFormula;
+        var sysFormula = newVersion.toString();
         if (sysFormula) {
           potentials.forEach(function(node) {
             sysFormula = sysFormula.replace(
@@ -223,6 +210,8 @@ export default {
             );
           });
         }
+        sysFormula.trim(); //trim whitespace from both sides
+        sysFormula = sysFormula.replace(/  +/g, " "); //replace multiple spaces with single space
         this.nodeToSubmit.sysFormula = sysFormula;
       }
     }

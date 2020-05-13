@@ -149,6 +149,7 @@ function topoSort(nodes) {
       }
     });
   }
+  //now try to sort out unvisited nodes (ones in or blocked by a cycle)
 
   try {
     //if there are unvisited nodes, then graph has at least one cycle
