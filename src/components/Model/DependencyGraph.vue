@@ -404,7 +404,7 @@ export default {
         .attr("x", 0)
         .attr("y", ".31em")
         .attr("text-anchor", "middle")
-        .text(d => d.name + " (" + d.symbol + ") " + d.unit)
+        .text(d => d.name)
         .call(this.wrap, nodeRadius * 2); // wrap the text in <= node diameter
 
       // Add 'marker-end' attribute to each path
