@@ -183,17 +183,34 @@ function delay(args, math, scope) {
   let $nodeId = args[0].name;
   let nodeId = $nodeId.substr(1);
   let delayTime = args[1].compile().evaluate(scope);
+  let initialValue = null;
+  if (args.length <= 1) {
+    console.error('"delay" function needs at least 2 arguments.');
+    throw '"delay" function needs at least 2 arguments.';
+  } else if (args.length == 2) {
+    //no initial value defined
+  } else if (args.length == 3) {
+    if (typeof args[2] == "number") initialValue = args[2];
+    else if (args[2] == "best_guess") initialValue = "best_guess";
+    else {
+      console.error("Initial value not recognized for " + nodeId);
+      throw "Initial value not recognized for " + nodeId;
+    }
+  } else {
+    console.error('"delay" function takes at most 3 arguments.');
+    throw '"delay" function takes at most 3 arguments.';
+  }
 
   let values = scope.timeSeries.nodes[nodeId];
   let timeSPoints = scope.timeSeries.timeSPoints;
-  let defaultValue = scope[$nodeId];
+  //let defaultValue = scope[$nodeId];
   let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
 
   //interpolate value at targetTimeS
-  return interpolate(timeSPoints, values, targetTimeS, defaultValue);
+  return interpolate(timeSPoints, values, targetTimeS, initialValue);
 }
 
-function interpolate(rawTimeSPoints, rawValues, targetTimeS, defaultValue) {
+function interpolate(rawTimeSPoints, rawValues, targetTimeS, initialValue) {
   let timeSPoints = [];
   let values = [];
   //extract only available data points
@@ -208,22 +225,23 @@ function interpolate(rawTimeSPoints, rawValues, targetTimeS, defaultValue) {
   //if symbol has no history, then return default value
   if (values.length == 0) {
     //console.log("No history; using default value.");
-    return defaultValue;
+    if (typeof initialValue == "number") return initialValue;
+    else {
+      console.error("No history and no initial value available.");
+      throw "No history and no initial value available.";
+    }
   }
-  //else if history starts after target time, then return default (current) value if available, or first value
+  //else if history starts after target time, then return initial value if available, or first value in history
   else if (timeSPoints[0] > targetTimeS) {
     //console.log("History starts after target time; using default value if available, else first value in history.");
-    //todo: if currentValue is available, then interpolate using currentValue and beginning of history
-    return typeof defaultValue == "number" ? defaultValue : values[0];
+    if (typeof initialValue == "number") return initialValue;
+    else if (initialValue == "best_guess") return values[0];
   }
-  //else if history ends before target time, then return last value
+  //else if history ends before target time, then return last value in history
   else if (timeSPoints[timeSPoints.length - 1] < targetTimeS) {
-    //console.log("History ends before target time; using last value.");
-    //todo: if history has 2 points, then interpolate using 2 end points of history,
-    //else history has only 1 point,
-    //  if currentValue available then interpolate
-    //  else return history's only value
-    return values[values.length - 1];
+    //console.log("History ends before target time; using initialValue or best_guess.");
+    if (typeof initialValue == "number") return initialValue;
+    else if (initialValue == "best_guess") return values[values.length - 1];
   }
   //else if history is only one point (should be at targetTimeS) then return its value
   else if (timeSPoints.length == 1) {
