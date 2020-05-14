@@ -110,6 +110,18 @@ export default {
         : "";
       console.log("LaTeX expression:", latex);
     }
+
+    /*nonBlockingInfluencers() {
+      if ('influencers' in this.nodeToSubmit && this.nodeToSubmit.influencers.length > 0) {
+        this.nodeToSubmit.influencers.forEach(function(influencerId, index){
+          //check if influencer is in a delay function
+          //parse the formula, evaluate 
+          //todo: check if influencer's time series begins before delay time
+        })
+      } else {
+        return [];
+      }
+    }*/
   },
 
   methods: {
@@ -143,6 +155,66 @@ export default {
           }
         }
       } else this.chartData = [];
+    },
+    getBlockingInfluencers(sysFormula) {
+      let nodeToSubmit = this.nodeToSubmit;
+      let thisNodeId = this.nodeToSubmit.id;
+      let parsedSysFormula = parse(sysFormula);
+      //get all used influencers, add to blocking array
+      let blocking = [];
+      this.nodeToSubmit.influencers.forEach(function(influencerId) {
+        if (sysFormula.includes(influencerId)) blocking.push(influencerId);
+      });
+
+      //get all delay calls
+      let delayCallsArgs = [];
+      let selfDelay = false;
+      parsedSysFormula.traverse(function(node, path, parent) {
+        if (node.type == "FunctionNode") {
+          if (node.fn.name == "delay") {
+            delayCallsArgs.push(node.args);
+            //if the current node has a delay influence on itself
+            if (node.args[0].name == "$" + nodeToSubmit.id) selfDelay = true;
+          }
+        }
+      });
+      if (selfDelay == true) blocking.push(nodeToSubmit.id);
+
+      blocking.forEach(function(influencerId, index, object) {
+        //remove influencer from blocking if it is only in non-blocking delay
+        let influencerIsBlocking = true;
+        let influencerDelayCallsArgs = [];
+        //is influencer is used in any delay?
+        delayCallsArgs.forEach(function(args) {
+          //console.log(args);
+          //if influencer is used in any delay, then influencerIsBlocking = false
+          if (args[0].name.substring(1) == influencerId) {
+            influencerIsBlocking = false;
+            influencerDelayCallsArgs.push(args);
+          }
+        });
+        //for each delay call the influencer is in
+        influencerDelayCallsArgs.forEach(function(args) {
+          //if a blocking delay, then set influencerIsBlocking = true
+          //if initialValue is not set then influencerIsBlocking = true
+          if (args.length < 3) influencerIsBlocking = true;
+          let initialValue = args[2];
+          if (initialValue == "best_guess") {
+            let historyAvailable = false; //todo: check if history is available
+            if (isNaN(nodeToSubmit.currentValue))
+              var currentValueAvailable = false;
+            else var currentValueAvailable = true;
+            if (!historyAvailable && !currentValueAvailable)
+              influencerIsBlocking = true;
+          }
+        });
+        if (influencerIsBlocking == false) {
+          //remove influencer from blocking array
+          object.splice(index, 1);
+        }
+      });
+      console.log({ blocking });
+      return blocking;
     }
   },
 
@@ -171,6 +243,7 @@ export default {
     },
 
     parsedSymbolFormula: function(newVersion, oldVersion) {
+      // calculate sysFormula
       if (newVersion.toString() == "") {
         this.nodeToSubmit.sysFormula = "";
       } else {
@@ -197,10 +270,10 @@ export default {
             });
           });
         }
-
         potentials.sort(function(a, b) {
           return a.symbol.length - b.symbol.length;
         });
+
         var sysFormula = newVersion.toString();
         if (sysFormula) {
           potentials.forEach(function(node) {
@@ -214,6 +287,9 @@ export default {
         sysFormula = sysFormula.replace(/  +/g, " "); //replace multiple spaces with single space
         this.nodeToSubmit.sysFormula = sysFormula;
       }
+
+      //calculate nonBlockingInfluencers
+      let blockingInfluencers = this.getBlockingInfluencers(sysFormula);
     }
   }
 };
