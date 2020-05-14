@@ -8,7 +8,8 @@ onmessage = function(e) {
   //console.log("Message received from main script");
   //console.log(e.data);
 
-  let nodes = e.data.modelNodes.map(simplifyForSort);
+  let nodes = prepForSort(e.data.modelNodes);
+  //let nodes = e.data.modelNodes.map(simplifyForSort);
   //console.log("nodes: ", nodes);
   let sortedNodes = topoSort(nodes);
 
@@ -125,8 +126,8 @@ onmessage = function(e) {
 
 function topoSort(nodes) {
   let L = []; //for storing sorted elements
-  let S = nodes.filter(node => node.inDegree == 0); //nodes with no incoming edges
-  let unvisitedNodes = nodes.filter(node => node.inDegree != 0);
+  let S = nodes.filter(node => node.blockingInDegree == 0); //nodes with no incoming edges
+  let unvisitedNodes = nodes.filter(node => node.blockingInDegree != 0);
   let n = null; //node to process
   let influencee = null; //a working variable
 
@@ -135,10 +136,10 @@ function topoSort(nodes) {
     n = S.shift();
     L.push(n);
     //console.log("n: ", n);
-    n.influencees.forEach(function(influenceeId, index) {
+    n.blockedInfluencees.forEach(function(influenceeId, index) {
       influencee = unvisitedNodes.find(node => node.id == influenceeId);
-      influencee.inDegree--;
-      if (influencee.inDegree == 0) {
+      influencee.blockingInDegree--;
+      if (influencee.blockingInDegree == 0) {
         S.push(influencee);
         //remove influencee from unvisited nodes
         for (var i = 0; i < unvisitedNodes.length; i++) {
@@ -164,12 +165,45 @@ function topoSort(nodes) {
   return L;
 }
 
+function prepForSort(nodes) {
+  let preppedNodes = [];
+  nodes.forEach(function(outerNode) {
+    // calculate blockedInfluencees
+    let blockedInfluencees = [];
+    //examine each candidate node to check for current node being in blockingInfluencers
+    nodes.forEach(function(innerNode) {
+      if (innerNode.id != outerNode.id) {
+        //skip self
+        if (innerNode.blockingInfluencers.includes(outerNode.id)) {
+          blockedInfluencees.push(innerNode.id);
+        }
+      }
+    });
+    preppedNodes.push({
+      id: outerNode.id,
+      name: outerNode.name,
+      blockingInDegree: outerNode.blockingInfluencers.length,
+      blockedInfluencees: blockedInfluencees,
+      sysFormula:
+        typeof outerNode.sysFormula !== "undefined" ? outerNode.sysFormula : "",
+      unit: typeof outerNode.unit !== "undefined" ? outerNode.unit : "",
+      currentValue:
+        typeof outerNode.currentValue !== "undefined"
+          ? outerNode.currentValue
+          : ""
+    });
+  });
+  return preppedNodes;
+}
+
 function simplifyForSort(node) {
   return {
     id: node.id,
     name: node.name,
     inDegree:
-      typeof node.influencers !== "undefined" ? node.influencers.length : 0,
+      typeof node.influencers !== "undefined"
+        ? node.blockingInfluencers.length
+        : 0,
     influencees:
       typeof node.influencees !== "undefined" ? node.influencees : [],
     sysFormula: typeof node.sysFormula !== "undefined" ? node.sysFormula : "",
