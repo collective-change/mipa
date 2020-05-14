@@ -12,6 +12,8 @@
       :height="svgHeight"
       style="border: black; border-style: solid; border-width: 0px"
     />
+    <pre>{{links}}</pre>
+    <pre>{{d3Data.links}}</pre>
     <p class="print-hide">Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.</p>
     <q-dialog v-model="showAddNode">
       <add-node
@@ -199,10 +201,10 @@ export default {
   },
 
   beforeUpdate() {
-    console.log("beforeUpdate()");
+    //console.log("beforeUpdate()");
   },
   updated() {
-    console.log("updated()");
+    //console.log("updated()");
   },
 
   methods: {
@@ -352,11 +354,13 @@ export default {
         }
       });
 
-      // Links should only exit if not needed anymore
+      // Links should only exit if not needed anymore,
+      // but somehow .exit() does not work, so we're
+      // removing all links and redrawing with each data change.
       graph
         .selectAll("path")
         .data(this.d3Data.links)
-        .exit()
+        //.exit()
         .remove();
 
       graph
@@ -840,13 +844,15 @@ export default {
           else {
             that.d3Data.links.push(Object.assign({}, storeLink));
             dataChanged = true;
+            console.log("new link added to d3Data ", storeLink);
           }
         });
         //remove unconfirmed links in data.links
         if (that.d3Data.links.length > 0) {
           var originalLinkCount = that.d3Data.links.length;
           that.d3Data.links = that.d3Data.links.filter(function(link) {
-            return typeof link.unconfirmed === "undefined"; //link does not have 'unconfirmed' property
+            //only keep links that do not have 'unconfirmed' property
+            return typeof link.unconfirmed === "undefined";
           });
           if (that.d3Data.links.length != originalLinkCount) {
             dataChanged = true;
@@ -886,15 +892,9 @@ path.link.highlight {
 path.link.nonBlocking {
   stroke-dasharray: 5, 2;
 }
-
-path.link.back {
-  stroke: #7f3f00;
-}
-
 path.link.unusedInFormula {
   stroke: lightcoral;
 }
-
 path.link.usedInFormula {
   stroke: #333;
 }

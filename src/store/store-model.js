@@ -318,12 +318,17 @@ const getters = {
       //console.log(node.id);
       if ("influencers" in node) {
         node.influencers.forEach(function(influencerId) {
-          //check if influencer is also in node.blockingInfluencers
           allLinks.push({
             source: influencerId,
             target: node.id,
-            hasReciprocal: node.influencees.includes(influencerId),
-            isBlocking: node.blockingInfluencers.includes(influencerId)
+            hasReciprocal:
+              "influencees" in node
+                ? node.influencees.includes(influencerId)
+                : false,
+            isBlocking:
+              "blockingInfluencers" in node
+                ? node.blockingInfluencers.includes(influencerId)
+                : false
           });
         });
       }
