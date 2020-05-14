@@ -328,6 +328,7 @@ const getters = {
         });
       }
     });
+    console.log("allLinks updated");
     return allLinks;
   }
 };

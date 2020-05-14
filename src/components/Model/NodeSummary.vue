@@ -26,6 +26,7 @@
           :value="nodeToSubmit.symbolFormula"
           @change="e => { nodeToSubmit.symbolFormula = e.target.value }"
           label="(symbol) Formula"
+          autogrow
         />
         <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
         <gchart :v-if="chartData != []" type="LineChart" :data="chartData" :options="chartOptions" />
@@ -180,7 +181,12 @@ export default {
       });
       if (selfDelay == true) blocking.push(nodeToSubmit.id);
 
-      blocking.forEach(function(influencerId, index, object) {
+      console.log({ blocking });
+
+      let blockingArrForIteration = [...blocking];
+
+      blockingArrForIteration.forEach(function(influencerId, index, object) {
+        console.log("processing ", influencerId);
         //remove influencer from blocking if it is only in non-blocking delay
         let influencerIsBlocking = true;
         let influencerDelayCallsArgs = [];
@@ -200,6 +206,7 @@ export default {
           if (args.length < 3) influencerIsBlocking = true;
           let initialValue = args[2];
           if (initialValue == "best_guess") {
+            console.log("processing best_guess for ", args[0]);
             let historyAvailable = false; //todo: check if history is available
             if (isNaN(nodeToSubmit.currentValue))
               var currentValueAvailable = false;
@@ -210,7 +217,11 @@ export default {
         });
         if (influencerIsBlocking == false) {
           //remove influencer from blocking array
-          object.splice(index, 1);
+          console.log("removing", influencerId);
+          const index = blocking.indexOf(influencerId);
+          if (index > -1) {
+            blocking.splice(index, 1);
+          }
         }
       });
       console.log({ blocking });
