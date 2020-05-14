@@ -318,10 +318,12 @@ const getters = {
       //console.log(node.id);
       if ("influencers" in node) {
         node.influencers.forEach(function(influencerId) {
+          //check if influencer is also in node.blockingInfluencers
           allLinks.push({
             source: influencerId,
             target: node.id,
-            hasReciprocal: node.influencees.includes(influencerId)
+            hasReciprocal: node.influencees.includes(influencerId),
+            isBlocking: node.blockingInfluencers.includes(influencerId)
           });
         });
       }

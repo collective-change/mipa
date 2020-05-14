@@ -110,8 +110,8 @@ export default {
       linkToSubmit: {
         sourceNodeId: "",
         targetNodeId: "",
-        targetType: "",
-        type: ""
+        targetType: ""
+        //type: ""
       }
     };
   },
@@ -307,7 +307,7 @@ export default {
             that.linkToSubmit.sourceNodeId = that.selectedNodeId;
             that.linkToSubmit.targetNodeId = "";
             that.linkToSubmit.targetType = "influencer";
-            that.linkToSubmit.type = "forward";
+            //that.linkToSubmit.type = "forward";
           }
         },
         {
@@ -317,7 +317,7 @@ export default {
             that.linkToSubmit.sourceNodeId = that.selectedNodeId;
             that.linkToSubmit.targetNodeId = "";
             that.linkToSubmit.targetType = "influencee";
-            that.linkToSubmit.type = "forward";
+            //that.linkToSubmit.type = "forward";
           }
         },
         /*{
@@ -364,7 +364,7 @@ export default {
         .data(this.d3Data.links)
         .enter()
         .append("path")
-        .attr("class", d => "link " + d.type)
+        .attr("class", d => "link " + (d.isBlocking ? "" : "nonBlocking"))
         .on("contextmenu", function(d) {
           d3.event.preventDefault();
           linkContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
@@ -824,34 +824,18 @@ export default {
         let matchedD3Link = null;
         //for each in storeLinks,
         this.storeData.links.forEach(function(storeLink) {
-          var filterPattern = {
-            source: storeLink.source,
-            target: storeLink.target,
-            type: storeLink.type
-          };
-          //if storeLink exists in data.links already
-          // if (
-          //   //declaration inside if conditional intended
-          //   (matchedD3Link = that.d3Data.links.filter(function(item) {
-          //     for (var key in filterPattern) {
-          //       console.log("key: ", key, " ", filterPattern[key]);
-          //       if (item[key] === undefined || item[key] != filterPattern[key])
-          //         return false;
-          //     }
-          //   })[0])
-          // )
           if (
+            //if a match in d3Data.links is found
             (matchedD3Link = that.d3Data.links.filter(
               d3Link =>
                 d3Link.source.id == storeLink.source &&
                 d3Link.target.id == storeLink.target &&
-                d3Link.hasReciprocal == storeLink.hasReciprocal
+                d3Link.hasReciprocal == storeLink.hasReciprocal &&
+                d3Link.isBlocking == storeLink.isBlocking
             )[0])
           ) {
-            //remove "unconfirmed" mark
+            //then remove "unconfirmed" mark
             delete matchedD3Link.unconfirmed;
-            //update data link with values from storeLink
-            // matchedD3Link.derivative = storeLink.derivative;
           } //else storeLink does not exist in data; clone it there
           else {
             that.d3Data.links.push(Object.assign({}, storeLink));
@@ -899,8 +883,7 @@ path.link.faded {
 path.link.highlight {
   opacity: 1;
 }
-path.link.depends {
-  stroke: #005900;
+path.link.nonBlocking {
   stroke-dasharray: 5, 2;
 }
 
