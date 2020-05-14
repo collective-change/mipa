@@ -181,7 +181,7 @@ export default {
       });
       if (selfDelay == true) blocking.push(nodeToSubmit.id);
 
-      console.log({ blocking });
+      //console.log({ blocking });
 
       let blockingArrForIteration = [...blocking];
 
@@ -217,14 +217,14 @@ export default {
         });
         if (influencerIsBlocking == false) {
           //remove influencer from blocking array
-          console.log("removing", influencerId);
+          //console.log("removing", influencerId);
           const index = blocking.indexOf(influencerId);
           if (index > -1) {
             blocking.splice(index, 1);
           }
         }
       });
-      console.log({ blocking });
+      //console.log({ blocking });
       return blocking;
     }
   },
