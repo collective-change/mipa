@@ -186,7 +186,7 @@ export default {
       let blockingArrForIteration = [...blocking];
 
       blockingArrForIteration.forEach(function(influencerId, index, object) {
-        console.log("processing ", influencerId);
+        //console.log("processing ", influencerId);
         //remove influencer from blocking if it is only in non-blocking delay
         let influencerIsBlocking = true;
         let influencerDelayCallsArgs = [];
@@ -206,7 +206,7 @@ export default {
           if (args.length < 3) influencerIsBlocking = true;
           let initialValue = args[2];
           if (initialValue == "best_guess") {
-            console.log("processing best_guess for ", args[0]);
+            //console.log("processing best_guess for ", args[0]);
             let historyAvailable = false; //todo: check if history is available
             if (isNaN(nodeToSubmit.currentValue))
               var currentValueAvailable = false;
