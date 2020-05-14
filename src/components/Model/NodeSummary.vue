@@ -288,8 +288,9 @@ export default {
         this.nodeToSubmit.sysFormula = sysFormula;
       }
 
-      //calculate nonBlockingInfluencers
+      //calculate blockingInfluencers
       let blockingInfluencers = this.getBlockingInfluencers(sysFormula);
+      this.nodeToSubmit.blockingInfluencers = blockingInfluencers;
     }
   }
 };
