@@ -159,6 +159,7 @@ export default {
     },
     getBlockingInfluencers(sysFormula) {
       let nodeToSubmit = this.nodeToSubmit;
+      let nodes = this.nodes;
       let thisNodeId = this.nodeToSubmit.id;
       let parsedSysFormula = parse(sysFormula);
       //get all used influencers, add to blocking array
@@ -208,9 +209,21 @@ export default {
           if (initialValue == "best_guess") {
             //console.log("processing best_guess for ", args[0]);
             let historyAvailable = false; //todo: check if history is available
-            if (isNaN(nodeToSubmit.currentValue))
-              var currentValueAvailable = false;
-            else var currentValueAvailable = true;
+            let influencerNode = nodes.find(function(node) {
+              return node.id == influencerId;
+            });
+            console.log(
+              influencerNode.id,
+              " currentValue: ",
+              influencerNode.currentValue
+            );
+            if (
+              typeof influencerNode.currentValue != "undefined" &&
+              !isNaN(influencerNode.currentValue)
+            )
+              var currentValueAvailable = true;
+            else var currentValueAvailable = false;
+            console.log(influencerId, { currentValueAvailable });
             if (!historyAvailable && !currentValueAvailable)
               influencerIsBlocking = true;
           }
