@@ -142,7 +142,7 @@ export default {
           }
         }
       } else {
-        console.log("nope");
+        //console.log("nope");
         this.chartData = [];
       }
     }

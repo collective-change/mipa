@@ -269,11 +269,11 @@ export default {
     },
     updateData() {
       var that = this;
-      console.log(
+      /*console.log(
         "updateData; change count ",
         this.storeDataChangeCount,
         "****************"
-      );
+      );*/
       // stop the previous simulation if it is still running
       this.simulation.stop();
       this.simulation.nodes(this.d3Data.nodes);
@@ -761,7 +761,7 @@ export default {
       immediate: true,
       deep: true,
       handler(/*newNodes, oldNodes*/) {
-        console.log("nodes handler running");
+        //console.log("nodes handler running");
         var that = this;
         var dataChanged = false;
         //mark each node in d3Data.nodes as unconfirmed
@@ -811,18 +811,9 @@ export default {
             dataChanged = true;
           }
         }
-        console.log("finished handling nodes; starting on links");
-        //     this.storeDataChangeCount++;
-        //   }
-        // },
-        // // watcher for store links
-        // links: {
-        //   immediate: true,
-        //   deep: true,
-        //   handler(/*newLinks, oldLinks*/) {
-        // var that = this;
 
         //now do the links
+        //console.log("finished handling nodes; starting on links");
         //mark each link in data.links as unconfirmed
         if (this.d3Data.links.length > 0) {
           this.d3Data.links.forEach(function(d3Link) {
@@ -849,7 +840,7 @@ export default {
           else {
             that.d3Data.links.push(Object.assign({}, storeLink));
             dataChanged = true;
-            console.log("new link added to d3Data ", storeLink);
+            //console.log("new link added to d3Data ", storeLink);
           }
         });
         //remove unconfirmed links in data.links
@@ -864,10 +855,10 @@ export default {
           }
         }
         if (dataChanged) {
-          console.log("incrementing storeDataChangeCount");
+          //console.log("incrementing storeDataChangeCount");
           this.storeDataChangeCount++;
         }
-        console.log("nodes handler finished");
+        //console.log("nodes handler finished");
       }
     }
   }
