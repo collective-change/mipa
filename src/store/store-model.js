@@ -71,7 +71,7 @@ const actions = {
   }),
 
   addNode({ dispatch }, payload) {
-    console.log(payload);
+    //console.log(payload);
     let node = payload.node;
     node.createTime = firebase.firestore.FieldValue.serverTimestamp();
     node.createdBy = firebaseAuth.currentUser.uid;
@@ -302,6 +302,14 @@ const actions = {
       .catch(function(error) {
         console.log("reDetermineNodeClass failed: ", error);
       });
+  },
+
+  updateClassifiedInfluencersOf({}, payload) {
+    let modelId = payload.modelId;
+    let influenceeId = payload.influenceeId;
+    console.log("state.nodes", state.nodes);
+    //run classifyInfluencers
+    //save results
   }
 };
 

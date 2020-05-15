@@ -11,10 +11,12 @@ function classifyInfluencers(payload) {
   //get all used influencers, add to used and blocking array
   let used = [];
   let blocking = [];
-  thisNode.influencers.forEach(function(influencerId) {
-    if (sysFormula.includes(influencerId)) blocking.push(influencerId);
-    if (sysFormula.includes(influencerId)) used.push(influencerId);
-  });
+  if ("influencers" in thisNode) {
+    thisNode.influencers.forEach(function(influencerId) {
+      if (sysFormula.includes(influencerId)) blocking.push(influencerId);
+      if (sysFormula.includes(influencerId)) used.push(influencerId);
+    });
+  }
 
   //get all delay calls
   let delayCallsArgs = [];
