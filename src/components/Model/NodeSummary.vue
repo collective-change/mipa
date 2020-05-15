@@ -66,8 +66,6 @@ export default {
   data() {
     return {
       nodeToSubmit: {},
-      //nodeBaseline: null,
-      //enteredFormula: "",
       model: null,
 
       chartData: [],
@@ -112,18 +110,6 @@ export default {
         : "";
       console.log("LaTeX expression:", latex);
     }
-
-    /*nonBlockingInfluencers() {
-      if ('influencers' in this.nodeToSubmit && this.nodeToSubmit.influencers.length > 0) {
-        this.nodeToSubmit.influencers.forEach(function(influencerId, index){
-          //check if influencer is in a delay function
-          //parse the formula, evaluate 
-          //todo: check if influencer's time series begins before delay time
-        })
-      } else {
-        return [];
-      }
-    }*/
   },
 
   methods: {
@@ -139,7 +125,6 @@ export default {
         modelId: this.$route.params.modelId,
         updates: this.nodeToSubmit
       });
-      //this.$emit("close");
     },
     updateChartData() {
       // if baseline.nodes contains the selected node then load baseline for this nde
@@ -158,91 +143,6 @@ export default {
         }
       } else this.chartData = [];
     }
-    /*classifyInfluencers(sysFormula) {
-      let nodeToSubmit = this.nodeToSubmit;
-      let nodes = this.nodes;
-      let thisNodeId = this.nodeToSubmit.id;
-      let parsedSysFormula = parse(sysFormula);
-      //get all used influencers, add to used and blocking array
-      let used = [];
-      let blocking = [];
-      nodeToSubmit.influencers.forEach(function(influencerId) {
-        if (sysFormula.includes(influencerId)) blocking.push(influencerId);
-        if (sysFormula.includes(influencerId)) used.push(influencerId);
-      });
-
-      //get all delay calls
-      let delayCallsArgs = [];
-      let selfDelay = false;
-      parsedSysFormula.traverse(function(node, path, parent) {
-        if (node.type == "FunctionNode") {
-          if (node.fn.name == "delay") {
-            delayCallsArgs.push(node.args);
-            //if the current node has a delay influence on itself
-            if (node.args[0].name == "$" + nodeToSubmit.id) selfDelay = true;
-          }
-        }
-      });
-      if (selfDelay == true) blocking.push(nodeToSubmit.id);
-
-      //console.log({ blocking });
-
-      let blockingArrForIteration = [...blocking];
-
-      blockingArrForIteration.forEach(function(influencerId, index, object) {
-        //console.log("processing ", influencerId);
-        //remove influencer from blocking if it is only in non-blocking delay
-        let influencerIsBlocking = true;
-        let influencerDelayCallsArgs = [];
-        //is influencer is used in any delay?
-        delayCallsArgs.forEach(function(args) {
-          //console.log(args);
-          //if influencer is used in any delay, then influencerIsBlocking = false
-          if (args[0].name.substring(1) == influencerId) {
-            influencerIsBlocking = false;
-            influencerDelayCallsArgs.push(args);
-          }
-        });
-        //for each delay call the influencer is in
-        influencerDelayCallsArgs.forEach(function(args) {
-          //if a blocking delay, then set influencerIsBlocking = true
-          //if initialValue is not set then influencerIsBlocking = true
-          if (args.length < 3) influencerIsBlocking = true;
-          let initialValue = args[2];
-          if (initialValue == "best_guess") {
-            //console.log("processing best_guess for ", args[0]);
-            let historyAvailable = false; //todo: check if history is available
-            let influencerNode = nodes.find(function(node) {
-              return node.id == influencerId;
-            });
-            if (
-              typeof influencerNode.currentValue != "undefined" &&
-              influencerNode.currentValue != "" &&
-              !isNaN(Number(influencerNode.currentValue))
-            )
-              var currentValueAvailable = true;
-            else var currentValueAvailable = false;
-            //console.log(influencerId, { currentValueAvailable });
-            if (!historyAvailable && !currentValueAvailable)
-              influencerIsBlocking = true;
-          }
-        });
-        if (influencerIsBlocking == false) {
-          //remove influencer from blocking array
-          //console.log("removing", influencerId);
-          const index = blocking.indexOf(influencerId);
-          if (index > -1) {
-            blocking.splice(index, 1);
-          }
-        }
-      });
-      // end of calculation for blocking influencers
-
-      //unused influencers = all influencers - used influencers
-      let unused = nodeToSubmit.influencers.filter(el => !used.includes(el));
-
-      return { blocking: blocking, unused: unused };
-    }*/
   },
 
   mounted() {
@@ -254,9 +154,6 @@ export default {
     );
     plugin.async = true;
     document.head.appendChild(plugin);
-
-    //initialize nodeToSubmit
-    //this.nodeToSubmit = Object.assign({}, this.selectedNode);
   },
 
   watch: {
@@ -316,7 +213,6 @@ export default {
       }
 
       //calculate blockingInfluencers
-      //let classifiedInfluencers = this.classifyInfluencers(sysFormula);
       let classifiedInfluencers = classifyInfluencers({
         thisNode: this.nodeToSubmit,
         nodes: this.nodes
