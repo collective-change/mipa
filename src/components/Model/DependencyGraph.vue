@@ -177,7 +177,7 @@ export default {
       .attr("markerUnits", "userSpaceOnUse")
       .attr("markerWidth", 15)
       .attr("markerHeight", 15)
-      .attr("fill", "#888")
+      .attr("fill", "#666")
       .attr("orient", "auto")
       .append("svg:path")
       .attr("d", "M0,-5L10,0L0,5");
@@ -887,7 +887,7 @@ export default {
 
 path.link {
   fill: none;
-  stroke: #888;
+  stroke: #666;
   stroke-width: 5px;
 }
 path.link.faded {
@@ -900,7 +900,7 @@ path.link.nonBlocking {
   stroke-dasharray: 5, 2;
 }
 path.link.unused {
-  stroke: lightcoral;
+  stroke: #aaa;
 }
 path.link.usedInFormula {
   stroke: #333;

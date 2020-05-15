@@ -48,11 +48,12 @@
 
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
-import { parse, format, toTex } from "mathjs";
+import { parse, toTex } from "mathjs";
 import { VueMathjax } from "vue-mathjax";
-import { getAcronym } from "src/utils/util-getAcronym";
 import { GChart } from "vue-google-charts";
+import { getAcronym } from "src/utils/util-getAcronym";
 import { showErrorMessage } from "src/utils/util-show-error-message";
+import { classifyInfluencers } from "src/utils/util-node-operations";
 
 export default {
   components: {
@@ -156,8 +157,8 @@ export default {
           }
         }
       } else this.chartData = [];
-    },
-    classifyInfluencers(sysFormula) {
+    }
+    /*classifyInfluencers(sysFormula) {
       let nodeToSubmit = this.nodeToSubmit;
       let nodes = this.nodes;
       let thisNodeId = this.nodeToSubmit.id;
@@ -165,7 +166,7 @@ export default {
       //get all used influencers, add to used and blocking array
       let used = [];
       let blocking = [];
-      this.nodeToSubmit.influencers.forEach(function(influencerId) {
+      nodeToSubmit.influencers.forEach(function(influencerId) {
         if (sysFormula.includes(influencerId)) blocking.push(influencerId);
         if (sysFormula.includes(influencerId)) used.push(influencerId);
       });
@@ -238,12 +239,10 @@ export default {
       // end of calculation for blocking influencers
 
       //unused influencers = all influencers - used influencers
-      let unused = this.nodeToSubmit.influencers.filter(
-        el => !used.includes(el)
-      );
+      let unused = nodeToSubmit.influencers.filter(el => !used.includes(el));
 
       return { blocking: blocking, unused: unused };
-    }
+    }*/
   },
 
   mounted() {
@@ -317,7 +316,12 @@ export default {
       }
 
       //calculate blockingInfluencers
-      let classifiedInfluencers = this.classifyInfluencers(sysFormula);
+      //let classifiedInfluencers = this.classifyInfluencers(sysFormula);
+      let classifiedInfluencers = classifyInfluencers({
+        thisNode: this.nodeToSubmit,
+        nodes: this.nodes
+      });
+
       this.nodeToSubmit.blockingInfluencers = classifiedInfluencers.blocking;
       this.nodeToSubmit.unusedInfluencers = classifiedInfluencers.unused;
     }
