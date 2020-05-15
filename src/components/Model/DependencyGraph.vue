@@ -368,7 +368,13 @@ export default {
         .data(this.d3Data.links)
         .enter()
         .append("path")
-        .attr("class", d => "link " + (d.isBlocking ? "" : "nonBlocking"))
+        .attr(
+          "class",
+          d =>
+            "link " +
+            (d.isBlocking ? "" : "nonBlocking ") +
+            (d.isUnused ? "unused " : "")
+        )
         .on("contextmenu", function(d) {
           d3.event.preventDefault();
           linkContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
@@ -835,7 +841,8 @@ export default {
                 d3Link.source.id == storeLink.source &&
                 d3Link.target.id == storeLink.target &&
                 d3Link.hasReciprocal == storeLink.hasReciprocal &&
-                d3Link.isBlocking == storeLink.isBlocking
+                d3Link.isBlocking == storeLink.isBlocking &&
+                d3Link.isUnused == storeLink.isUnused
             )[0])
           ) {
             //then remove "unconfirmed" mark
@@ -892,7 +899,7 @@ path.link.highlight {
 path.link.nonBlocking {
   stroke-dasharray: 5, 2;
 }
-path.link.unusedInFormula {
+path.link.unused {
   stroke: lightcoral;
 }
 path.link.usedInFormula {

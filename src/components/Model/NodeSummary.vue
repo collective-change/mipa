@@ -157,15 +157,17 @@ export default {
         }
       } else this.chartData = [];
     },
-    getBlockingInfluencers(sysFormula) {
+    classifyInfluencers(sysFormula) {
       let nodeToSubmit = this.nodeToSubmit;
       let nodes = this.nodes;
       let thisNodeId = this.nodeToSubmit.id;
       let parsedSysFormula = parse(sysFormula);
-      //get all used influencers, add to blocking array
+      //get all used influencers, add to used and blocking array
+      let used = [];
       let blocking = [];
       this.nodeToSubmit.influencers.forEach(function(influencerId) {
         if (sysFormula.includes(influencerId)) blocking.push(influencerId);
+        if (sysFormula.includes(influencerId)) used.push(influencerId);
       });
 
       //get all delay calls
@@ -233,8 +235,14 @@ export default {
           }
         }
       });
-      //console.log({ blocking });
-      return blocking;
+      // end of calculation for blocking influencers
+
+      //unused influencers = all influencers - used influencers
+      let unused = this.nodeToSubmit.influencers.filter(
+        el => !used.includes(el)
+      );
+
+      return { blocking: blocking, unused: unused };
     }
   },
 
@@ -309,8 +317,9 @@ export default {
       }
 
       //calculate blockingInfluencers
-      let blockingInfluencers = this.getBlockingInfluencers(sysFormula);
-      this.nodeToSubmit.blockingInfluencers = blockingInfluencers;
+      let classifiedInfluencers = this.classifyInfluencers(sysFormula);
+      this.nodeToSubmit.blockingInfluencers = classifiedInfluencers.blocking;
+      this.nodeToSubmit.unusedInfluencers = classifiedInfluencers.unused;
     }
   }
 };

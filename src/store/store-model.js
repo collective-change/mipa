@@ -328,6 +328,10 @@ const getters = {
             isBlocking:
               "blockingInfluencers" in node
                 ? node.blockingInfluencers.includes(influencerId)
+                : false,
+            isUnused:
+              "unusedInfluencers" in node
+                ? node.unusedInfluencers.includes(influencerId)
                 : false
           });
         });
