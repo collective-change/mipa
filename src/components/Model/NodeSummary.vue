@@ -212,18 +212,14 @@ export default {
             let influencerNode = nodes.find(function(node) {
               return node.id == influencerId;
             });
-            console.log(
-              influencerNode.id,
-              " currentValue: ",
-              influencerNode.currentValue
-            );
             if (
               typeof influencerNode.currentValue != "undefined" &&
-              !isNaN(influencerNode.currentValue)
+              influencerNode.currentValue != "" &&
+              !isNaN(Number(influencerNode.currentValue))
             )
               var currentValueAvailable = true;
             else var currentValueAvailable = false;
-            console.log(influencerId, { currentValueAvailable });
+            //console.log(influencerId, { currentValueAvailable });
             if (!historyAvailable && !currentValueAvailable)
               influencerIsBlocking = true;
           }
