@@ -32,14 +32,15 @@
         <gchart :v-if="chartData != []" type="LineChart" :data="chartData" :options="chartOptions" />
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
-      </q-form>parsedSymbolFormula
+      </q-form>
+      <p>nodeToSubmit: {{ nodeToSubmit.id }}</p>
+      <p>symbolFormula</p>
       <pre>{{nodeToSubmit.symbolFormula}}</pre>
       <p>parsedSymbolFormula</p>
       <pre>{{parsedSymbolFormula}}</pre>
       <p>sysFormula</p>
       <pre>{{nodeToSubmit.sysFormula}}</pre>
-
-      <p>nodeToSubmit {{ nodeToSubmit.id }}</p>
+      <p>nodeToSubmit</p>
       <pre>{{ nodeToSubmit }}</pre>
     </div>
   </div>
