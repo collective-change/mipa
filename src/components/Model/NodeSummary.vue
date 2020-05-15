@@ -30,7 +30,6 @@
         />
         <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
         <gchart :v-if="chartData != []" type="LineChart" :data="chartData" :options="chartOptions" />
-
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
       </q-form>parsedSymbolFormula
@@ -129,8 +128,8 @@ export default {
     updateChartData() {
       // if baseline.nodes contains the selected node then load baseline for this nde
       if (
-        typeof selectedNodeId !== "undefined" &&
-        selectedNodeId in this.baseline.nodes
+        typeof this.selectedNodeId !== "undefined" &&
+        this.selectedNodeId in this.baseline.nodes
       ) {
         let timeSPoints = this.baseline.timeSPoints;
         let values = this.baseline.nodes[this.selectedNode.id];
@@ -141,7 +140,10 @@ export default {
             this.chartData.push([new Date(timeSPoints[i] * 1000), values[i]]);
           }
         }
-      } else this.chartData = [];
+      } else {
+        console.log("nope");
+        this.chartData = [];
+      }
     }
   },
 

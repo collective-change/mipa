@@ -59,7 +59,7 @@ const actions = {
     console.log("Message posted to worker");
 
     baselineCalcWorker.onmessage = function(e) {
-      //console.log(e.data);
+      console.log(e.data);
       if (typeof e.data == "string") {
         console.log("Error message received from worker: ", e.data);
         showErrorMessage(

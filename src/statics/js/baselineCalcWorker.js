@@ -48,6 +48,7 @@ onmessage = function(e) {
     console.log("begin loading");
     sortedNodes.forEach(function(node, index) {
       //console.log({ node });
+      scope["$" + node.id + "_unit"] = node.unit;
       if ("currentValue" in node && node.currentValue != "") {
         //console.log("yay");
         scope["$" + node.id] = math.unit(Number(node.currentValue), node.unit);
@@ -218,6 +219,7 @@ function delay(args, math, scope) {
   let nodeId = $nodeId.substr(1);
   let delayTime = args[1].compile().evaluate(scope);
   let initialValue = null;
+  let currentValue = scope[$nodeId];
   if (args.length <= 1) {
     console.error('"delay" function needs at least 2 arguments.');
     throw '"delay" function needs at least 2 arguments.';
@@ -241,10 +243,24 @@ function delay(args, math, scope) {
   let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
 
   //interpolate value at targetTimeS
-  return interpolate(timeSPoints, values, targetTimeS, initialValue);
+  return interpolate(
+    timeSPoints,
+    values,
+    targetTimeS,
+    initialValue,
+    currentValue,
+    nodeId
+  );
 }
 
-function interpolate(rawTimeSPoints, rawValues, targetTimeS, initialValue) {
+function interpolate(
+  rawTimeSPoints,
+  rawValues,
+  targetTimeS,
+  initialValue,
+  currentValue,
+  nodeId
+) {
   let timeSPoints = [];
   let values = [];
   //extract only available data points
@@ -259,22 +275,52 @@ function interpolate(rawTimeSPoints, rawValues, targetTimeS, initialValue) {
   //if symbol has no history, then return default value
   if (values.length == 0) {
     //console.log("No history; using default value.");
-    if (typeof initialValue == "number") return initialValue;
-    else {
-      console.error("No history and no initial value available.");
-      throw "No history and no initial value available.";
+    //if (typeof initialValue == "number") return initialValue;
+    if (valueIsANumber(initialValue))
+      return math.unit(Number(initialValue), scope["$" + nodeId + "_unit"]);
+    else if (initialValue == "best_guess") {
+      //if currentValue is available then return current value
+      if (currentValue != "") return currentValue;
+      else {
+        console.error(
+          "No history, no initial value, and no current value available for best guess for node id " +
+            nodeId +
+            " initialValue: " +
+            typeof initialValue +
+            " " +
+            initialValue
+        );
+        throw "No history, no initial value, and no current value available for best guess for node id " +
+          nodeId +
+          " initialValue: " +
+          typeof initialValue +
+          " " +
+          initialValue;
+      }
+    } else {
+      console.error(
+        "No history and no initial value available for node id " +
+          nodeId +
+          " initialValue: " +
+          typeof initialValue +
+          " " +
+          initialValue
+      );
+      throw "No history and no initial value available for node id " + nodeId;
     }
   }
   //else if history starts after target time, then return initial value if available, or first value in history
   else if (timeSPoints[0] > targetTimeS) {
     //console.log("History starts after target time; using default value if available, else first value in history.");
-    if (typeof initialValue == "number") return initialValue;
+    if (valueIsANumber(initialValue))
+      return math.unit(Number(initialValue), scope["$" + nodeId + "_unit"]);
     else if (initialValue == "best_guess") return values[0];
   }
   //else if history ends before target time, then return last value in history
   else if (timeSPoints[timeSPoints.length - 1] < targetTimeS) {
     //console.log("History ends before target time; using initialValue or best_guess.");
-    if (typeof initialValue == "number") return initialValue;
+    if (valueIsANumber(initialValue))
+      return math.unit(Number(initialValue), scope["$" + nodeId + "_unit"]);
     else if (initialValue == "best_guess") return values[values.length - 1];
   }
   //else if history is only one point (should be at targetTimeS) then return its value
@@ -316,4 +362,9 @@ function interpolateFromLookup(timeSPoints, values, targetTimeS) {
   } catch (err) {
     console.log(err);
   }
+}
+
+function valueIsANumber(val) {
+  //console.log(val, typeof val != "undefined", val != "", !isNaN(Number(val)));
+  return typeof val != "undefined" && val != "" && !isNaN(Number(val));
 }
