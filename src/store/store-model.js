@@ -3,6 +3,7 @@ import { uid, Notify } from "quasar";
 import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
 import { firestoreAction } from "vuexfire";
 import { showErrorMessage } from "src/utils/util-show-error-message";
+import { classifyInfluencers } from "src/utils/util-node-operations";
 
 const state = {
   currentModel: null,
@@ -128,6 +129,7 @@ const actions = {
         //dispatch("calculator/calculateBaseline", orgId, { root: true });
       })
       .catch(function(error) {
+        console.error("Error updating node", error.message);
         showErrorMessage("Error updating node", error.message);
       });
   },
@@ -164,10 +166,6 @@ const actions = {
         var influencerNodeId = link.sourceNodeId;
         var influenceeNodeId = link.targetNodeId;
         break;
-      case "feedback influencee":
-        var feedbackInfluencerNodeId = link.sourceNodeId;
-        var feedbackInfluenceeNodeId = link.targetNodeId;
-        break;
       default:
         throw new Error("Link target type not recognized.");
     }
@@ -185,18 +183,7 @@ const actions = {
       batch.update(nodesRef.doc(influenceeNodeId), {
         influencers: firebase.firestore.FieldValue.arrayUnion(influencerNodeId)
       });
-    if (feedbackInfluencerNodeId)
-      batch.update(nodesRef.doc(feedbackInfluencerNodeId), {
-        feedbackInfluencees: firebase.firestore.FieldValue.arrayUnion(
-          feedbackInfluenceeNodeId
-        )
-      });
-    if (feedbackInfluenceeNodeId)
-      batch.update(nodesRef.doc(feedbackInfluenceeNodeId), {
-        feedbackInfluencers: firebase.firestore.FieldValue.arrayUnion(
-          feedbackInfluencerNodeId
-        )
-      });
+
     batch
       .commit()
       .then(function() {
@@ -210,8 +197,15 @@ const actions = {
           modelId: payload.modelId,
           nodeId: link.targetNodeId
         });
+        //run updateClassifiedInfluencers on influencee
+        dispatch("updateClassifiedInfluencersOf", {
+          modelId: payload.modelId,
+          influenceeIds: [influenceeNodeId]
+        });
+        console.log("call to updateClassifiedInfluencersOf done");
       })
       .catch(function(error) {
+        console.error("Error adding link", error.message);
         showErrorMessage("Error adding link", error.message);
       });
   },
@@ -304,12 +298,32 @@ const actions = {
       });
   },
 
-  updateClassifiedInfluencersOf({}, payload) {
+  /* Recalculate classifiedInfluencers (unused and blocking influencers)
+  of the node in the payload. */
+  updateClassifiedInfluencersOf({ dispatch }, payload) {
     let modelId = payload.modelId;
-    let influenceeId = payload.influenceeId;
+    let influenceeIds = payload.influenceeIds;
     console.log("state.nodes", state.nodes);
-    //run classifyInfluencers
-    //save results
+    influenceeIds.forEach(function(influenceeId) {
+      //get influencee node
+      let influenceeNode = state.nodes.find(node => node.id == influenceeId);
+      console.log({ influenceeNode });
+      //run classifyInfluencers
+      let classifiedInfluencers = classifyInfluencers({
+        thisNode: influenceeNode,
+        nodes: state.nodes
+      });
+      //save results
+      console.log("Going to save results");
+      dispatch("updateNode", {
+        modelId: modelId,
+        updates: {
+          id: influenceeId,
+          unusedInfluencers: classifiedInfluencers.unused,
+          blockingInfluencers: classifiedInfluencers.blocking
+        }
+      });
+    });
   }
 };
 

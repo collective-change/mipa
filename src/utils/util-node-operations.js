@@ -86,7 +86,10 @@ function classifyInfluencers(payload) {
   // end of calculation for blocking influencers
 
   //unused influencers = all influencers - used influencers
-  let unused = thisNode.influencers.filter(el => !used.includes(el));
+  let unused = [];
+  if ("influencers" in thisNode) {
+    unused = thisNode.influencers.filter(el => !used.includes(el));
+  }
 
   return { blocking: blocking, unused: unused };
 }
