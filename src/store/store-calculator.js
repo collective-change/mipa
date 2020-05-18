@@ -38,7 +38,7 @@ const actions = {
     // if already running
     if (state.calculatorIsRunning) {
       showErrorMessage(
-        "Error updating Calculator is currently busy. Please retry in a bit.",
+        "Error updating Calculator is currently busy. Please retry in a bit, or reload the page if you believe the calculator has crashed.",
         ""
       );
       //Notify.create("Calculator is currently busy. Please retry in a bit.");

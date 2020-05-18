@@ -175,7 +175,10 @@ function prepForSort(nodes) {
     nodes.forEach(function(innerNode) {
       if (innerNode.id != outerNode.id) {
         //skip self
-        if (innerNode.blockingInfluencers.includes(outerNode.id)) {
+        if (
+          "blockingInfluencers" in innerNode &&
+          innerNode.blockingInfluencers.includes(outerNode.id)
+        ) {
           blockedInfluencees.push(innerNode.id);
         }
       }
@@ -183,7 +186,10 @@ function prepForSort(nodes) {
     preppedNodes.push({
       id: outerNode.id,
       name: outerNode.name,
-      blockingInDegree: outerNode.blockingInfluencers.length,
+      blockingInDegree:
+        typeof outerNode.blockingInfluencers !== "undefined"
+          ? outerNode.blockingInfluencers.length
+          : 0,
       blockedInfluencees: blockedInfluencees,
       sysFormula:
         typeof outerNode.sysFormula !== "undefined" ? outerNode.sysFormula : "",
