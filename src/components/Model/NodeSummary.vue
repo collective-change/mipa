@@ -13,7 +13,7 @@
         <q-input
           v-model="nodeToSubmit.unit"
           label="Unit"
-          :rules="[val => (val=='' || val!='' && isNaN(parseInt(val.substring(0,1)))) || 'Cannot start with a number']"
+          :rules="[val => ((typeof val == 'undefined' || val=='') || val!='' && isNaN(parseInt(val.substring(0,1)))) || 'Cannot start with a number']"
         />
         <q-input v-model="nodeToSubmit.currentValue" label="Current value" type="number" />
         <q-input

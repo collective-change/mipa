@@ -202,7 +202,6 @@ const actions = {
           modelId: payload.modelId,
           influenceeIds: [influenceeNodeId]
         });
-        console.log("call to updateClassifiedInfluencersOf done");
       })
       .catch(function(error) {
         console.error("Error adding link", error.message);
@@ -303,18 +302,15 @@ const actions = {
   updateClassifiedInfluencersOf({ dispatch }, payload) {
     let modelId = payload.modelId;
     let influenceeIds = payload.influenceeIds;
-    console.log("state.nodes", state.nodes);
     influenceeIds.forEach(function(influenceeId) {
       //get influencee node
       let influenceeNode = state.nodes.find(node => node.id == influenceeId);
-      console.log({ influenceeNode });
       //run classifyInfluencers
       let classifiedInfluencers = classifyInfluencers({
         thisNode: influenceeNode,
         nodes: state.nodes
       });
       //save results
-      console.log("Going to save results");
       dispatch("updateNode", {
         modelId: modelId,
         updates: {
