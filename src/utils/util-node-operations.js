@@ -17,6 +17,7 @@ function classifyInfluencers(payload) {
       if (sysFormula.includes(influencerId)) used.push(influencerId);
     });
   }
+  console.log("influencers", thisNode.influencers);
 
   //get all delay calls
   let delayCallsArgs = [];
@@ -90,6 +91,7 @@ function classifyInfluencers(payload) {
   if ("influencers" in thisNode) {
     unused = thisNode.influencers.filter(el => !used.includes(el));
   }
+  console.log({ unused });
 
   return { blocking: blocking, unused: unused };
 }

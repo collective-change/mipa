@@ -242,6 +242,15 @@ const actions = {
       .catch(function(error) {
         showErrorMessage("Error deleting link", error.message);
       });
+
+    //run updateClassifiedInfluencers on influencee
+    //todo：wait until node has updated in local state before
+    //dispatching the following function, so the node's influencers
+    //don't include the just-removed influencer.
+    dispatch("updateClassifiedInfluencersOf", {
+      modelId: payload.modelId,
+      influenceeIds: [influenceeNodeId]
+    });
   },
 
   reDetermineNodeClass({}, payload) {
