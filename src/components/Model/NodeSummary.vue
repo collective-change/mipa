@@ -67,6 +67,7 @@ export default {
     return {
       nodeToSubmit: {},
       model: null,
+      hasCurrentValueChanged: false,
 
       chartData: [],
       chartOptions: {
@@ -121,9 +122,23 @@ export default {
       }
     },
     submitNode() {
+      let oldCurrentVal = this.selectedNode.currentValue;
+      let newCurrentVal = this.nodeToSubmit.currentValue;
+      let oldCurrentValIsANumber =
+        typeof oldCurrentVal != "undefined" &&
+        oldCurrentVal != "" &&
+        !isNaN(Number(oldCurrentVal));
+      let newCurrentValIsANumber =
+        typeof newCurrentVal != "undefined" &&
+        newCurrentVal != "" &&
+        !isNaN(Number(newCurrentVal));
+      let currentValueExistenceChanged =
+        oldCurrentValIsANumber != newCurrentValIsANumber;
+
       this.updateNode({
         modelId: this.$route.params.modelId,
-        updates: this.nodeToSubmit
+        updates: this.nodeToSubmit,
+        currentValueExistenceChanged: currentValueExistenceChanged
       });
     },
     updateChartData() {

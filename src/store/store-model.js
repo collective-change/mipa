@@ -146,7 +146,19 @@ const actions = {
       .then(function() {
         let keys = Object.keys(payload.updates);
         Notify.create("Node updated!");
-        //dispatch("calculator/calculateBaseline", orgId, { root: true });
+        //if existence of currentValue changed, then run
+        //updateClassifiedInfluencersOf on the node's influencees
+        if (
+          "currentValueExistenceChanged" in payload &&
+          payload.currentValueExistenceChanged == true
+        ) {
+          let node = state.nodes.find(node => node.id == nodeId);
+          let influenceesIds = node.influencees;
+          dispatch("updateClassifiedInfluencersOf", {
+            modelId: payload.modelId,
+            influenceeIds: influenceesIds
+          });
+        }
       })
       .catch(function(error) {
         console.error("Error updating node", error.message);

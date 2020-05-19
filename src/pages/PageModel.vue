@@ -7,12 +7,7 @@
     <div class="q-pa-md">
       <div class="row q-col-gutter-md">
         <div class="col-12 col-md-2 print-hide">
-          <q-select
-            borderless
-            v-model="currentModel"
-            :options="modelOptions"
-            label="Model"
-          />
+          <q-select borderless v-model="currentModel" :options="modelOptions" label="Model" />
           <baseline-calculator />
           <q-tree :nodes="exampleTree" node-key="label" />
         </div>
@@ -43,7 +38,6 @@ export default {
   data() {
     return {
       models: null,
-      //currentModel: null,
       modelOptions: ["Tzu Chi", "Human-Earth system model"],
       exampleTree: [
         { label: "Goal" },
@@ -93,7 +87,8 @@ export default {
     };
   },
   computed: {
-    ...mapState("orgs", ["currentOrg"])
+    ...mapState("orgs", ["currentOrg"]),
+    ...mapState("model", ["currentModel"])
   },
   created() {
     (async () => {
@@ -106,7 +101,7 @@ export default {
       //(user is in model's owners, editors, or viewers)
       //this.$store.dispatch("orgs/bindReadableModels", this.$route.params.orgId);
       let modelId = this.$route.params.orgId;
-      //this.$store.dispatch("model/bindCurrentModel", modelId);
+      this.$store.dispatch("model/bindCurrentModel", modelId);
       this.$store.dispatch("model/bindNodes", modelId);
       this.$store.dispatch("calcResults/bindBaseline", modelId);
 
@@ -118,7 +113,7 @@ export default {
   },
   mounted() {},
   beforeDestroy() {
-    //this.$store.dispatch("teams/unbindCurrentTeam");
+    this.$store.dispatch("teams/unbindCurrentModel");
     this.$store.dispatch("model/unbindNodes");
     this.$store.dispatch("calcResults/unbindBaseline");
   }
