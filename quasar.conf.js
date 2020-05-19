@@ -79,7 +79,8 @@ module.exports = function(ctx) {
         "QTr",
         "QTd",
         "QSlider",
-        "QLinearProgress"
+        "QLinearProgress",
+        "QMarkupTable"
       ],
 
       directives: ["Ripple", "ClosePopup", "TouchHold"],

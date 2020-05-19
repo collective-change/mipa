@@ -15,20 +15,35 @@
           label="Unit"
           :rules="[val => ((typeof val == 'undefined' || val=='') || val!='' && isNaN(parseInt(val.substring(0,1)))) || 'Cannot start with a number']"
         />
-        <q-input v-model="nodeToSubmit.currentValue" label="Current value" type="number" />
         <q-input
           :value="nodeToSubmit.symbol"
           @change="e => {nodeToSubmit.symbol = e.target.value}"
           label="Symbol"
           :rules="[val => !!val || 'Field is required', val => isNaN(parseInt(val.substring(0,1))) || 'Cannot start with a number']"
         />
+        <q-markup-table flat bordered>
+          <thead>
+            <tr>
+              <th class="text-left">Influencer</th>
+              <th class="text-left">Symbol</th>
+              <th class="text-left">Unit</th>
+            </tr>
+          </thead>
+          <tr v-for="influencer in influencerNodes" :key="influencer.id">
+            <td>{{influencer.name}}</td>
+            <td>{{influencer.symbol}}</td>
+            <td>{{influencer.unit}}</td>
+          </tr>
+        </q-markup-table>
         <q-input
           :value="nodeToSubmit.symbolFormula"
           @change="e => { nodeToSubmit.symbolFormula = e.target.value }"
-          label="(symbol) Formula"
+          label="Formula"
+          :prefix="nodeToSubmit.symbol+' ='"
           autogrow
         />
         <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
+        <q-input v-model="nodeToSubmit.currentValue" label="Current value" type="number" />
         <gchart :v-if="chartData != []" type="LineChart" :data="chartData" :options="chartOptions" />
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
@@ -86,6 +101,20 @@ export default {
       return this.nodes.find(function(node) {
         return node.id == that.selectedNodeId;
       });
+    },
+
+    influencerNodes() {
+      let nodeToSubmit = this.nodeToSubmit;
+      let influencerNodes = this.nodes.filter(node =>
+        nodeToSubmit.influencers.includes(node.id)
+      );
+      influencerNodes.forEach(function(influencerNode) {
+        if (nodeToSubmit.blockingInfluencers.includes(influencerNode.id))
+          influencerNode.isBlocking = true;
+        if (nodeToSubmit.unusedInfluencers.includes(influencerNode.id))
+          influencerNode.isUnused = true;
+      });
+      return influencerNodes;
     },
 
     //parse symbol formula
