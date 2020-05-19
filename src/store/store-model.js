@@ -10,7 +10,27 @@ const state = {
   nodes: []
 };
 
-const mutations = {};
+const mutations = {
+  deleteLink(state, payload) {
+    let influencerId = payload.influencerId;
+    let influenceeId = payload.influenceeId;
+    let influencer = state.nodes.find(function(node) {
+      if (node.id == influencerId) return true;
+    });
+    let influencee = state.nodes.find(function(node) {
+      if (node.id == influenceeId) return true;
+    });
+
+    //in influencer node, remove influencee
+    influencer.influencees = influencer.influencees.filter(function(id) {
+      return id != influenceeId;
+    });
+    //in influencee node, remove influencer
+    influencee.influencers = influencee.influencers.filter(function(id) {
+      return id != influencerId;
+    });
+  }
+};
 
 const actions = {
   addModel({ dispatch }, payload) {
@@ -209,10 +229,15 @@ const actions = {
       });
   },
 
-  deleteLink({ dispatch }, payload) {
+  deleteLink({ commit, dispatch }, payload) {
     let link = payload.link;
     let influencerNodeId = link.influencerNodeId;
     let influenceeNodeId = link.influenceeNodeId;
+
+    commit("deleteLink", {
+      influencerId: influencerNodeId,
+      influenceeId: influenceeNodeId
+    });
 
     var nodesRef = firebaseDb
       .collection("models")
@@ -243,10 +268,6 @@ const actions = {
         showErrorMessage("Error deleting link", error.message);
       });
 
-    //run updateClassifiedInfluencers on influencee
-    //todo：wait until node has updated in local state before
-    //dispatching the following function, so the node's influencers
-    //don't include the just-removed influencer.
     dispatch("updateClassifiedInfluencersOf", {
       modelId: payload.modelId,
       influenceeIds: [influenceeNodeId]
