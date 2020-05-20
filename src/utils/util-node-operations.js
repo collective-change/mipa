@@ -63,6 +63,11 @@ function classifyInfluencers(payload) {
         let influencerNode = nodes.find(function(node) {
           return node.id == influencerId;
         });
+        //but if the influencer node is "thisNode", then set it as such
+        //to get its newest values.
+        if (influencerId == thisNode.id) {
+          influencerNode = thisNode;
+        }
         if (
           typeof influencerNode.currentValue != "undefined" &&
           influencerNode.currentValue != "" &&

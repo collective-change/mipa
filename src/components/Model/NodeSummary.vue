@@ -241,8 +241,6 @@ export default {
     },
 
     watchedObjectForNodePropertyRecalculation: function(/*newVersion, oldVersion*/) {
-      //parsedSymbolFormula: function(/*newVersion, oldVersion*/) {
-      //console.log("obj changed");
       let parsedSymbolFormula = this.parsedSymbolFormula;
       // calculate sysFormula
       if (parsedSymbolFormula.toString() == "") {
@@ -300,7 +298,6 @@ export default {
       this.nodeToSubmit.isSelfBlocking = classifiedInfluencers.blocking.includes(
         this.nodeToSubmit.id
       );
-      //console.log(this.nodeToSubmit.isSelfBlocking);
     }
   }
 };
