@@ -49,17 +49,14 @@ const actions = {
     commit("setCalculationProgressLabel", "0%");
     let startTime = new Date();
 
-    //let that = this;
-
     let baselineCalcWorker = new Worker("statics/js/baselineCalcWorker.js");
     baselineCalcWorker.postMessage({
       modelNodes: payload.nodes
-      //expr: "12 / (2.3 + 0.7)"
     });
-    console.log("Message posted to worker");
+    //console.log("Message posted to worker");
 
     baselineCalcWorker.onmessage = function(e) {
-      console.log(e.data);
+      //console.log(e.data);
       if (typeof e.data == "string") {
         console.log("Error message received from worker: ", e.data);
         showErrorMessage(
