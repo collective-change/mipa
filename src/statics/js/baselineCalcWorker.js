@@ -32,7 +32,7 @@ onmessage = function(e) {
   let scope = {
     initialTimeS: initialTimeS, //this will remain constant throughout the simulation
     timeS: initialTimeS, //timeS will increment with each iteration
-    dt: math.unit("1 day"), //delta time
+    dt: math.unit("1 month"), //delta time
     timeSeries: { timeSPoints: [], nodes: {} }
   }; //todo: load timeSeries with current or historical values
   sortedNodes.forEach(function(node, index) {
@@ -41,7 +41,7 @@ onmessage = function(e) {
   //console.log({ sortedNodes });
 
   let completedLoops = 0;
-  let maxLoops = 10;
+  let maxLoops = 60;
 
   try {
     // gather up current values from nodes into scope
