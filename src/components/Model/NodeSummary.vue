@@ -51,7 +51,7 @@
           label="Current value"
           type="number"
           :suffix="nodeToSubmit.unit"
-          debounce="500"
+          debounce="300"
         />
         <gchart :v-if="chartData != []" type="LineChart" :data="chartData" :options="chartOptions" />
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
