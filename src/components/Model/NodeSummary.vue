@@ -16,9 +16,9 @@
           :rules="[val => ((typeof val == 'undefined' || val=='') || val!='' && isNaN(parseInt(val.substring(0,1)))) || 'Cannot start with a number']"
         />
         <q-input
-          :value="nodeToSubmit.symbol"
-          @change="e => {nodeToSubmit.symbol = e.target.value}"
+          v-model="nodeToSubmit.symbol"
           label="Symbol"
+          debounce="500"
           :rules="[val => !!val || 'Field is required', val => isNaN(parseInt(val.substring(0,1))) || 'Cannot start with a number']"
         />
         <q-markup-table flat bordered>
@@ -36,18 +36,22 @@
           </tr>
         </q-markup-table>
         <q-input
-          :value="nodeToSubmit.symbolFormula"
-          @change="e => { nodeToSubmit.symbolFormula = e.target.value }"
+          v-model="nodeToSubmit.symbolFormula"
           label="Formula"
           :prefix="nodeToSubmit.symbol+' ='"
           autogrow
+          debounce="800"
         />
-        <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
+        <div v-if="parserError==''">
+          <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
+        </div>
+        <div v-else class="text-negative">{{parserError}}</div>
         <q-input
           v-model="nodeToSubmit.currentValue"
           label="Current value"
           type="number"
           :suffix="nodeToSubmit.unit"
+          debounce="300"
         />
         <gchart :v-if="chartData != []" type="LineChart" :data="chartData" :options="chartOptions" />
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
@@ -59,11 +63,10 @@
       <pre>{{nodeToSubmit.symbolFormula}}</pre>
       <p>parsedSymbolFormula</p>
       <pre>{{parsedSymbolFormula}}</pre>
-      <!--
       <p>sysFormula</p>
       <pre>{{nodeToSubmit.sysFormula}}</pre>
       <p>nodeToSubmit</p>
-      <pre>{{ nodeToSubmit }}</pre>-->
+      <pre>{{ nodeToSubmit }}</pre>
     </div>
   </div>
 </template>
@@ -89,6 +92,7 @@ export default {
     return {
       nodeToSubmit: {},
       model: null,
+      parserError: "",
 
       chartData: [],
       chartOptions: {
@@ -137,10 +141,12 @@ export default {
         let parsedSymbolFormula = this.nodeToSubmit.symbolFormula
           ? parse(this.nodeToSubmit.symbolFormula)
           : "";
+        this.parserError = "";
         return parsedSymbolFormula;
       } catch (err) {
         console.log(err);
-        showErrorMessage("Error parsing formula", err.message);
+        this.parserError = "Error parsing formula: " + err.message;
+        //showErrorMessage("Error parsing formula", err.message);
       }
     },
 
@@ -294,7 +300,7 @@ export default {
       this.nodeToSubmit.isSelfBlocking = classifiedInfluencers.blocking.includes(
         this.nodeToSubmit.id
       );
-      console.log(this.nodeToSubmit.isSelfBlocking);
+      //console.log(this.nodeToSubmit.isSelfBlocking);
     }
   }
 };
