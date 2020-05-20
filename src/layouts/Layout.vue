@@ -5,7 +5,7 @@
         <q-btn flat no-caps no-wrap class="q-ml-xs" v-if="$q.screen.gt.xs" clickable to="/">
           <q-toolbar-title shrink class="text-weight-bold text-primary">mipa</q-toolbar-title>
         </q-btn>
-
+        <div>{{orgName}}</div>
         <q-btn-dropdown v-if="linkGroups[currentLinkGroup]" dense flat :label="currentLinkGroup">
           <q-list>
             <div v-for="(linkGroup, key) in linkGroups" v-bind:key="key">
@@ -156,88 +156,13 @@
 <script>
 import { mapState, mapActions } from "vuex";
 import { openURL } from "quasar";
+import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 
 export default {
   name: "MyLayout",
   data() {
     return {
       rightDrawerOpen: false, //this.$q.platform.is.desktop,
-      navs: [
-        {
-          label: "Todo",
-          icon: "list",
-          to: "/"
-        },
-        {
-          label: "Settings",
-          icon: "settings",
-          to: "/settings"
-        }
-      ],
-      linkGroups: {
-        home: {
-          text: "Home",
-          icon: "home",
-          links: [
-            { text: "My dashboard", to: "/" },
-            { text: "To do", to: "/todo" }
-          ]
-        },
-        organization: {
-          text: "Team",
-          icon: "people",
-          links: [
-            { text: "Basic information", to: "/organization/basic-info" },
-            { text: "Users", to: "/organization/users" },
-            {
-              text: "Structure and permissions",
-              to: "/organizations/structure-and-permissions"
-            },
-            { text: "Performance", to: "/organization/performance" }
-          ]
-        },
-        model: {
-          text: "Model",
-          icon: "share",
-          icon_class: "flip-horizontal",
-          links: [
-            { text: "Model", to: "/model/model" },
-            { text: "Units", to: "/placeholder" },
-            { text: "Update values", to: "/placeholder" },
-            { text: "Analysis", to: "/placeholder" },
-            { text: "Templates", to: "/placeholder" }
-          ]
-        },
-        ideate: {
-          text: "Ideate",
-          icon: "wb_incandescent",
-          icon_class: "flip-vertical",
-          links: [
-            { text: "Strategic analysis", to: "/placeholder" },
-            { text: "Situations and actions", to: "/placeholder" },
-            { text: "Templates", to: "/placeholder" }
-          ]
-        },
-        prioritize: {
-          text: "Prioritize",
-          icon: "poll",
-          links: [
-            { text: "Priorities", to: "/placeholder" },
-            { text: "Resource allocation", to: "/placeholder" },
-            { text: "Roadmap", to: "/placeholder" }
-          ]
-        },
-        achieve: {
-          text: "Achieve",
-          icon: "whatshot",
-          links: [
-            { text: "My current focus", to: "/placeholder" },
-            { text: "To do", to: "/placeholder" },
-            { text: "Time log", to: "/placeholder" },
-            { text: "My team's work", to: "/placeholder" }
-          ]
-        }
-      },
 
       links1: [{ icon: "home", text: "Home", to: "/" }],
       links2: [
@@ -260,9 +185,103 @@ export default {
   },
   computed: {
     ...mapState("auth", ["loggedIn"]),
+    ...mapState("model", ["currentModel"]),
+    ...mapState("orgs", ["orgs", "currentOrg"]),
+
     currentRoute() {
+      console.log(this.$route.path);
       return this.$route.path;
     },
+
+    orgId() {
+      return this.currentOrg ? this.currentOrg.id : "unknownOrgId";
+    },
+
+    orgName() {
+      return this.currentOrg ? this.currentOrg.name : "";
+    },
+
+    orgNameSlug() {
+      return this.currentOrg ? this.currentOrg.nameSlug : "unknownOrgNameSlug";
+    },
+
+    modelId() {
+      return this.currentModel ? this.currentModel.id : this.orgId;
+    },
+
+    linkGroups() {
+      return {
+        home: {
+          text: "Home",
+          icon: "home",
+          links: [
+            { text: "My dashboard", to: "/" },
+            { text: "To do", to: "/todo" }
+          ]
+        },
+        organization: {
+          text: "Organization",
+          icon: "people",
+          links: [
+            { text: "Basic information", to: "/organization/basic-info" },
+            { text: "Users", to: "/organization/users" },
+            {
+              text: "Structure and permissions",
+              to: "/organizations/structure-and-permissions"
+            },
+            { text: "Performance", to: "/organization/performance" }
+          ]
+        },
+        model: {
+          text: "Model",
+          icon: "share",
+          icon_class: "flip-horizontal",
+          links: [
+            {
+              text: "Model",
+              to: `/org/${this.orgNameSlug}/model/${this.orgId}/${this.modelId}`
+            },
+            { text: "Units", to: "/placeholder" },
+            { text: "Update values", to: "/placeholder" },
+            { text: "Analysis", to: "/placeholder" },
+            { text: "Templates", to: "/placeholder" }
+          ]
+        },
+        ideate: {
+          text: "Ideate",
+          icon: "wb_incandescent",
+          icon_class: "flip-vertical",
+          links: [
+            { text: "Strategic analysis", to: "/placeholder" },
+            {
+              text: "Situations and actions",
+              to: `/org/${this.orgNameSlug}/ideate/${this.orgId}`
+            },
+            { text: "Templates", to: "/placeholder" }
+          ]
+        },
+        prioritize: {
+          text: "Prioritize",
+          icon: "poll",
+          links: [
+            { text: "Priorities", to: "/placeholder" },
+            { text: "Resource allocation", to: "/placeholder" },
+            { text: "Roadmap", to: "/placeholder" }
+          ]
+        },
+        achieve: {
+          text: "Achieve",
+          icon: "whatshot",
+          links: [
+            { text: "My current focus", to: "/placeholder" },
+            { text: "To do", to: "/placeholder" },
+            { text: "Time log", to: "/placeholder" },
+            { text: "My team's work", to: "/placeholder" }
+          ]
+        }
+      };
+    },
+
     currentLinkGroup() {
       if (this.$route.path == "/" || this.$route.path == "/todo") {
         return "home";
@@ -287,6 +306,35 @@ export default {
     onItemClick() {
       console.log("Clicked on an Item");
       console.log("currentroute", this.$route);
+    }
+  },
+  created() {
+    (async () => {
+      //console.log("waiting for currentUser to be defined");
+      while (
+        !firebaseAuth.currentUser // define the condition as you like
+      )
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+      let orgId = this.$route.params.orgId;
+      this.$store.dispatch("orgs/bindCurrentOrg", orgId);
+    })();
+  },
+  mounted() {},
+  beforeDestroy() {
+    this.$store.dispatch("orgs/unbindCurrentOrg");
+  },
+  watch: {
+    $route(newRoute, oldRoute) {
+      let newOrgId = "orgId" in newRoute.params ? newRoute.params.orgId : "";
+      let oldOrgId = "orgId" in oldRoute.params ? oldRoute.params.orgId : "";
+
+      if (newOrgId != oldOrgId)
+        this.$store.dispatch("orgs/bindCurrentOrg", newOrgId);
+
+      if (newOrgId == "") {
+        this.$store.dispatch("orgs/unbindCurrentOrg");
+      }
     }
   }
 };

@@ -113,7 +113,6 @@ export default {
   },
   mounted() {},
   beforeDestroy() {
-    this.$store.dispatch("teams/unbindCurrentModel");
     this.$store.dispatch("model/unbindNodes");
     this.$store.dispatch("calcResults/unbindBaseline");
   }

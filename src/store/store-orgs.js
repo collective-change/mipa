@@ -6,13 +6,14 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 import { slugify } from "src/utils/util-slugify";
 
 const state = {
-  orgs: null,
+  currentOrg: null,
+  orgs: null
 };
 
 const mutations = {
   clearOrgs(state) {
     state.orgs = null;
-  },
+  }
 };
 const actions = {
   updateOrg({ dispatch }, payload) {
@@ -24,12 +25,12 @@ const actions = {
       .collection("orgs")
       .doc(payload.id)
       .set(payload.updates, { merge: true })
-      .then(function () {
+      .then(function() {
         let keys = Object.keys(payload.updates);
         //console.log("keys: ", keys);
         Notify.create("Organization updated!");
       })
-      .catch(function (error) {
+      .catch(function(error) {
         showErrorMessage("Error updating organization", error.message);
       });
   },
@@ -39,10 +40,10 @@ const actions = {
       .collection("orgs")
       .doc(orgId)
       .delete()
-      .then(function () {
+      .then(function() {
         Notify.create("Org deleted!");
       })
-      .catch(function (error) {
+      .catch(function(error) {
         showErrorMessage("Error deleting organization", error.message);
       });
   },
@@ -57,7 +58,7 @@ const actions = {
     firebaseDb
       .collection("orgs")
       .add(org)
-      .then(function (docRef) {
+      .then(function(docRef) {
         //console.log(docRef.id);
         dispatch(
           "model/addModel",
@@ -66,7 +67,7 @@ const actions = {
         );
         Notify.create("Organization added!");
       })
-      .catch(function (error) {
+      .catch(function(error) {
         showErrorMessage("Error adding organization", error.message);
       });
   },
@@ -81,18 +82,35 @@ const actions = {
         .orderBy("name", "asc")
         .orderBy("goal", "asc"),
       {
-        maxRefDepth: 1,
+        maxRefDepth: 1
       }
     );
   }),
   unbindOrgs: firestoreAction(({ unbindFirestoreRef }) => {
     unbindFirestoreRef("orgs", false); //don't reset data when unbinding
   }),
+
+  bindCurrentOrg: firestoreAction(({ bindFirestoreRef }, orgId) => {
+    let userId = firebaseAuth.currentUser.uid;
+    // return the promise returned by `bindFirestoreRef`
+    return bindFirestoreRef(
+      "currentOrg",
+      firebaseDb.collection("orgs").doc(orgId),
+      {
+        reset: true,
+        maxRefDepth: 1
+      }
+    );
+  }),
+
+  unbindCurrentOrg: firestoreAction(({ unbindFirestoreRef }) => {
+    unbindFirestoreRef("currentOrg");
+  })
 };
 
 export default {
   namespaced: true,
   state,
   mutations,
-  actions,
+  actions
 };
