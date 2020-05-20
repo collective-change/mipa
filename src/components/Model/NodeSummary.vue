@@ -43,7 +43,12 @@
           autogrow
         />
         <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
-        <q-input v-model="nodeToSubmit.currentValue" label="Current value" type="number" />
+        <q-input
+          v-model="nodeToSubmit.currentValue"
+          label="Current value"
+          type="number"
+          :suffix="nodeToSubmit.unit"
+        />
         <gchart :v-if="chartData != []" type="LineChart" :data="chartData" :options="chartOptions" />
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
