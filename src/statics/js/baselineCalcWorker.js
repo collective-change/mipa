@@ -45,7 +45,7 @@ onmessage = function(e) {
 
   try {
     // gather up current values from nodes into scope
-    console.log("begin loading");
+    console.log("begin loading currentValues");
     sortedNodes.forEach(function(node, index) {
       //console.log({ node });
       scope["$" + node.id + "_unit"] = node.unit;
