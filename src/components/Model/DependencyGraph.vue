@@ -412,7 +412,7 @@ export default {
         .attr("x", 0)
         .attr("y", ".31em")
         .attr("text-anchor", "middle")
-        .text(d => d.name)
+        .text(d => d.name + (d.isSelfBlocking ? " (self-blocking)" : ""))
         .call(this.wrap, nodeRadius * 2); // wrap the text in <= node diameter
 
       // Add 'marker-end' attribute to each path
@@ -761,7 +761,11 @@ export default {
       immediate: true,
       deep: true,
       handler(/*newNodes, oldNodes*/) {
-        //console.log("nodes handler running");
+        /*console.log(
+          "nodes handler running on ",
+          this.storeData.nodes.length,
+          " nodes"
+        );*/
         var that = this;
         var dataChanged = false;
         //mark each node in d3Data.nodes as unconfirmed
@@ -794,6 +798,18 @@ export default {
             if (matchedD3Node.class != storeNode.class) {
               matchedD3Node.class = storeNode.class;
               dataChanged = true;
+            }
+            /*if (storeNode.id == "x7qGOzTWU9iifpVHO7cy") {
+              console.log(
+                matchedD3Node.isSelfBlocking,
+                storeNode.isSelfBlocking
+              );
+            }*/
+            if (matchedD3Node.isSelfBlocking != storeNode.isSelfBlocking) {
+              matchedD3Node.isSelfBlocking = storeNode.isSelfBlocking;
+              dataChanged = true;
+
+              //console.log("isSelfBlocking changed");
             }
           } else {
             // storeNode does not exist in d3Data; clone it there

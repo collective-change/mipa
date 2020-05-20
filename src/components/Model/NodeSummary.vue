@@ -29,7 +29,7 @@
               <th class="text-left">Unit</th>
             </tr>
           </thead>
-          <tr v-for="influencer in influencerNodes" :key="influencer.id">
+          <tr v-for="influencer in influencerNodesInfo" :key="influencer.id">
             <td>{{influencer.name}}</td>
             <td>{{influencer.symbol}}</td>
             <td>{{influencer.unit}}</td>
@@ -53,15 +53,17 @@
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
       </q-form>
+
       <p>nodeToSubmit: {{ nodeToSubmit.id }}</p>
       <p>symbolFormula</p>
       <pre>{{nodeToSubmit.symbolFormula}}</pre>
       <p>parsedSymbolFormula</p>
       <pre>{{parsedSymbolFormula}}</pre>
+      <!--
       <p>sysFormula</p>
       <pre>{{nodeToSubmit.sysFormula}}</pre>
       <p>nodeToSubmit</p>
-      <pre>{{ nodeToSubmit }}</pre>
+      <pre>{{ nodeToSubmit }}</pre>-->
     </div>
   </div>
 </template>
@@ -87,7 +89,6 @@ export default {
     return {
       nodeToSubmit: {},
       model: null,
-      hasCurrentValueChanged: false,
 
       chartData: [],
       chartOptions: {
@@ -108,18 +109,26 @@ export default {
       });
     },
 
-    influencerNodes() {
+    influencerNodesInfo() {
       let nodeToSubmit = this.nodeToSubmit;
       let influencerNodes = this.nodes.filter(node =>
         nodeToSubmit.influencers.includes(node.id)
       );
+      let influencerNodesInfo = [];
       influencerNodes.forEach(function(influencerNode) {
-        if (nodeToSubmit.blockingInfluencers.includes(influencerNode.id))
-          influencerNode.isBlocking = true;
-        if (nodeToSubmit.unusedInfluencers.includes(influencerNode.id))
-          influencerNode.isUnused = true;
+        let influencerNodeInfo = {
+          id: influencerNode.id,
+          name: influencerNode.name,
+          symbol: influencerNode.symbol,
+          unit: influencerNode.unit,
+          isBlocking: nodeToSubmit.blockingInfluencers.includes(
+            influencerNode.id
+          ),
+          isUnused: nodeToSubmit.unusedInfluencers.includes(influencerNode.id)
+        };
+        influencerNodesInfo.push(influencerNodeInfo);
       });
-      return influencerNodes;
+      return influencerNodesInfo;
     },
 
     //parse symbol formula
@@ -133,6 +142,13 @@ export default {
         console.log(err);
         showErrorMessage("Error parsing formula", err.message);
       }
+    },
+
+    watchedObjectForNodePropertyRecalculation() {
+      return {
+        currentValue: this.nodeToSubmit.currentValue,
+        parsedFormula: this.parsedSymbolFormula
+      };
     },
 
     //latexFormula from parsedSymbolFormula
@@ -218,9 +234,12 @@ export default {
       this.updateChartData();
     },
 
-    parsedSymbolFormula: function(newVersion, oldVersion) {
+    watchedObjectForNodePropertyRecalculation: function(/*newVersion, oldVersion*/) {
+      //parsedSymbolFormula: function(/*newVersion, oldVersion*/) {
+      //console.log("obj changed");
+      let parsedSymbolFormula = this.parsedSymbolFormula;
       // calculate sysFormula
-      if (newVersion.toString() == "") {
+      if (parsedSymbolFormula.toString() == "") {
         this.nodeToSubmit.sysFormula = "";
       } else {
         var nodes = this.nodes;
@@ -250,7 +269,7 @@ export default {
           return a.symbol.length - b.symbol.length;
         });
 
-        var sysFormula = newVersion.toString();
+        var sysFormula = parsedSymbolFormula.toString();
         if (sysFormula) {
           potentials.forEach(function(node) {
             sysFormula = sysFormula.replace(
@@ -272,6 +291,10 @@ export default {
 
       this.nodeToSubmit.blockingInfluencers = classifiedInfluencers.blocking;
       this.nodeToSubmit.unusedInfluencers = classifiedInfluencers.unused;
+      this.nodeToSubmit.isSelfBlocking = classifiedInfluencers.blocking.includes(
+        this.nodeToSubmit.id
+      );
+      console.log(this.nodeToSubmit.isSelfBlocking);
     }
   }
 };
