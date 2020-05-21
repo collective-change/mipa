@@ -79,7 +79,6 @@
       side="right"
       v-model="rightDrawerOpen"
       bordered
-      show-if-above
       content-class="bg-grey-2"
       :width="240"
       class="print-hide"
