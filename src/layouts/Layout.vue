@@ -6,7 +6,7 @@
         <q-btn flat no-caps no-wrap class="q-ml-xs" v-if="$q.screen.gt.xs" clickable to="/">
           <q-toolbar-title shrink class="text-weight-bold text-primary">mipa</q-toolbar-title>
         </q-btn>
-        <q-btn-dropdown v-if="linkGroups[currentLinkGroup]" dense flat :label="currentLinkGroup">
+        <q-btn-dropdown v-if="currentOrg" dense flat :label="currentLinkGroup">
           <q-list>
             <div v-for="(linkGroup, key) in linkGroups" v-bind:key="key">
               <q-separator class="q-my-xs" />
