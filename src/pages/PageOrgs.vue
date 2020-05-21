@@ -2,13 +2,13 @@
   <q-page>
     <div class="q-pa-md absolute full-width full-height column">
       <template v-if="orgs!=null">
-        <div class="text-h6">My Orgs</div>
+        <div class="text-h6">My Organizations</div>
         <no-orgs v-if="orgsLoaded && Object.keys(orgs).length==0" />
         <orgs :orgs="orgs" />
         <div class="absolute-bottom text-center q-mb-lg no-pointer-events">
           <q-btn
             @click="showAddOrg = true"
-            round
+            label="add organization"
             class="all-pointer-events"
             color="primary"
             size="24px"
