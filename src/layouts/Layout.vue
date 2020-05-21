@@ -2,10 +2,10 @@
   <q-layout view="hHh lpR fFf">
     <q-header elevated class="bg-white text-grey-8 q-py-none print-hide">
       <q-toolbar>
+        <div class="text-h6">{{orgName}}</div>
         <q-btn flat no-caps no-wrap class="q-ml-xs" v-if="$q.screen.gt.xs" clickable to="/">
           <q-toolbar-title shrink class="text-weight-bold text-primary">mipa</q-toolbar-title>
         </q-btn>
-        <div>{{orgName}}</div>
         <q-btn-dropdown v-if="linkGroups[currentLinkGroup]" dense flat :label="currentLinkGroup">
           <q-list>
             <div v-for="(linkGroup, key) in linkGroups" v-bind:key="key">
@@ -317,7 +317,7 @@ export default {
         await new Promise(resolve => setTimeout(resolve, 200));
 
       let orgId = this.$route.params.orgId;
-      this.$store.dispatch("orgs/bindCurrentOrg", orgId);
+      if (orgId) this.$store.dispatch("orgs/bindCurrentOrg", orgId);
     })();
   },
   mounted() {},
@@ -329,7 +329,7 @@ export default {
       let newOrgId = "orgId" in newRoute.params ? newRoute.params.orgId : "";
       let oldOrgId = "orgId" in oldRoute.params ? oldRoute.params.orgId : "";
 
-      if (newOrgId != oldOrgId)
+      if (newOrgId != oldOrgId && newOrgId != "")
         this.$store.dispatch("orgs/bindCurrentOrg", newOrgId);
 
       if (newOrgId == "") {
