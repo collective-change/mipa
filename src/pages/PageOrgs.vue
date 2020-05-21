@@ -3,7 +3,7 @@
     <div class="q-pa-md absolute full-width full-height column">
       <template v-if="orgs!=null">
         <div class="text-h6">My Orgs</div>
-        <no-orgs v-if="!Object.keys(orgs).length" />
+        <no-orgs v-if="orgsLoaded && Object.keys(orgs).length==0" />
         <orgs :orgs="orgs" />
         <div class="absolute-bottom text-center q-mb-lg no-pointer-events">
           <q-btn
@@ -35,6 +35,7 @@ import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 export default {
   data() {
     return {
+      orgsLoaded: false,
       showAddOrg: false
     };
   },
@@ -67,6 +68,16 @@ export default {
 
   beforeDestroy() {
     this.$store.dispatch("orgs/unbindOrgs");
+  },
+
+  watch: {
+    orgs: function(newOrgs, oldOrgs) {
+      console.log({ oldOrgs });
+      console.log({ newOrgs });
+      if (oldOrgs != null && newOrgs.length == oldOrgs.length) {
+        this.orgsLoaded = true;
+      }
+    }
   },
 
   components: {

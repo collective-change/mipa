@@ -253,7 +253,7 @@ export default {
           links: [
             { text: "Strategic analysis", to: "/placeholder" },
             {
-              text: "Situations and actions",
+              text: "Issues",
               to: `/org/${this.orgNameSlug}/ideate/${this.orgId}`
             },
             { text: "Templates", to: "/placeholder" }
@@ -309,11 +309,12 @@ export default {
   },
   created() {
     (async () => {
-      //console.log("waiting for currentUser to be defined");
       while (
         !firebaseAuth.currentUser // define the condition as you like
-      )
-        await new Promise(resolve => setTimeout(resolve, 200));
+      ) {
+        //console.log("waiting for currentUser to be defined");
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
 
       let orgId = this.$route.params.orgId;
       if (orgId) this.$store.dispatch("orgs/bindCurrentOrg", orgId);
