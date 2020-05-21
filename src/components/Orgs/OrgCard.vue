@@ -99,7 +99,7 @@ export default {
 <style lang="stylus" scoped>
 .org-card {
   width: 100%;
-  max-width: 250px;
+  max-width: 260px;
 }
 
 .q-btn {
