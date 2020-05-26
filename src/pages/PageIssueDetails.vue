@@ -1,13 +1,7 @@
 <template>
   <q-page padding>
-    <div class="text-h5">
-      <!-- {{ $route.params.orgName }}'s goal: -->
-      <!-- <span v-if="currentOrg">{{ currentOrg.goal }}</span> -->
-    </div>
     <div class="q-pa-xs">
-      <div class="row q-col-gutter-md">
-        <issue-summary />
-      </div>
+      <issue-summary />
     </div>
   </q-page>
 </template>
@@ -46,9 +40,7 @@ export default {
         await new Promise(resolve => setTimeout(resolve, 200));
 
       let orgId = this.$route.params.orgId;
-      console.log({ orgId });
       await this.$store.dispatch("issues/bindIssues", orgId);
-      console.log("issues loaded");
     })();
   },
   mounted() {

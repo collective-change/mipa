@@ -131,6 +131,7 @@ export default {
 
   data() {
     return {
+      issueId: null,
       issue: {},
       estimatedRoi: null
     };
@@ -143,9 +144,9 @@ export default {
 
     selectedIssue() {
       let that = this;
-      let issueId = null;
-      if (this.$route.params.issueId) issueId = this.$route.params.issueId;
-      else if (that.selectedIssueId) issueId = that.selectedIssueId;
+      if (this.$route.params.issueId) this.issueId = this.$route.params.issueId;
+      else if (that.selectedIssueId) this.issueId = that.selectedIssueId;
+      let issueId = this.issueId;
       return this.issues.find(function(issue) {
         return issue.id == issueId;
       });
@@ -205,7 +206,7 @@ export default {
     },
     submitIssue() {
       let payload = {
-        id: this.selectedIssueId,
+        id: this.issueId,
         updates: this.issue
       };
       this.$store.dispatch("issues/updateIssue", payload);

@@ -188,7 +188,6 @@ export default {
     ...mapState("orgs", ["orgs", "currentOrg"]),
 
     currentRoute() {
-      console.log(this.$route.path);
       return this.$route.path;
     },
 

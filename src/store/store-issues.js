@@ -29,7 +29,7 @@ const mutations = {
 const actions = {
   //may be asynchronous or synchronous
   updateIssue({ dispatch }, payload) {
-    let userId = firebaseAuth.currentUser.uid;
+    //let userId = firebaseAuth.currentUser.uid;
     firebaseDb
       .collection("issues")
       .doc(payload.id)
