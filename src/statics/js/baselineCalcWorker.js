@@ -80,6 +80,7 @@ onmessage = function(e) {
       compiledExpressions.forEach(function(code, index) {
         //todo: if timeS == initialTimeS then evaluate current value
         code.evaluate(scope);
+        if (completedLoops == 0) console.log({ code });
         //todo: if on first few loops, check result of evaluation against units expected by user.
       });
 

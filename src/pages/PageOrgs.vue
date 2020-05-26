@@ -72,7 +72,11 @@ export default {
 
   watch: {
     orgs: function(newOrgs, oldOrgs) {
-      if (oldOrgs != null && newOrgs.length == oldOrgs.length) {
+      if (
+        oldOrgs != null &&
+        newOrgs != null &&
+        newOrgs.length == oldOrgs.length
+      ) {
         this.orgsLoaded = true;
       }
     }
