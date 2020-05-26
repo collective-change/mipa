@@ -7,7 +7,7 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 const state = {
   issues: [],
   search: "",
-  sort: "name",
+  sort: "name"
 };
 
 const mutations = {
@@ -23,7 +23,7 @@ const mutations = {
   },
   setIssuesDownloaded(state, value) {
     state.issuesDownloaded = value;
-  },
+  }
 };
 
 const actions = {
@@ -34,13 +34,13 @@ const actions = {
       .collection("issues")
       .doc(payload.id)
       .set(payload.updates, { merge: true })
-      .then(function () {
+      .then(function() {
         let keys = Object.keys(payload.updates);
         //console.log("keys: ", keys);
         if (!(keys.includes("completed") && keys.length == 1))
           Notify.create("Issue updated!");
       })
-      .catch(function (error) {
+      .catch(function(error) {
         showErrorMessage("Error updating issue", error.message);
       });
   },
@@ -50,10 +50,10 @@ const actions = {
       .collection("issues")
       .doc(issueId)
       .delete()
-      .then(function () {
+      .then(function() {
         Notify.create("Issue deleted!");
       })
-      .catch(function (error) {
+      .catch(function(error) {
         showErrorMessage("Error removing issue", error.message);
       });
   },
@@ -64,10 +64,10 @@ const actions = {
     firebaseDb
       .collection("issues")
       .add(issue)
-      .then(function () {
+      .then(function() {
         Notify.create("Issue added!");
       })
-      .catch(function (error) {
+      .catch(function(error) {
         showErrorMessage("Error adding issue", error.message);
       });
   },
@@ -82,6 +82,7 @@ const actions = {
       //.orderBy("goal", "asc"),
       {
         maxRefDepth: 1,
+        reset: false
       }
     );
   }),
@@ -93,11 +94,14 @@ const actions = {
   },
   setSort({ commit }, value) {
     commit("setSort", value);
-  },
+  }
 };
 
 const getters = {
-  issuesSorted: (state) => {
+  issues: state => {
+    return state.issues;
+  },
+  issuesSorted: state => {
     let issuesSorted = {},
       keysOrdered = Object.keys(state.issues);
 
@@ -109,7 +113,7 @@ const getters = {
       else return 0;
     });
 
-    keysOrdered.forEach((key) => {
+    keysOrdered.forEach(key => {
       issuesSorted[key] = state.issues[key];
     });
 
@@ -120,7 +124,7 @@ const getters = {
       issuesFiltered = {};
     if (state.search) {
       //populate empty object
-      Object.keys(issuesSorted).forEach(function (key) {
+      Object.keys(issuesSorted).forEach(function(key) {
         let issue = issuesSorted[key],
           issueNameLowerCase = issue.name.toLowerCase(),
           searchLowerCase = state.search.toLowerCase();
@@ -135,7 +139,7 @@ const getters = {
   issuesTodo: (state, getters) => {
     let issuesFiltered = getters.issuesFiltered;
     let issues = {};
-    Object.keys(issuesFiltered).forEach(function (key) {
+    Object.keys(issuesFiltered).forEach(function(key) {
       let issue = issuesFiltered[key];
       if (!issue.completed) {
         issues[key] = issue;
@@ -146,14 +150,14 @@ const getters = {
   issuesCompleted: (state, getters) => {
     let issuesFiltered = getters.issuesFiltered;
     let issues = {};
-    Object.keys(issuesFiltered).forEach(function (key) {
+    Object.keys(issuesFiltered).forEach(function(key) {
       let issue = issuesFiltered[key];
       if (issue.completed) {
         issues[key] = issue;
       }
     });
     return issues;
-  },
+  }
 };
 
 export default {
@@ -161,5 +165,5 @@ export default {
   state,
   mutations,
   actions,
-  getters,
+  getters
 };

@@ -295,7 +295,7 @@ export default {
       } else if (this.$route.path.includes("achieve")) {
         return "achieve";
       } else {
-        return "unknown";
+        return "home";
       }
     }
   },
@@ -320,7 +320,9 @@ export default {
       if (orgId) this.$store.dispatch("orgs/bindCurrentOrg", orgId);
     })();
   },
-  mounted() {},
+  mounted() {
+    //console.log("Layout mounted");
+  },
   beforeDestroy() {
     this.$store.dispatch("orgs/unbindCurrentOrg");
   },

@@ -7,7 +7,16 @@
           v-model="issue.title"
           :rules="[(val) => !!val || 'Field is required']"
           ref="issueTitle"
-        />
+        >
+          <template v-slot:after v-if="$route.name!='issueDetails'">
+            <q-btn
+              dense
+              label="details"
+              color="primary"
+              @click="$router.push(`/org/${currentOrg.name}/issue/${currentOrg.id}/${selectedIssueId}`)"
+            />
+          </template>
+        </q-input>
         <div class="q-gutter-md row items-start">
           <q-input
             v-model.number="issue.estTotalBenefitXdr"
@@ -67,12 +76,7 @@
             filled
             style="max-width: 150px;"
           />
-          <q-slider
-            v-model="issue.effortCompletionPercentage"
-            :min="0"
-            :max="100"
-            label
-          />
+          <q-slider v-model="issue.effortCompletionPercentage" :min="0" :max="100" label />
         </div>
 
         <div class="q-gutter-md q-mt-md row items-start">
@@ -113,8 +117,6 @@
         <modal-buttons />
       </q-form>
     </div>
-    <!-- <p>selectedIssueId: {{ selectedIssueId }}</p>
-    <pre>{{ selectedIssue }}</pre> -->
   </div>
 </template>
 
@@ -124,25 +126,28 @@ import { mapActions, mapGetters, mapState } from "vuex";
 export default {
   components: {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default,
+      .default
   },
 
   data() {
     return {
       issue: {},
-      estimatedRoi: null,
-      //model: null
+      estimatedRoi: null
     };
   },
 
   computed: {
+    ...mapState("orgs", ["currentOrg"]),
     ...mapState("ui", ["selectedIssueId"]),
     ...mapState("issues", ["issues"]),
 
     selectedIssue() {
       let that = this;
-      return this.issues.find(function (issue) {
-        return issue.id == that.selectedIssueId;
+      let issueId = null;
+      if (this.$route.params.issueId) issueId = this.$route.params.issueId;
+      else if (that.selectedIssueId) issueId = that.selectedIssueId;
+      return this.issues.find(function(issue) {
+        return issue.id == issueId;
       });
     },
 
@@ -187,7 +192,7 @@ export default {
         : 0;
       let roi = (benefit - outstandingCostXdr) / outstandingCostXdr;
       return Number(roi.toPrecision(2));
-    },
+    }
   },
 
   methods: {
@@ -201,32 +206,25 @@ export default {
     submitIssue() {
       let payload = {
         id: this.selectedIssueId,
-        updates: this.issue,
+        updates: this.issue
       };
       this.$store.dispatch("issues/updateIssue", payload);
-      /*this.updateIssue({
-        modelId: this.$route.params.modelId,
-        updates: this.issue
-      });*/
-      //this.$emit("close");
-    },
+    }
   },
-
-  mounted() {},
 
   watch: {
-    selectedIssue: function (newIssue, oldIssue) {
+    selectedIssue: function(newIssue, oldIssue) {
       this.issue = Object.assign({}, this.selectedIssue);
     },
-    estTotalCostXdr: function () {
+    estTotalCostXdr: function() {
       this.issue.estTotalCostXdr = this.estTotalCostXdr;
     },
-    outstandingCostXdr: function () {
+    outstandingCostXdr: function() {
       this.issue.outstandingCostXdr = this.outstandingCostXdr;
     },
-    estRoi: function (newValue, oldValue) {
+    estRoi: function(newValue, oldValue) {
       this.issue.estRoi = this.estRoi;
-    },
-  },
+    }
+  }
 };
 </script>

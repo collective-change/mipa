@@ -6,25 +6,7 @@
     </div>
     <div class="q-pa-xs">
       <div class="row q-col-gutter-md">
-        <!--
-        <div class="col-12 col-md-2 print-hide">
-          <q-select borderless v-model="currentModel" :options="modelOptions" label="Model" />
-          <q-tree :nodes="exampleTree" node-key="label" />
-        </div>
-        -->
-        <div class="col-12 col-md-7">
-          <q-toggle v-model="useRoi" label="分析優先順序" />
-          <div v-if="useRoi">
-            <issues-list></issues-list>
-          </div>
-          <div v-else>
-            <unprioritized-issues-list></unprioritized-issues-list>
-          </div>
-          <!-- <pre>{{ issues}}</pre> -->
-        </div>
-        <div class="col-12 col-md-3">
-          <issue-summary />
-        </div>
+        <issue-summary />
       </div>
     </div>
   </q-page>
@@ -50,7 +32,7 @@ export default {
   },
   data() {
     return {
-      useRoi: true
+      models: null
     };
   },
   computed: {
@@ -64,10 +46,14 @@ export default {
         await new Promise(resolve => setTimeout(resolve, 200));
 
       let orgId = this.$route.params.orgId;
-      this.$store.dispatch("issues/bindIssues", orgId);
+      console.log({ orgId });
+      await this.$store.dispatch("issues/bindIssues", orgId);
+      console.log("issues loaded");
     })();
   },
-  mounted() {},
+  mounted() {
+    //console.log("issueDetails");
+  },
   beforeDestroy() {
     //if the new route does not need issues, then unbind
     if (this.$route.name in ["issues", "issueDetails"]) {

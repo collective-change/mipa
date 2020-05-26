@@ -20,7 +20,13 @@ const routes = [
       },
       {
         path: "/org/:orgName/ideate/:orgId",
+        name: "issues",
         component: () => import("pages/PageIssues.vue")
+      },
+      {
+        path: "/org/:orgName/issue/:orgId/:issueId",
+        name: "issueDetails",
+        component: () => import("pages/PageIssueDetails.vue")
       }
     ]
   }
