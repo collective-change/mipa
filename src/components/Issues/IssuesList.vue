@@ -20,13 +20,8 @@
           color="primary"
           size="16px"
           icon="add"
-        /> -->
-        <q-btn
-          color="primary"
-          :disable="loading"
-          label="新增"
-          @click="showAddIssue = true"
-        />
+        />-->
+        <q-btn color="primary" :disable="loading" label="新增" @click="showAddIssue = true" />
 
         <!--
         <q-btn
@@ -62,7 +57,7 @@ import { mapGetters, mapState } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 export default {
   components: {
-    "add-issue": require("components/Issues/Modals/AddIssue.vue").default,
+    "add-issue": require("components/Issues/Modals/AddIssue.vue").default
   },
   data() {
     return {
@@ -74,7 +69,7 @@ export default {
         sortBy: "roi",
         descending: true,
         page: 1,
-        rowsPerPage: 20,
+        rowsPerPage: 20
         // rowsNumber: xx if getting data from a server
       },
       columns: [
@@ -84,63 +79,63 @@ export default {
           align: "right",
           label: "SROI",
           field: "estRoi",
-          format: (val) =>
+          format: val =>
             `${typeof val !== "undefined" ? val.toLocaleString() : ""}`,
           sortable: true,
-          sortBy: "desc",
+          sortBy: "desc"
         },
         {
           name: "title",
           required: true,
           label: "標題",
           align: "left",
-          field: (row) => row.title,
-          sortable: true,
+          field: row => row.title,
+          sortable: true
         },
         {
           name: "type",
           align: "center",
           label: "種類",
           field: "type",
-          sortable: true,
+          sortable: true
         },
         {
           name: "benefit",
           align: "right",
           label: "總效益 (XDR)",
           field: "estTotalBenefitXdr",
-          format: (val) =>
+          format: val =>
             `${typeof val !== "undefined" ? val.toLocaleString() : ""}`,
-          sortable: true,
+          sortable: true
         },
         {
           name: "totalCost",
           align: "right",
           label: "總成本 (XDR)",
           field: "estTotalCostXdr",
-          format: (val) =>
+          format: val =>
             `${typeof val !== "undefined" ? val.toLocaleString() : ""}`,
-          sortable: true,
+          sortable: true
         },
         {
           name: "dueDate",
           align: "center",
           label: "截止日期",
           field: "dueDate",
-          sortable: true,
-        },
-      ],
+          sortable: true
+        }
+      ]
     };
   },
 
   computed: {
     //...mapGetters("settings", ["settings"]),
-    ...mapState("issues", ["issues"]),
+    ...mapState("issues", ["issues"])
   },
 
   methods: {
     onRowClick(evt, row) {
-      console.log("clicked on", row.id);
+      //console.log("clicked on", row.id);
       this.$store.dispatch("ui/setSelectedIssueId", row.id);
     },
     // emulate fetching data from server
@@ -157,7 +152,7 @@ export default {
         this.data = [
           ...this.data.slice(0, index),
           addRow,
-          ...this.data.slice(index),
+          ...this.data.slice(index)
         ];
         this.loading = false;
       }, 500);
@@ -169,11 +164,11 @@ export default {
         const index = Math.floor(Math.random() * this.data.length);
         this.data = [
           ...this.data.slice(0, index),
-          ...this.data.slice(index + 1),
+          ...this.data.slice(index + 1)
         ];
         this.loading = false;
       }, 500);
-    },
-  },
+    }
+  }
 };
 </script>

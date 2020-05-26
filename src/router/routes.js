@@ -12,25 +12,25 @@ const routes = [
       { path: "/auth", component: () => import("pages/PageAuth.vue") },
       {
         path: "/placeholder",
-        component: () => import("pages/PagePlaceholder.vue"),
+        component: () => import("pages/PagePlaceholder.vue")
       },
       {
         path: "/org/:orgName/model/:orgId/:modelId",
-        component: () => import("pages/PageModel.vue"),
+        component: () => import("pages/PageModel.vue")
       },
       {
         path: "/org/:orgName/ideate/:orgId",
-        component: () => import("pages/PageIdeate.vue"),
-      },
-    ],
-  },
+        component: () => import("pages/PageIssues.vue")
+      }
+    ]
+  }
 ];
 
 // Always leave this as last one
 if (process.env.MODE !== "ssr") {
   routes.push({
     path: "*",
-    component: () => import("pages/Error404.vue"),
+    component: () => import("pages/Error404.vue")
   });
 }
 
