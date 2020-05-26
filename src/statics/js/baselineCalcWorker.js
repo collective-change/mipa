@@ -45,7 +45,7 @@ onmessage = function(e) {
 
   try {
     // gather up current values from nodes into scope
-    console.log("begin loading currentValues");
+    //console.log("begin loading currentValues");
     sortedNodes.forEach(function(node, index) {
       //console.log({ node });
       scope["$" + node.id + "_unit"] = node.unit;
@@ -70,18 +70,40 @@ onmessage = function(e) {
       }
     });
 
-    let compiledExpressions = expressionsArray.map(function(expression) {
-      return math.parse(expression).compile();
+    let parsedExpressions = expressionsArray.map(function(expression) {
+      return math.parse(expression);
+    });
+
+    let compiledExpressions = parsedExpressions.map(function(expression) {
+      return expression.compile();
+    });
+
+    let expectedUnit = null;
+    let expectedUnits = sortedNodes.map(function(node) {
+      return math.unit(node.unit);
     });
 
     while (completedLoops < maxLoops) {
-      //console.log("starting loop ", completedLoops + 1);
       // evaluate the formulas
       compiledExpressions.forEach(function(code, index) {
         //todo: if timeS == initialTimeS then evaluate current value
         code.evaluate(scope);
-        if (completedLoops == 0) console.log({ code });
-        //todo: if on first few loops, check result of evaluation against units expected by user.
+        //on first 2 loops, check result of evaluation against units expected by user.
+        if (completedLoops < 2) {
+          expectedUnit = expectedUnits[index];
+          if (
+            !expectedUnits[index].equalBase(scope["$" + sortedNodes[index].id])
+          )
+            throw "Dimensions of expected units and calculated units do not match for node " +
+              sortedNodes[index].id +
+              " (" +
+              sortedNodes[index].name +
+              ")." +
+              " Expected: " +
+              expectedUnit.toString() +
+              " Calculated: " +
+              scope["$" + sortedNodes[index].id].toString();
+        }
       });
 
       //save time and node values into results object

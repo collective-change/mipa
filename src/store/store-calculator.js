@@ -59,10 +59,7 @@ const actions = {
       //console.log(e.data);
       if (typeof e.data == "string") {
         console.log("Error message received from worker: ", e.data);
-        showErrorMessage(
-          "Error message received from worker. Please see console log.",
-          ""
-        );
+        showErrorMessage("Calculation error", e.data);
       } else if ("timeSPoints" in e.data) {
         let payload2 = {
           modelId: payload.modelId,
