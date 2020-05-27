@@ -63,10 +63,12 @@
           </div>
         </div>
 
-        <div class="row">
+        <div class="row ">
           <div
             v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
           >
+            <q-input v-model="notes" label="筆記" filled autogrow />
+
             <div class="text-h6">Impacts</div>
             <q-list bordered padding>
               <q-item tag="label" v-ripple>
@@ -78,7 +80,8 @@
                 </q-item-section>
               </q-item>
             </q-list>
-            <div class="q-gutter-md row items-start">
+
+            <div class="row q-gutter-md q-mt-md items-start">
               <q-input
                 v-model.number="estTotalBenefitXdr"
                 label="預估總效益"
@@ -118,7 +121,7 @@
               />
             </div>
 
-            <div class="q-gutter-md q-mt-md row items-start">
+            <div class="row q-gutter-md q-mt-md items-start">
               <q-input
                 v-model.number="estEffortCostXdr"
                 label="預估人力成本"
@@ -190,8 +193,6 @@
                 style="max-width: 160px;"
                 debounce="500"
               />
-
-              <q-input v-model="notes" label="筆記" type="textarea" filled />
             </div>
 
             <modal-buttons />
