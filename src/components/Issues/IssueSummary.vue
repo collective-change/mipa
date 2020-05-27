@@ -87,10 +87,11 @@
                 suffix="XDR"
                 filled
                 style="max-width: 150px;"
+                debounce="500"
               />
 
               <q-input
-                v-model.number="uiIssue.estTotalCostXdr"
+                v-bind:value="uiIssue.estTotalCostXdr"
                 label="預估總成本"
                 type="number"
                 suffix="XDR"
@@ -129,6 +130,7 @@
                 ]"
                 filled
                 style="max-width: 150px;"
+                debounce="500"
               />
               <q-input
                 v-model.number="effortCompletionPercentage"
@@ -139,9 +141,15 @@
                 ]"
                 filled
                 style="max-width: 150px;"
+                debounce="500"
               />
               <q-slider
-                v-model="effortCompletionPercentage"
+                :value="effortCompletionPercentage"
+                @change="
+                  val => {
+                    effortCompletionPercentage = val;
+                  }
+                "
                 :min="0"
                 :max="100"
                 label
@@ -159,6 +167,7 @@
                 ]"
                 filled
                 style="max-width: 150px;"
+                debounce="500"
               />
               <q-input
                 v-model.number="purchasedAmount"
@@ -170,6 +179,7 @@
                 ]"
                 filled
                 style="max-width: 150px;"
+                debounce="500"
               />
             </div>
             <div class="q-gutter-md q-mt-md items-start">
@@ -179,6 +189,7 @@
                 type="date"
                 label="截止日期"
                 style="max-width: 160px;"
+                debounce="500"
               />
 
               <q-input v-model="notes" label="筆記" type="textarea" filled />
