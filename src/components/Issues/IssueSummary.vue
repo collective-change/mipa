@@ -3,7 +3,7 @@
     <div v-if="selectedIssue">
       <q-form @submit.prevent="submitForm">
         <div class="row justify-between">
-          <div v-bind:class="{'col-xs-12 col-md-6': !embedded,  'col-12': embedded}">
+          <div v-bind:class="{'col-12 col-md-6': !embedded,  'col-12': embedded}">
             <q-input
               class="text-h6"
               v-model="issue.title"
@@ -20,14 +20,14 @@
               </template>
             </q-input>
           </div>
-          <div v-bind:class="{'col-xs-6 col-md-3': !embedded,  'col-6': embedded}">
-            <div class="q-pa-sm q-gutter-sm">
+          <div v-bind:class="{'col-6 col-md-3': !embedded,  'col-6': embedded}">
+            <div class="q-pa-xs q-gutter-xs">
               <q-chip outline color="primary">Total benefit {{issue.estTotalBenefitXdr}} XDR</q-chip>
               <q-chip outline color="primary">Outstanding cost {{issue.outstandingCostXdr}} XDR</q-chip>
               <q-chip color="primary" text-color="white">ROI {{issue.estRoi}}</q-chip>
             </div>
           </div>
-          <div v-bind:class="{'col-xs-6 col-md-3': !embedded,  'col-6': embedded}">
+          <div v-bind:class="{'col-6 col-md-3': !embedded,  'col-6': embedded}">
             <div class="q-pa-sm q-gutter-sm">
               <q-btn color="primary" label="Meet about this" />
               <q-btn color="primary" label="Mark as resolved" />
