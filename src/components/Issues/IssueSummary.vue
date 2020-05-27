@@ -281,25 +281,8 @@ export default {
 
   watch: {
     selectedIssue: function(newIssue, oldIssue) {
-      //this.issue = Object.assign({}, this.selectedIssue);
       this.$store.dispatch("uiIssue/setUiIssue", this.selectedIssue);
     }
-    /*
-    estTotalCostXdr: function() {
-      //this.issue.estTotalCostXdr = this.estTotalCostXdr;
-      this.$store.dispatch("uiIssue/setEstTotalCostXdr", this.estTotalCostXdr);
-    },
-    outstandingCostXdr: function() {
-      //this.issue.outstandingCostXdr = this.outstandingCostXdr;
-      this.$store.dispatch(
-        "uiIssue/setOutstandingCostXdr",
-        this.outstandingCostXdr
-      );
-    },
-    estRoi: function(newValue, oldValue) {
-      //this.issue.estRoi = this.estRoi;
-      this.$store.dispatch("uiIssue/setEstRoi", this.estRoi);
-    } */
   }
 };
 </script>
