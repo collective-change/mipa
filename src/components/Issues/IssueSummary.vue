@@ -6,6 +6,7 @@
           <div
             v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
           >
+            <div>title:{{ uiIssue.title }}</div>
             <q-input
               class="text-h6"
               v-model="title"
@@ -32,13 +33,23 @@
           >
             <div class="q-pa-xs q-gutter-xs">
               <q-chip outline color="primary"
-                >Total benefit {{ uiIssue.estTotalBenefitXdr }} XDR</q-chip
+                >Total benefit
+                {{ uiIssue.estTotalBenefitXdr.toLocaleString() }} XDR</q-chip
               >
               <q-chip outline color="primary"
-                >Outstanding cost {{ uiIssue.outstandingCostXdr }} XDR</q-chip
+                >Outstanding cost
+                {{
+                  parseFloat(
+                    uiIssue.outstandingCostXdr.toPrecision(3)
+                  ).toLocaleString()
+                }}
+                XDR</q-chip
               >
               <q-chip color="primary" text-color="white"
-                >ROI {{ uiIssue.estRoi }}</q-chip
+                >ROI
+                {{
+                  parseFloat(uiIssue.estRoi.toPrecision(2)).toLocaleString()
+                }}</q-chip
               >
             </div>
           </div>
@@ -64,7 +75,7 @@
                   <q-item-label>Battery too low</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle color="blue" v-model="notif1" val="battery" />
+                  <!--<q-toggle color="blue" v-model="notif1" val="battery" />-->
                 </q-item-section>
               </q-item>
             </q-list>
@@ -88,7 +99,9 @@
               />
 
               <q-input
-                v-model.number="uiIssue.outstandingCostXdr"
+                v-bind:value="
+                  parseFloat(uiIssue.outstandingCostXdr.toPrecision(3))
+                "
                 label="需再付出成本"
                 type="number"
                 suffix="XDR"
@@ -97,7 +110,7 @@
               />
 
               <q-input
-                v-model.number="uiIssue.estRoi"
+                v-bind:value="parseFloat(uiIssue.estRoi.toPrecision(2))"
                 label="估計 SROI"
                 type="number"
                 style="max-width: 150px;"
@@ -196,7 +209,7 @@ import { createHelpers } from "vuex-map-fields";
 
 const { mapFields } = createHelpers({
   getterType: "uiIssue/getField",
-  mutationType: "uiIssue/updateField"
+  mutationType: "uiIssue/updateUiIssueField"
 });
 
 export default {
@@ -246,54 +259,7 @@ export default {
       return this.issues.find(function(issue) {
         return issue.id == issueId;
       });
-    },
-
-    estTotalCostXdr() {
-      let estEffortCostXdr = this.uiIssue.estEffortCostXdr
-        ? this.uiIssue.estEffortCostXdr
-        : 0;
-      let estPurchaseCostXdr = this.uiIssue.estPurchaseCostXdr
-        ? this.uiIssue.estPurchaseCostXdr
-        : 0;
-      let estTotalCostXdr = estEffortCostXdr + estPurchaseCostXdr;
-      return estTotalCostXdr;
-    },
-
-    outstandingCostXdr() {
-      let effortCompletionPercentage = this.uiIssue.effortCompletionPercentage
-        ? this.uiIssue.effortCompletionPercentage
-        : 0;
-      let outstandingEffortCost =
-        this.uiIssue.estEffortCostXdr * (1 - effortCompletionPercentage / 100);
-
-      let estPurchaseCostXdr = this.uiIssue.estPurchaseCostXdr
-        ? this.uiIssue.estPurchaseCostXdr
-        : 0;
-
-      let purchasedAmount = this.uiIssue.purchasedAmount
-        ? this.uiIssue.purchasedAmount
-        : 0;
-
-      let outstandingPurchaseCost = Math.max(
-        0,
-        estPurchaseCostXdr - purchasedAmount
-      );
-      let outstandingCostXdr = outstandingEffortCost + outstandingPurchaseCost;
-      return Math.round(outstandingCostXdr);
-    },
-
-    estRoi() {
-      let outstandingCostXdr = this.outstandingCostXdr;
-      let benefit = this.uiIssue.estTotalBenefitXdr
-        ? this.uiIssue.estTotalBenefitXdr
-        : 0;
-      let roi = (benefit - outstandingCostXdr) / outstandingCostXdr;
-      return Number(roi.toPrecision(2));
     }
-
-    /*class6() {
-      return this.embedded ? 'col-xs-12 col-sm-6' : 'col-xs-6 col-sm-3'
-    }*/
   },
 
   methods: {
