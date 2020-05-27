@@ -2,7 +2,7 @@
   <div>
     <div v-if="selectedIssue">
       <q-form @submit.prevent="submitForm">
-        <div class="row justify-between">
+        <div class="row">
           <div v-bind:class="{'col-12 col-md-6': !embedded,  'col-12': embedded}">
             <q-input
               class="text-h6"
@@ -34,115 +34,122 @@
             </div>
           </div>
         </div>
-        <div class="text-h6">Impacts</div>
-        <q-list bordered padding>
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>Battery too low</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle color="blue" v-model="notif1" val="battery" />
-            </q-item-section>
-          </q-item>
-        </q-list>
-        <div class="q-gutter-md row items-start">
-          <q-input
-            v-model.number="issue.estTotalBenefitXdr"
-            label="預估總效益"
-            type="number"
-            suffix="XDR"
-            filled
-            style="max-width: 150px;"
-          />
 
-          <q-input
-            v-model.number="issue.estTotalCostXdr"
-            label="預估總成本"
-            type="number"
-            suffix="XDR"
-            style="max-width: 150px;"
-            readonly
-          />
+        <div class="row">
+          <div v-bind:class="{'col-12 col-md-6': !embedded,  'col-12': embedded}">
+            <div class="text-h6">Impacts</div>
+            <q-list bordered padding>
+              <q-item tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>Battery too low</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle color="blue" v-model="notif1" val="battery" />
+                </q-item-section>
+              </q-item>
+            </q-list>
+            <div class="q-gutter-md row items-start">
+              <q-input
+                v-model.number="issue.estTotalBenefitXdr"
+                label="預估總效益"
+                type="number"
+                suffix="XDR"
+                filled
+                style="max-width: 150px;"
+              />
 
-          <q-input
-            v-model.number="issue.outstandingCostXdr"
-            label="需再付出成本"
-            type="number"
-            suffix="XDR"
-            style="max-width: 150px;"
-            readonly
-          />
+              <q-input
+                v-model.number="issue.estTotalCostXdr"
+                label="預估總成本"
+                type="number"
+                suffix="XDR"
+                style="max-width: 150px;"
+                readonly
+              />
 
-          <q-input
-            v-model.number="issue.estRoi"
-            label="估計 SROI"
-            type="number"
-            style="max-width: 150px;"
-            readonly
-          />
-        </div>
+              <q-input
+                v-model.number="issue.outstandingCostXdr"
+                label="需再付出成本"
+                type="number"
+                suffix="XDR"
+                style="max-width: 150px;"
+                readonly
+              />
 
-        <div class="q-gutter-md q-mt-md row items-start">
-          <q-input
-            v-model.number="issue.estEffortCostXdr"
-            label="預估人力成本"
-            type="number"
-            suffix="XDR"
-            :rules="[
+              <q-input
+                v-model.number="issue.estRoi"
+                label="估計 SROI"
+                type="number"
+                style="max-width: 150px;"
+                readonly
+              />
+            </div>
+
+            <div class="q-gutter-md q-mt-md row items-start">
+              <q-input
+                v-model.number="issue.estEffortCostXdr"
+                label="預估人力成本"
+                type="number"
+                suffix="XDR"
+                :rules="[
               (val) => val == null || val >= 0 || 'Should be at least 0',
             ]"
-            filled
-            style="max-width: 150px;"
-          />
-          <q-input
-            v-model.number="issue.effortCompletionPercentage"
-            type="number"
-            suffix="% 完成"
-            :rules="[
+                filled
+                style="max-width: 150px;"
+              />
+              <q-input
+                v-model.number="issue.effortCompletionPercentage"
+                type="number"
+                suffix="% 完成"
+                :rules="[
               (val) => val == null || val >= 0 || 'Should be at least 0',
             ]"
-            filled
-            style="max-width: 150px;"
-          />
-          <q-slider v-model="issue.effortCompletionPercentage" :min="0" :max="100" label />
-        </div>
+                filled
+                style="max-width: 150px;"
+              />
+              <q-slider v-model="issue.effortCompletionPercentage" :min="0" :max="100" label />
+            </div>
 
-        <div class="q-gutter-md q-mt-md row items-start">
-          <q-input
-            v-model.number="issue.estPurchaseCostXdr"
-            label="預估採購金額"
-            type="number"
-            suffix="XDR"
-            :rules="[
+            <div class="q-gutter-md q-mt-md row items-start">
+              <q-input
+                v-model.number="issue.estPurchaseCostXdr"
+                label="預估採購金額"
+                type="number"
+                suffix="XDR"
+                :rules="[
               (val) => val == null || val >= 0 || 'Should be at least 0',
             ]"
-            filled
-            style="max-width: 150px;"
-          />
-          <q-input
-            v-model.number="issue.purchasedAmount"
-            label="已採購金額"
-            type="number"
-            suffix="XDR"
-            :rules="[
+                filled
+                style="max-width: 150px;"
+              />
+              <q-input
+                v-model.number="issue.purchasedAmount"
+                label="已採購金額"
+                type="number"
+                suffix="XDR"
+                :rules="[
               (val) => val == null || val >= 0 || 'Should be at least 0',
             ]"
-            filled
-            style="max-width: 150px;"
-          />
-        </div>
-        <div class="q-gutter-md q-mt-md items-start">
-          <q-input
-            v-model="issue.dueDate"
-            filled
-            type="date"
-            label="截止日期"
-            style="max-width: 160px;"
-          />
+                filled
+                style="max-width: 150px;"
+              />
+            </div>
+            <div class="q-gutter-md q-mt-md items-start">
+              <q-input
+                v-model="issue.dueDate"
+                filled
+                type="date"
+                label="截止日期"
+                style="max-width: 160px;"
+              />
 
-          <q-input v-model="issue.notes" label="筆記" type="textarea" filled />
+              <q-input v-model="issue.notes" label="筆記" type="textarea" filled />
+            </div>
+            <modal-buttons />
+          </div>
+          <div v-bind:class="{'col-6 col-md-3': !embedded,  'col-12': embedded}">middle column</div>
+          <div v-bind:class="{'col-6 col-md-3': !embedded,  'col-12': embedded}">right column</div>
         </div>
-        <modal-buttons />
       </q-form>
     </div>
   </div>
