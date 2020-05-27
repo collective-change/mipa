@@ -6,7 +6,6 @@
           <div
             v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
           >
-            <div>title:{{ uiIssue.title }}</div>
             <q-input
               class="text-h6"
               v-model="title"

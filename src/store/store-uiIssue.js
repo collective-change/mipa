@@ -19,15 +19,11 @@ const mutations = {
     let fieldName = field.path.replace("uiIssue.", "");
     updateField(state, field);
     if (fieldsToTriggerRecalculation.includes(fieldName)) recalculate(state);
-    else
-      throw "Unrecognized field " +
-        fieldName +
-        " passed to updateUiIssueField.";
   }
 };
 
 function recalculate(state) {
-  console.log("recalculating");
+  //console.log("recalculating");
   let uiIssue = state.uiIssue;
   uiIssue.estEffortCostXdr = uiIssue.estEffortCostXdr
     ? uiIssue.estEffortCostXdr
