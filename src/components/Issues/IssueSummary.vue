@@ -2,21 +2,49 @@
   <div>
     <div v-if="selectedIssue">
       <q-form @submit.prevent="submitForm">
-        <q-input
-          class="text-h6"
-          v-model="issue.title"
-          :rules="[(val) => !!val || 'Field is required']"
-          ref="issueTitle"
-        >
-          <template v-slot:after v-if="$route.name!='issueDetails'">
-            <q-btn
-              dense
-              label="details"
-              color="primary"
-              @click="$router.push(`/org/${currentOrg.name}/issue/${currentOrg.id}/${selectedIssueId}`)"
-            />
-          </template>
-        </q-input>
+        <div class="row justify-between">
+          <div v-bind:class="{'col-xs-12 col-md-6': !embedded,  'col-12': embedded}">
+            <q-input
+              class="text-h6"
+              v-model="issue.title"
+              :rules="[(val) => !!val || 'Field is required']"
+              ref="issueTitle"
+            >
+              <template v-slot:after v-if="embedded">
+                <q-btn
+                  dense
+                  label="details"
+                  color="primary"
+                  @click="$router.push(`/org/${currentOrg.name}/issue/${currentOrg.id}/${selectedIssueId}`)"
+                />
+              </template>
+            </q-input>
+          </div>
+          <div v-bind:class="{'col-xs-6 col-md-3': !embedded,  'col-6': embedded}">
+            <div class="q-pa-sm q-gutter-sm">
+              <q-chip outline color="primary">Total benefit {{issue.estTotalBenefitXdr}} XDR</q-chip>
+              <q-chip outline color="primary">Outstanding cost {{issue.outstandingCostXdr}} XDR</q-chip>
+              <q-chip color="primary" text-color="white">ROI {{issue.estRoi}}</q-chip>
+            </div>
+          </div>
+          <div v-bind:class="{'col-xs-6 col-md-3': !embedded,  'col-6': embedded}">
+            <div class="q-pa-sm q-gutter-sm">
+              <q-btn color="primary" label="Meet about this" />
+              <q-btn color="primary" label="Mark as resolved" />
+            </div>
+          </div>
+        </div>
+        <div class="text-h6">Impacts</div>
+        <q-list bordered padding>
+          <q-item tag="label" v-ripple>
+            <q-item-section>
+              <q-item-label>Battery too low</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle color="blue" v-model="notif1" val="battery" />
+            </q-item-section>
+          </q-item>
+        </q-list>
         <div class="q-gutter-md row items-start">
           <q-input
             v-model.number="issue.estTotalBenefitXdr"
@@ -131,6 +159,7 @@ export default {
 
   data() {
     return {
+      embedded: false, //whether this component is embedded or a full page
       issueId: null,
       issue: {},
       estimatedRoi: null
@@ -144,8 +173,13 @@ export default {
 
     selectedIssue() {
       let that = this;
-      if (this.$route.params.issueId) this.issueId = this.$route.params.issueId;
-      else if (that.selectedIssueId) this.issueId = that.selectedIssueId;
+      if (this.$route.params.issueId) {
+        this.issueId = this.$route.params.issueId;
+        this.embedded = false;
+      } else if (that.selectedIssueId) {
+        this.issueId = that.selectedIssueId;
+        this.embedded = true;
+      }
       let issueId = this.issueId;
       return this.issues.find(function(issue) {
         return issue.id == issueId;
@@ -194,6 +228,10 @@ export default {
       let roi = (benefit - outstandingCostXdr) / outstandingCostXdr;
       return Number(roi.toPrecision(2));
     }
+
+    /*class6() {
+      return this.embedded ? 'col-xs-12 col-sm-6' : 'col-xs-6 col-sm-3'
+    }*/
   },
 
   methods: {

@@ -2,7 +2,7 @@
   <q-layout view="hHh lpR fFf">
     <q-header elevated class="bg-white text-grey-8 q-py-none print-hide">
       <q-toolbar>
-        <div class="text-h6">{{orgName}}</div>
+        <div class="text-h6">{{orgGoal}}</div>
         <q-btn flat no-caps no-wrap class="q-ml-xs" v-if="$q.screen.gt.xs" clickable to="/">
           <q-toolbar-title shrink class="text-weight-bold text-primary">mipa</q-toolbar-title>
         </q-btn>
@@ -197,6 +197,10 @@ export default {
 
     orgName() {
       return this.currentOrg ? this.currentOrg.name : "";
+    },
+
+    orgGoal() {
+      return this.currentOrg ? this.currentOrg.goal : "";
     },
 
     orgNameSlug() {
