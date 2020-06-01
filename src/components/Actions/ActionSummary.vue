@@ -62,17 +62,7 @@
           >
             <q-input v-model="notes" label="筆記" filled autogrow />
 
-            <div class="text-h6">Impacts</div>
-            <q-list bordered padding>
-              <q-item tag="label" v-ripple>
-                <q-item-section>
-                  <q-item-label>Battery too low</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <!--<q-toggle color="blue" v-model="notif1" val="battery" />-->
-                </q-item-section>
-              </q-item>
-            </q-list>
+            <impacts />
 
             <div class="row q-gutter-md q-mt-md items-start">
               <q-input
@@ -206,7 +196,7 @@
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 //import { mapFields } from 'vuex-map-fields';
-import { createHelpers } from "vuex-map-fields";
+import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
 import { formatNumber } from "src/utils/util-formatNumber";
 
 const { mapFields } = createHelpers({
@@ -217,7 +207,8 @@ const { mapFields } = createHelpers({
 export default {
   components: {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default
+      .default,
+    impacts: require("components/Impacts/Impacts.vue").default
   },
 
   data() {
@@ -247,6 +238,7 @@ export default {
       "uiAction.dueDate",
       "uiAction.notes"
     ]),
+    ...mapMultiRowFields(["uiAction.impacts"]),
 
     selectedAction() {
       let that = this;

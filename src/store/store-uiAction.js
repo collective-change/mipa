@@ -22,6 +22,9 @@ const mutations = {
     updateField(state, field);
     if (fieldsToTriggerRecalculation.includes(fieldName)) recalculate(state);
     console.log("updated", state.uiAction[fieldName]);
+  },
+  addImpact(state, impact) {
+    state.uiAction.impacts.push(impact);
   }
 };
 
