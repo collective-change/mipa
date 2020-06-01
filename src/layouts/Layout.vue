@@ -371,7 +371,11 @@ export default {
       }
 
       let orgId = this.$route.params.orgId;
-      if (orgId) this.$store.dispatch("orgs/bindCurrentOrg", orgId);
+      if (orgId) {
+        this.$store.dispatch("orgs/bindCurrentOrg", orgId);
+        this.$store.dispatch("model/bindCurrentModel", orgId);
+        this.$store.dispatch("model/bindNodes", orgId);
+      }
     })();
   },
   mounted() {

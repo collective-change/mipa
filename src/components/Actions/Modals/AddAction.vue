@@ -25,6 +25,7 @@ export default {
         title: "",
         isProject: false,
         notes: "",
+        impacts: [],
         estTotalBenefitXdr: null,
         estEffortCostXdr: null,
         effortCompletionPercentage: null,

@@ -9,9 +9,45 @@
         v-ripple
       >
         <q-item-section>
-          <q-item-label>{{ impact.id }}</q-item-label>
+          <q-item-label overline>{{ impact.id }}</q-item-label>
+          <q-item-label>
+            <div class="row">
+              {{ getImpactTypeIfClause(impact.impactType) }} then
+              {{ impact.thenText }}
+            </div>
+            <div class="row items-center">
+              <q-chip>{{ getNodeName(impact.nodeId) }}</q-chip>
+              {{ impact.operation }} {{ impact.operand }}
+              {{ impact.durationType }} {{ impact.durationExpression }}
+              {{ impact.durationUnit }}
+            </div>
+          </q-item-label>
+          <q-item-label caption> </q-item-label>
         </q-item-section>
-        <q-item-section side> </q-item-section>
+        <q-item-section side>
+          <div class="row">
+            <q-btn
+              @click.stop="showEditImpactModal"
+              flat
+              round
+              dense
+              color="primary"
+              icon="edit"
+            >
+              <q-tooltip>Edit impact</q-tooltip>
+            </q-btn>
+            <q-btn
+              @click.stop="promptToDelete(id)"
+              flat
+              round
+              dense
+              color="red-4"
+              icon="delete"
+            >
+              <q-tooltip>Delete impact</q-tooltip>
+            </q-btn>
+          </div></q-item-section
+        >
       </q-item>
     </q-list>
     <div class="q-pa-sm q-gutter-sm">
@@ -27,7 +63,7 @@
 import { mapActions, mapGetters, mapState } from "vuex";
 //import { mapFields } from 'vuex-map-fields';
 import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
-import { formatNumber } from "src/utils/util-formatNumber";
+//import { formatNumber } from "src/utils/util-formatNumber";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
@@ -45,12 +81,12 @@ export default {
     return {
       actionId: null,
       showAddImpact: false
-      //estimatedRoi: null
     };
   },
 
   computed: {
     ...mapState("orgs", ["currentOrg"]),
+    ...mapState("model", ["nodes"]),
     ...mapState("ui", ["selectedActionId"]),
     ...mapState("actions", ["actions"]),
     //fields calculated in the uiAction store, for display only
@@ -73,7 +109,21 @@ export default {
 
   methods: {
     ...mapActions("model", ["updateAction"]),
-    formatNumber
+    //formatNumber
+    getImpactTypeIfClause(type) {
+      switch (type) {
+        case "if_done":
+          return "If done,";
+          break;
+        case "if_not_done":
+          return "if not done";
+          break;
+      }
+    },
+    getNodeName(nodeId) {
+      const found = this.nodes.find(node => node.id == nodeId);
+      return found.name;
+    }
   },
 
   watch: {}
