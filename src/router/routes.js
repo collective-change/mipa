@@ -15,18 +15,28 @@ const routes = [
         component: () => import("pages/PagePlaceholder.vue")
       },
       {
-        path: "/org/:orgName/model/:orgId/:modelId",
+        path: "/org/:orgNameSlug/model/:orgId/:modelId",
         component: () => import("pages/PageModel.vue")
       },
       {
-        path: "/org/:orgName/ideate/:orgId",
+        path: "/org/:orgNameSlug/issues/:orgId",
         name: "issues",
         component: () => import("pages/PageIssues.vue")
       },
       {
-        path: "/org/:orgName/issue/:orgId/:issueId",
+        path: "/org/:orgNameSlug/issue/:orgId/:issueId",
         name: "issueDetails",
         component: () => import("pages/PageIssueDetails.vue")
+      },
+      {
+        path: "/org/:orgNameSlug/actions/:orgId",
+        name: "actions",
+        component: () => import("pages/PageActions.vue")
+      },
+      {
+        path: "/org/:orgNameSlug/action/:orgId/:actionId",
+        name: "actionDetails",
+        component: () => import("pages/PageActionDetails.vue")
       }
     ]
   }

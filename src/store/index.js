@@ -9,10 +9,12 @@ import teams from "./store-teams";
 import orgs from "./store-orgs";
 import model from "./store-model";
 import issues from "./store-issues";
+import actions from "./store-actions";
 import calculator from "./store-calculator";
 import calcResults from "./store-calcResults";
 import ui from "./store-ui";
 import uiIssue from "./store-uiIssue";
+import uiAction from "./store-uiAction";
 
 Vue.use(Vuex);
 
@@ -35,10 +37,12 @@ export default function(/* { ssrContext } */) {
       teams,
       model,
       issues,
+      actions,
       calculator,
       calcResults,
       ui,
-      uiIssue
+      uiIssue,
+      uiAction
     },
 
     // enable strict mode (adds overhead!)

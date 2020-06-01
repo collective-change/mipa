@@ -2,9 +2,19 @@
   <q-layout view="hHh lpR fFf">
     <q-header elevated class="bg-white text-grey-8 q-py-none print-hide">
       <q-toolbar>
-        <div class="text-h6">{{orgGoal}}</div>
-        <q-btn flat no-caps no-wrap class="q-ml-xs" v-if="$q.screen.gt.xs" clickable to="/">
-          <q-toolbar-title shrink class="text-weight-bold text-primary">mipa</q-toolbar-title>
+        <div class="text-h6">{{ orgGoal }}</div>
+        <q-btn
+          flat
+          no-caps
+          no-wrap
+          class="q-ml-xs"
+          v-if="$q.screen.gt.xs"
+          clickable
+          to="/"
+        >
+          <q-toolbar-title shrink class="text-weight-bold text-primary"
+            >mipa</q-toolbar-title
+          >
         </q-btn>
         <q-btn-dropdown v-if="currentOrg" dense flat :label="currentLinkGroup">
           <q-list>
@@ -12,10 +22,14 @@
               <q-separator class="q-my-xs" />
               <q-item class="q-py-none">
                 <q-item-section avatar class="q-py-none">
-                  <q-icon color="grey" :name="linkGroup.icon" :class="linkGroup.icon_class" />
+                  <q-icon
+                    color="grey"
+                    :name="linkGroup.icon"
+                    :class="linkGroup.icon_class"
+                  />
                 </q-item-section>
                 <q-item-section class="q-py-none">
-                  <q-item-label>{{linkGroup.text}}</q-item-label>
+                  <q-item-label>{{ linkGroup.text }}</q-item-label>
                 </q-item-section>
               </q-item>
               <q-btn-group flat unelevated>
@@ -30,7 +44,11 @@
                 >
                   <q-item-section>
                     <q-item-section avatar>
-                      <q-icon color="grey" :name="link.icon" :class="link.icon_class" />
+                      <q-icon
+                        color="grey"
+                        :name="link.icon"
+                        :class="link.icon_class"
+                      />
                     </q-item-section>
                     <q-item-section>
                       <q-item-label>{{ link.text }}</q-item-label>
@@ -57,12 +75,25 @@
           <q-btn v-if="loggedIn" round dense flat color="grey-8" icon="message">
             <q-tooltip>Messages</q-tooltip>
           </q-btn>
-          <q-btn v-if="loggedIn" round dense flat color="grey-8" icon="notifications">
+          <q-btn
+            v-if="loggedIn"
+            round
+            dense
+            flat
+            color="grey-8"
+            icon="notifications"
+          >
             <q-badge color="red" text-color="white" floating>2</q-badge>
             <q-tooltip>Notifications</q-tooltip>
           </q-btn>
 
-          <q-btn v-if="!loggedIn" to="/auth" flat icon-right="account_circle" label="Login" />
+          <q-btn
+            v-if="!loggedIn"
+            to="/auth"
+            flat
+            icon-right="account_circle"
+            label="Login"
+          />
           <q-btn
             v-else
             flat
@@ -85,7 +116,14 @@
     >
       <q-scroll-area class="fit">
         <q-list padding>
-          <q-item v-for="link in links1" :key="link.text" v-ripple clickable :to="link.to" exact>
+          <q-item
+            v-for="link in links1"
+            :key="link.text"
+            v-ripple
+            clickable
+            :to="link.to"
+            exact
+          >
             <q-item-section avatar>
               <q-icon color="grey" :name="link.icon" :class="link.icon_class" />
             </q-item-section>
@@ -96,7 +134,14 @@
 
           <q-separator class="q-my-md" />
 
-          <q-item v-for="link in links2" :key="link.text" v-ripple clickable :to="link.to" exact>
+          <q-item
+            v-for="link in links2"
+            :key="link.text"
+            v-ripple
+            clickable
+            :to="link.to"
+            exact
+          >
             <q-item-section avatar>
               <q-icon color="grey" :name="link.icon" />
             </q-item-section>
@@ -129,7 +174,8 @@
                 :key="button.text"
                 class="drawer-footer-link"
                 href="javascript:void(0)"
-              >{{ button.text }}</a>
+                >{{ button.text }}</a
+              >
             </div>
           </div>
           <div class="q-py-md q-px-md text-grey-9">
@@ -139,7 +185,8 @@
                 :key="button.text"
                 class="drawer-footer-link"
                 href="javascript:void(0)"
-              >{{ button.text }}</a>
+                >{{ button.text }}</a
+              >
             </div>
           </div>
         </q-list>
@@ -256,8 +303,12 @@ export default {
           links: [
             { text: "Strategic analysis", to: "/placeholder" },
             {
-              text: "Issues",
-              to: `/org/${this.orgNameSlug}/ideate/${this.orgId}`
+              text: "Actions",
+              //to: `/org/${this.orgNameSlug}/actions/${this.orgId}`
+              to: {
+                name: "actions",
+                params: { orgNameSlug: this.orgNameSlug, orgId: this.orgId }
+              }
             },
             { text: "Templates", to: "/placeholder" }
           ]
@@ -345,8 +396,7 @@ export default {
 };
 </script>
 
-
-<style lang='scss'>
+<style lang="scss">
 .q-toolbar {
   min-height: 48px;
 }

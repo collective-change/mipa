@@ -7,15 +7,21 @@
       v-touch-hold:1000.mouse="showEditOrgModal"
       class="bg-primary text-white text-h4"
     >
-      <div class="text-h5">{{org.name}}</div>
-      <div class="text-h4">{{org.goal}}</div>
+      <div class="text-h5">{{ org.name }}</div>
+      <div class="text-h4">{{ org.goal }}</div>
     </q-card-section>
 
     <q-separator />
 
     <q-card-actions align="right">
       <div class="row">
-        <q-btn :to="`/org/${org.nameSlug}/details/${id}`" flat round dense icon="people">
+        <q-btn
+          :to="`/org/${org.nameSlug}/details/${id}`"
+          flat
+          round
+          dense
+          icon="people"
+        >
           <q-tooltip>Organization details</q-tooltip>
         </q-btn>
         <q-btn
@@ -29,7 +35,11 @@
           <q-tooltip>Model</q-tooltip>
         </q-btn>
         <q-btn
-          :to="`/org/${org.nameSlug}/ideate/${id}`"
+          :xto="`/org/${org.nameSlug}/ideate/${id}`"
+          :to="{
+            name: 'actions',
+            params: { orgNameSlug: org.nameSlug, orgId: id }
+          }"
           flat
           round
           dense
@@ -44,17 +54,31 @@
         <q-btn to="/model/model" flat round dense icon="whatshot">
           <q-tooltip>Achieve</q-tooltip>
         </q-btn>
-        <q-btn @click.stop="showEditOrgModal" flat round dense color="primary" icon="edit">
+        <q-btn
+          @click.stop="showEditOrgModal"
+          flat
+          round
+          dense
+          color="primary"
+          icon="edit"
+        >
           <q-tooltip>Edit organization</q-tooltip>
         </q-btn>
-        <q-btn @click.stop="promptToDelete(id)" flat round dense color="red-4" icon="delete">
+        <q-btn
+          @click.stop="promptToDelete(id)"
+          flat
+          round
+          dense
+          color="red-4"
+          icon="delete"
+        >
           <q-tooltip>Delete organization</q-tooltip>
         </q-btn>
       </div>
     </q-card-actions>
 
     <q-dialog v-model="showEditOrg">
-      <edit-org @close="showEditOrg=false" :org="org" :id="id" />
+      <edit-org @close="showEditOrg = false" :org="org" :id="id" />
     </q-dialog>
   </q-card>
 </template>

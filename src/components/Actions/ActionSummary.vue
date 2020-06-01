@@ -1,0 +1,293 @@
+<template>
+  <div>
+    <div v-if="selectedAction">
+      <q-form @submit.prevent="submitForm">
+        <div class="row">
+          <div
+            v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
+          >
+            <q-input
+              class="text-h6"
+              v-model="title"
+              :rules="[val => !!val || 'Field is required']"
+              ref="actionTitle"
+            >
+              <template v-slot:after v-if="embedded">
+                <q-btn
+                  dense
+                  label="details"
+                  color="primary"
+                  @click="
+                    $router.push(
+                      `/org/${currentOrg.name}/action/${currentOrg.id}/${selectedActionId}`
+                    )
+                  "
+                />
+              </template>
+            </q-input>
+          </div>
+
+          <div
+            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }"
+          >
+            <div class="q-pa-xs q-gutter-xs">
+              <q-chip outline color="primary"
+                >Total benefit
+                {{ formatNumber(uiAction.estTotalBenefitXdr) }} XDR</q-chip
+              >
+              <q-chip outline color="primary"
+                >Outstanding cost
+                {{ formatNumber(uiAction.outstandingCostXdr, 3) }}
+                XDR</q-chip
+              >
+              <q-chip color="primary" text-color="white"
+                >ROI {{ formatNumber(uiAction.estRoi, 2) }}</q-chip
+              >
+            </div>
+          </div>
+
+          <div
+            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }"
+          >
+            <div class="q-pa-sm q-gutter-sm">
+              <q-btn color="primary" label="Meet about this" />
+              <q-btn color="primary" label="Mark as resolved" />
+            </div>
+          </div>
+        </div>
+
+        <div class="row ">
+          <div
+            v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
+          >
+            <q-input v-model="notes" label="筆記" filled autogrow />
+
+            <div class="text-h6">Impacts</div>
+            <q-list bordered padding>
+              <q-item tag="label" v-ripple>
+                <q-item-section>
+                  <q-item-label>Battery too low</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <!--<q-toggle color="blue" v-model="notif1" val="battery" />-->
+                </q-item-section>
+              </q-item>
+            </q-list>
+
+            <div class="row q-gutter-md q-mt-md items-start">
+              <q-input
+                v-model.number="estTotalBenefitXdr"
+                label="預估總效益"
+                type="number"
+                suffix="XDR"
+                filled
+                style="max-width: 150px;"
+                debounce="500"
+              />
+
+              <q-input
+                v-bind:value="uiAction.estTotalCostXdr"
+                label="預估總成本"
+                type="number"
+                suffix="XDR"
+                style="max-width: 150px;"
+                readonly
+              />
+
+              <q-input
+                v-bind:value="formatNumber(uiAction.outstandingCostXdr, 3)"
+                label="需再付出成本"
+                type="number"
+                suffix="XDR"
+                style="max-width: 150px;"
+                readonly
+              />
+
+              <q-input
+                v-bind:value="formatNumber(uiAction.estRoi, 2)"
+                label="估計 SROI"
+                type="number"
+                style="max-width: 150px;"
+                readonly
+              />
+            </div>
+
+            <div class="row q-gutter-md q-mt-md items-start">
+              <q-input
+                v-model.number="estEffortCostXdr"
+                label="預估人力成本"
+                type="number"
+                suffix="XDR"
+                :rules="[
+                  val => val == null || val >= 0 || 'Should be at least 0'
+                ]"
+                filled
+                style="max-width: 150px;"
+                debounce="500"
+              />
+              <q-input
+                v-model.number="effortCompletionPercentage"
+                type="number"
+                suffix="% 完成"
+                :rules="[
+                  val => val == null || val >= 0 || 'Should be at least 0'
+                ]"
+                filled
+                style="max-width: 150px;"
+                debounce="500"
+              />
+              <q-slider
+                :value="effortCompletionPercentage"
+                @change="
+                  val => {
+                    effortCompletionPercentage = val;
+                  }
+                "
+                :min="0"
+                :max="100"
+                label
+              />
+            </div>
+
+            <div class="q-gutter-md q-mt-md row items-start">
+              <q-input
+                v-model.number="estPurchaseCostXdr"
+                label="預估採購金額"
+                type="number"
+                suffix="XDR"
+                :rules="[
+                  val => val == null || val >= 0 || 'Should be at least 0'
+                ]"
+                filled
+                style="max-width: 150px;"
+                debounce="500"
+              />
+              <q-input
+                v-model.number="purchasedAmount"
+                label="已採購金額"
+                type="number"
+                suffix="XDR"
+                :rules="[
+                  val => val == null || val >= 0 || 'Should be at least 0'
+                ]"
+                filled
+                style="max-width: 150px;"
+                debounce="500"
+              />
+            </div>
+            <div class="q-gutter-md q-mt-md items-start">
+              <q-input
+                v-model="dueDate"
+                filled
+                type="date"
+                label="截止日期"
+                style="max-width: 160px;"
+                debounce="500"
+              />
+            </div>
+
+            <modal-buttons />
+          </div>
+          <div
+            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
+          >
+            middle column
+          </div>
+          <div
+            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
+          >
+            right column
+          </div>
+        </div>
+      </q-form>
+    </div>
+  </div>
+</template>
+
+<script>
+import { mapActions, mapGetters, mapState } from "vuex";
+//import { mapFields } from 'vuex-map-fields';
+import { createHelpers } from "vuex-map-fields";
+import { formatNumber } from "src/utils/util-formatNumber";
+
+const { mapFields } = createHelpers({
+  getterType: "uiAction/getField",
+  mutationType: "uiAction/updateUiActionField"
+});
+
+export default {
+  components: {
+    "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
+      .default
+  },
+
+  data() {
+    return {
+      embedded: false, //whether this component is embedded or a full page
+      actionId: null,
+      //action: {},
+      estimatedRoi: null
+    };
+  },
+
+  computed: {
+    ...mapState("orgs", ["currentOrg"]),
+    ...mapState("ui", ["selectedActionId"]),
+    ...mapState("actions", ["actions"]),
+    //fields calculated in the uiAction store, for display only
+    //(do not modify their values in the component)
+    ...mapState("uiAction", ["uiAction"]),
+    //fields for 2-way sync between component and store
+    ...mapFields([
+      "uiAction.title",
+      "uiAction.estTotalBenefitXdr",
+      "uiAction.estEffortCostXdr",
+      "uiAction.effortCompletionPercentage",
+      "uiAction.estPurchaseCostXdr",
+      "uiAction.purchasedAmount",
+      "uiAction.dueDate",
+      "uiAction.notes"
+    ]),
+
+    selectedAction() {
+      let that = this;
+      if (this.$route.params.actionId) {
+        this.actionId = this.$route.params.actionId;
+        this.embedded = false;
+      } else if (that.selectedActionId) {
+        this.actionId = that.selectedActionId;
+        this.embedded = true;
+      }
+      let actionId = this.actionId;
+      return this.actions.find(function(action) {
+        return action.id == actionId;
+      });
+    }
+  },
+
+  methods: {
+    ...mapActions("model", ["updateAction"]),
+    formatNumber,
+
+    submitForm() {
+      this.$refs.actionTitle.validate();
+      if (!this.$refs.actionTitle.hasError) {
+        this.submitAction();
+      }
+    },
+    submitAction() {
+      let payload = {
+        id: this.actionId,
+        updates: this.uiAction
+      };
+      this.$store.dispatch("actions/updateAction", payload);
+    }
+  },
+
+  watch: {
+    selectedAction: function(newAction, oldAction) {
+      this.$store.dispatch("uiAction/setUiAction", this.selectedAction);
+    }
+  }
+};
+</script>
