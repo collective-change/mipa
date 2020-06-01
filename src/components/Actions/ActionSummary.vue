@@ -32,11 +32,11 @@
           >
             <div class="q-pa-xs q-gutter-xs">
               <q-chip outline color="primary"
-                >Total benefit
+                >Benefit
                 {{ formatNumber(uiAction.estTotalBenefitXdr) }} XDR</q-chip
               >
               <q-chip outline color="primary"
-                >Outstanding cost
+                >Cost
                 {{ formatNumber(uiAction.outstandingCostXdr, 3) }}
                 XDR</q-chip
               >
@@ -106,7 +106,6 @@
               <q-input
                 v-bind:value="formatNumber(uiAction.estRoi, 2)"
                 label="估計 SROI"
-                type="number"
                 style="max-width: 150px;"
                 readonly
               />
@@ -175,7 +174,7 @@
                 debounce="500"
               />
             </div>
-            <div class="q-gutter-md q-mt-md items-start">
+            <!--<div class="q-gutter-md q-mt-md items-start">
               <q-input
                 v-model="dueDate"
                 filled
@@ -184,7 +183,7 @@
                 style="max-width: 160px;"
                 debounce="500"
               />
-            </div>
+            </div> -->
 
             <modal-buttons />
           </div>

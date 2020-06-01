@@ -21,12 +21,15 @@ export default {
   data() {
     return {
       actionToSubmit: {
+        orgId: this.$route.params.orgId,
         title: "",
         isProject: false,
-        //dueDate: "",
-        //dueTime: "",
-        orgId: this.$route.params.orgId,
-        completed: false
+        notes: "",
+        estTotalBenefitXdr: null,
+        estEffortCostXdr: null,
+        effortCompletionPercentage: null,
+        estPurchaseCostXdr: null,
+        purchasedAmount: null
       }
     };
   },

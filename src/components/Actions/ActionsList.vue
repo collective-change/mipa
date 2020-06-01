@@ -85,7 +85,11 @@ export default {
           label: "SROI",
           field: "estRoi",
           format: val =>
-            `${typeof val !== "undefined" ? val.toLocaleString() : ""}`,
+            `${
+              typeof val !== "undefined" && val != null
+                ? val.toLocaleString()
+                : ""
+            }`,
           sortable: true,
           sortBy: "desc"
         },
@@ -110,16 +114,24 @@ export default {
           label: "總效益 (XDR)",
           field: "estTotalBenefitXdr",
           format: val =>
-            `${typeof val !== "undefined" ? val.toLocaleString() : ""}`,
+            `${
+              typeof val !== "undefined" && val != null
+                ? val.toLocaleString()
+                : ""
+            }`,
           sortable: true
         },
         {
           name: "totalCost",
           align: "right",
-          label: "總成本 (XDR)",
-          field: "estTotalCostXdr",
+          label: "需再付出成本 (XDR)",
+          field: "outstandingCostXdr",
           format: val =>
-            `${typeof val !== "undefined" ? val.toLocaleString() : ""}`,
+            `${
+              typeof val !== "undefined" && val != null
+                ? val.toLocaleString()
+                : ""
+            }`,
           sortable: true
         },
         {
