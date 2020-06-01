@@ -4,7 +4,7 @@
       <div class="text-h6">Add impact</div>
     </q-card-section>
 
-    <q-form @submit.prevent="submitAction">
+    <q-form @submit.prevent="submitImpact">
       <q-card-section class="q-gutter-sm q-pt-none">
         <div class="q-gutter-sm row items-start">
           <q-select
@@ -167,7 +167,7 @@ export default {
   methods: {
     ...mapActions("actions", ["addAction"]),
 
-    submitAction() {
+    submitImpact() {
       var newImpact = {};
       Object.assign(newImpact, this.impact);
       newImpact.id = Date.now();
