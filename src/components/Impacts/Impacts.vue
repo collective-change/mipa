@@ -9,7 +9,7 @@
         v-ripple
       >
         <q-item-section>
-          <!-- <q-item-label overline>{{ impact.id }}</q-item-label> -->
+          <q-item-label overline>{{ impact.id }}</q-item-label>
           <q-item-label>
             <div class="row">
               {{ getImpactTypeIfClause(impact.impactType) }} then
@@ -57,6 +57,7 @@
       </q-item>
     </q-list>
     <div class="q-pa-sm q-gutter-sm">
+      {{ editImpactId }}
       <q-btn label="Add impact" color="primary" @click="showAddImpact = true" />
     </div>
     <q-dialog v-model="showAddImpact">
@@ -82,9 +83,7 @@
 
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
-//import { mapFields } from 'vuex-map-fields';
 import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
-//import { formatNumber } from "src/utils/util-formatNumber";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
@@ -93,10 +92,6 @@ const { mapFields } = createHelpers({
 
 export default {
   components: {
-    "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default,
-    "add-impact": require("components/Impacts/AddImpact.vue").default,
-    //"edit-impact": require("components/Impacts/EditImpact.vue").default
     "add-edit-impact": require("components/Impacts/AddEditImpact.vue").default
   },
 
@@ -136,7 +131,7 @@ export default {
       "uiAction.notes",
       "uiAction.impacts"
     ]),
-    //...mapMultiRowFields(["uiAction.impacts"])
+
     impactToEdit() {
       if (this.editImpactId != null)
         return this.impacts.find(impact => impact.id == this.editImpactId);

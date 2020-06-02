@@ -6,6 +6,8 @@
 
     <q-form @submit.prevent="submitImpact">
       <q-card-section class="q-gutter-sm q-pt-none">
+        <pre>{{ impactToEdit }}</pre>
+        <pre>{{ impact }}</pre>
         <div class="q-gutter-sm row items-center">
           <q-select
             filled
@@ -63,7 +65,7 @@
             map-options
           />
           <q-input
-            v-if="impact.durationType == 'for'"
+            v-show="impact.durationType == 'for'"
             v-model="impact.durationExpression"
             placeholder="how many"
             filled
@@ -71,7 +73,7 @@
             style="width: 8em"
           />
           <q-select
-            v-if="impact.durationType == 'for'"
+            v-show="impact.durationType == 'for'"
             filled
             v-model="impact.durationUnit"
             :options="durationUnitOptions"
@@ -92,17 +94,14 @@
 
 <script>
 import { mapState } from "vuex";
-import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
+/*import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
 
-/*
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
   mutationType: "uiAction/updateUiActionField"
 });*/
 
 export default {
-  //mixins: [mixinAddEditImpact],
-
   props: ["addOrEdit", "impactToEdit", "nodes"],
 
   components: {
@@ -197,8 +196,11 @@ export default {
   },
 
   mounted: function() {
+    console.log("AddEditImpact mounted");
+    console.log(this.impactToEdit);
     if (this.addOrEdit == "edit") {
       Object.assign(this.impact, this.impactToEdit);
+      console.log(this.impact);
     }
   },
 
