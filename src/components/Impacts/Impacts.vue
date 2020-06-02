@@ -30,7 +30,10 @@
         <q-item-section side>
           <div class="row">
             <q-btn
-              @click.stop="showEditImpactModal"
+              @click.stop="
+                editImpactId = impact.id;
+                showEditImpact = true;
+              "
               flat
               round
               dense
@@ -56,8 +59,17 @@
     <div class="q-pa-sm q-gutter-sm">
       <q-btn label="Add impact" color="primary" @click="showAddImpact = true" />
     </div>
-    <q-dialog v-model="showAddImpact" style="width: 80%">
+    <q-dialog v-model="showAddImpact">
       <add-impact @close="showAddImpact = false" />
+    </q-dialog>
+    <q-dialog v-model="showEditImpact">
+      <edit-impact
+        :id="editImpactId"
+        @close="
+          showEditImpact = false;
+          editImpactId = null;
+        "
+      />
     </q-dialog>
   </div>
 </template>
@@ -78,12 +90,15 @@ export default {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
     "add-impact": require("components/Impacts/AddImpact.vue").default
+    //"edit-impact": require("components/Impacts/EditImpact.vue").default
   },
 
   data() {
     return {
       actionId: null,
       showAddImpact: false,
+      showEditImpact: false,
+      editImpactId: null,
       mathSymbols: {
         "+": "+",
         "-": "−",

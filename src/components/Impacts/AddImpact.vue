@@ -85,7 +85,7 @@
           Please fill in all visible fields.
         </div>
       </q-card-section>
-      <modal-buttons />
+      <modal-save-button />
     </q-form>
   </q-card>
 </template>
@@ -93,6 +93,7 @@
 <script>
 import { mapActions, mapState } from "vuex";
 import { createHelpers } from "vuex-map-fields";
+import mixinAddEditImpact from "src/mixins/mixin-add-edit-impact";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
@@ -100,6 +101,7 @@ const { mapFields } = createHelpers({
 });
 
 export default {
+  mixins: [mixinAddEditImpact],
   data() {
     return {
       validationError: false,
@@ -198,7 +200,6 @@ export default {
         newImpact.id = Date.now();
         this.$store.commit("uiAction/addImpact", newImpact);
         this.$emit("close");
-        console.log("close");
       }
     },
 
@@ -231,9 +232,7 @@ export default {
   components: {
     "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
       .default,
-    "modal-action-title": require("components/Actions/Modals/Shared/ModalActionTitle.vue")
-      .default,
-    "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
+    "modal-save-button": require("components/Shared/ModalComponents/ModalSaveButton.vue")
       .default
   },
   computed: {
