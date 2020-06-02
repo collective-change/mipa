@@ -1,7 +1,7 @@
 <template>
   <q-card style="max-width:1500px; width:1000px">
     <q-card-section>
-      <div class="text-h6">{{ addOrEdit }} impact</div>
+      <modal-header v-slot:header>{{ addOrEdit }} impact</modal-header>
     </q-card-section>
 
     <q-form @submit.prevent="submitImpact">
