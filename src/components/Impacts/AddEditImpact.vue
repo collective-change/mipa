@@ -14,8 +14,19 @@
             emit-value
             map-options
           />
-          <div>and finish by</div>
-          <q-input v-model="impact.deadline" filled type="date" />
+          <q-select
+            filled
+            v-model="impact.hasDeadline"
+            :options="deadlineOptions"
+            emit-value
+            map-options
+          />
+          <q-input
+            v-show="impact.hasDeadline == true"
+            v-model="impact.deadline"
+            filled
+            type="date"
+          />
           <q-input
             prefix="then"
             v-model="impact.thenText"
@@ -109,6 +120,7 @@ export default {
       impact: {
         id: null,
         impactType: "if_done",
+        hasDeadline: false,
         operation: "+",
         durationType: "for_period",
         durationUnit: "days"
@@ -122,6 +134,16 @@ export default {
         {
           label: "If we don't act on the threat",
           value: "if_not_done"
+        }
+      ],
+      deadlineOptions: [
+        {
+          label: "at some time",
+          value: false
+        },
+        {
+          label: "by deadline",
+          value: true
         }
       ],
       operationOptions: [
@@ -253,6 +275,7 @@ export default {
       if (
         !this.impact.thenText ||
         !this.impact.nodeId ||
+        (this.impact.hasDeadline && !this.impact.deadline) ||
         typeof this.impact.operand == "undefined" ||
         this.impact.operand == "" ||
         (this.impact.durationType == "for" &&

@@ -12,7 +12,9 @@
           <!-- <q-item-label overline>{{ impact.id }}</q-item-label> -->
           <q-item-label>
             <div class="row">
-              {{ getImpactTypeIfClause(impact.impactType) }} then
+              {{ getImpactTypeIfClause(impact.impactType) }}
+              {{ impact.hasDeadline ? "by deadline" : "at some time" }}
+              {{ impact.deadline }} then
               {{ impact.thenText }}
             </div>
             <div class="row items-center">
@@ -148,7 +150,7 @@ export default {
     getImpactTypeIfClause(type) {
       switch (type) {
         case "if_done":
-          return "If done,";
+          return "If done";
           break;
         case "if_not_done":
           return "if not done";
