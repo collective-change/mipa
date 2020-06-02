@@ -72,14 +72,19 @@ export default {
 
   beforeRouteLeave(to, from, next) {
     if (this.uiActionChanged) {
-      const answer = window.confirm("You have unsaved changes. Really leave?");
-      if (answer) {
-        next();
-      } else {
-        next(false);
-      }
+      this.$q
+        .dialog({
+          title: "Unsaved changes",
+          message: "Any changes you made will be lost. Really leave?",
+          cancel: true,
+          persistent: true
+        })
+        .onOk(() => {
+          next();
+        });
     } else next();
   },
+
   beforeDestroy() {
     //if the new route does not need actions, then unbind
     if (this.$route.name in ["actions", "actionDetails"]) {

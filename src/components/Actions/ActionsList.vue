@@ -148,19 +148,31 @@ export default {
   computed: {
     //...mapGetters("settings", ["settings"]),
     ...mapState("actions", ["actions"]),
-    ...mapState("uiAction", ["uiActionChanged"])
+    ...mapState("uiAction", ["uiActionChanged"]),
+    ...mapState("ui", ["selectedActionId"])
   },
 
   methods: {
     onRowClick(evt, row) {
       //console.log("clicked on", row.id);
-      if (this.uiActionChanged) {
-        const answer = window.confirm(
-          "You have unsaved changes. Really leave?"
-        );
-        if (!answer) return;
+      //todo: check if the same row is clicked
+      if (this.selectedActionId == row.id) {
+        return;
       }
-      this.$store.dispatch("ui/setSelectedActionId", row.id);
+      if (this.uiActionChanged) {
+        this.$q
+          .dialog({
+            title: "Unsaved changes",
+            message:
+              "Any changes you made will be lost. Really change to another action?",
+            cancel: true,
+            persistent: true
+          })
+          .onOk(() => {
+            console.log("ok");
+            this.$store.dispatch("ui/setSelectedActionId", row.id);
+          });
+      } else this.$store.dispatch("ui/setSelectedActionId", row.id);
     },
     // emulate fetching data from server
     addRow() {
