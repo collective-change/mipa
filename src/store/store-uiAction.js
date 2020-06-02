@@ -9,31 +9,36 @@ const fieldsToTriggerRecalculation = [
 ];
 
 const state = {
-  uiAction: {}
+  uiAction: {},
+  uiActionChanged: false
 };
 
 const mutations = {
   setUiAction(state, action) {
     state.uiAction = action;
-    //console.log(state.uiAction);
+    state.uiActionChanged = false;
   },
   updateUiActionField(state, field) {
     let fieldName = field.path.replace("uiAction.", "");
     updateField(state, field);
     if (fieldsToTriggerRecalculation.includes(fieldName)) recalculate(state);
-    console.log("updated", state.uiAction[fieldName]);
+    state.uiActionChanged = true;
+    //console.log("updated", state.uiAction[fieldName]);
   },
   addImpact(state, impact) {
     state.uiAction.impacts.push(impact);
+    state.uiActionChanged = true;
   },
   updateImpact(state, impact) {
     let index = state.uiAction.impacts.map(imp => imp.id).indexOf(impact.id);
     state.uiAction.impacts[index] = impact;
+    state.uiActionChanged = true;
   },
   deleteImpact(state, impactId) {
     state.uiAction.impacts = state.uiAction.impacts.filter(impact => {
       return impact.id != impactId;
     });
+    state.uiActionChanged = true;
   }
 };
 

@@ -30,7 +30,8 @@ export default {
     };
   },
   computed: {
-    ...mapState("actions", ["actions"])
+    ...mapState("actions", ["actions"]),
+    ...mapState("uiAction", ["uiActionChanged"])
   },
   created() {
     (async () => {
@@ -46,6 +47,18 @@ export default {
   mounted() {
     //console.log("actionDetails");
   },
+
+  beforeRouteLeave(to, from, next) {
+    if (this.uiActionChanged) {
+      const answer = window.confirm("You have unsaved changes. Really leave?");
+      if (answer) {
+        next();
+      } else {
+        next(false);
+      }
+    } else next();
+  },
+
   beforeDestroy() {
     //if the new route does not need actions, then unbind
     if (this.$route.name in ["actions", "actionDetails"]) {

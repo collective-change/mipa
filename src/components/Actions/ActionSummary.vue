@@ -175,7 +175,7 @@
               />
             </div> -->
 
-            <modal-buttons />
+            <modal-save-button />
           </div>
           <div
             v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
@@ -206,7 +206,7 @@ const { mapFields } = createHelpers({
 
 export default {
   components: {
-    "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
+    "modal-save-button": require("components/Shared/ModalComponents/ModalSaveButton.vue")
       .default,
     impacts: require("components/Impacts/Impacts.vue").default
   },
@@ -226,7 +226,7 @@ export default {
     ...mapState("actions", ["actions"]),
     //fields calculated in the uiAction store, for display only
     //(do not modify their values in the component)
-    ...mapState("uiAction", ["uiAction"]),
+    ...mapState("uiAction", ["uiAction", "uiActionChanged"]),
     //fields for 2-way sync between component and store
     ...mapFields([
       "uiAction.title",
