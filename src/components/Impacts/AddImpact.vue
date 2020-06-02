@@ -1,12 +1,12 @@
 <template>
-  <q-card>
+  <q-card style="max-width:1500px; width:1000px">
     <q-card-section>
       <div class="text-h6">Add impact</div>
     </q-card-section>
 
     <q-form @submit.prevent="submitImpact">
       <q-card-section class="q-gutter-sm q-pt-none">
-        <div class="q-gutter-sm row items-start">
+        <div class="q-gutter-sm row items-center">
           <q-select
             filled
             v-model="impact.impactType"
@@ -14,16 +14,18 @@
             emit-value
             map-options
           />
+          <div>and finish by</div>
+          <q-input v-model="impact.deadline" filled type="date" />
           <q-input
             prefix="then"
             v-model="impact.thenText"
             placeholder="what's impacted and how?"
             filled
             autogrow
-            style="width: 400px"
+            style="width: 30em;"
           />
         </div>
-        <div class="q-gutter-sm row items-start">
+        <div class="q-gutter-sm row items-center">
           <div>That is,</div>
           <q-select
             filled
@@ -31,12 +33,13 @@
             hide-selected
             fill-input
             v-model="impact.nodeId"
+            placeholder="impacted node"
             @filter="filterFn"
             @filter-abort="abortFilterFn"
             :options="filteredNodeOptions"
             emit-value
             map-options
-            style="width: 150px"
+            style="width: 12em"
           />
           <q-select
             filled
@@ -47,10 +50,10 @@
           />
           <q-input
             v-model="impact.operand"
-            placeholder="number or expression"
             filled
             autogrow
-            style="width: 180px"
+            :suffix="unitDisplay"
+            :style="'width: ' + operandFieldWidthEm + 'em; max-width: 30em'"
           />
           <q-select
             filled
@@ -60,19 +63,26 @@
             map-options
           />
           <q-input
+            v-if="impact.durationType == 'for'"
             v-model="impact.durationExpression"
-            placeholder="number or expression"
+            placeholder="how many"
             filled
             autogrow
-            style="width: 80px"
+            style="width: 8em"
           />
           <q-select
+            v-if="impact.durationType == 'for'"
             filled
             v-model="impact.durationUnit"
             :options="durationUnitOptions"
             emit-value
             map-options
           />
+        </div>
+      </q-card-section>
+      <q-card-section class="q-gutter-sm q-pt-none">
+        <div v-if="validationError" class="text-negative">
+          Please fill in all visible fields.
         </div>
       </q-card-section>
       <modal-buttons />
@@ -92,8 +102,10 @@ const { mapFields } = createHelpers({
 export default {
   data() {
     return {
+      validationError: false,
       impact: {
         impactType: "if_done",
+        operation: "+",
         durationType: "for",
         durationUnit: "days"
       },
@@ -168,20 +180,28 @@ export default {
     ...mapActions("actions", ["addAction"]),
 
     submitImpact() {
-      var newImpact = {};
-      Object.assign(newImpact, this.impact);
-      newImpact.id = Date.now();
-      this.$store.commit("uiAction/addImpact", newImpact);
-      this.$emit("close");
-      console.log("close");
+      //validate inputs
+      if (
+        !this.impact.thenText ||
+        !this.impact.nodeId ||
+        typeof this.impact.operand == "undefined" ||
+        this.impact.operand == "" ||
+        (this.impact.durationType == "for" &&
+          (typeof this.impact.durationExpression == "undefined" ||
+            this.impact.durationExpression == ""))
+      ) {
+        this.validationError = true;
+        console.log("validation error");
+      } else {
+        var newImpact = {};
+        Object.assign(newImpact, this.impact);
+        newImpact.id = Date.now();
+        this.$store.commit("uiAction/addImpact", newImpact);
+        this.$emit("close");
+        console.log("close");
+      }
     },
 
-    /*submitForm() {
-      this.$refs.modalActionTitle.$refs.title.validate();
-      if (!this.$refs.modalActionTitle.$refs.title.hasError) {
-        this.submitAction();
-      }
-    }*/
     filterFn(val, update, abort) {
       // call abort() at any time if you can't retrieve data somehow
 
@@ -201,6 +221,11 @@ export default {
 
     abortFilterFn() {
       // console.log('delayed filter aborted')
+    },
+
+    getNodeUnit(nodeId) {
+      const found = this.nodes.find(node => node.id == nodeId);
+      return found.unit;
     }
   },
   components: {
@@ -222,6 +247,25 @@ export default {
       return this.nodes.map(node => {
         return { label: node.name, value: node.id };
       });
+    },
+    operandFieldWidthEm() {
+      let operandWidthEm = 4;
+      if (typeof this.impact.operand != "undefined") {
+        operandWidthEm = Math.min(
+          20,
+          Math.max(operandWidthEm, this.impact.operand.length * 0.6)
+        );
+      }
+      return operandWidthEm + this.unitDisplay.length * 0.7;
+    },
+    unitDisplay() {
+      if (this.impact.nodeId) {
+        if (["+", "-", "="].includes(this.impact.operation))
+          return this.getNodeUnit(this.impact.nodeId);
+        else return "";
+      } else {
+        return "";
+      }
     }
   }
 };

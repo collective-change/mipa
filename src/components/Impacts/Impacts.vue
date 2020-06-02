@@ -53,7 +53,7 @@
     <div class="q-pa-sm q-gutter-sm">
       <q-btn label="Add impact" color="primary" @click="showAddImpact = true" />
     </div>
-    <q-dialog v-model="showAddImpact">
+    <q-dialog v-model="showAddImpact" style="width: 80%">
       <add-impact @close="showAddImpact = false" />
     </q-dialog>
   </div>
@@ -122,7 +122,8 @@ export default {
     },
     getNodeName(nodeId) {
       const found = this.nodes.find(node => node.id == nodeId);
-      return found.name;
+      if (found) return found.name;
+      else return nodeId;
     }
   },
 
