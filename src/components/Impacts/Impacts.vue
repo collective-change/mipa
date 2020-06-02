@@ -9,7 +9,7 @@
         v-ripple
       >
         <q-item-section>
-          <q-item-label overline>{{ impact.id }}</q-item-label>
+          <!-- <q-item-label overline>{{ impact.id }}</q-item-label> -->
           <q-item-label>
             <div class="row">
               {{ getImpactTypeIfClause(impact.impactType) }} then
@@ -20,9 +20,13 @@
               {{ mathSymbols[impact.operation] }} {{ impact.operand }}
               {{ impact.durationType }}
               {{
-                impact.durationType == "for" ? impact.durationExpression : ""
+                impact.durationType == "for_period"
+                  ? impact.durationExpression
+                  : ""
               }}
-              {{ impact.durationType == "for" ? impact.durationUnit : "" }}
+              {{
+                impact.durationType == "for_period" ? impact.durationUnit : ""
+              }}
             </div>
           </q-item-label>
           <q-item-label caption> </q-item-label>
@@ -57,7 +61,6 @@
       </q-item>
     </q-list>
     <div class="q-pa-sm q-gutter-sm">
-      {{ editImpactId }}
       <q-btn label="Add impact" color="primary" @click="showAddImpact = true" />
     </div>
     <q-dialog v-model="showAddImpact">
