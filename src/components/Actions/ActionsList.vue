@@ -155,7 +155,6 @@ export default {
   methods: {
     onRowClick(evt, row) {
       //console.log("clicked on", row.id);
-      //todo: check if the same row is clicked
       if (this.selectedActionId == row.id) {
         return;
       }
@@ -169,7 +168,6 @@ export default {
             persistent: true
           })
           .onOk(() => {
-            console.log("ok");
             this.$store.dispatch("ui/setSelectedActionId", row.id);
           });
       } else this.$store.dispatch("ui/setSelectedActionId", row.id);
