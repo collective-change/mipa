@@ -277,7 +277,9 @@ export default {
 
   watch: {
     selectedAction: function(newAction, oldAction) {
-      this.$store.dispatch("uiAction/setUiAction", this.selectedAction);
+      let action = {};
+      Object.assign(action, this.selectedAction);
+      this.$store.dispatch("uiAction/setUiAction", action);
     }
   }
 };
