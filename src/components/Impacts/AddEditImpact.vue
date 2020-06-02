@@ -195,13 +195,6 @@ export default {
   },
 
   computed: {
-    //fields calculated in the uiAction store, for display only
-    //(do not modify their values in the component)
-    ...mapState("uiAction", ["uiAction"]),
-    //...mapState("model", ["nodes"]),
-    //fields for 2-way sync between component and store
-    //...mapFields(["uiAction.impacts"]),
-
     nodeOptions() {
       return this.nodes.map(node => {
         return { label: node.name, value: node.id };
