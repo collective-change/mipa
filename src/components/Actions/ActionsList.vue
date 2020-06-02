@@ -147,12 +147,19 @@ export default {
 
   computed: {
     //...mapGetters("settings", ["settings"]),
-    ...mapState("actions", ["actions"])
+    ...mapState("actions", ["actions"]),
+    ...mapState("uiAction", ["uiActionChanged"])
   },
 
   methods: {
     onRowClick(evt, row) {
       //console.log("clicked on", row.id);
+      if (this.uiActionChanged) {
+        const answer = window.confirm(
+          "You have unsaved changes. Really leave?"
+        );
+        if (!answer) return;
+      }
       this.$store.dispatch("ui/setSelectedActionId", row.id);
     },
     // emulate fetching data from server
