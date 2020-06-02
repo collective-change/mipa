@@ -37,7 +37,7 @@
               <q-tooltip>Edit impact</q-tooltip>
             </q-btn>
             <q-btn
-              @click.stop="promptToDelete(id)"
+              @click.stop="promptToDelete(impact.id)"
               flat
               round
               dense
@@ -108,7 +108,7 @@ export default {
   },
 
   methods: {
-    ...mapActions("model", ["updateAction"]),
+    //...mapActions("model", ["updateAction"]),
     //formatNumber
     getImpactTypeIfClause(type) {
       switch (type) {
@@ -124,6 +124,18 @@ export default {
       const found = this.nodes.find(node => node.id == nodeId);
       if (found) return found.name;
       else return nodeId;
+    },
+    promptToDelete(impactId) {
+      this.$q
+        .dialog({
+          title: "Confirm",
+          message: "Really delete?",
+          cancel: true,
+          persistent: true
+        })
+        .onOk(() => {
+          this.$store.commit("uiAction/deleteImpact", impactId);
+        });
     }
   },
 

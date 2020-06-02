@@ -25,6 +25,11 @@ const mutations = {
   },
   addImpact(state, impact) {
     state.uiAction.impacts.push(impact);
+  },
+  deleteImpact(state, impactId) {
+    state.uiAction.impacts = state.uiAction.impacts.filter(impact => {
+      return impact.id != impactId;
+    });
   }
 };
 
