@@ -9,7 +9,7 @@
         v-ripple
       >
         <q-item-section>
-          <q-item-label overline>{{ impact.id }}</q-item-label>
+          <!-- <q-item-label overline>{{ impact.id }}</q-item-label> -->
           <q-item-label>
             <div class="row">
               {{ getImpactTypeIfClause(impact.impactType) }} then
@@ -17,9 +17,12 @@
             </div>
             <div class="row items-center">
               <q-chip>{{ getNodeName(impact.nodeId) }}</q-chip>
-              {{ impact.operation }} {{ impact.operand }}
-              {{ impact.durationType }} {{ impact.durationExpression }}
-              {{ impact.durationUnit }}
+              {{ mathSymbols[impact.operation] }} {{ impact.operand }}
+              {{ impact.durationType }}
+              {{
+                impact.durationType == "for" ? impact.durationExpression : ""
+              }}
+              {{ impact.durationType == "for" ? impact.durationUnit : "" }}
             </div>
           </q-item-label>
           <q-item-label caption> </q-item-label>
@@ -80,7 +83,14 @@ export default {
   data() {
     return {
       actionId: null,
-      showAddImpact: false
+      showAddImpact: false,
+      mathSymbols: {
+        "+": "+",
+        "-": "−",
+        "*": "×",
+        "/": "÷",
+        "=": "="
+      }
     };
   },
 
@@ -125,6 +135,7 @@ export default {
       if (found) return found.name;
       else return nodeId;
     },
+
     promptToDelete(impactId) {
       this.$q
         .dialog({
