@@ -96,6 +96,8 @@ import mixinAddEditImpact from "src/mixins/mixin-add-edit-impact";
 export default {
   mixins: [mixinAddEditImpact],
 
+  props: ["addOrEdit", "editImpactId"],
+
   methods: {
     submitImpact() {
       //validate inputs

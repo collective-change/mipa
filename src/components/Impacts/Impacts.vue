@@ -60,11 +60,17 @@
       <q-btn label="Add impact" color="primary" @click="showAddImpact = true" />
     </div>
     <q-dialog v-model="showAddImpact">
-      <add-impact @close="showAddImpact = false" />
+      <add-edit-impact
+        addOrEdit="add"
+        :nodes="nodes"
+        @close="showAddImpact = false"
+      />
     </q-dialog>
     <q-dialog v-model="showEditImpact">
-      <edit-impact
-        :id="editImpactId"
+      <add-edit-impact
+        addOrEdit="edit"
+        :nodes="nodes"
+        :impactToEdit="impactToEdit"
         @close="
           showEditImpact = false;
           editImpactId = null;
@@ -89,8 +95,9 @@ export default {
   components: {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
-    "add-impact": require("components/Impacts/AddImpact.vue").default
+    "add-impact": require("components/Impacts/AddImpact.vue").default,
     //"edit-impact": require("components/Impacts/EditImpact.vue").default
+    "add-edit-impact": require("components/Impacts/AddEditImpact.vue").default
   },
 
   data() {
@@ -128,8 +135,13 @@ export default {
       "uiAction.dueDate",
       "uiAction.notes",
       "uiAction.impacts"
-    ])
+    ]),
     //...mapMultiRowFields(["uiAction.impacts"])
+    impactToEdit() {
+      if (this.editImpactId != null)
+        return this.impacts.find(impact => impact.id == this.editImpactId);
+      else return null;
+    }
   },
 
   methods: {

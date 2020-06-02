@@ -26,6 +26,10 @@ const mutations = {
   addImpact(state, impact) {
     state.uiAction.impacts.push(impact);
   },
+  updateImpact(state, impact) {
+    let index = state.uiAction.impacts.map(imp => imp.id).indexOf(impact.id);
+    state.uiAction.impacts[index] = impact;
+  },
   deleteImpact(state, impactId) {
     state.uiAction.impacts = state.uiAction.impacts.filter(impact => {
       return impact.id != impactId;
