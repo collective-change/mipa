@@ -364,6 +364,20 @@ export default {
         .exit()
         .remove();
 
+      //Ted: Somehow, we need to remove all links if there are more than 1.
+      //Otherwise link styles won't update when isBlocking/isUnused changes.
+      if (
+        graph
+          .selectAll("path")
+          .data(this.d3Data.links)
+          .exit()._groups[0].length > 1
+      ) {
+        graph
+          .selectAll("path")
+          .data(this.d3Data.links)
+          .remove();
+      }
+
       graph
         .selectAll("path")
         .data(this.d3Data.links)
@@ -854,6 +868,15 @@ export default {
             )[0])
           ) {
             //then remove "unconfirmed" mark
+            /*console.log(
+              "keeping link in d3Data: ",
+              matchedD3Link.source.name,
+              "-",
+              matchedD3Link.target.name,
+              matchedD3Link.isBlocking ? "blocking" : "",
+              matchedD3Link.isUnused ? "unused" : ""
+            );*/
+            //console.log(matchedD3Link);
             delete matchedD3Link.unconfirmed;
           } //else storeLink does not exist in data; clone it there
           else {

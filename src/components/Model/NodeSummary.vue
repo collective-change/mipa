@@ -314,7 +314,7 @@ export default {
         thisNode: this.nodeToSubmit,
         nodes: this.nodes
       });
-
+      //console.log("classifyInfluencers ran");
       this.nodeToSubmit.blockingInfluencers = classifiedInfluencers.blocking;
       this.nodeToSubmit.unusedInfluencers = classifiedInfluencers.unused;
       this.nodeToSubmit.isSelfBlocking = classifiedInfluencers.blocking.includes(
