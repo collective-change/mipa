@@ -1,13 +1,18 @@
 <template>
   <q-page padding>
     <div class="text-h5">
-      {{ $route.params.orgName }}'s goal:
+      <span v-if="currentOrg">{{ currentOrg.name }}'s goal: </span>
       <span v-if="currentOrg">{{ currentOrg.goal }}</span>
     </div>
     <div class="q-pa-md">
       <div class="row q-col-gutter-md">
         <div class="col-12 col-md-2 print-hide">
-          <q-select borderless v-model="currentModel" :options="modelOptions" label="Model" />
+          <q-select
+            borderless
+            v-model="currentModel"
+            :options="modelOptions"
+            label="Model"
+          />
           <baseline-calculator />
           <q-tree :nodes="exampleTree" node-key="label" />
         </div>

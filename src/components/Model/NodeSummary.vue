@@ -13,13 +13,24 @@
         <q-input
           v-model="nodeToSubmit.unit"
           label="Unit"
-          :rules="[val => ((typeof val == 'undefined' || val=='') || val!='' && isNaN(parseInt(val.substring(0,1)))) || 'Cannot start with a number']"
+          :rules="[
+            val =>
+              typeof val == 'undefined' ||
+              val == '' ||
+              (val != '' && isNaN(parseInt(val.substring(0, 1)))) ||
+              'Cannot start with a number'
+          ]"
         />
         <q-input
           v-model="nodeToSubmit.symbol"
           label="Symbol"
           debounce="500"
-          :rules="[val => !!val || 'Field is required', val => isNaN(parseInt(val.substring(0,1))) || 'Cannot start with a number']"
+          :rules="[
+            val => !!val || 'Field is required',
+            val =>
+              isNaN(parseInt(val.substring(0, 1))) ||
+              'Cannot start with a number'
+          ]"
         />
         <q-markup-table flat bordered>
           <thead>
@@ -30,22 +41,25 @@
             </tr>
           </thead>
           <tr v-for="influencer in influencerNodesInfo" :key="influencer.id">
-            <td>{{influencer.name}}</td>
-            <td>{{influencer.symbol}}</td>
-            <td>{{influencer.unit}}</td>
+            <td>{{ influencer.name }}</td>
+            <td>{{ influencer.symbol }}</td>
+            <td>{{ influencer.unit }}</td>
           </tr>
         </q-markup-table>
+
         <q-input
           v-model="nodeToSubmit.symbolFormula"
           label="Formula"
-          :prefix="nodeToSubmit.symbol+' ='"
+          :prefix="nodeToSubmit.symbol + ' ='"
           autogrow
           debounce="800"
         />
-        <div v-if="parserError==''">
-          <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
+        <div v-if="parserError == ''">
+          <vue-mathjax
+            :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"
+          ></vue-mathjax>
         </div>
-        <div v-else class="text-negative">{{parserError}}</div>
+        <div v-else class="text-negative">{{ parserError }}</div>
         <q-input
           v-model="nodeToSubmit.currentValue"
           label="Current value"
@@ -53,18 +67,23 @@
           :suffix="nodeToSubmit.unit"
           debounce="300"
         />
-        <gchart :v-if="chartData != []" type="LineChart" :data="chartData" :options="chartOptions" />
+        <gchart
+          :v-if="chartData != []"
+          type="LineChart"
+          :data="chartData"
+          :options="chartOptions"
+        />
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
       </q-form>
 
       <p>nodeToSubmit: {{ nodeToSubmit.id }}</p>
       <p>symbolFormula</p>
-      <pre>{{nodeToSubmit.symbolFormula}}</pre>
+      <pre>{{ nodeToSubmit.symbolFormula }}</pre>
       <p>parsedSymbolFormula</p>
-      <pre>{{parsedSymbolFormula}}</pre>
+      <pre>{{ parsedSymbolFormula }}</pre>
       <p>sysFormula</p>
-      <pre>{{nodeToSubmit.sysFormula}}</pre>
+      <pre>{{ nodeToSubmit.sysFormula }}</pre>
       <p>nodeToSubmit</p>
       <pre>{{ nodeToSubmit }}</pre>
     </div>
@@ -115,10 +134,12 @@ export default {
 
     influencerNodesInfo() {
       let nodeToSubmit = this.nodeToSubmit;
+      let influencerNodesInfo = [];
+      if (typeof nodeToSubmit.influencers == "undefined")
+        return influencerNodesInfo;
       let influencerNodes = this.nodes.filter(node =>
         nodeToSubmit.influencers.includes(node.id)
       );
-      let influencerNodesInfo = [];
       influencerNodes.forEach(function(influencerNode) {
         let influencerNodeInfo = {
           id: influencerNode.id,
@@ -199,8 +220,10 @@ export default {
     },
     updateChartData() {
       // if baseline.nodes contains the selected node then load baseline for this nde
+      console.log(this.baseline);
       if (
         typeof this.selectedNodeId !== "undefined" &&
+        this.baseline != null &&
         this.selectedNodeId in this.baseline.nodes
       ) {
         let timeSPoints = this.baseline.timeSPoints;
