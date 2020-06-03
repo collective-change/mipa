@@ -15,7 +15,6 @@
       :height="svgHeight"
       style="border: black; border-style: solid; border-width: 0px"
     />
-    <pre>{{ d3Data.links }}</pre>
     <p class="print-hide">
       Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.
     </p>
