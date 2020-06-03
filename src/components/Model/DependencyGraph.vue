@@ -1,7 +1,10 @@
 <template>
   <div>
     <q-btn
-      @click="showAddNode = true; addNodeProps.newNodeRole=''"
+      @click="
+        showAddNode = true;
+        addNodeProps.newNodeRole = '';
+      "
       class="all-pointer-events print-hide"
       style="position: relative; top: 40px; left: 4px;"
       color="primary"
@@ -12,22 +15,25 @@
       :height="svgHeight"
       style="border: black; border-style: solid; border-width: 0px"
     />
-    <p class="print-hide">Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.</p>
+    <pre>{{ d3Data.links }}</pre>
+    <p class="print-hide">
+      Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.
+    </p>
     <q-dialog v-model="showAddNode">
       <add-node
         :sourceNodeId="addNodeProps.sourceNodeId"
         :newNodeRole="addNodeProps.newNodeRole"
-        @close="showAddNode=false"
+        @close="showAddNode = false"
       />
     </q-dialog>
     <q-dialog v-model="showDeleteNode">
-      <delete-node :node="selectedNode" @close="showDeleteNode=false" />
+      <delete-node :node="selectedNode" @close="showDeleteNode = false" />
     </q-dialog>
     <q-dialog v-model="showAddLink">
       <add-link
         :sourceNodeId="selectedNodeId"
         :linkToSubmit="linkToSubmit"
-        @close="showAddLink=false"
+        @close="showAddLink = false"
       />
     </q-dialog>
   </div>
@@ -237,7 +243,7 @@ export default {
         );
       };
 
-      const alink = d => {
+      /*const alink = d => {
         const arcRadius = getDistance(d) * 0.6;
         return (
           "M" +
@@ -259,7 +265,7 @@ export default {
           "," +
           d.target.y
         );
-      };
+      }; */
 
       const graph = this.selections.graph;
       graph.selectAll("path").attr("d", link);
@@ -269,6 +275,7 @@ export default {
     },
     updateData() {
       var that = this;
+
       /*console.log(
         "updateData; change count ",
         this.storeDataChangeCount,
@@ -352,13 +359,10 @@ export default {
         }
       });
 
-      // Links should only exit if not needed anymore,
-      // but somehow .exit() does not work, so we're
-      // removing all links and redrawing with each data change.
       graph
         .selectAll("path")
         .data(this.d3Data.links)
-        //.exit()
+        .exit()
         .remove();
 
       graph

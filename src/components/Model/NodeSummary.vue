@@ -32,7 +32,7 @@
               'Cannot start with a number'
           ]"
         />
-        <q-markup-table flat bordered>
+        <q-markup-table flat bordered v-if="influencerNodesInfo.length">
           <thead>
             <tr>
               <th class="text-left">Influencer</th>
@@ -220,7 +220,6 @@ export default {
     },
     updateChartData() {
       // if baseline.nodes contains the selected node then load baseline for this nde
-      console.log(this.baseline);
       if (
         typeof this.selectedNodeId !== "undefined" &&
         this.baseline != null &&
