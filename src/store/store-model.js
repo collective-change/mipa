@@ -342,6 +342,7 @@ const actions = {
   /* Recalculate classifiedInfluencers (unused and blocking influencers)
   of the node in the payload. */
   updateClassifiedInfluencersOf({ dispatch }, payload) {
+    console.log("updateClassifiedInfluencersOf");
     let modelId = payload.modelId;
     let influenceeIds = payload.influenceeIds;
     influenceeIds.forEach(function(influenceeId) {
@@ -362,6 +363,7 @@ const actions = {
         }
       });
     });
+    console.log("end updateClassifiedInfluencersOf");
   }
 };
 

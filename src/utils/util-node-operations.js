@@ -6,32 +6,40 @@ function classifyInfluencers(payload) {
   let thisNode = payload.thisNode;
   let nodes = payload.nodes;
 
-  let sysFormula = thisNode.sysFormula;
-  let parsedSysFormula = parse(sysFormula);
+  let formulaExists =
+    typeof thisNode.sysFormula != "undefined" && thisNode.sysFormula != "";
+
   //get all used influencers, add to used and blocking array
   let used = [];
   let blocking = [];
-  if ("influencers" in thisNode) {
-    thisNode.influencers.forEach(function(influencerId) {
-      if (sysFormula.includes(influencerId)) blocking.push(influencerId);
-      if (sysFormula.includes(influencerId)) used.push(influencerId);
-    });
-  }
-  //console.log("influencers", thisNode.influencers);
-
-  //get all delay calls
   let delayCallsArgs = [];
-  let selfDelay = false;
-  parsedSysFormula.traverse(function(node, path, parent) {
-    if (node.type == "FunctionNode") {
-      if (node.fn.name == "delay") {
-        delayCallsArgs.push(node.args);
-        //if the current node has a delay influence on itself
-        if (node.args[0].name == "$" + thisNode.id) selfDelay = true;
-      }
+
+  if (formulaExists) {
+    let sysFormula = thisNode.sysFormula;
+    let parsedSysFormula = parse(sysFormula);
+    if ("influencers" in thisNode) {
+      thisNode.influencers.forEach(function(influencerId) {
+        if (sysFormula.includes(influencerId)) blocking.push(influencerId);
+        if (sysFormula.includes(influencerId)) used.push(influencerId);
+      });
     }
-  });
-  if (selfDelay == true) blocking.push(thisNode.id);
+    //console.log("influencers", thisNode.influencers);
+
+    //get all delay calls
+
+    let selfDelay = false;
+    parsedSysFormula.traverse(function(expressionNode, path, parent) {
+      if (expressionNode.type == "FunctionNode") {
+        if (expressionNode.fn.name == "delay") {
+          delayCallsArgs.push(expressionNode.args);
+          //if the current node has a delay influence on itself
+          if (expressionNode.args[0].name == "$" + thisNode.id)
+            selfDelay = true;
+        }
+      }
+    });
+    if (selfDelay == true) blocking.push(thisNode.id);
+  } //end of calculation for if formulaExists
 
   //console.log({ blocking });
 
@@ -98,5 +106,8 @@ function classifyInfluencers(payload) {
   }
   //console.log({ unused });
 
-  return { blocking: blocking, unused: unused };
+  return {
+    blocking: blocking,
+    unused: unused
+  };
 }
