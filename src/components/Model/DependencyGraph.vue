@@ -532,7 +532,7 @@ export default {
       const graph = this.selections.graph;
       const circles = graph.selectAll("circle");
       const paths = graph.selectAll("path");
-      const text = graph.selectAll("text");
+      const texts = graph.selectAll("text");
 
       const related = [];
       const relatedLinks = [];
@@ -557,8 +557,8 @@ export default {
       paths
         .filter(df => df.source === d || df.target === d)
         .classed("highlight", true);
-      text.classed("faded", true);
-      text.filter(df => related.indexOf(df) > -1).classed("highlight", true);
+      texts.classed("faded", true);
+      texts.filter(df => related.indexOf(df) > -1).classed("highlight", true);
       // This ensures that tick is called so the node count is updated
       this.simulation.alphaTarget(0.0001).restart();
     },
@@ -566,14 +566,14 @@ export default {
       const graph = this.selections.graph;
       const circles = graph.selectAll("circle");
       const paths = graph.selectAll("path");
-      const text = graph.selectAll("text");
+      const texts = graph.selectAll("text");
 
       circles.classed("faded", false);
       circles.classed("highlight", false);
       paths.classed("faded", false);
       paths.classed("highlight", false);
-      text.classed("faded", false);
-      text.classed("highlight", false);
+      texts.classed("faded", false);
+      texts.classed("highlight", false);
       // This ensures that tick is called so the node count is updated
       this.simulation.restart();
     },
@@ -746,8 +746,8 @@ export default {
 
       return menu;
     },
-    wrap(text, width) {
-      text.each(function() {
+    wrap(texts, width) {
+      texts.each(function() {
         var text = d3.select(this),
           words = text
             .text()
