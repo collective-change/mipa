@@ -67,12 +67,14 @@
           :suffix="nodeToSubmit.unit"
           debounce="300"
         />
+
         <gchart
-          :v-if="chartData != []"
+          v-if="chartData.length > 0"
           type="LineChart"
           :data="chartData"
           :options="chartOptions"
         />
+
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
       </q-form>
