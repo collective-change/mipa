@@ -54,7 +54,7 @@
           autogrow
           debounce="800"
         />
-        <div v-if="parserError == ''">
+        <div v-if="parserError == '' && latexFormula">
           <vue-mathjax
             :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"
           ></vue-mathjax>
@@ -171,9 +171,7 @@ export default {
         this.parserError = "";
         return parsedSymbolFormula;
       } catch (err) {
-        console.log(err);
         this.parserError = "Error parsing formula: " + err.message;
-        //showErrorMessage("Error parsing formula", err.message);
       }
     },
 
@@ -289,7 +287,9 @@ export default {
     },
 
     watchedObjectForNodePropertyRecalculation: function(/*newVersion, oldVersion*/) {
-      let parsedSymbolFormula = this.parsedSymbolFormula;
+      let parsedSymbolFormula = this.parsedSymbolFormula
+        ? this.parsedSymbolFormula
+        : "";
       // calculate sysFormula
       if (parsedSymbolFormula.toString() == "") {
         this.nodeToSubmit.sysFormula = "";
