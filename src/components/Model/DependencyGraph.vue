@@ -569,8 +569,7 @@ export default {
     },
     nodeClick(d) {
       const circle = this.selections.graph.selectAll("circle");
-      circle.classed("selected", false);
-      circle.filter(td => td === d).classed("selected", true);
+
       let correspondingStoreNode = this.storeData.nodes.find(function(
         storeNode
       ) {
@@ -592,12 +591,17 @@ export default {
             persistent: true,
             html: true
           })
+
           .onOk(() => {
             this.setSelectedNodeId(correspondingStoreNode.id);
+            circle.classed("selected", false);
+            circle.filter(td => td === d).classed("selected", true);
           });
-      } else this.setSelectedNodeId(correspondingStoreNode.id);
-
-      //this.setSelectedNodeId(correspondingStoreNode.id);
+      } else {
+        this.setSelectedNodeId(correspondingStoreNode.id);
+        circle.classed("selected", false);
+        circle.filter(td => td === d).classed("selected", true);
+      }
     },
 
     contextMenu(hostD) {

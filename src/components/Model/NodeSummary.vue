@@ -278,7 +278,12 @@ export default {
           );
 
           differences = differences.filter(function(item) {
-            return !["sysFormula", "class"].includes(item);
+            return ![
+              "sysFormula",
+              "class",
+              "blockingInfluencers",
+              "unusedInfluencers"
+            ].includes(item);
           });
           if (differences.length) {
             this.$store.commit("ui/setUiNodeChanged", true);
