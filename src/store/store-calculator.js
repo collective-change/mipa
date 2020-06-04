@@ -64,7 +64,7 @@ const actions = {
         let data = e.data;
         //replace $nodeIds in error message with node name
         showErrorMessage(
-          "Calculation error: " + data.errorType,
+          data.errorType,
           data.errorMessage,
           true //useHtml
         );

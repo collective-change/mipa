@@ -67,23 +67,34 @@ onmessage = function(e) {
 
   if (errorOccurred) return;
 
-  try {
-    // gather up formulas from nodes into an array ordered by calculation order
-    var expressionsArray = sortedNodes.map(function(node) {
-      //if formula includes a variable then save it
-      if (node.sysFormula.includes("$")) {
-        return "$" + node.id + " = " + node.sysFormula;
-      } else {
-        //else set as value and units
-        return (
-          "$" + node.id + " = unit(" + node.sysFormula + ",'" + node.unit + "')"
-        );
+  // gather up formulas from nodes into an array ordered by calculation order
+  var expressionsArray = [];
+  sortedNodes.forEach(function(node) {
+    if (!errorOccurred)
+      try {
+        //if formula includes a variable then save it
+        if (node.sysFormula.includes("$")) {
+          return "$" + node.id + " = " + node.sysFormula;
+        } else {
+          //else set as value and units
+          return (
+            "$" +
+            node.id +
+            " = unit(" +
+            node.sysFormula +
+            ",'" +
+            node.unit +
+            "')"
+          );
+        }
+      } catch (err) {
+        console.log(err);
+        this.postMessage({
+          errorType: "expression array error",
+          errorMessage: `For node "${node.name}" <br/> ${err}`
+        });
       }
-    });
-  } catch (err) {
-    console.log(err);
-    this.postMessage(err);
-  }
+  });
 
   if (errorOccurred) return;
 
@@ -122,15 +133,22 @@ onmessage = function(e) {
 
   if (errorOccurred) return;
 
-  try {
-    var expectedUnit = null;
-    var expectedUnits = sortedNodes.map(function(node) {
-      return math.unit(node.unit);
-    });
-  } catch (err) {
-    console.log(err);
-    this.postMessage(err);
-  }
+  var expectedUnit = null;
+  var expectedUnits = [];
+
+  sortedNodes.forEach(function(node) {
+    if (!errorOccurred)
+      try {
+        expectedUnits.push(math.unit(node.unit));
+      } catch (err) {
+        //console.log(err);
+        this.postMessage({
+          errorType: "unit loading error",
+          errorMessage: `For node "${node.name}", unit "${node.unit}" <br/> ${err}`
+        });
+        errorOccurred = true;
+      }
+  });
 
   if (errorOccurred) return;
 

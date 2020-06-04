@@ -426,7 +426,6 @@ export default {
     updateNodeClassAndText(restartSimulation = false) {
       const graph = this.selections.graph;
       const selectedCircle = graph.selectAll("circle.selected");
-      console.log(selectedCircle);
       graph
         .selectAll("circle")
         .data(this.d3Data.nodes)
