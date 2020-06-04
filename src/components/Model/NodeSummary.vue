@@ -110,6 +110,8 @@ export default {
   data() {
     return {
       nodeToSubmit: {},
+      oldNodeToSubmit: {}, //used for comparing changes to nodeToSubmit
+      nodeToSubmitIsFreshlyAssigned: false,
       model: null,
       parserError: "",
 
@@ -121,7 +123,7 @@ export default {
   },
 
   computed: {
-    ...mapState("ui", ["selectedNodeId"]),
+    ...mapState("ui", ["selectedNodeId", "uiNodeChanged"]),
     ...mapState("calcResults", ["baseline"]),
     ...mapGetters("model", ["nodes", "links"]),
 
@@ -254,8 +256,27 @@ export default {
 
   watch: {
     selectedNode: function(newNode, oldNode) {
+      this.nodeToSubmitIsFreshlyAssigned = true;
       this.nodeToSubmit = Object.assign({}, this.selectedNode);
+      this.$store.commit("ui/setUiNodeChanged", false);
       this.updateChartData();
+    },
+
+    nodeToSubmit: {
+      deep: true,
+      handler: function(newNode) {
+        if (!this.nodeToSubmitIsFreshlyAssigned && !this.uiNodeChanged) {
+          let difference = Object.keys(newNode).filter(
+            k => newNode[k].toString() !== this.oldNodeToSubmit[k].toString()
+          );
+          if (difference.length) {
+            this.$store.commit("ui/setUiNodeChanged", true);
+          }
+        } else {
+          this.nodeToSubmitIsFreshlyAssigned = false;
+        }
+        Object.assign(this.oldNodeToSubmit, newNode);
+      }
     },
 
     baseline: function() {

@@ -122,7 +122,7 @@ export default {
   },
 
   computed: {
-    ...mapState("ui", ["selectedNodeId"]),
+    ...mapState("ui", ["selectedNodeId", "uiNodeChanged"]),
     ...mapGetters("model", ["nodes", "links"]),
     selectedNode() {
       let that = this;
@@ -567,7 +567,25 @@ export default {
       ) {
         return storeNode.id == d.id;
       });
-      this.setSelectedNodeId(correspondingStoreNode.id);
+
+      if (this.selectedNodeId == correspondingStoreNode.id) {
+        return;
+      }
+      if (this.uiNodeChanged) {
+        this.$q
+          .dialog({
+            title: "Unsaved changes",
+            message:
+              "Any changes you made will be lost. Really switch to another node?",
+            cancel: true,
+            persistent: true
+          })
+          .onOk(() => {
+            this.setSelectedNodeId(correspondingStoreNode.id);
+          });
+      } else this.setSelectedNodeId(correspondingStoreNode.id);
+
+      //this.setSelectedNodeId(correspondingStoreNode.id);
     },
 
     contextMenu(hostD) {

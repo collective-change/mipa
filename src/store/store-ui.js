@@ -1,5 +1,6 @@
 const state = {
   selectedNodeId: null,
+  uiNodeChanged: false,
   selectedIssueId: null,
   selectedActionId: null,
   selectedSituationId: null
@@ -8,6 +9,10 @@ const state = {
 const mutations = {
   setSelectedNodeId(state, nodeId) {
     state.selectedNodeId = nodeId;
+    state.uiNodeChanged = false;
+  },
+  setUiNodeChanged(state, value) {
+    state.uiNodeChanged = value;
   },
   setSelectedIssueId(state, issueId) {
     state.selectedIssueId = issueId;
