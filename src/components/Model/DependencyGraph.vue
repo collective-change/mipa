@@ -122,7 +122,11 @@ export default {
   },
 
   computed: {
-    ...mapState("ui", ["selectedNodeId", "uiNodeChanged"]),
+    ...mapState("ui", [
+      "selectedNodeId",
+      "uiNodeChanged",
+      "uiNodeChangedFields"
+    ]),
     ...mapGetters("model", ["nodes", "links"]),
     selectedNode() {
       let that = this;
@@ -576,9 +580,12 @@ export default {
           .dialog({
             title: "Unsaved changes",
             message:
-              "Any changes you made will be lost. Really switch to another node?",
+              "<p>Changed: " +
+              this.uiNodeChangedFields.join(", ") +
+              "<p/><p>The changes you made will be lost. Really switch to another node?</p>",
             cancel: true,
-            persistent: true
+            persistent: true,
+            html: true
           })
           .onOk(() => {
             this.setSelectedNodeId(correspondingStoreNode.id);

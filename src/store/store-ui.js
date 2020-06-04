@@ -1,8 +1,12 @@
 const state = {
   selectedNodeId: null,
   uiNodeChanged: false,
+  uiNodeChangedFields: [],
+
   selectedIssueId: null,
+
   selectedActionId: null,
+
   selectedSituationId: null
 };
 
@@ -10,9 +14,19 @@ const mutations = {
   setSelectedNodeId(state, nodeId) {
     state.selectedNodeId = nodeId;
     state.uiNodeChanged = false;
+    state.uiNodeChangdFields = [];
   },
   setUiNodeChanged(state, value) {
     state.uiNodeChanged = value;
+    if (value == false) state.uiNodeChangdFields = [];
+  },
+  addUiNodeChangedFields(state, differences) {
+    let jointArray = [];
+    jointArray = [...state.uiNodeChangedFields, ...differences];
+    let uniqueArray = jointArray.filter(
+      (item, index) => jointArray.indexOf(item) === index
+    );
+    state.uiNodeChangedFields = uniqueArray;
   },
   setSelectedIssueId(state, issueId) {
     state.selectedIssueId = issueId;

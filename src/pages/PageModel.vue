@@ -93,7 +93,8 @@ export default {
   },
   computed: {
     ...mapState("orgs", ["currentOrg"]),
-    ...mapState("model", ["currentModel"])
+    ...mapState("model", ["currentModel"]),
+    ...mapState("ui", ["uiNodeChanged", "uiNodeChangedFields"])
   },
   created() {
     (async () => {
@@ -117,6 +118,27 @@ export default {
     //console.log("above code doesn't block main function stack");
   },
   mounted() {},
+
+  beforeRouteLeave(to, from, next) {
+    if (this.uiNodeChanged) {
+      this.$q
+        .dialog({
+          title: "Unsaved changes",
+          message:
+            "<p>Changed: " +
+            this.uiNodeChangedFields.join(", ") +
+            "<p/><p>The changes you made will be lost. Really leave?</p>",
+
+          cancel: true,
+          persistent: true,
+          html: true
+        })
+        .onOk(() => {
+          next();
+        });
+    } else next();
+  },
+
   beforeDestroy() {
     this.$store.dispatch("model/unbindNodes");
     this.$store.dispatch("calcResults/unbindBaseline");

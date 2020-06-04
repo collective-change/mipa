@@ -123,7 +123,11 @@ export default {
   },
 
   computed: {
-    ...mapState("ui", ["selectedNodeId", "uiNodeChanged"]),
+    ...mapState("ui", [
+      "selectedNodeId",
+      "uiNodeChanged",
+      "uiNodeChangedFields"
+    ]),
     ...mapState("calcResults", ["baseline"]),
     ...mapGetters("model", ["nodes", "links"]),
 
@@ -265,12 +269,13 @@ export default {
     nodeToSubmit: {
       deep: true,
       handler: function(newNode) {
-        if (!this.nodeToSubmitIsFreshlyAssigned && !this.uiNodeChanged) {
-          let difference = Object.keys(newNode).filter(
+        if (!this.nodeToSubmitIsFreshlyAssigned) {
+          let differences = Object.keys(newNode).filter(
             k => newNode[k].toString() !== this.oldNodeToSubmit[k].toString()
           );
-          if (difference.length) {
+          if (differences.length) {
             this.$store.commit("ui/setUiNodeChanged", true);
+            this.$store.commit("ui/addUiNodeChangedFields", differences);
           }
         } else {
           this.nodeToSubmitIsFreshlyAssigned = false;
