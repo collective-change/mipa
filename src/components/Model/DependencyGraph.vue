@@ -396,13 +396,6 @@ export default {
         .enter()
         .append("circle")
         .attr("r", nodeRadius)
-        /*.attr("class", d =>
-          d.class.concat(
-            d.isSelfBlocking ? " selfBlocking" : "",
-            d.isNew ? " new" : "",
-            d.symbolFormula ? "" : " noFormula"
-          )
-        )*/
         .call(
           d3
             .drag()
