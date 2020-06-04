@@ -46,23 +46,28 @@ onmessage = function(e) {
   let completedLoops = 0;
   let maxLoops = 60;
 
-  try {
-    // gather up current values from nodes into scope
-    //console.log("begin loading currentValues");
-    sortedNodes.forEach(function(node, index) {
-      //console.log({ node });
-      scope["$" + node.id + "_unit"] = node.unit;
-      if ("currentValue" in node && node.currentValue != "") {
-        //console.log("yay");
-        scope["$" + node.id] = math.unit(Number(node.currentValue), node.unit);
-        //console.log("in");
+  // gather up current values from nodes into scope
+  //console.log("begin loading currentValues");
+  sortedNodes.forEach(function(node, index) {
+    if (!errorOccurred)
+      try {
+        scope["$" + node.id + "_unit"] = node.unit;
+        if ("currentValue" in node && node.currentValue != "") {
+          scope["$" + node.id] = math.unit(
+            Number(node.currentValue),
+            node.unit
+          );
+        }
+      } catch (err) {
+        this.postMessage({
+          errorType: "current value loading error",
+          errorMessage: `For node "${node.name}", current value "${node.currentValue}", unit "${node.unit}" <br/> ${err}`
+        });
+        errorOccurred = true;
       }
-    });
-    //console.log({ scope });
-  } catch (err) {
-    console.log(err);
-    this.postMessage(err);
-  }
+  });
+
+  if (errorOccurred) return;
 
   try {
     // gather up formulas from nodes into an array ordered by calculation order
@@ -81,6 +86,8 @@ onmessage = function(e) {
     console.log(err);
     this.postMessage(err);
   }
+
+  if (errorOccurred) return;
 
   /*var parsedExpressions = expressionsArray.map(function(expression) {
       return math.parse(expression);
@@ -101,8 +108,7 @@ onmessage = function(e) {
         );
         this.postMessage({
           errorType: "parse error",
-          errorMessage:
-            "in expression for node [" + nodeName + "]: " + replacedExpression
+          errorMessage: `For node "${nodeName}"<br/>Expression: ${replacedExpression} <br/> ${err}`
         });
         errorOccurred = true;
       }
@@ -118,6 +124,9 @@ onmessage = function(e) {
     console.log(err);
     this.postMessage(err);
   }
+
+  if (errorOccurred) return;
+
   try {
     var expectedUnit = null;
     var expectedUnits = sortedNodes.map(function(node) {
@@ -127,6 +136,9 @@ onmessage = function(e) {
     console.log(err);
     this.postMessage(err);
   }
+
+  if (errorOccurred) return;
+
   try {
     while (completedLoops < maxLoops) {
       // evaluate the formulas
@@ -165,6 +177,8 @@ onmessage = function(e) {
     console.log(err);
     this.postMessage(err);
   }
+
+  if (errorOccurred) return;
 
   //clean up scope.timeSeries for posting back to main script
   //console.log(scope);

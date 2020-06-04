@@ -65,13 +65,11 @@ const actions = {
         //replace $nodeIds in error message with node name
         showErrorMessage(
           "Calculation error: " + data.errorType,
-          data.errorMessage
+          data.errorMessage,
+          true //useHtml
         );
         baselineCalcWorker.terminate();
         commit("setCalculatorIsRunning", false);
-        //let endTime = new Date();
-        //let calcDurationSec = (endTime - startTime) / 1000;
-        //Notify.create("Calculation took " + calcDurationSec + " seconds.");
       } else if ("timeSPoints" in e.data) {
         let payload2 = {
           modelId: payload.modelId,
