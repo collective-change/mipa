@@ -4,25 +4,24 @@
       <span v-if="currentOrg">{{ currentOrg.name }}'s goal: </span>
       <span v-if="currentOrg">{{ currentOrg.goal }}</span>
     </div>
-    <div class="q-pa-md">
-      <div class="row q-col-gutter-md">
-        <div class="col-12 col-md-2 print-hide">
-          <q-select
-            borderless
-            v-model="currentModel"
-            :options="modelOptions"
-            label="Model"
-          />
-          <baseline-calculator />
-          <q-tree :nodes="exampleTree" node-key="label" />
-        </div>
 
-        <div class="col-12 col-md-7">
-          <dependency-graph></dependency-graph>
-        </div>
-        <div class="col-12 col-md-3">
-          <node-summary />
-        </div>
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-md-2 print-hide">
+        <q-select
+          borderless
+          v-model="currentModel"
+          :options="modelOptions"
+          label="Model"
+        />
+        <baseline-calculator />
+        <q-tree :nodes="exampleTree" node-key="label" />
+      </div>
+
+      <div class="col-12 col-md-7">
+        <dependency-graph></dependency-graph>
+      </div>
+      <div class="col-12 col-md-3">
+        <node-summary />
       </div>
     </div>
   </q-page>

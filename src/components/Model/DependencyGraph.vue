@@ -1,12 +1,12 @@
 <template>
-  <div>
+  <div style="position: relative;">
     <q-btn
       @click="
         showAddNode = true;
         addNodeProps.newNodeRole = '';
       "
       class="all-pointer-events print-hide"
-      style="position: relative; top: 40px; left: 4px;"
+      style="position: absolute; top: 10px; left: 10px; z-index: 2"
       color="primary"
       label="Add node"
     />
@@ -15,6 +15,7 @@
       :height="svgHeight"
       style="border: black; border-style: solid; border-width: 0px"
     />
+
     <p class="print-hide">
       Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.
     </p>
