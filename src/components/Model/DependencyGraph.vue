@@ -289,7 +289,7 @@ export default {
       this.simulation.nodes(this.d3Data.nodes);
       this.simulation.force("link").links(this.d3Data.links);
 
-      const simulation = this.simulation;
+      //const simulation = this.simulation;
       const graph = this.selections.graph;
       const svg = this.selections.svg;
 
@@ -317,7 +317,6 @@ export default {
             that.linkToSubmit.sourceNodeId = that.selectedNodeId;
             that.linkToSubmit.targetNodeId = "";
             that.linkToSubmit.targetType = "influencer";
-            //that.linkToSubmit.type = "forward";
           }
         },
         {
@@ -327,19 +326,9 @@ export default {
             that.linkToSubmit.sourceNodeId = that.selectedNodeId;
             that.linkToSubmit.targetNodeId = "";
             that.linkToSubmit.targetType = "influencee";
-            //that.linkToSubmit.type = "forward";
           }
         },
-        /*{
-          label: "Link to feedback influencee",
-          handler: function() {
-            that.showAddLink = true;
-            that.linkToSubmit.sourceNodeId = that.selectedNodeId;
-            that.linkToSubmit.targetNodeId = "";
-            that.linkToSubmit.targetType = "feedback influencee";
-            that.linkToSubmit.type = "back";
-          }
-        },*/
+
         {
           label: "Delete node",
           handler: function() {
@@ -424,6 +413,18 @@ export default {
         })
         .on("click", this.nodeClick);
 
+      this.updateNodeText();
+
+      // Add 'marker-end' attribute to each path
+      svg
+        .selectAll("g")
+        .selectAll("path")
+        .attr("marker-end", "url(#end)");
+
+      this.simulation.alpha(1).restart();
+    },
+    updateNodeText(restartSimulation = false) {
+      const graph = this.selections.graph;
       graph.selectAll("text").remove();
       graph
         .selectAll("text")
@@ -436,18 +437,12 @@ export default {
         .text(d =>
           d.name.concat(
             d.isSelfBlocking ? " (self-blocking)" : "",
-            d.isNew ? " (new)" : ""
+            d.isNew ? " (new)" : "",
+            d.symbolFormula ? "" : " (no formula)"
           )
         )
         .call(this.wrap, nodeRadius * 2); // wrap the text in <= node diameter
-
-      // Add 'marker-end' attribute to each path
-      svg
-        .selectAll("g")
-        .selectAll("path")
-        .attr("marker-end", "url(#end)");
-
-      simulation.alpha(1).restart();
+      if (restartSimulation) this.simulation.alpha(0.01).restart();
     },
     updateForces() {
       const { simulation, forceProperties, svgWidth, svgHeight, d3Data } = this;
@@ -577,6 +572,8 @@ export default {
       });
 
       if (this.selectedNodeId == correspondingStoreNode.id) {
+        circle.classed("selected", false);
+        circle.filter(td => td === d).classed("selected", true);
         return;
       }
       if (this.uiNodeChanged) {
@@ -819,6 +816,7 @@ export default {
         );*/
         var that = this;
         var dataChanged = false;
+        var graphTextChange = false;
         //mark each node in d3Data.nodes as unconfirmed
         if (this.d3Data.nodes.length > 0) {
           this.d3Data.nodes.forEach(function(d3Node) {
@@ -840,11 +838,7 @@ export default {
             //update d3Data node with values from storeNode
             if (matchedD3Node.name != storeNode.name) {
               matchedD3Node.name = storeNode.name;
-              dataChanged = true;
-            }
-            if (matchedD3Node.group != storeNode.group) {
-              matchedD3Node.group = storeNode.group;
-              dataChanged = true;
+              graphTextChange = true;
             }
             if (matchedD3Node.class != storeNode.class) {
               matchedD3Node.class = storeNode.class;
@@ -852,11 +846,15 @@ export default {
             }
             if (matchedD3Node.isSelfBlocking != storeNode.isSelfBlocking) {
               matchedD3Node.isSelfBlocking = storeNode.isSelfBlocking;
-              dataChanged = true;
+              graphTextChange = true;
             }
             if (matchedD3Node.isNew != storeNode.isNew) {
               matchedD3Node.isNew = storeNode.isNew;
-              dataChanged = true;
+              graphTextChange = true;
+            }
+            if (matchedD3Node.symbolFormula != storeNode.symbolFormula) {
+              matchedD3Node.symbolFormula = storeNode.symbolFormula;
+              graphTextChange = true;
             }
           } else {
             // storeNode does not exist in d3Data; clone it there
@@ -898,21 +896,11 @@ export default {
             )[0])
           ) {
             //then remove "unconfirmed" mark
-            /*console.log(
-              "keeping link in d3Data: ",
-              matchedD3Link.source.name,
-              "-",
-              matchedD3Link.target.name,
-              matchedD3Link.isBlocking ? "blocking" : "",
-              matchedD3Link.isUnused ? "unused" : ""
-            );*/
-            //console.log(matchedD3Link);
             delete matchedD3Link.unconfirmed;
           } //else storeLink does not exist in data; clone it there
           else {
             that.d3Data.links.push(Object.assign({}, storeLink));
             dataChanged = true;
-            //console.log("new link added to d3Data ", storeLink);
           }
         });
         //remove unconfirmed links in data.links
@@ -929,6 +917,9 @@ export default {
         if (dataChanged) {
           //console.log("incrementing storeDataChangeCount");
           this.storeDataChangeCount++;
+        }
+        if (graphTextChange && !dataChanged) {
+          this.updateNodeText(true);
         }
         //console.log("nodes handler finished");
       }
