@@ -5,6 +5,7 @@ const parser = self.math.parser();
 
 onmessage = function(e) {
   let startTime = new Date();
+  var errorOccurred = false;
   //console.log("Message received from main script");
   //console.log(e.data);
 
@@ -40,6 +41,8 @@ onmessage = function(e) {
   });
   //console.log({ sortedNodes });
 
+  //let expressionsArray = [];
+  //let parsedExpressions = [];
   let completedLoops = 0;
   let maxLoops = 60;
 
@@ -56,9 +59,14 @@ onmessage = function(e) {
       }
     });
     //console.log({ scope });
+  } catch (err) {
+    console.log(err);
+    this.postMessage(err);
+  }
 
+  try {
     // gather up formulas from nodes into an array ordered by calculation order
-    let expressionsArray = sortedNodes.map(function(node) {
+    var expressionsArray = sortedNodes.map(function(node) {
       //if formula includes a variable then save it
       if (node.sysFormula.includes("$")) {
         return "$" + node.id + " = " + node.sysFormula;
@@ -69,20 +77,57 @@ onmessage = function(e) {
         );
       }
     });
+  } catch (err) {
+    console.log(err);
+    this.postMessage(err);
+  }
 
-    let parsedExpressions = expressionsArray.map(function(expression) {
+  /*var parsedExpressions = expressionsArray.map(function(expression) {
       return math.parse(expression);
-    });
+    });*/
+  var parsedExpressions = [];
+  expressionsArray.forEach(function(expression) {
+    if (!errorOccurred)
+      try {
+        parsedExpressions.push(math.parse(expression));
+      } catch (err) {
+        let nodeName = replace$NodeIdsWithName(
+          expression.split(" =")[0],
+          e.data.modelNodes
+        );
+        let replacedExpression = replace$NodeIdsWithSymbol(
+          expression,
+          e.data.modelNodes
+        );
+        this.postMessage({
+          errorType: "parse error",
+          errorMessage:
+            "in expression for node [" + nodeName + "]: " + replacedExpression
+        });
+        errorOccurred = true;
+      }
+  });
 
-    let compiledExpressions = parsedExpressions.map(function(expression) {
+  if (errorOccurred) return;
+
+  try {
+    var compiledExpressions = parsedExpressions.map(function(expression) {
       return expression.compile();
     });
-
-    let expectedUnit = null;
-    let expectedUnits = sortedNodes.map(function(node) {
+  } catch (err) {
+    console.log(err);
+    this.postMessage(err);
+  }
+  try {
+    var expectedUnit = null;
+    var expectedUnits = sortedNodes.map(function(node) {
       return math.unit(node.unit);
     });
-
+  } catch (err) {
+    console.log(err);
+    this.postMessage(err);
+  }
+  try {
     while (completedLoops < maxLoops) {
       // evaluate the formulas
       compiledExpressions.forEach(function(code, index) {
@@ -224,23 +269,6 @@ function prepForSort(nodes) {
     });
   });
   return preppedNodes;
-}
-
-function simplifyForSort(node) {
-  return {
-    id: node.id,
-    name: node.name,
-    inDegree:
-      typeof node.influencers !== "undefined"
-        ? node.blockingInfluencers.length
-        : 0,
-    influencees:
-      typeof node.influencees !== "undefined" ? node.influencees : [],
-    sysFormula: typeof node.sysFormula !== "undefined" ? node.sysFormula : "",
-    unit: typeof node.unit !== "undefined" ? node.unit : "",
-    currentValue:
-      typeof node.currentValue !== "undefined" ? node.currentValue : ""
-  };
 }
 
 function delay(args, math, scope) {
@@ -396,4 +424,18 @@ function interpolateFromLookup(timeSPoints, values, targetTimeS) {
 function valueIsANumber(val) {
   //console.log(val, typeof val != "undefined", val != "", !isNaN(Number(val)));
   return typeof val != "undefined" && val != "" && !isNaN(Number(val));
+}
+
+function replace$NodeIdsWithName(workingString, nodes) {
+  nodes.forEach(
+    node => (workingString = workingString.replace("$" + node.id, node.name))
+  );
+  return workingString;
+}
+
+function replace$NodeIdsWithSymbol(workingString, nodes) {
+  nodes.forEach(
+    node => (workingString = workingString.replace("$" + node.id, node.symbol))
+  );
+  return workingString;
 }

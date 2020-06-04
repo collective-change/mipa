@@ -60,6 +60,18 @@ const actions = {
       if (typeof e.data == "string") {
         console.log("Error message received from worker: ", e.data);
         showErrorMessage("Calculation error", e.data);
+      } else if ("errorType" in e.data) {
+        let data = e.data;
+        //replace $nodeIds in error message with node name
+        showErrorMessage(
+          "Calculation error: " + data.errorType,
+          data.errorMessage
+        );
+        baselineCalcWorker.terminate();
+        commit("setCalculatorIsRunning", false);
+        //let endTime = new Date();
+        //let calcDurationSec = (endTime - startTime) / 1000;
+        //Notify.create("Calculation took " + calcDurationSec + " seconds.");
       } else if ("timeSPoints" in e.data) {
         let payload2 = {
           modelId: payload.modelId,
@@ -69,7 +81,6 @@ const actions = {
         dispatch("calcResults/setBaseline", payload2, { root: true });
 
         baselineCalcWorker.terminate();
-
         commit("setCalculatorIsRunning", false);
         let endTime = new Date();
         let calcDurationSec = (endTime - startTime) / 1000;
