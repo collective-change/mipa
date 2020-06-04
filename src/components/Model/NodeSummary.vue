@@ -216,6 +216,8 @@ export default {
       let currentValueExistenceChanged =
         oldCurrentValIsANumber != newCurrentValIsANumber;
 
+      this.nodeToSubmit.isNew = false;
+
       this.updateNode({
         modelId: this.$route.params.modelId,
         updates: this.nodeToSubmit,

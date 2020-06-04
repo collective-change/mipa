@@ -102,6 +102,8 @@ const actions = {
       .collection("nodes")
       .add(node)
       .then(function(docRef) {
+        //add in default sysFormula
+        //docRef.update({ sysFormula: `delay( ${docRef.id} , dt, 0)` });
         Notify.create("Node added! ");
         if (payload.newNodeRole == "influencer") {
           dispatch("addLink", {

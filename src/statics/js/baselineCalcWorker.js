@@ -41,8 +41,6 @@ onmessage = function(e) {
   });
   //console.log({ sortedNodes });
 
-  //let expressionsArray = [];
-  //let parsedExpressions = [];
   let completedLoops = 0;
   let maxLoops = 60;
 
@@ -89,9 +87,6 @@ onmessage = function(e) {
 
   if (errorOccurred) return;
 
-  /*var parsedExpressions = expressionsArray.map(function(expression) {
-      return math.parse(expression);
-    });*/
   var parsedExpressions = [];
   expressionsArray.forEach(function(expression) {
     if (!errorOccurred)
