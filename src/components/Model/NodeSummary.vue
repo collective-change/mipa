@@ -271,6 +271,10 @@ export default {
           let differences = Object.keys(newNode).filter(
             k => newNode[k].toString() !== this.oldNodeToSubmit[k].toString()
           );
+
+          differences = differences.filter(function(item) {
+            return !["sysFormula", "class"].includes(item);
+          });
           if (differences.length) {
             this.$store.commit("ui/setUiNodeChanged", true);
             this.$store.commit("ui/addUiNodeChangedFields", differences);

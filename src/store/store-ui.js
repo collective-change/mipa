@@ -14,11 +14,11 @@ const mutations = {
   setSelectedNodeId(state, nodeId) {
     state.selectedNodeId = nodeId;
     state.uiNodeChanged = false;
-    state.uiNodeChangdFields = [];
+    state.uiNodeChangedFields = [];
   },
   setUiNodeChanged(state, value) {
     state.uiNodeChanged = value;
-    if (value == false) state.uiNodeChangdFields = [];
+    if (value === false) state.uiNodeChangedFields = [];
   },
   addUiNodeChangedFields(state, differences) {
     let jointArray = [];
