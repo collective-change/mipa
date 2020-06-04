@@ -531,7 +531,7 @@ export default {
     nodeMouseOver(d) {
       const graph = this.selections.graph;
       const circles = graph.selectAll("circle");
-      const path = graph.selectAll("path");
+      const paths = graph.selectAll("path");
       const text = graph.selectAll("text");
 
       const related = [];
@@ -553,8 +553,8 @@ export default {
         });
       circles.classed("faded", true);
       circles.filter(df => related.indexOf(df) > -1).classed("highlight", true);
-      path.classed("faded", true);
-      path
+      paths.classed("faded", true);
+      paths
         .filter(df => df.source === d || df.target === d)
         .classed("highlight", true);
       text.classed("faded", true);
@@ -565,13 +565,13 @@ export default {
     nodeMouseOut(d) {
       const graph = this.selections.graph;
       const circles = graph.selectAll("circle");
-      const path = graph.selectAll("path");
+      const paths = graph.selectAll("path");
       const text = graph.selectAll("text");
 
       circles.classed("faded", false);
       circles.classed("highlight", false);
-      path.classed("faded", false);
-      path.classed("highlight", false);
+      paths.classed("faded", false);
+      paths.classed("highlight", false);
       text.classed("faded", false);
       text.classed("highlight", false);
       // This ensures that tick is called so the node count is updated
