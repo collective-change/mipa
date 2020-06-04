@@ -163,7 +163,7 @@ export default {
           .dialog({
             title: "Unsaved changes",
             message:
-              "Any changes you made will be lost. Really change to another action?",
+              "Any changes you made will be lost. Really switch to another action?",
             cancel: true,
             persistent: true
           })
