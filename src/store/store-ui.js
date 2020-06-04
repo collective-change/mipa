@@ -18,7 +18,7 @@ const mutations = {
   },
   setUiNodeChanged(state, value) {
     state.uiNodeChanged = value;
-    if (value === false) state.uiNodeChangedFields = [];
+    if (value == false) state.uiNodeChangedFields = [];
   },
   addUiNodeChangedFields(state, differences) {
     let jointArray = [];

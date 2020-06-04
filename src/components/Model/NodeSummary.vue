@@ -268,8 +268,11 @@ export default {
       deep: true,
       handler: function(newNode) {
         if (!this.nodeToSubmitIsFreshlyAssigned) {
+          let oldNode = this.oldNodeToSubmit;
           let differences = Object.keys(newNode).filter(
-            k => newNode[k].toString() !== this.oldNodeToSubmit[k].toString()
+            k =>
+              (newNode[k] ? newNode[k] : {}).toString() !==
+              (oldNode[k] ? oldNode[k] : {}).toString()
           );
 
           differences = differences.filter(function(item) {
