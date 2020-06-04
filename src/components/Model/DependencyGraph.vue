@@ -396,7 +396,13 @@ export default {
         .enter()
         .append("circle")
         .attr("r", nodeRadius)
-        .attr("class", d => d.class)
+        /*.attr("class", d =>
+          d.class.concat(
+            d.isSelfBlocking ? " selfBlocking" : "",
+            d.isNew ? " new" : "",
+            d.symbolFormula ? "" : " noFormula"
+          )
+        )*/
         .call(
           d3
             .drag()
@@ -413,7 +419,7 @@ export default {
         })
         .on("click", this.nodeClick);
 
-      this.updateNodeText();
+      this.updateNodeClassAndText();
 
       // Add 'marker-end' attribute to each path
       svg
@@ -423,8 +429,23 @@ export default {
 
       this.simulation.alpha(1).restart();
     },
-    updateNodeText(restartSimulation = false) {
+    updateNodeClassAndText(restartSimulation = false) {
       const graph = this.selections.graph;
+      const selectedCircle = graph.selectAll("circle.selected");
+      console.log(selectedCircle);
+      graph
+        .selectAll("circle")
+        .data(this.d3Data.nodes)
+        //.attr("r", nodeRadius)
+        .attr("class", d =>
+          d.class.concat(
+            d.isSelfBlocking ? " selfBlocking" : "",
+            d.isNew ? " new" : "",
+            d.symbolFormula ? "" : " noFormula"
+          )
+        );
+      selectedCircle.classed("selected", true);
+
       graph.selectAll("text").remove();
       graph
         .selectAll("text")
@@ -442,6 +463,7 @@ export default {
           )
         )
         .call(this.wrap, nodeRadius * 2); // wrap the text in <= node diameter
+      //update circle styles as well
       if (restartSimulation) this.simulation.alpha(0.01).restart();
     },
     updateForces() {
@@ -919,7 +941,7 @@ export default {
           this.storeDataChangeCount++;
         }
         if (graphTextChange && !dataChanged) {
-          this.updateNodeText(true);
+          this.updateNodeClassAndText(true);
         }
         //console.log("nodes handler finished");
       }
@@ -976,6 +998,12 @@ circle.output {
 circle.input {
   fill: #b2e48a;
   stroke: #005000;
+}
+circle.new,
+circle.noFormula,
+circle.selfBlocking {
+  stroke-width: 1px;
+  stroke: red;
 }
 
 circle.selected {
