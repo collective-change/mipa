@@ -530,7 +530,7 @@ export default {
     },
     nodeMouseOver(d) {
       const graph = this.selections.graph;
-      const circle = graph.selectAll("circle");
+      const circles = graph.selectAll("circle");
       const path = graph.selectAll("path");
       const text = graph.selectAll("text");
 
@@ -551,8 +551,8 @@ export default {
             }
           }
         });
-      circle.classed("faded", true);
-      circle.filter(df => related.indexOf(df) > -1).classed("highlight", true);
+      circles.classed("faded", true);
+      circles.filter(df => related.indexOf(df) > -1).classed("highlight", true);
       path.classed("faded", true);
       path
         .filter(df => df.source === d || df.target === d)
@@ -564,12 +564,12 @@ export default {
     },
     nodeMouseOut(d) {
       const graph = this.selections.graph;
-      const circle = graph.selectAll("circle");
+      const circles = graph.selectAll("circle");
       const path = graph.selectAll("path");
       const text = graph.selectAll("text");
 
-      circle.classed("faded", false);
-      circle.classed("highlight", false);
+      circles.classed("faded", false);
+      circles.classed("highlight", false);
       path.classed("faded", false);
       path.classed("highlight", false);
       text.classed("faded", false);
@@ -578,7 +578,7 @@ export default {
       this.simulation.restart();
     },
     nodeClick(d) {
-      const circle = this.selections.graph.selectAll("circle");
+      const circles = this.selections.graph.selectAll("circle");
 
       let correspondingStoreNode = this.storeData.nodes.find(function(
         storeNode
@@ -587,8 +587,8 @@ export default {
       });
 
       if (this.selectedNodeId == correspondingStoreNode.id) {
-        circle.classed("selected", false);
-        circle.filter(td => td === d).classed("selected", true);
+        circles.classed("selected", false);
+        circles.filter(td => td === d).classed("selected", true);
         return;
       }
       if (this.uiNodeChanged) {
@@ -606,13 +606,13 @@ export default {
 
           .onOk(() => {
             this.setSelectedNodeId(correspondingStoreNode.id);
-            circle.classed("selected", false);
-            circle.filter(td => td === d).classed("selected", true);
+            circles.classed("selected", false);
+            circles.filter(td => td === d).classed("selected", true);
           });
       } else {
         this.setSelectedNodeId(correspondingStoreNode.id);
-        circle.classed("selected", false);
-        circle.filter(td => td === d).classed("selected", true);
+        circles.classed("selected", false);
+        circles.filter(td => td === d).classed("selected", true);
       }
     },
 
