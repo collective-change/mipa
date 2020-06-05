@@ -174,6 +174,7 @@ export default {
         return parsedSymbolFormula;
       } catch (err) {
         this.parserError = "Error parsing formula: " + err.message;
+        return "";
       }
     },
 
