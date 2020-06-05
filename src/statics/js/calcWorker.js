@@ -2,6 +2,7 @@
 importScripts("https://unpkg.com/mathjs@6.6.4/dist/math.min.js");
 
 const parser = self.math.parser();
+var modelNodes = [];
 
 onmessage = function(e) {
   switch (e.data.calculationType) {
@@ -15,8 +16,10 @@ onmessage = function(e) {
   }
 };
 
-function prepEnvironment() {
+function prepEnvironment(data) {
   var errorOccurred = false;
+
+  modelNodes = data.modelNodes; //make modelNodes globally accessible
 
   //import custom functions
   delay.rawArgs = true;
@@ -25,6 +28,20 @@ function prepEnvironment() {
   });
 
   //create currency units
+  math.createUnit(data.exchangeRates.base);
+  Object.keys(data.exchangeRates.rates)
+    .filter(function(currency) {
+      return currency !== data.exchangeRates.base;
+    })
+    .forEach(function(currency) {
+      math.createUnit(
+        currency,
+        math.unit(
+          1 / data.exchangeRates.rates[currency],
+          data.exchangeRates.base
+        )
+      );
+    });
 
   //create custom units
   math.createUnit({
@@ -41,7 +58,7 @@ function calculateBaseline(data) {
   let startTime = new Date();
   var errorOccurred = false;
 
-  errorOccurred = prepEnvironment();
+  errorOccurred = prepEnvironment(data);
 
   let nodes = prepForSort(data.modelNodes);
   //console.log("nodes: ", nodes);
@@ -96,17 +113,17 @@ function calculateBaseline(data) {
       try {
         //if formula includes a variable then save it
         if (node.sysFormula.includes("$")) {
-          return "$" + node.id + " = " + node.sysFormula;
+          expressionsArray.push("$" + node.id + " = " + node.sysFormula);
         } else {
           //else set as value and units
-          return (
+          expressionsArray.push(
             "$" +
-            node.id +
-            " = unit(" +
-            node.sysFormula +
-            ",'" +
-            node.unit +
-            "')"
+              node.id +
+              " = unit(" +
+              node.sysFormula +
+              ",'" +
+              node.unit +
+              "')"
           );
         }
       } catch (err) {
@@ -127,12 +144,12 @@ function calculateBaseline(data) {
         parsedExpressions.push(math.parse(expression));
       } catch (err) {
         let nodeName = replace$NodeIdsWithName(
-          expression.split(" =")[0],
-          data.modelNodes
+          expression.split(" =")[0]
+          //data.modelNodes
         );
         let replacedExpression = replace$NodeIdsWithSymbol(
-          expression,
-          data.modelNodes
+          expression
+          //data.modelNodes
         );
         this.postMessage({
           errorType: "parse error",
@@ -174,43 +191,55 @@ function calculateBaseline(data) {
 
   if (errorOccurred) return;
 
-  try {
-    while (completedLoops < maxLoops) {
-      // evaluate the formulas
-      compiledExpressions.forEach(function(code, index) {
-        //todo: if timeS == initialTimeS then evaluate current value
-        code.evaluate(scope);
-        //on first 2 loops, check result of evaluation against units expected by user.
-        if (completedLoops < 2) {
-          expectedUnit = expectedUnits[index];
-          if (
-            !expectedUnits[index].equalBase(scope["$" + sortedNodes[index].id])
-          )
-            throw "Dimensions of expected units and calculated units do not match for node " +
-              sortedNodes[index].id +
-              " (" +
-              sortedNodes[index].name +
-              ")." +
-              " Expected: " +
-              expectedUnit.toString() +
-              " Calculated: " +
-              scope["$" + sortedNodes[index].id].toString();
-        }
-      });
+  while (completedLoops < maxLoops) {
+    // evaluate the formulas
+    compiledExpressions.forEach(function(code, index) {
+      if (!errorOccurred)
+        try {
+          //todo: if timeS == initialTimeS then evaluate current value
+          code.evaluate(scope);
 
-      //save time and node values into results object
-      scope.timeSeries.timeSPoints.push(scope.timeS);
-      sortedNodes.forEach(function(node, index) {
-        scope.timeSeries.nodes[node.id].push(scope["$" + node.id]);
-      });
-      scope.timeS = scope.timeS + scope.dt.toNumber("seconds");
-      completedLoops++;
-      this.postMessage({ progressValue: completedLoops / maxLoops });
-      //console.log("completed loop ", completedLoops);
-    }
-  } catch (err) {
-    console.log(err);
-    this.postMessage(err);
+          //on first 2 loops, check result of evaluation against units expected by user.
+          if (completedLoops < 2) {
+            expectedUnit = expectedUnits[index];
+            if (
+              !expectedUnits[index].equalBase(
+                scope["$" + sortedNodes[index].id]
+              )
+            )
+              throw `dimensions of expected units and calculated units do not match.
+              <br/> Expected: "${expectedUnit.toString()}"
+              <br/> Calculated: "${scope[
+                "$" + sortedNodes[index].id
+              ].toString()}"`;
+          }
+        } catch (err) {
+          //console.log(err);
+          this.postMessage({
+            errorType: "evaluation error",
+            errorMessage: `For node "${sortedNodes[index].name}",  <br/> ${err}`
+          });
+          errorOccurred = true;
+        }
+      if (errorOccurred) return;
+    });
+    if (!errorOccurred)
+      try {
+        //save time and node values into results object
+        scope.timeSeries.timeSPoints.push(scope.timeS);
+        sortedNodes.forEach(function(node, index) {
+          scope.timeSeries.nodes[node.id].push(scope["$" + node.id]);
+        });
+      } catch (err) {
+        console.log(err);
+        this.postMessage(err);
+        errorOccurred = true;
+      }
+    if (errorOccurred) return;
+    scope.timeS = scope.timeS + scope.dt.toNumber("seconds");
+    completedLoops++;
+    this.postMessage({ progressValue: completedLoops / maxLoops });
+    //console.log("completed loop ", completedLoops);
   }
 
   if (errorOccurred) return;
@@ -219,15 +248,26 @@ function calculateBaseline(data) {
   //console.log(scope);
   let resultTimeSeriesNodesValues = {};
   sortedNodes.forEach(function(node, index) {
-    let nodeValues = scope.timeSeries.nodes[node.id].map(function(val) {
-      //get only the numeric value of each value entry in the array
-      if (typeof val == "number") {
-        return val;
-      } else {
-        return val.toNumber(node.unit);
-      }
-    });
-    resultTimeSeriesNodesValues[node.id] = nodeValues;
+    try {
+      let nodeValues = scope.timeSeries.nodes[node.id].map(function(val) {
+        //get only the numeric value of each value entry in the array
+        if (typeof val == "number") {
+          return val;
+        } else {
+          return val.toNumber(node.unit);
+        }
+      });
+      resultTimeSeriesNodesValues[node.id] = nodeValues;
+    } catch (err) {
+      //console.log(err);
+      this.postMessage({
+        errorType: "results number extraction error",
+        errorMessage: `For node "${node.name}", timeSeries [${
+          scope.timeSeries.nodes[node.id]
+        }] <br/> ${err}`
+      });
+      errorOccurred = true;
+    }
   });
 
   let outputTimeSeries = {
@@ -332,11 +372,17 @@ function delay(args, math, scope) {
   } else if (args.length == 2) {
     //no initial value defined
   } else if (args.length == 3) {
-    if (typeof args[2] == "number") initialValue = args[2];
+    if (!isNaN(args[2])) initialValue = Number(args[2]);
     else if (args[2] == "best_guess") initialValue = "best_guess";
     else {
-      console.error("Initial value not recognized for " + nodeId);
-      throw "Initial value not recognized for " + nodeId;
+      console.error(
+        `Initial value not recognized for "${replaceNodeIdsWithName(
+          nodeId
+        )}" <br/> ${args}`
+      );
+      throw `Initial value not recognized for "${replaceNodeIdsWithName(
+        nodeId
+      )}" <br/> ${args}`;
     }
   } else {
     console.error('"delay" function takes at most 3 arguments.');
@@ -355,7 +401,8 @@ function delay(args, math, scope) {
     targetTimeS,
     initialValue,
     currentValue,
-    nodeId
+    nodeId,
+    scope
   );
 }
 
@@ -365,7 +412,8 @@ function interpolate(
   targetTimeS,
   initialValue,
   currentValue,
-  nodeId
+  nodeId,
+  scope
 ) {
   let timeSPoints = [];
   let values = [];
@@ -389,30 +437,23 @@ function interpolate(
       if (currentValue != "") return currentValue;
       else {
         console.error(
-          "No history, no initial value, and no current value available for best guess for node id " +
-            nodeId +
-            " initialValue: " +
-            typeof initialValue +
-            " " +
-            initialValue
+          `No history, no initial value, and no current value available for best guess for node "${replaceNodeIdsWithName(
+            nodeId
+          )}", initialValue: (${typeof initialValue}) ${initialValue}`
         );
-        throw "No history, no initial value, and no current value available for best guess for node id " +
-          nodeId +
-          " initialValue: " +
-          typeof initialValue +
-          " " +
-          initialValue;
+        throw `No history, no initial value, and no current value available for best guess for node "${replaceNodeIdsWithName(
+          nodeId
+        )}", initialValue: (${typeof initialValue}) ${initialValue}`;
       }
     } else {
       console.error(
-        "No history and no initial value available for node id " +
-          nodeId +
-          " initialValue: " +
-          typeof initialValue +
-          " " +
-          initialValue
+        `No history and no initial value available for node "${replaceNodeIdsWithName(
+          nodeId
+        )}", initialValue: (${typeof initialValue}) ${initialValue}`
       );
-      throw "No history and no initial value available for node id " + nodeId;
+      throw `No history and no initial value available for node "${replaceNodeIdsWithName(
+        nodeId
+      )}", initialValue: (${typeof initialValue}) ${initialValue}`;
     }
   }
   //else if history starts after target time, then return initial value if available, or first value in history
@@ -472,18 +513,26 @@ function interpolateFromLookup(timeSPoints, values, targetTimeS) {
 
 function valueIsANumber(val) {
   //console.log(val, typeof val != "undefined", val != "", !isNaN(Number(val)));
-  return typeof val != "undefined" && val != "" && !isNaN(Number(val));
+  return typeof val != "undefined" && val !== "" && !isNaN(Number(val));
 }
 
-function replace$NodeIdsWithName(workingString, nodes) {
-  nodes.forEach(
+function replace$NodeIdsWithName(workingString) {
+  /*modelNodes.forEach(
     node => (workingString = workingString.replace("$" + node.id, node.name))
+  );
+  return workingString;*/
+  return replaceNodeIdsWithName("$" + workingString);
+}
+
+function replaceNodeIdsWithName(workingString) {
+  modelNodes.forEach(
+    node => (workingString = workingString.replace(node.id, node.name))
   );
   return workingString;
 }
 
-function replace$NodeIdsWithSymbol(workingString, nodes) {
-  nodes.forEach(
+function replace$NodeIdsWithSymbol(workingString) {
+  modelNodes.forEach(
     node => (workingString = workingString.replace("$" + node.id, node.symbol))
   );
   return workingString;

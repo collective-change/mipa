@@ -43,11 +43,16 @@ export default {
       "calculatorIsRunning",
       "calculationProgress",
       "calculationProgressLabel"
-    ])
+    ]),
+    ...mapState("adHocDocs", ["exchangeRates"])
   },
   methods: {
     calculateBaseline() {
-      let payload = { modelId: this.$route.params.modelId, nodes: this.nodes };
+      let payload = {
+        modelId: this.$route.params.modelId,
+        nodes: this.nodes,
+        exchangeRates: this.exchangeRates
+      };
       this.$store.dispatch("calculator/calculateBaseline", payload);
     }
   },
