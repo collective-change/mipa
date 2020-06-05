@@ -48,13 +48,13 @@ const actions = {
     commit("setCalculationProgressLabel", "0%");
     let startTime = new Date();
 
-    let baselineCalcWorker = new Worker("statics/js/baselineCalcWorker.js");
-    baselineCalcWorker.postMessage({
+    let calcWorker = new Worker("statics/js/calcWorker.js");
+    calcWorker.postMessage({
       modelNodes: payload.nodes
     });
     //console.log("Message posted to worker");
 
-    baselineCalcWorker.onmessage = function(e) {
+    calcWorker.onmessage = function(e) {
       //console.log(e.data);
       if (typeof e.data == "string") {
         console.log("Error message received from worker: ", e.data);
@@ -67,7 +67,7 @@ const actions = {
           data.errorMessage,
           true //useHtml
         );
-        baselineCalcWorker.terminate();
+        calcWorker.terminate();
         commit("setCalculatorIsRunning", false);
       } else if ("timeSPoints" in e.data) {
         let payload2 = {
@@ -77,7 +77,7 @@ const actions = {
 
         dispatch("calcResults/setBaseline", payload2, { root: true });
 
-        baselineCalcWorker.terminate();
+        calcWorker.terminate();
         commit("setCalculatorIsRunning", false);
         let endTime = new Date();
         let calcDurationSec = (endTime - startTime) / 1000;

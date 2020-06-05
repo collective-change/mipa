@@ -34,7 +34,7 @@ export default {
   data() {
     return {
       showBaselineCalculator: false,
-      baselineCalcWorker: null
+      calcWorker: null
     };
   },
   computed: {
