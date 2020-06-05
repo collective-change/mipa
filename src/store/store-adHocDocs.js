@@ -5,21 +5,7 @@ const state = {
   exchangeRates: []
 };
 
-const mutations = {
-  //synchronous
-  clearIssues(state) {
-    state.issues = {};
-  },
-  setSearch(state, value) {
-    state.search = value;
-  },
-  setSort(state, value) {
-    state.sort = value;
-  },
-  setIssuesDownloaded(state, value) {
-    state.issuesDownloaded = value;
-  }
-};
+const mutations = {};
 
 const actions = {
   bindExchangeRates: firestoreAction(({ bindFirestoreRef }) => {
