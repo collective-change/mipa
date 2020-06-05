@@ -14,8 +14,7 @@ const actions = {
       firebaseDb.collection("adHocDocs").doc("exchangeRates"),
       {
         maxRefDepth: 1,
-        reset: false,
-        wait: true
+        wait: true //this also forces reset: false
       }
     );
   }),

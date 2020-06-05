@@ -108,6 +108,7 @@ export default {
       let modelId = this.$route.params.orgId;
       this.$store.dispatch("model/bindCurrentModel", modelId);
       this.$store.dispatch("model/bindNodes", modelId);
+      this.$store.dispatch("adHocDocs/bindExchangeRates");
       this.$store.dispatch("calcResults/bindBaseline", modelId);
 
       //bind to currentModel's nodes
@@ -139,7 +140,9 @@ export default {
   },
 
   beforeDestroy() {
+    this.$store.dispatch("model/unbindCurrentModel");
     this.$store.dispatch("model/unbindNodes");
+    this.$store.dispatch("adHocDocs/unbindExchangeRates");
     this.$store.dispatch("calcResults/unbindBaseline");
   }
 };

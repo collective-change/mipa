@@ -52,9 +52,8 @@ const actions = {
         .collection("calcResults")
         .doc("baseline"),
       {
-        reset: true,
         maxRefDepth: 1,
-        wait: true
+        wait: true //this also forces reset: false
       }
     );
   }),

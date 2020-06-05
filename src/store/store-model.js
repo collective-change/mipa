@@ -60,9 +60,8 @@ const actions = {
       "currentModel",
       firebaseDb.collection("models").doc(modelId),
       {
-        reset: true,
         maxRefDepth: 1,
-        wait: true
+        wait: true //this also forces reset: false
       }
     );
   }),
@@ -81,9 +80,8 @@ const actions = {
         .doc(modelId)
         .collection("nodes"),
       {
-        reset: true,
         maxRefDepth: 1,
-        wait: true
+        wait: true //this also forces reset: false
       }
     );
   }),

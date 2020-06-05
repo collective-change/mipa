@@ -82,8 +82,7 @@ const actions = {
         .orderBy("goal", "asc"),
       {
         maxRefDepth: 1,
-        reset: false,
-        wait: true
+        wait: true //this also forces reset: false
       }
     );
   }),
@@ -98,9 +97,8 @@ const actions = {
       "currentOrg",
       firebaseDb.collection("orgs").doc(orgId),
       {
-        reset: true,
         maxRefDepth: 1,
-        wait: true
+        wait: true //this also forces reset: false
       }
     );
   }),

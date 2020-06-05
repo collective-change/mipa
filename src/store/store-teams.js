@@ -23,9 +23,8 @@ const actions = {
         .orderBy("name", "asc")
         .orderBy("goal", "asc"),
       {
-        reset: false,
         maxRefDepth: 1,
-        wait: true
+        wait: true //this also forces reset: false
       }
     );
   }),
@@ -40,8 +39,7 @@ const actions = {
       firebaseDb.collection("teams").doc(teamId),
       {
         maxRefDepth: 1,
-        reset: true,
-        wait: true
+        wait: true //this also forces reset: false
       }
     );
   }),

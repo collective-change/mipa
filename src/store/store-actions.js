@@ -81,8 +81,7 @@ const actions = {
       //.orderBy("goal", "asc"),
       {
         maxRefDepth: 1,
-        reset: false,
-        wait: true
+        wait: true //this also forces reset: false
       }
     );
   }),
