@@ -1,10 +1,7 @@
 <template>
   <div class="q-pa-md">
     <q-btn
-      @click="
-        //showBaselineCalculator = true;
-        calculateBaseline()
-      "
+      @click="calculateBaseline()"
       class="all-pointer-events print-hide"
       color="primary"
       label="Calculate basesline"
@@ -31,9 +28,6 @@
 
 <script>
 import { mapGetters, mapState } from "vuex";
-//import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-//import BaselineCalcWorker from "statics/baselineCalcWorker.js";
-//const baselineCalcWorker = new BaselineCalcWorker();
 
 export default {
   components: {},
@@ -41,61 +35,24 @@ export default {
     return {
       showBaselineCalculator: false,
       baselineCalcWorker: null
-      //calculationProgress: 0,
-      //calculationProgressLabel: "0%"
-      //baseline: null
     };
   },
   computed: {
-    //...mapState("orgs", ["currentOrg"]),
     ...mapGetters("model", ["nodes"]),
     ...mapState("calculator", [
       "calculatorIsRunning",
       "calculationProgress",
       "calculationProgressLabel"
     ])
-    //...mapState("calcResults", ["baseline"])
   },
   methods: {
     calculateBaseline() {
       let payload = { modelId: this.$route.params.modelId, nodes: this.nodes };
       this.$store.dispatch("calculator/calculateBaseline", payload);
-      /*if (!window.Worker) {
-        console.log(
-          "Web worker not supported by browser. Aborting calculations."
-        );
-        return;
-      }*/
-
-      /*
-      let that = this;
-      this.baselineCalcWorker = new Worker("statics/js/baselineCalcWorker.js");
-      this.baselineCalcWorker.postMessage({
-        modelNodes: this.nodes
-        //expr: "12 / (2.3 + 0.7)"
-      });
-      console.log("Message posted to worker");
-
-      this.baselineCalcWorker.onmessage = function(e) {
-        if ("timeSPoints" in e.data) {
-          //that.baseline = e.data;
-
-          let payload = { modelId: that.$route.params.modelId, data: e.data };
-          that.$store.dispatch("calcResults/setBaseline", payload);
-          //todo: save into cloud storage file
-        } else if ("progressValue" in e.data) {
-          that.calculationProgress = e.data.progressValue;
-          that.calculationProgressLabel = e.data.progressValue * 100 + "%";
-        } else {
-          console.log("Message received from worker: ", e.data);
-        }
-      };*/
     }
   },
   created() {},
   mounted() {},
-  beforeDestroy() {
-    //this.$store.dispatch("model/unbindNodes");
-  }
+  beforeDestroy() {}
 };
 </script>
