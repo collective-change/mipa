@@ -359,6 +359,16 @@ export default {
     onItemClick() {
       console.log("Clicked on an Item");
       console.log("currentroute", this.$route);
+    },
+    bindMinimalOrgRelatedData(orgId) {
+      this.$store.dispatch("orgs/bindCurrentOrg", orgId);
+    },
+    unbindAllOrgRelatedData() {
+      this.$store.dispatch("orgs/unbindCurrentOrg");
+      this.$store.dispatch("actions/unbindActions");
+      this.$store.dispatch("model/unbindCurrentModel");
+      this.$store.dispatch("model/unbindNodes");
+      this.$store.dispatch("calcResults/unbindBaseline");
     }
   },
   created() {
@@ -372,11 +382,7 @@ export default {
 
       let orgId = this.$route.params.orgId;
       if (orgId) {
-        let modelId = orgId;
-        this.$store.dispatch("orgs/bindCurrentOrg", orgId);
-        this.$store.dispatch("actions/bindActions", orgId);
-        this.$store.dispatch("model/bindCurrentModel", modelId);
-        this.$store.dispatch("model/bindNodes", modelId);
+        this.bindMinimalOrgRelatedData(orgId);
       }
     })();
   },
@@ -384,7 +390,7 @@ export default {
     //console.log("Layout mounted");
   },
   beforeDestroy() {
-    this.$store.dispatch("orgs/unbindCurrentOrg");
+    this.unbindAllOrgRelatedData();
   },
   watch: {
     $route(newRoute, oldRoute) {
@@ -392,15 +398,10 @@ export default {
       let oldOrgId = "orgId" in oldRoute.params ? oldRoute.params.orgId : "";
 
       if (newOrgId != oldOrgId && newOrgId != "") {
-        let modelId = newOrgId;
-        this.$store.dispatch("orgs/bindCurrentOrg", newOrgId);
-        this.$store.dispatch("actions/bindActions", newOrgId);
-        this.$store.dispatch("model/bindCurrentModel", modelId);
-        this.$store.dispatch("model/bindNodes", modelId);
+        this.bindMinimalOrgRelatedData(newOrgId);
       }
       if (newOrgId == "") {
-        this.$store.dispatch("orgs/unbindCurrentOrg");
-        this.$store.dispatch("actions/unbindActions");
+        this.unbindAllOrgRelatedData();
       }
     }
   }

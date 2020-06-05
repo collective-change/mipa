@@ -140,10 +140,7 @@ export default {
   },
 
   beforeDestroy() {
-    this.$store.dispatch("model/unbindCurrentModel");
-    this.$store.dispatch("model/unbindNodes");
-    this.$store.dispatch("adHocDocs/unbindExchangeRates");
-    this.$store.dispatch("calcResults/unbindBaseline");
+    // don't unbind firestore refs here; leave it until org change in Layout.vue
   }
 };
 </script>
