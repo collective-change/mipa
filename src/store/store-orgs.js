@@ -1,4 +1,3 @@
-import Vue from "vue";
 import { uid, Notify } from "quasar";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { firestoreAction } from "vuexfire";

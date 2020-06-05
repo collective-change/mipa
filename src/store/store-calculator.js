@@ -1,4 +1,3 @@
-import Vue from "vue";
 import { uid, Notify } from "quasar";
 import { showErrorMessage } from "src/utils/util-show-error-message";
 //import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
