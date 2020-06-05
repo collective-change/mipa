@@ -46,7 +46,7 @@ const actions = {
     commit("setCalculatorIsRunning", true);
     commit("setCalculationProgress", 0);
     commit("setCalculationProgressLabel", "0%");
-    let startTime = new Date();
+    //let startTime = new Date();
 
     let calcWorker = new Worker("statics/js/calcWorker.js");
     calcWorker.postMessage({
@@ -81,12 +81,18 @@ const actions = {
 
         calcWorker.terminate();
         commit("setCalculatorIsRunning", false);
-        let endTime = new Date();
-        let calcDurationSec = (endTime - startTime) / 1000;
-        Notify.create("Calculation took " + calcDurationSec + " seconds.");
+        //let endTime = new Date();
+        //let calcDurationSec = (endTime - startTime) / 1000;
+        Notify.create(
+          "Calculation time " + e.data.calcTimeMs / 1000 + " seconds."
+        );
+        console.table(e.data.calcTimeStages);
       } else if ("progressValue" in e.data) {
         commit("setCalculationProgress", e.data.progressValue);
-        commit("setCalculationProgressLabel", e.data.progressValue * 100 + "%");
+        commit(
+          "setCalculationProgressLabel",
+          Math.round(e.data.progressValue * 100) + "%"
+        );
       } else {
         console.log("Error message received from worker: ", e.data);
         showErrorMessage(

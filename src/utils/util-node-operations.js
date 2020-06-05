@@ -33,7 +33,10 @@ function classifyInfluencers(payload) {
         if (expressionNode.fn.name == "delay") {
           delayCallsArgs.push(expressionNode.args);
           //if the current node has a delay influence on itself
-          if (expressionNode.args[0].name == "$" + thisNode.id)
+          if (
+            expressionNode.args.length &&
+            expressionNode.args[0].name == "$" + thisNode.id
+          )
             selfDelay = true;
         }
       }
@@ -54,7 +57,7 @@ function classifyInfluencers(payload) {
     delayCallsArgs.forEach(function(args) {
       //console.log(args);
       //if influencer is used in any delay, then influencerIsBlocking = false
-      if (args[0].name.substring(1) == influencerId) {
+      if (args.length && args[0].name.substring(1) == influencerId) {
         influencerIsBlocking = false;
         influencerDelayCallsArgs.push(args);
       }

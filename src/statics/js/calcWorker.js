@@ -55,14 +55,22 @@ function prepEnvironment(data) {
 }
 
 function calculateBaseline(data) {
-  let startTime = new Date();
+  let calcTimeLog = {}; //used for tracking calculation times of different sections
+  calcTimeLog.startTime = new Date();
+  this.postMessage({ progressValue: 0 });
+  let lastProgressReportTime = new Date();
+
   var errorOccurred = false;
 
   errorOccurred = prepEnvironment(data);
+  calcTimeLog.prepEnvDone = new Date();
 
   let nodes = prepForSort(data.modelNodes);
+  calcTimeLog.prepForSortDone = new Date();
+
   //console.log("nodes: ", nodes);
   let sortedNodes = topoSort(nodes);
+  calcTimeLog.topoSortDone = new Date();
 
   //prepare scope object
   let initialTimeS = Math.floor(Date.now() / 1000);
@@ -78,6 +86,7 @@ function calculateBaseline(data) {
   sortedNodes.forEach(function(node, index) {
     scope.timeSeries.nodes[node.id] = [];
   });
+  calcTimeLog.timeSeriesPrepDone = new Date();
   //console.log({ sortedNodes });
 
   let completedLoops = 0;
@@ -103,6 +112,7 @@ function calculateBaseline(data) {
         errorOccurred = true;
       }
   });
+  calcTimeLog.currentValuesLoadingDone = new Date();
 
   if (errorOccurred) return;
 
@@ -134,6 +144,7 @@ function calculateBaseline(data) {
         });
       }
   });
+  calcTimeLog.expressionsLoadingDone = new Date();
 
   if (errorOccurred) return;
 
@@ -158,6 +169,7 @@ function calculateBaseline(data) {
         errorOccurred = true;
       }
   });
+  calcTimeLog.expressionsParsingDone = new Date();
 
   if (errorOccurred) return;
 
@@ -169,6 +181,7 @@ function calculateBaseline(data) {
     console.log(err);
     this.postMessage(err);
   }
+  calcTimeLog.expressionsCompilationDone = new Date();
 
   if (errorOccurred) return;
 
@@ -188,6 +201,7 @@ function calculateBaseline(data) {
         errorOccurred = true;
       }
   });
+  calcTimeLog.unitLoadingDone = new Date();
 
   if (errorOccurred) return;
 
@@ -238,9 +252,17 @@ function calculateBaseline(data) {
     if (errorOccurred) return;
     scope.timeS = scope.timeS + scope.dt.toNumber("seconds");
     completedLoops++;
-    this.postMessage({ progressValue: completedLoops / maxLoops });
-    //console.log("completed loop ", completedLoops);
+
+    //report progress every 500 ms
+    if (
+      new Date() - lastProgressReportTime >= 500 ||
+      completedLoops == maxLoops
+    ) {
+      this.postMessage({ progressValue: completedLoops / maxLoops });
+      lastProgressReportTime = new Date();
+    }
   }
+  calcTimeLog.evaluationDone = new Date();
 
   if (errorOccurred) return;
 
@@ -270,12 +292,36 @@ function calculateBaseline(data) {
     }
   });
 
+  calcTimeLog.endTime = new Date();
+
+  let calcTimeMs = calcTimeLog.endTime - calcTimeLog.startTime;
+  let log = calcTimeLog;
+  let calcTimeStages = {
+    prepEnv: log.prepEnvDone - log.startTime,
+    prepForSort: log.prepForSortDone - log.prepEnvDone,
+    topoSort: log.topoSortDone - log.prepForSortDone,
+    timeSeriesPrep: log.timeSeriesPrepDone - log.topoSortDone,
+    currentValuesLoading: log.currentValuesLoadingDone - log.timeSeriesPrepDone,
+    expressionsLoading:
+      log.expressionsLoadingDone - log.currentValuesLoadingDone,
+    expressionsParsing: log.expressionsParsingDone - log.expressionsLoadingDone,
+    expressionsCompilation:
+      log.expressionsCompilationDone - log.expressionsParsingDone,
+    unitLoading: log.unitLoadingDone - log.expressionsCompilationDone,
+    evaluation: log.evaluationDone - log.unitLoadingDone,
+    prepResult: log.endTime - log.evaluationDone
+  };
+
   let outputTimeSeries = {
     timeSPoints: scope.timeSeries.timeSPoints,
-    nodes: resultTimeSeriesNodesValues
+    nodes: resultTimeSeriesNodesValues,
+    calcTimeLog: calcTimeLog,
+    calcTimeStages: calcTimeStages,
+    calcTimeMs: calcTimeMs
   };
-  let endTime = new Date();
-  console.log("calcTime:", endTime - startTime, "ms");
+
+  console.log("calcTime:", calcTimeMs, "ms");
+
   //console.log("Posting message back to main script");
   //console.log({ scope });
   //console.log(outputTimeSeries);

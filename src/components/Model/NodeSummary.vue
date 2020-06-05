@@ -50,7 +50,7 @@
         <q-input
           v-model="nodeToSubmit.symbolFormula"
           label="Formula"
-          :prefix="nodeToSubmit.symbol + ' ='"
+          prefix="="
           autogrow
           debounce="800"
         />
