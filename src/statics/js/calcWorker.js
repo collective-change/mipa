@@ -15,14 +15,8 @@ onmessage = function(e) {
   }
 };
 
-function calculateBaseline(data) {
-  let startTime = new Date();
+function prepEnvironment() {
   var errorOccurred = false;
-  //console.log("Message received from main script");
-
-  let nodes = prepForSort(data.modelNodes);
-  //console.log("nodes: ", nodes);
-  let sortedNodes = topoSort(nodes);
 
   //import custom functions
   delay.rawArgs = true;
@@ -30,10 +24,28 @@ function calculateBaseline(data) {
     delay: delay
   });
 
+  //create currency units
+
   //create custom units
   math.createUnit({
-    person: { baseName: "person", aliases: ["persons", "people"] }
+    person: {
+      baseName: "person",
+      aliases: ["persons", "people"]
+    }
   });
+
+  return errorOccurred;
+}
+
+function calculateBaseline(data) {
+  let startTime = new Date();
+  var errorOccurred = false;
+
+  errorOccurred = prepEnvironment();
+
+  let nodes = prepForSort(data.modelNodes);
+  //console.log("nodes: ", nodes);
+  let sortedNodes = topoSort(nodes);
 
   //prepare scope object
   let initialTimeS = Math.floor(Date.now() / 1000);
