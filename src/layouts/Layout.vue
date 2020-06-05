@@ -361,10 +361,10 @@ export default {
       console.log("Clicked on an Item");
       console.log("currentroute", this.$route);
     },
-    bindSharedData() {
+    bindPublicData() {
       this.$store.dispatch("adHocDocs/bindExchangeRates");
     },
-    unbindSharedData() {
+    unbindPublicData() {
       this.$store.dispatch("adHocDocs/unbindExchangeRates");
     },
     bindMinimalOrgRelatedData(orgId) {
@@ -386,7 +386,7 @@ export default {
         //console.log("waiting for currentUser to be defined");
         await new Promise(resolve => setTimeout(resolve, 100));
       }
-      this.bindSharedData();
+      this.bindPublicData();
       let orgId = this.$route.params.orgId;
       if (orgId) {
         this.bindMinimalOrgRelatedData(orgId);
@@ -398,7 +398,7 @@ export default {
   },
   beforeDestroy() {
     this.unbindAllOrgRelatedData();
-    this.unbindSharedData();
+    this.unbindPublicData();
   },
   watch: {
     $route(newRoute, oldRoute) {
