@@ -372,9 +372,11 @@ export default {
 
       let orgId = this.$route.params.orgId;
       if (orgId) {
+        let modelId = orgId;
         this.$store.dispatch("orgs/bindCurrentOrg", orgId);
-        this.$store.dispatch("model/bindCurrentModel", orgId);
-        this.$store.dispatch("model/bindNodes", orgId);
+        this.$store.dispatch("actions/bindActions", orgId);
+        this.$store.dispatch("model/bindCurrentModel", modelId);
+        this.$store.dispatch("model/bindNodes", modelId);
       }
     })();
   },
@@ -389,11 +391,16 @@ export default {
       let newOrgId = "orgId" in newRoute.params ? newRoute.params.orgId : "";
       let oldOrgId = "orgId" in oldRoute.params ? oldRoute.params.orgId : "";
 
-      if (newOrgId != oldOrgId && newOrgId != "")
+      if (newOrgId != oldOrgId && newOrgId != "") {
+        let modelId = newOrgId;
         this.$store.dispatch("orgs/bindCurrentOrg", newOrgId);
-
+        this.$store.dispatch("actions/bindActions", newOrgId);
+        this.$store.dispatch("model/bindCurrentModel", modelId);
+        this.$store.dispatch("model/bindNodes", modelId);
+      }
       if (newOrgId == "") {
         this.$store.dispatch("orgs/unbindCurrentOrg");
+        this.$store.dispatch("actions/unbindActions");
       }
     }
   }

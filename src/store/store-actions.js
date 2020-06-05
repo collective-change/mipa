@@ -81,12 +81,13 @@ const actions = {
       //.orderBy("goal", "asc"),
       {
         maxRefDepth: 1,
-        wait: true //this also forces reset: false
+        reset: true, //reset actions so they don't linger when switching orgs
+        wait: false
       }
     );
   }),
   unbindActions: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("actions", false); //don't reset data when unbinding
+    unbindFirestoreRef("actions", true); //reset data when unbinding
   }),
   setSearch({ commit }, value) {
     commit("setSearch", value);

@@ -61,7 +61,8 @@ const actions = {
       firebaseDb.collection("models").doc(modelId),
       {
         maxRefDepth: 1,
-        wait: true //this also forces reset: false
+        wait: false,
+        reset: true
       }
     );
   }),
@@ -81,7 +82,8 @@ const actions = {
         .collection("nodes"),
       {
         maxRefDepth: 1,
-        wait: true //this also forces reset: false
+        wait: false,
+        reset: true
       }
     );
   }),
