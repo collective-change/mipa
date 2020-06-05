@@ -61,6 +61,7 @@ function calculateBaseline(data) {
   let lastProgressReportTime = new Date();
 
   var errorOccurred = false;
+  let maxLoops = 60;
 
   errorOccurred = prepEnvironment(data);
   calcTimeLog.prepEnvDone = new Date();
@@ -90,7 +91,6 @@ function calculateBaseline(data) {
   //console.log({ sortedNodes });
 
   let completedLoops = 0;
-  let maxLoops = 60;
 
   // gather up current values from nodes into scope
   //console.log("begin loading currentValues");
@@ -409,9 +409,23 @@ function prepForSort(nodes) {
 function delay(args, math, scope) {
   let $nodeId = args[0].name;
   let nodeId = $nodeId.substr(1);
-  let delayTime = args[1].compile().evaluate(scope);
+  let delayTime = valueIsANumber(args[1])
+    ? args[1]
+    : args[1].compile().evaluate(scope);
+  let values = scope.timeSeries.nodes[nodeId];
+  let timeSPoints = scope.timeSeries.timeSPoints;
+  //let defaultValue = scope[$nodeId];
+  let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
+
+  //quick case: if the last value in the time series is for the target time, then return it
+  if (timeSPoints[timeSPoints.length - 1] == targetTimeS) {
+    //console.log("match");
+    return values[values.length - 1];
+  }
+
   let initialValue = null;
   let currentValue = scope[$nodeId];
+
   if (args.length <= 1) {
     console.error('"delay" function needs at least 2 arguments.');
     throw '"delay" function needs at least 2 arguments.';
@@ -435,11 +449,6 @@ function delay(args, math, scope) {
     throw '"delay" function takes at most 3 arguments.';
   }
 
-  let values = scope.timeSeries.nodes[nodeId];
-  let timeSPoints = scope.timeSeries.timeSPoints;
-  //let defaultValue = scope[$nodeId];
-  let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
-
   //interpolate value at targetTimeS
   return interpolate(
     timeSPoints,
@@ -461,6 +470,11 @@ function interpolate(
   nodeId,
   scope
 ) {
+  //quick case: if the last value in the time series is for the target time, then return it
+  if (rawTimeSPoints[rawTimeSPoints.length - 1] == targetTimeS) {
+    //console.log("match");
+    return rawValues[rawValues.length - 1];
+  }
   let timeSPoints = [];
   let values = [];
   //extract only available data points
