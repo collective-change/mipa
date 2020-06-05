@@ -33,9 +33,9 @@ const actions = {
         showErrorMessage("Error updating organization", error.message);
       });
   },
-  deleteOrg({ dispatch }, orgId) {
+  async deleteOrg({ dispatch }, orgId) {
     //let userId = firebaseAuth.currentUser.uid;
-    firebaseDb
+    await firebaseDb
       .collection("orgs")
       .doc(orgId)
       .delete()
@@ -45,6 +45,9 @@ const actions = {
       .catch(function(error) {
         showErrorMessage("Error deleting organization", error.message);
       });
+
+    dispatch("model/deleteModel", orgId, { root: true });
+    //todo: delete all non-public models solely owned by org
   },
   addOrg({ dispatch }, org) {
     //add organization and its main model
@@ -60,7 +63,7 @@ const actions = {
       .then(function(docRef) {
         //console.log(docRef.id);
         dispatch(
-          "model/addModel",
+          "model/addOrgMainModel",
           { orgId: docRef.id, modelId: docRef.id },
           { root: true }
         );

@@ -32,7 +32,7 @@ const mutations = {
 };
 
 const actions = {
-  addModel({ dispatch }, payload) {
+  addOrgMainModel({ dispatch }, payload) {
     console.log("payload: ", payload);
     console.log("id: ", payload.orgId);
     let model = {};
@@ -40,6 +40,8 @@ const actions = {
     model.owners = { users: [firebaseAuth.currentUser.uid] };
     model.editors = { users: [firebaseAuth.currentUser.uid] };
     model.viewers = { org: [payload.orgId] };
+    model.isOrgMainModel = true;
+    model.name = "Main;";
     model.unwrittenChanges = [];
     firebaseDb
       .collection("models")
@@ -50,6 +52,20 @@ const actions = {
       })
       .catch(function(error) {
         showErrorMessage("Error creating model", error.message);
+      });
+  },
+
+  deleteModel({}, modelId) {
+    //let modelId = payload.modelId;
+    //let node = payload.node;
+    let modelRef = firebaseDb.collection("models").doc(modelId);
+    modelRef
+      .delete()
+      .then(function() {
+        Notify.create("Model deleted!");
+      })
+      .catch(function(error) {
+        showErrorMessage("Error deleting model", error.message);
       });
   },
 

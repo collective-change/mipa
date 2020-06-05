@@ -13,6 +13,7 @@
           :options="modelOptions"
           label="Model"
         />
+        {{ currentModel }}
         <baseline-calculator />
         <q-tree :nodes="exampleTree" node-key="label" />
       </div>
