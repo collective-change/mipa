@@ -10,6 +10,7 @@ import orgs from "./store-orgs";
 import model from "./store-model";
 import issues from "./store-issues";
 import actions from "./store-actions";
+import adHocDocs from "./store-adHocDocs";
 import calculator from "./store-calculator";
 import calcResults from "./store-calcResults";
 import ui from "./store-ui";
@@ -38,6 +39,7 @@ export default function(/* { ssrContext } */) {
       model,
       issues,
       actions,
+      adHocDocs,
       calculator,
       calcResults,
       ui,
