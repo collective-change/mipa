@@ -50,6 +50,7 @@ const actions = {
 
     let calcWorker = new Worker("statics/js/calcWorker.js");
     calcWorker.postMessage({
+      calculationType: "baseline",
       modelNodes: payload.nodes
     });
     //console.log("Message posted to worker");

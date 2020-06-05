@@ -4,13 +4,23 @@ importScripts("https://unpkg.com/mathjs@6.6.4/dist/math.min.js");
 const parser = self.math.parser();
 
 onmessage = function(e) {
+  switch (e.data.calculationType) {
+    case "baseline":
+      calculateBaseline(e.data);
+      break;
+    default:
+      console.err(
+        `calculationType "${e.data.calculationType}" not recognized.`
+      );
+  }
+};
+
+function calculateBaseline(data) {
   let startTime = new Date();
   var errorOccurred = false;
   //console.log("Message received from main script");
-  //console.log(e.data);
 
-  let nodes = prepForSort(e.data.modelNodes);
-  //let nodes = e.data.modelNodes.map(simplifyForSort);
+  let nodes = prepForSort(data.modelNodes);
   //console.log("nodes: ", nodes);
   let sortedNodes = topoSort(nodes);
 
@@ -106,11 +116,11 @@ onmessage = function(e) {
       } catch (err) {
         let nodeName = replace$NodeIdsWithName(
           expression.split(" =")[0],
-          e.data.modelNodes
+          data.modelNodes
         );
         let replacedExpression = replace$NodeIdsWithSymbol(
           expression,
-          e.data.modelNodes
+          data.modelNodes
         );
         this.postMessage({
           errorType: "parse error",
@@ -218,7 +228,7 @@ onmessage = function(e) {
   //console.log({ scope });
   //console.log(outputTimeSeries);
   postMessage(outputTimeSeries);
-};
+}
 
 function topoSort(nodes) {
   let L = []; //for storing sorted elements
