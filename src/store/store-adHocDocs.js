@@ -5,6 +5,22 @@ const state = {
   exchangeRates: []
 };
 
+const mutations = {
+  //synchronous
+  clearIssues(state) {
+    state.issues = {};
+  },
+  setSearch(state, value) {
+    state.search = value;
+  },
+  setSort(state, value) {
+    state.sort = value;
+  },
+  setIssuesDownloaded(state, value) {
+    state.issuesDownloaded = value;
+  }
+};
+
 const actions = {
   bindExchangeRates: firestoreAction(({ bindFirestoreRef }) => {
     return bindFirestoreRef(
@@ -21,6 +37,8 @@ const actions = {
     unbindFirestoreRef("exchangeRates", false); //don't reset data when unbinding
   })
 };
+
+const getters = {};
 
 export default {
   namespaced: true,
