@@ -82,7 +82,9 @@ const actions = {
         .orderBy("name", "asc")
         .orderBy("goal", "asc"),
       {
-        maxRefDepth: 1
+        maxRefDepth: 1,
+        reset: false,
+        wait: true
       }
     );
   }),
@@ -98,13 +100,14 @@ const actions = {
       firebaseDb.collection("orgs").doc(orgId),
       {
         reset: true,
-        maxRefDepth: 1
+        maxRefDepth: 1,
+        wait: true
       }
     );
   }),
 
   unbindCurrentOrg: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("currentOrg");
+    unbindFirestoreRef("currentOrg", true);
   })
 };
 

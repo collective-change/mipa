@@ -54,13 +54,14 @@ const actions = {
         .doc("baseline"),
       {
         reset: true,
-        maxRefDepth: 1
+        maxRefDepth: 1,
+        wait: true
       }
     );
   }),
 
   unbindBaseline: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("baseline");
+    unbindFirestoreRef("baseline", false);
   })
 };
 

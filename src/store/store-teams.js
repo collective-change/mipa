@@ -25,13 +25,14 @@ const actions = {
         .orderBy("goal", "asc"),
       {
         reset: false,
-        maxRefDepth: 1
+        maxRefDepth: 1,
+        wait: true
       }
     );
   }),
 
   unbindTeams: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("teams");
+    unbindFirestoreRef("teams", false);
   }),
 
   bindCurrentTeam: firestoreAction(({ bindFirestoreRef }, teamId) => {
@@ -39,13 +40,15 @@ const actions = {
       "currentTeam",
       firebaseDb.collection("teams").doc(teamId),
       {
-        maxRefDepth: 1
+        maxRefDepth: 1,
+        reset: true,
+        wait: true
       }
     );
   }),
 
   unbindCurrentTeam: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("currentTeam");
+    unbindFirestoreRef("currentTeam", true);
   }),
 
   addTeam({}, team) {

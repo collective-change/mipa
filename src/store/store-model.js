@@ -62,13 +62,14 @@ const actions = {
       firebaseDb.collection("models").doc(modelId),
       {
         reset: true,
-        maxRefDepth: 1
+        maxRefDepth: 1,
+        wait: true
       }
     );
   }),
 
   unbindCurrentModel: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("currentModel");
+    unbindFirestoreRef("currentModel", true);
   }),
 
   bindNodes: firestoreAction(({ bindFirestoreRef }, modelId) => {
@@ -82,13 +83,14 @@ const actions = {
         .collection("nodes"),
       {
         reset: true,
-        maxRefDepth: 1
+        maxRefDepth: 1,
+        wait: true
       }
     );
   }),
 
   unbindNodes: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("nodes");
+    unbindFirestoreRef("nodes", true);
   }),
 
   addNode({ dispatch }, payload) {
