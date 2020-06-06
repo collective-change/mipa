@@ -335,7 +335,7 @@ export default {
           });
         }
         potentials.sort(function(a, b) {
-          return a.symbol.length - b.symbol.length;
+          return b.symbol.length - a.symbol.length;
         });
 
         var sysFormula = parsedSymbolFormula.toString();

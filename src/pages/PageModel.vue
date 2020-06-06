@@ -45,22 +45,18 @@ export default {
       models: null,
       modelOptions: ["Tzu Chi", "Human-Earth system model"],
       exampleTree: [
-        { label: "Goal" },
-        { label: "Total cost" },
+        { label: "Goal and cost" },
         {
-          label: "AC usage",
-          children: [{ label: "overall" }, { label: "AC efficiency" }]
+          label: "Chart of accounts",
+          children: [
+            { label: "income statement accounts" },
+            { label: "balance sheet accounts" }
+          ]
         },
         {
-          label: "some model shared w/ public",
-          icon: "public",
-          iconColor: "orange-4",
-          children: [{ label: "one" }, { label: "two" }]
-        },
-        {
-          label: "global warming",
-          icon: "public",
-          iconColor: "blue-4",
+          label: "World3 (imported)",
+          //icon: "public",
+          //iconColor: "blue-4",
           children: [
             {
               label: "ESCiMO",
