@@ -55,6 +55,23 @@ const actions = {
       });
   },
 
+  async updateModel({ dispatch }, payload) {
+    let modelId = payload.modelId;
+
+    //let formulaChanged = false;
+    payload.updates.updateTime = firebase.firestore.FieldValue.serverTimestamp();
+    payload.updates.updatedBy = firebaseAuth.currentUser.uid;
+
+    let modelRef = firebaseDb.collection("models").doc(modelId);
+    try {
+      await modelRef.set(payload.updates, { merge: true });
+      Notify.create("Model updated!");
+    } catch (error) {
+      console.error("Error updating model", error.message);
+      showErrorMessage("Error updating model", error.message);
+    }
+  },
+
   deleteModel({}, modelId) {
     //let modelId = payload.modelId;
     //let node = payload.node;

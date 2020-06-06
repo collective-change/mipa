@@ -1,5 +1,5 @@
 <template>
-  <div class="q-pa-md">
+  <div>
     <q-btn
       @click="calculateBaseline()"
       class="all-pointer-events print-hide"

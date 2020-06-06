@@ -5,17 +5,28 @@
       <span v-if="currentOrg">{{ currentOrg.goal }}</span>
     </div>
 
-    <div class="row q-col-gutter-md">
-      <div class="col-12 col-md-2 print-hide">
-        <q-select
-          borderless
-          v-model="currentModel"
-          :options="modelOptions"
-          label="Model"
-        />
-        {{ currentModel }}
-        <baseline-calculator />
-        <q-tree :nodes="exampleTree" node-key="label" />
+    <div class="row q-col-gutter-sm">
+      <div class="col-12 col-md-2 q-gutter-sm print-hide">
+        <div class="row">
+          {{ currentModel ? currentModel.name : "" }}
+          {{
+            currentModel ? (currentModel.isOrgMainModel ? " (main)" : "") : ""
+          }}
+        </div>
+        <div class="row">
+          <q-btn
+            @click="showConfigOrgModel = true"
+            class="all-pointer-events print-hide"
+            color="primary"
+            label="Configure model"
+          />
+        </div>
+        <div class="row">
+          <baseline-calculator />
+        </div>
+        <div class="row">
+          <q-tree :nodes="exampleTree" node-key="label" />
+        </div>
       </div>
 
       <div class="col-12 col-md-7">
@@ -25,6 +36,9 @@
         <node-summary />
       </div>
     </div>
+    <q-dialog v-model="showConfigOrgModel">
+      <config-org-model @close="showConfigOrgModel = false" />
+    </q-dialog>
   </q-page>
 </template>
 
@@ -33,8 +47,9 @@ import { mapGetters, mapState } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 
 export default {
-  name: "app",
   components: {
+    "config-org-model": require("components/Model/Modals/ConfigOrgModel.vue")
+      .default,
     "baseline-calculator": require("components/Calc/BaselineCalculator.vue")
       .default,
     "dependency-graph": require("components/Model/DependencyGraph.vue").default,
@@ -42,6 +57,7 @@ export default {
   },
   data() {
     return {
+      showConfigOrgModel: false,
       models: null,
       modelOptions: ["Tzu Chi", "Human-Earth system model"],
       exampleTree: [
