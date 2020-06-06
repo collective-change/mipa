@@ -219,12 +219,20 @@ export default {
       let currentValueExistenceChanged =
         oldCurrentValIsANumber != newCurrentValIsANumber;
 
+      let oldSymbol = this.selectedNode.symbol;
+      let newSymbol = this.nodeToSubmit.symbol;
+      let symbolChanged = oldSymbol != newSymbol;
       this.nodeToSubmit.isNew = false;
 
       this.updateNode({
         modelId: this.$route.params.modelId,
         updates: this.nodeToSubmit,
-        currentValueExistenceChanged: currentValueExistenceChanged
+        currentValueExistenceChanged: currentValueExistenceChanged,
+        symbolChanged: symbolChanged
+        /* "symbolChanged" doesn't actually work yet to classify influencers 
+        of node's influencees, because classifyInfluencers currently 
+        starts with sysFormula, which would not change until it's recomposed.
+        */
       });
     },
     updateChartData() {

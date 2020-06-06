@@ -168,14 +168,15 @@ const actions = {
         //if existence of currentValue changed, then run
         //updateClassifiedInfluencersOf on the node's influencees
         if (
-          "currentValueExistenceChanged" in payload &&
-          payload.currentValueExistenceChanged == true
+          ("currentValueExistenceChanged" in payload &&
+            payload.currentValueExistenceChanged) ||
+          ("symbolChanged" in payload && payload.symbolChanged)
         ) {
           let node = state.nodes.find(node => node.id == nodeId);
-          let influenceesIds = node.influencees;
+          let influenceeIds = node.influencees;
           dispatch("updateClassifiedInfluencersOf", {
             modelId: payload.modelId,
-            influenceeIds: influenceesIds
+            influenceeIds: influenceeIds
           });
         }
       })
@@ -361,7 +362,7 @@ const actions = {
   /* Recalculate classifiedInfluencers (unused and blocking influencers)
   of the node in the payload. */
   updateClassifiedInfluencersOf({ dispatch }, payload) {
-    console.log("updateClassifiedInfluencersOf");
+    //console.log("updateClassifiedInfluencersOf");
     let modelId = payload.modelId;
     let influenceeIds = payload.influenceeIds;
     influenceeIds.forEach(function(influenceeId) {
@@ -372,6 +373,7 @@ const actions = {
         thisNode: influenceeNode,
         nodes: state.nodes
       });
+
       //save results
       dispatch("updateNode", {
         modelId: modelId,
@@ -382,7 +384,7 @@ const actions = {
         }
       });
     });
-    console.log("end updateClassifiedInfluencersOf");
+    //console.log("end updateClassifiedInfluencersOf");
   }
 };
 

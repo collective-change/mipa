@@ -5,6 +5,7 @@ export { classifyInfluencers };
 function classifyInfluencers(payload) {
   let thisNode = payload.thisNode;
   let nodes = payload.nodes;
+  //console.log("classifying influencers of ", thisNode.name);
 
   let formulaExists =
     typeof thisNode.sysFormula != "undefined" && thisNode.sysFormula != "";
