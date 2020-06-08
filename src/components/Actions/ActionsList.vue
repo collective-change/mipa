@@ -21,14 +21,14 @@
           size="16px"
           icon="add"
         />-->
-        <div class="q-gutter-sm">
+        <div class="row q-gutter-sm">
           <q-btn
             color="primary"
             :disable="loading"
             label="新增"
             @click="showAddAction = true"
           />
-          <q-btn color="primary" :disable="loading" label="Recalculate" />
+          <calculator-ui calculationType="actions" buttonLabel="Recalculate" />
         </div>
 
         <q-space />
@@ -50,7 +50,8 @@ import { mapGetters, mapState } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 export default {
   components: {
-    "add-action": require("components/Actions/Modals/AddAction.vue").default
+    "add-action": require("components/Actions/Modals/AddAction.vue").default,
+    "calculator-ui": require("components/Calc/CalculatorUi.vue").default
   },
   data() {
     return {

@@ -54,20 +54,29 @@ export default {
         case "baseline":
           this.calculateBaseline();
           break;
+        case "actions":
+          this.calculateAllActions();
+          break;
         default:
-          throw `calculationType "${this.calculationType}" not recognized.`;
+          throw `Calculation type "${this.calculationType}" not recognized.`;
       }
     },
-    calculateBaseline() {
-      //console.log(this.currentModel.simulation);
-      let payload = {
+    getCommonPayload() {
+      let commonPayload = {
         modelId: this.$route.params.modelId,
         nodes: this.nodes,
         exchangeRates: this.exchangeRates,
         simulationParams: this.currentModel.simulationParams
       };
-      //console.log({ payload });
+      return commonPayload;
+    },
+    calculateBaseline() {
+      let payload = this.getCommonPayload();
       this.$store.dispatch("calculator/calculateBaseline", payload);
+    },
+    calculateAllActions() {
+      let payload = this.getCommonPayload();
+      this.$store.dispatch("calculator/calculateActions", payload);
     }
   },
   created() {},
