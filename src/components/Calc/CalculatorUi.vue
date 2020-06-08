@@ -1,10 +1,10 @@
 <template>
   <div>
     <q-btn
-      @click="calculateBaseline()"
+      @click="calculate()"
       class="all-pointer-events print-hide"
       color="primary"
-      label="Calculate basesline"
+      :label="buttonLabel"
     />
     <q-linear-progress
       v-if="calculatorIsRunning"
@@ -30,6 +30,7 @@
 import { mapGetters, mapState } from "vuex";
 
 export default {
+  props: ["calculationType", "buttonLabel"],
   components: {},
   data() {
     return {
@@ -48,6 +49,15 @@ export default {
     ...mapState("adHocDocs", ["exchangeRates"])
   },
   methods: {
+    calculate() {
+      switch (this.calculationType) {
+        case "baseline":
+          this.calculateBaseline();
+          break;
+        default:
+          throw `calculationType "${this.calculationType}" not recognized.`;
+      }
+    },
     calculateBaseline() {
       //console.log(this.currentModel.simulation);
       let payload = {
