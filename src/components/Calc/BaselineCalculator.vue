@@ -39,6 +39,7 @@ export default {
   },
   computed: {
     ...mapGetters("model", ["nodes"]),
+    ...mapState("model", ["currentModel"]),
     ...mapState("calculator", [
       "calculatorIsRunning",
       "calculationProgress",
@@ -48,12 +49,15 @@ export default {
   },
   methods: {
     calculateBaseline() {
+      //console.log(this.currentModel.simulation);
       let payload = {
         modelId: this.$route.params.modelId,
         nodes: this.nodes,
-        exchangeRates: this.exchangeRates
+        exchangeRates: this.exchangeRates,
+        simulationParams: this.currentModel.simulation
       };
-      this.$store.dispatch("calculator/calculateBaseline", payload);
+      console.log({ payload });
+      //this.$store.dispatch("calculator/calculateBaseline", payload);
     }
   },
   created() {},

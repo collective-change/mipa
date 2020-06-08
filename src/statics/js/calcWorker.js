@@ -55,6 +55,8 @@ function prepEnvironment(data) {
 }
 
 function calculateBaseline(data) {
+  console.log(data.simulationParams);
+
   let calcTimeLog = {}; //used for tracking calculation times of different sections
   calcTimeLog.startTime = new Date();
   this.postMessage({ progressValue: 0 });

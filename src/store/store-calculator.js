@@ -52,7 +52,8 @@ const actions = {
     calcWorker.postMessage({
       calculationType: "baseline",
       modelNodes: payload.nodes,
-      exchangeRates: payload.exchangeRates
+      exchangeRates: payload.exchangeRates,
+      simulationParams: payload.simulationParams
     });
     //console.log("Message posted to worker");
 
