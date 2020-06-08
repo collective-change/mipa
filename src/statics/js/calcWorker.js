@@ -55,15 +55,14 @@ function prepEnvironment(data) {
 }
 
 function calculateBaseline(data) {
-  console.log(data.simulationParams);
-
   let calcTimeLog = {}; //used for tracking calculation times of different sections
   calcTimeLog.startTime = new Date();
   this.postMessage({ progressValue: 0 });
   let lastProgressReportTime = new Date();
 
   var errorOccurred = false;
-  let maxLoops = 60;
+  let simulationParams = data.simulationParams;
+  let maxLoops = simulationParams.numTimeSteps + 1;
 
   errorOccurred = prepEnvironment(data);
   calcTimeLog.prepEnvDone = new Date();
@@ -83,7 +82,10 @@ function calculateBaseline(data) {
   let scope = {
     initialTimeS: initialTimeS, //this will remain constant throughout the simulation
     timeS: initialTimeS, //timeS will increment with each iteration
-    dt: math.unit("1 month"), //delta time
+    dt: math.unit(
+      simulationParams.timeStepNumber,
+      simulationParams.timeStepUnit
+    ), //delta time
     timeSeries: { timeSPoints: [], nodes: {} }
   }; //todo: load timeSeries with current or historical values
   sortedNodes.forEach(function(node, index) {
@@ -252,6 +254,11 @@ function calculateBaseline(data) {
         errorOccurred = true;
       }
     if (errorOccurred) return;
+    if (completedLoops > 0)
+      scope.dt = math.multiply(
+        scope.dt,
+        1 + simulationParams.timeStepGrowthRate
+      );
     scope.timeS = scope.timeS + scope.dt.toNumber("seconds");
     completedLoops++;
 

@@ -42,8 +42,8 @@
           />
         </div>
         <q-input
-          v-model.number="modelToSubmit.simulationParams.iterations"
-          label="number of iterations"
+          v-model.number="modelToSubmit.simulationParams.numTimeSteps"
+          label="number of time steps"
           :rules="[
             val =>
               (val == parseInt(val) && val > 0) ||
@@ -179,11 +179,11 @@ export default {
       let simulationParams = this.modelToSubmit.simulationParams;
       if (simulationParams.timeStepGrowthRate == 0) {
         finalTime.number =
-          simulationParams.timeStepNumber * simulationParams.iterations;
+          simulationParams.timeStepNumber * simulationParams.numTimeSteps;
         finalTime.unit = simulationParams.timeStepUnit;
       } else {
         let r = 1 + simulationParams.timeStepGrowthRate;
-        let N = simulationParams.iterations;
+        let N = simulationParams.numTimeSteps;
         finalTime.number =
           simulationParams.timeStepNumber * ((1 - Math.pow(r, N)) / (1 - r));
         finalTime.unit = simulationParams.timeStepUnit;

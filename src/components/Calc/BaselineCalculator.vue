@@ -54,7 +54,7 @@ export default {
         modelId: this.$route.params.modelId,
         nodes: this.nodes,
         exchangeRates: this.exchangeRates,
-        simulationParams: this.currentModel.simulation
+        simulationParams: this.currentModel.simulationParams
       };
       //console.log({ payload });
       this.$store.dispatch("calculator/calculateBaseline", payload);
