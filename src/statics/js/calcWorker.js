@@ -16,8 +16,8 @@ onmessage = function(e) {
   }
 };
 
-function prepEnvironment(data) {
-  var errorOccurred = false;
+function prepEnvironment(sim) {
+  let data = sim.data;
 
   modelNodes = data.modelNodes; //make modelNodes globally accessible
 
@@ -50,8 +50,6 @@ function prepEnvironment(data) {
       aliases: ["persons", "people"]
     }
   });
-
-  return errorOccurred;
 }
 
 function calculateBaseline(data) {
@@ -59,13 +57,14 @@ function calculateBaseline(data) {
   sim.calcTimeLog = {}; //used for tracking calculation times of different sections
   sim.calcTimeLog.startTime = new Date();
   this.postMessage({ progressValue: 0 });
-  let lastProgressReportTime = new Date();
+  sim.lastProgressReportTime = new Date();
+  sim.data = data;
 
-  var errorOccurred = false;
+  sim.errorOccurred = false;
   let simulationParams = data.simulationParams;
   let maxLoops = simulationParams.numTimeSteps + 1;
 
-  errorOccurred = prepEnvironment(data);
+  prepEnvironment(sim);
   sim.calcTimeLog.prepEnvDone = new Date();
 
   let nodes = prepForSort(data.modelNodes);
@@ -98,7 +97,7 @@ function calculateBaseline(data) {
   // gather up current values from nodes into scope
   //console.log("begin loading currentValues");
   sortedNodes.forEach(function(node, index) {
-    if (!errorOccurred)
+    if (!sim.errorOccurred)
       try {
         scope["$" + node.id + "_unit"] = node.unit;
         if ("currentValue" in node && node.currentValue != "") {
@@ -112,17 +111,17 @@ function calculateBaseline(data) {
           errorType: "current value loading error",
           errorMessage: `For node "${node.name}", current value "${node.currentValue}", unit "${node.unit}" <br/> ${err}`
         });
-        errorOccurred = true;
+        sim.errorOccurred = true;
       }
   });
   sim.calcTimeLog.currentValuesLoadingDone = new Date();
 
-  if (errorOccurred) return;
+  if (sim.errorOccurred) return;
 
   // gather up formulas from nodes into an array ordered by calculation order
   var expressionsArray = [];
   sortedNodes.forEach(function(node) {
-    if (!errorOccurred)
+    if (!sim.errorOccurred)
       try {
         //if formula includes a variable then save it
         if (node.sysFormula.includes("$")) {
@@ -149,11 +148,11 @@ function calculateBaseline(data) {
   });
   sim.calcTimeLog.expressionsLoadingDone = new Date();
 
-  if (errorOccurred) return;
+  if (sim.errorOccurred) return;
 
   var parsedExpressions = [];
   expressionsArray.forEach(function(expression) {
-    if (!errorOccurred)
+    if (!sim.errorOccurred)
       try {
         parsedExpressions.push(math.parse(expression));
       } catch (err) {
@@ -169,12 +168,12 @@ function calculateBaseline(data) {
           errorType: "parse error",
           errorMessage: `For node "${nodeName}"<br/>Expression: ${replacedExpression} <br/> ${err}`
         });
-        errorOccurred = true;
+        sim.errorOccurred = true;
       }
   });
   sim.calcTimeLog.expressionsParsingDone = new Date();
 
-  if (errorOccurred) return;
+  if (sim.errorOccurred) return;
 
   try {
     var compiledExpressions = parsedExpressions.map(function(expression) {
@@ -186,13 +185,13 @@ function calculateBaseline(data) {
   }
   sim.calcTimeLog.expressionsCompilationDone = new Date();
 
-  if (errorOccurred) return;
+  if (sim.errorOccurred) return;
 
   var expectedUnit = null;
   var expectedUnits = [];
 
   sortedNodes.forEach(function(node) {
-    if (!errorOccurred)
+    if (!sim.errorOccurred)
       try {
         expectedUnits.push(math.unit(node.unit));
       } catch (err) {
@@ -201,17 +200,17 @@ function calculateBaseline(data) {
           errorType: "unit loading error",
           errorMessage: `For node "${node.name}", unit "${node.unit}" <br/> ${err}`
         });
-        errorOccurred = true;
+        sim.errorOccurred = true;
       }
   });
   sim.calcTimeLog.unitLoadingDone = new Date();
 
-  if (errorOccurred) return;
+  if (sim.errorOccurred) return;
 
   while (completedLoops < maxLoops) {
     // evaluate the formulas
     compiledExpressions.forEach(function(code, index) {
-      if (!errorOccurred)
+      if (!sim.errorOccurred)
         try {
           //todo: if timeS == initialTimeS then evaluate current value
           code.evaluate(scope);
@@ -236,11 +235,11 @@ function calculateBaseline(data) {
             errorType: "evaluation error",
             errorMessage: `For node "${sortedNodes[index].name}",  <br/> ${err}`
           });
-          errorOccurred = true;
+          sim.errorOccurred = true;
         }
-      if (errorOccurred) return;
+      if (sim.errorOccurred) return;
     });
-    if (!errorOccurred)
+    if (!sim.errorOccurred)
       try {
         //save time and node values into results object
         scope.timeSeries.timeSPoints.push(scope.timeS);
@@ -250,9 +249,9 @@ function calculateBaseline(data) {
       } catch (err) {
         console.log(err);
         this.postMessage(err);
-        errorOccurred = true;
+        sim.errorOccurred = true;
       }
-    if (errorOccurred) return;
+    if (sim.errorOccurred) return;
     if (completedLoops > 0)
       scope.dt = math.multiply(
         scope.dt,
@@ -263,16 +262,16 @@ function calculateBaseline(data) {
 
     //report progress every 500 ms
     if (
-      new Date() - lastProgressReportTime >= 500 ||
+      new Date() - sim.lastProgressReportTime >= 500 ||
       completedLoops == maxLoops
     ) {
       this.postMessage({ progressValue: completedLoops / maxLoops });
-      lastProgressReportTime = new Date();
+      sim.lastProgressReportTime = new Date();
     }
   }
   sim.calcTimeLog.evaluationDone = new Date();
 
-  if (errorOccurred) return;
+  if (sim.errorOccurred) return;
 
   //clean up scope.timeSeries for posting back to main script
   //console.log(scope);
@@ -296,7 +295,7 @@ function calculateBaseline(data) {
           scope.timeSeries.nodes[node.id]
         }] <br/> ${err}`
       });
-      errorOccurred = true;
+      sim.errorOccurred = true;
     }
   });
 
