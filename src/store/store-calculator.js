@@ -58,11 +58,9 @@ const actions = {
     calcWorker.onmessage = function(e) {
       //console.log(e.data);
       if (typeof e.data == "string") {
-        console.log("Error message received from worker: ", e.data);
         showErrorMessage("Calculation error", e.data);
       } else if ("errorType" in e.data) {
         let data = e.data;
-        //replace $nodeIds in error message with node name
         showErrorMessage(
           data.errorType,
           data.errorMessage,
