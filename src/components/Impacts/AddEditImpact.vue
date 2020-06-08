@@ -205,7 +205,7 @@ export default {
 
   created: function() {
     //compose option values first, so we don't need to wait
-    //for nodeOptions to compute, which results in q-select
+    //for filteredNodeOptions to compute, which results in q-select
     //displaying option value instead of option label.
     this.filteredNodeOptions = this.nodeOptions;
   },
