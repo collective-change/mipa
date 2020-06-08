@@ -1,6 +1,10 @@
 <template>
   <q-card>
-    <modal-header v-slot:header>Configure model</modal-header>
+    <modal-header v-if="modelToSubmit.isOrgMainModel" v-slot:header
+      >Configure main model</modal-header
+    >
+    <modal-header v-else v-slot:header>Configure model</modal-header>
+
     <q-form @submit.prevent="submitModel">
       <q-card-section>
         <q-input
@@ -10,7 +14,7 @@
           filled
         />
         <div class="text-h6">Simulation parameters</div>
-        <q-select
+        <!-- <q-select
           v-model="modelToSubmit.simulation.timeStepType"
           :options="timeStepTypeOptions"
           label="Time step type"
@@ -18,7 +22,7 @@
           map-options
           :rules="[val => !!val || 'Field is required']"
           filled
-        />
+        /> -->
 
         <div class="row">
           <q-input
@@ -77,6 +81,45 @@
           />
         </div>
       </q-card-section>
+      <q-card-section v-if="modelToSubmit.isOrgMainModel">
+        <div class="text-h6">Node assignments</div>
+        <q-select
+          v-model="modelToSubmit.roleNodes.singleEffort"
+          :options="nodeOptions"
+          label="Single effort"
+          emit-value
+          map-options
+          :rules="[val => !!val || 'Field is required']"
+          filled
+        />
+        <q-select
+          v-model="modelToSubmit.roleNodes.singlePurchase"
+          :options="nodeOptions"
+          label="Single purchase"
+          emit-value
+          map-options
+          :rules="[val => !!val || 'Field is required']"
+          filled
+        />
+        <q-select
+          v-model="modelToSubmit.roleNodes.totalValue"
+          :options="nodeOptions"
+          label="Total value"
+          emit-value
+          map-options
+          :rules="[val => !!val || 'Field is required']"
+          filled
+        />
+        <q-select
+          v-model="modelToSubmit.roleNodes.totalCost"
+          :options="nodeOptions"
+          label="Total cost"
+          emit-value
+          map-options
+          :rules="[val => !!val || 'Field is required']"
+          filled
+        />
+      </q-card-section>
       <modal-buttons />
     </q-form>
   </q-card>
@@ -91,7 +134,8 @@ export default {
     return {
       modelToSubmit: {
         name: "",
-        simulation: {}
+        simulation: {},
+        roleNodes: {}
       },
       timeStepTypeOptions: [
         { label: "constant time step", value: "constant" },
@@ -121,21 +165,26 @@ export default {
   },
   computed: {
     ...mapState("orgs", ["currentOrg"]),
-    ...mapState("model", ["currentModel"]),
+    ...mapState("model", ["currentModel", "nodes"]),
     computedFinalTime() {
       let finalTime = { number: 0, unit: "months" };
       let simulation = this.modelToSubmit.simulation;
-      if (simulation.timeStepType == "constant") {
+      if (simulation.timeStepGrowthRate == 0) {
         finalTime.number = simulation.timeStepNumber * simulation.iterations;
         finalTime.unit = simulation.timeStepUnit;
-      } else if (simulation.timeStepType == "exponential") {
-        let r = simulation.timeStepGrowthRate;
+      } else {
+        let r = 1 + simulation.timeStepGrowthRate;
         let N = simulation.iterations;
         finalTime.number =
           simulation.timeStepNumber * ((1 - Math.pow(r, N)) / (1 - r));
         finalTime.unit = simulation.timeStepUnit;
       }
       return finalTime;
+    },
+    nodeOptions() {
+      return this.nodes.map(node => {
+        return { label: node.name, value: node.id };
+      });
     }
   },
   methods: {
