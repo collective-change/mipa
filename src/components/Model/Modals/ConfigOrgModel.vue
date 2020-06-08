@@ -15,7 +15,7 @@
         />
         <div class="text-h6">Simulation parameters</div>
         <!-- <q-select
-          v-model="modelToSubmit.simulation.timeStepType"
+          v-model="modelToSubmit.simulationParams.timeStepType"
           :options="timeStepTypeOptions"
           label="Time step type"
           emit-value
@@ -26,13 +26,13 @@
 
         <div class="row">
           <q-input
-            v-model.number="modelToSubmit.simulation.timeStepNumber"
+            v-model.number="modelToSubmit.simulationParams.timeStepNumber"
             label="initial time step"
             :rules="[val => val > 0 || 'A number greater than 0 is required']"
             filled
           />
           <q-select
-            v-model="modelToSubmit.simulation.timeStepUnit"
+            v-model="modelToSubmit.simulationParams.timeStepUnit"
             :options="timeUnitOptions"
             label="units"
             emit-value
@@ -42,7 +42,7 @@
           />
         </div>
         <q-input
-          v-model.number="modelToSubmit.simulation.iterations"
+          v-model.number="modelToSubmit.simulationParams.iterations"
           label="number of iterations"
           :rules="[
             val =>
@@ -52,18 +52,18 @@
           filled
         />
         <q-input
-          v-model.number="modelToSubmit.simulation.timeStepGrowthRate"
+          v-model.number="modelToSubmit.simulationParams.timeStepGrowthRate"
           label="time step growth rate"
           filled
         />
         <div class="row">
           <q-input
-            v-model.number="modelToSubmit.simulation.finalTimeNumber"
+            v-model.number="modelToSubmit.simulationParams.finalTimeNumber"
             label="final time"
             readonly
           />
           <q-select
-            v-model="modelToSubmit.simulation.finalTimeUnit"
+            v-model="modelToSubmit.simulationParams.finalTimeUnit"
             :options="timeUnitOptions"
             label="units"
             emit-value
@@ -145,7 +145,7 @@ export default {
     return {
       modelToSubmit: {
         name: "",
-        simulation: {},
+        simulationParams: {},
         roleNodes: {}
       },
       timeUnitOptions: [
@@ -176,16 +176,17 @@ export default {
     ...mapState("model", ["currentModel", "nodes"]),
     computedFinalTime() {
       let finalTime = { number: 0, unit: "months" };
-      let simulation = this.modelToSubmit.simulation;
-      if (simulation.timeStepGrowthRate == 0) {
-        finalTime.number = simulation.timeStepNumber * simulation.iterations;
-        finalTime.unit = simulation.timeStepUnit;
-      } else {
-        let r = 1 + simulation.timeStepGrowthRate;
-        let N = simulation.iterations;
+      let simulationParams = this.modelToSubmit.simulationParams;
+      if (simulationParams.timeStepGrowthRate == 0) {
         finalTime.number =
-          simulation.timeStepNumber * ((1 - Math.pow(r, N)) / (1 - r));
-        finalTime.unit = simulation.timeStepUnit;
+          simulationParams.timeStepNumber * simulationParams.iterations;
+        finalTime.unit = simulationParams.timeStepUnit;
+      } else {
+        let r = 1 + simulationParams.timeStepGrowthRate;
+        let N = simulationParams.iterations;
+        finalTime.number =
+          simulationParams.timeStepNumber * ((1 - Math.pow(r, N)) / (1 - r));
+        finalTime.unit = simulationParams.timeStepUnit;
       }
       return finalTime;
     },
@@ -238,8 +239,8 @@ export default {
   watch: {
     computedFinalTime(newVal) {
       if (newVal) {
-        this.modelToSubmit.simulation.finalTimeNumber = newVal.number;
-        this.modelToSubmit.simulation.finalTimeUnit = newVal.unit;
+        this.modelToSubmit.simulationParams.finalTimeNumber = newVal.number;
+        this.modelToSubmit.simulationParams.finalTimeUnit = newVal.unit;
       }
     }
   }

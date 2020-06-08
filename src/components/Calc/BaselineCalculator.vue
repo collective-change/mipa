@@ -56,8 +56,8 @@ export default {
         exchangeRates: this.exchangeRates,
         simulationParams: this.currentModel.simulation
       };
-      console.log({ payload });
-      //this.$store.dispatch("calculator/calculateBaseline", payload);
+      //console.log({ payload });
+      this.$store.dispatch("calculator/calculateBaseline", payload);
     }
   },
   created() {},
