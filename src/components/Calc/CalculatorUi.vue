@@ -46,37 +46,29 @@ export default {
       "calculationProgress",
       "calculationProgressLabel"
     ]),
-    ...mapState("adHocDocs", ["exchangeRates"])
+    ...mapState("adHocDocs", ["exchangeRates"]),
+    ...mapState("actions", ["actions"])
   },
   methods: {
     calculate() {
-      switch (this.calculationType) {
-        case "baseline":
-          this.calculateBaseline();
-          break;
-        case "actions":
-          this.calculateAllActions();
-          break;
-        default:
-          throw `Calculation type "${this.calculationType}" not recognized.`;
-      }
-    },
-    getCommonPayload() {
-      let commonPayload = {
+      let payload = {
         modelId: this.$route.params.modelId,
         nodes: this.nodes,
         exchangeRates: this.exchangeRates,
         simulationParams: this.currentModel.simulationParams
       };
-      return commonPayload;
-    },
-    calculateBaseline() {
-      let payload = this.getCommonPayload();
-      this.$store.dispatch("calculator/calculateBaseline", payload);
-    },
-    calculateAllActions() {
-      let payload = this.getCommonPayload();
-      this.$store.dispatch("calculator/calculateActions", payload);
+      switch (this.calculationType) {
+        case "baseline":
+          payload.calculationType = "baseline";
+          break;
+        case "actions":
+          payload.calculationType = "allActions";
+          payload.actions = this.actions;
+          break;
+        default:
+          throw `Calculation type "${this.calculationType}" not recognized.`;
+      }
+      this.$store.dispatch("calculator/calculate", payload);
     }
   },
   created() {},

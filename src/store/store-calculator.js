@@ -22,15 +22,11 @@ const mutations = {
 };
 
 const actions = {
-  calculateBaseline({ commit, dispatch }, payload) {
+  getNewCalcWorker({ commit }) {
     if (!window.Worker) {
       showErrorMessage(
         "Web worker not supported by browser. Aborting calculations.",
         ""
-      );
-
-      console.log(
-        "Web worker not supported by browser. Aborting calculations."
       );
       return;
     }
@@ -40,17 +36,19 @@ const actions = {
         "Error updating Calculator is currently busy. Please retry in a bit, or reload the page if you believe the calculator has crashed.",
         ""
       );
-      //Notify.create("Calculator is currently busy. Please retry in a bit.");
       return;
     }
     commit("setCalculatorIsRunning", true);
     commit("setCalculationProgress", 0);
     commit("setCalculationProgressLabel", "0%");
-    //let startTime = new Date();
 
-    let calcWorker = new Worker("statics/js/calcWorker.js");
+    return new Worker("statics/js/calcWorker.js");
+  },
+
+  async calculate({ commit, dispatch }, payload) {
+    let calcWorker = await dispatch("getNewCalcWorker");
     calcWorker.postMessage({
-      calculationType: "baseline",
+      calculationType: payload.calculationType,
       modelNodes: payload.nodes,
       exchangeRates: payload.exchangeRates,
       simulationParams: payload.simulationParams
@@ -72,18 +70,18 @@ const actions = {
         );
         calcWorker.terminate();
         commit("setCalculatorIsRunning", false);
-      } else if ("timeSPoints" in e.data) {
+      } else if ("resultsType" in e.data) {
         let payload2 = {
           modelId: payload.modelId,
           data: e.data
         };
-
-        dispatch("calcResults/setBaseline", payload2, { root: true });
-
+        switch (e.data.resultsType) {
+          case "baseline":
+            dispatch("calcResults/setBaseline", payload2, { root: true });
+            break;
+        }
         calcWorker.terminate();
         commit("setCalculatorIsRunning", false);
-        //let endTime = new Date();
-        //let calcDurationSec = (endTime - startTime) / 1000;
         Notify.create(
           "Calculation time " + e.data.calcTimeMs / 1000 + " seconds."
         );

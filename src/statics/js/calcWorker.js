@@ -321,7 +321,8 @@ function calculateBaseline(data) {
     prepResult: log.endTime - log.evaluationDone
   };
 
-  let outputTimeSeries = {
+  let resultsMessage = {
+    resultsType: "baseline",
     timeSPoints: scope.timeSeries.timeSPoints,
     nodes: resultTimeSeriesNodesValues,
     calcTimeLog: calcTimeLog,
@@ -334,7 +335,7 @@ function calculateBaseline(data) {
   //console.log("Posting message back to main script");
   //console.log({ scope });
   //console.log(outputTimeSeries);
-  postMessage(outputTimeSeries);
+  postMessage(resultsMessage);
 }
 
 function topoSort(nodes) {
