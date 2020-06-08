@@ -55,8 +55,9 @@ function prepEnvironment(data) {
 }
 
 function calculateBaseline(data) {
-  let calcTimeLog = {}; //used for tracking calculation times of different sections
-  calcTimeLog.startTime = new Date();
+  let sim = {};
+  sim.calcTimeLog = {}; //used for tracking calculation times of different sections
+  sim.calcTimeLog.startTime = new Date();
   this.postMessage({ progressValue: 0 });
   let lastProgressReportTime = new Date();
 
@@ -65,19 +66,16 @@ function calculateBaseline(data) {
   let maxLoops = simulationParams.numTimeSteps + 1;
 
   errorOccurred = prepEnvironment(data);
-  calcTimeLog.prepEnvDone = new Date();
+  sim.calcTimeLog.prepEnvDone = new Date();
 
   let nodes = prepForSort(data.modelNodes);
-  calcTimeLog.prepForSortDone = new Date();
+  sim.calcTimeLog.prepForSortDone = new Date();
 
-  //console.log("nodes: ", nodes);
   let sortedNodes = topoSort(nodes);
-  calcTimeLog.topoSortDone = new Date();
+  sim.calcTimeLog.topoSortDone = new Date();
 
   //prepare scope object
   let initialTimeS = Math.floor(Date.now() / 1000);
-  //let initialDate = new Date(initialTimeS * 1000);
-  //console.log({ initialDate });
 
   let scope = {
     initialTimeS: initialTimeS, //this will remain constant throughout the simulation
@@ -88,11 +86,12 @@ function calculateBaseline(data) {
     ), //delta time
     timeSeries: { timeSPoints: [], nodes: {} }
   }; //todo: load timeSeries with current or historical values
+
   sortedNodes.forEach(function(node, index) {
     scope.timeSeries.nodes[node.id] = [];
   });
-  calcTimeLog.timeSeriesPrepDone = new Date();
-  //console.log({ sortedNodes });
+
+  sim.calcTimeLog.timeSeriesPrepDone = new Date();
 
   let completedLoops = 0;
 
@@ -116,7 +115,7 @@ function calculateBaseline(data) {
         errorOccurred = true;
       }
   });
-  calcTimeLog.currentValuesLoadingDone = new Date();
+  sim.calcTimeLog.currentValuesLoadingDone = new Date();
 
   if (errorOccurred) return;
 
@@ -148,7 +147,7 @@ function calculateBaseline(data) {
         });
       }
   });
-  calcTimeLog.expressionsLoadingDone = new Date();
+  sim.calcTimeLog.expressionsLoadingDone = new Date();
 
   if (errorOccurred) return;
 
@@ -173,7 +172,7 @@ function calculateBaseline(data) {
         errorOccurred = true;
       }
   });
-  calcTimeLog.expressionsParsingDone = new Date();
+  sim.calcTimeLog.expressionsParsingDone = new Date();
 
   if (errorOccurred) return;
 
@@ -185,7 +184,7 @@ function calculateBaseline(data) {
     console.log(err);
     this.postMessage(err);
   }
-  calcTimeLog.expressionsCompilationDone = new Date();
+  sim.calcTimeLog.expressionsCompilationDone = new Date();
 
   if (errorOccurred) return;
 
@@ -205,7 +204,7 @@ function calculateBaseline(data) {
         errorOccurred = true;
       }
   });
-  calcTimeLog.unitLoadingDone = new Date();
+  sim.calcTimeLog.unitLoadingDone = new Date();
 
   if (errorOccurred) return;
 
@@ -271,7 +270,7 @@ function calculateBaseline(data) {
       lastProgressReportTime = new Date();
     }
   }
-  calcTimeLog.evaluationDone = new Date();
+  sim.calcTimeLog.evaluationDone = new Date();
 
   if (errorOccurred) return;
 
@@ -301,10 +300,10 @@ function calculateBaseline(data) {
     }
   });
 
-  calcTimeLog.endTime = new Date();
+  sim.calcTimeLog.endTime = new Date();
 
-  let calcTimeMs = calcTimeLog.endTime - calcTimeLog.startTime;
-  let log = calcTimeLog;
+  let calcTimeMs = sim.calcTimeLog.endTime - sim.calcTimeLog.startTime;
+  let log = sim.calcTimeLog;
   let calcTimeStages = {
     prepEnv: log.prepEnvDone - log.startTime,
     prepForSort: log.prepForSortDone - log.prepEnvDone,
@@ -325,7 +324,7 @@ function calculateBaseline(data) {
     resultsType: "baseline",
     timeSPoints: scope.timeSeries.timeSPoints,
     nodes: resultTimeSeriesNodesValues,
-    calcTimeLog: calcTimeLog,
+    calcTimeLog: sim.calcTimeLog,
     calcTimeStages: calcTimeStages,
     calcTimeMs: calcTimeMs
   };
