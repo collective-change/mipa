@@ -50,7 +50,6 @@
             :options="filteredNodeOptions"
             emit-value
             map-options
-            style="width: 12em"
           />
           <q-select
             filled
@@ -208,13 +207,13 @@ export default {
     //for filteredNodeOptions to compute, which results in q-select
     //displaying option value instead of option label.
     this.filteredNodeOptions = this.nodeOptions;
-  },
 
-  mounted: function() {
     if (this.addOrEdit == "edit") {
       Object.assign(this.impact, this.impactToEdit);
     }
   },
+
+  mounted: function() {},
 
   computed: {
     nodeOptions() {

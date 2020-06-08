@@ -194,6 +194,7 @@
 </template>
 
 <script>
+import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { mapActions, mapGetters, mapState } from "vuex";
 //import { mapFields } from 'vuex-map-fields';
 import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
@@ -275,6 +276,20 @@ export default {
     }
   },
 
+  created() {
+    (async () => {
+      while (
+        !firebaseAuth.currentUser // define the condition as you like
+      ) {
+        //console.log("waiting for currentUser to be defined");
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      let orgId = this.$route.params.orgId;
+      let modelId = this.$route.params.orgId;
+      this.$store.dispatch("model/bindCurrentModel", modelId);
+      this.$store.dispatch("model/bindNodes", modelId);
+    })();
+  },
   watch: {
     selectedAction: function(newAction, oldAction) {
       let action = {};
