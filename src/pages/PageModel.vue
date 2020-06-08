@@ -22,7 +22,7 @@
           />
         </div>
         <div class="row">
-          <baseline-calculator />
+          <baseline-calculator-ui />
         </div>
         <div class="row">
           <q-tree :nodes="exampleTree" node-key="label" />
@@ -50,7 +50,7 @@ export default {
   components: {
     "config-org-model": require("components/Model/Modals/ConfigOrgModel.vue")
       .default,
-    "baseline-calculator": require("components/Calc/BaselineCalculator.vue")
+    "baseline-calculator-ui": require("components/Calc/BaselineCalculatorUi.vue")
       .default,
     "dependency-graph": require("components/Model/DependencyGraph.vue").default,
     "node-summary": require("components/Model/NodeSummary.vue").default

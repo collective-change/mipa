@@ -21,28 +21,16 @@
           size="16px"
           icon="add"
         />-->
-        <q-btn
-          color="primary"
-          :disable="loading"
-          label="新增"
-          @click="showAddAction = true"
-        />
+        <div class="q-gutter-sm">
+          <q-btn
+            color="primary"
+            :disable="loading"
+            label="新增"
+            @click="showAddAction = true"
+          />
+          <q-btn color="primary" :disable="loading" label="Recalculate" />
+        </div>
 
-        <!--
-        <q-btn
-          color="primary"
-          :disable="loading"
-          label="Add row"
-          @click="addRow"
-        />
-        <q-btn
-          class="q-ml-sm"
-          color="primary"
-          :disable="loading"
-          label="Remove row"
-          @click="removeRow"
-        />
-        -->
         <q-space />
         <q-input dense debounce="300" color="primary" v-model="filter">
           <template v-slot:append>
