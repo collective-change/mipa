@@ -54,32 +54,11 @@ function prepEnvironment(sim) {
   sim.calcTimeLog.push({ stage: "prepEnv", endTime: new Date() });
 }
 
-function calculateBaseline(data) {
-  let sim = {
-    calcTimeLog: [], //used for tracking calculation times of different sections
-    data: data,
-    errorOccurred: false,
-    params: data.simulationParams,
-    maxLoops: data.simulationParams.numTimeSteps + 1
-  };
-
-  sim.calcTimeLog.push({ stage: "start", endTime: new Date() });
-  this.postMessage({ progressValue: 0 });
-  sim.lastProgressReportTime = new Date();
-
-  prepEnvironment(sim);
-  if (sim.errorOccurred) return;
-
-  sim.nodes = prepForSort(sim);
-  if (sim.errorOccurred) return;
-
-  sim.sortedNodes = topoSort(sim);
-  if (sim.errorOccurred) return;
-
+function prepScope(sim) {
   //prepare scope object
   let initialTimeS = Math.floor(Date.now() / 1000);
 
-  sim.scope = {
+  let scope = {
     initialTimeS: initialTimeS, //this will remain constant throughout the simulation
     timeS: initialTimeS, //timeS will increment with each iteration
     dt: math.unit(sim.params.timeStepNumber, sim.params.timeStepUnit), //delta time
@@ -87,11 +66,17 @@ function calculateBaseline(data) {
   }; //todo: load timeSeries with current or historical values
 
   sim.sortedNodes.forEach(function(node, index) {
-    sim.scope.timeSeries.nodes[node.id] = [];
+    scope.timeSeries.nodes[node.id] = [];
   });
 
-  sim.calcTimeLog.push({ stage: "prep timeSeries", endTime: new Date() });
+  sim.calcTimeLog.push({
+    stage: "prep timeSeries",
+    endTime: new Date()
+  });
+  return scope;
+}
 
+function loadCurrentValues(sim) {
   // gather up current values from nodes into scope
   //console.log("begin loading currentValues");
   sim.sortedNodes.forEach(function(node, index) {
@@ -116,11 +101,11 @@ function calculateBaseline(data) {
     stage: "load currentValues",
     endTime: new Date()
   });
+}
 
-  if (sim.errorOccurred) return;
-
+function prepExpressionsArray(sim) {
   // gather up formulas from nodes into an array ordered by calculation order
-  var expressionsArray = [];
+  expressionsArray = [];
   sim.sortedNodes.forEach(function(node) {
     if (!sim.errorOccurred)
       try {
@@ -145,17 +130,49 @@ function calculateBaseline(data) {
           errorType: "expression array error",
           errorMessage: `For node "${node.name}" <br/> ${err}`
         });
+        sim.errorOccurred = true;
       }
   });
   sim.calcTimeLog.push({
     stage: "load expressions",
     endTime: new Date()
   });
+  return expressionsArray;
+}
 
+function calculateBaseline(data) {
+  let sim = {
+    calcTimeLog: [], //used for tracking calculation times of different sections
+    data: data,
+    errorOccurred: false,
+    params: data.simulationParams,
+    maxLoops: data.simulationParams.numTimeSteps + 1
+  };
+
+  sim.calcTimeLog.push({ stage: "start", endTime: new Date() });
+  this.postMessage({ progressValue: 0 });
+  sim.lastProgressReportTime = new Date();
+
+  prepEnvironment(sim);
+  if (sim.errorOccurred) return;
+
+  sim.nodes = prepForSort(sim);
+  if (sim.errorOccurred) return;
+
+  sim.sortedNodes = topoSort(sim);
+  if (sim.errorOccurred) return;
+
+  sim.scope = prepScope(sim);
+  if (sim.errorOccurred) return;
+
+  loadCurrentValues(sim);
+  if (sim.errorOccurred) return;
+
+  sim.expressionsArray = prepExpressionsArray(sim);
   if (sim.errorOccurred) return;
 
   var parsedExpressions = [];
-  expressionsArray.forEach(function(expression) {
+  sim.expressionsArray.forEach(function(expression) {
     if (!sim.errorOccurred)
       try {
         parsedExpressions.push(math.parse(expression));
