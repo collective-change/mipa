@@ -78,6 +78,7 @@ const actions = {
             dispatch("calcResults/setBaseline", payload2, { root: true });
             break;
         }
+
         calcWorker.terminate();
         commit("setCalculatorIsRunning", false);
         Notify.create(

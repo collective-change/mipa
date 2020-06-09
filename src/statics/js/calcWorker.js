@@ -54,8 +54,8 @@ function prepEnvironment(sim) {
 
 function calculateBaseline(data) {
   let sim = {};
-  sim.calcTimeLog = {}; //used for tracking calculation times of different sections
-  sim.calcTimeLog.startTime = new Date();
+  sim.calcTimeLog = []; //used for tracking calculation times of different sections
+  sim.calcTimeLog.push({ stage: "start", endTime: new Date() });
   this.postMessage({ progressValue: 0 });
   sim.lastProgressReportTime = new Date();
   sim.data = data;
@@ -65,13 +65,13 @@ function calculateBaseline(data) {
   let maxLoops = simulationParams.numTimeSteps + 1;
 
   prepEnvironment(sim);
-  sim.calcTimeLog.prepEnvDone = new Date();
+  sim.calcTimeLog.push({ stage: "prepEnv", endTime: new Date() });
 
   let nodes = prepForSort(data.modelNodes);
-  sim.calcTimeLog.prepForSortDone = new Date();
+  sim.calcTimeLog.push({ stage: "prepForSort", endTime: new Date() });
 
   let sortedNodes = topoSort(nodes);
-  sim.calcTimeLog.topoSortDone = new Date();
+  sim.calcTimeLog.push({ stage: "topoSort", endTime: new Date() });
 
   //prepare scope object
   let initialTimeS = Math.floor(Date.now() / 1000);
@@ -90,7 +90,7 @@ function calculateBaseline(data) {
     scope.timeSeries.nodes[node.id] = [];
   });
 
-  sim.calcTimeLog.timeSeriesPrepDone = new Date();
+  sim.calcTimeLog.push({ stage: "prep timeSeries", endTime: new Date() });
 
   let completedLoops = 0;
 
@@ -114,7 +114,10 @@ function calculateBaseline(data) {
         sim.errorOccurred = true;
       }
   });
-  sim.calcTimeLog.currentValuesLoadingDone = new Date();
+  sim.calcTimeLog.push({
+    stage: "load currentValues",
+    endTime: new Date()
+  });
 
   if (sim.errorOccurred) return;
 
@@ -146,7 +149,10 @@ function calculateBaseline(data) {
         });
       }
   });
-  sim.calcTimeLog.expressionsLoadingDone = new Date();
+  sim.calcTimeLog.push({
+    stage: "load expressions",
+    endTime: new Date()
+  });
 
   if (sim.errorOccurred) return;
 
@@ -171,7 +177,10 @@ function calculateBaseline(data) {
         sim.errorOccurred = true;
       }
   });
-  sim.calcTimeLog.expressionsParsingDone = new Date();
+  sim.calcTimeLog.push({
+    stage: "parse expressions",
+    endTime: new Date()
+  });
 
   if (sim.errorOccurred) return;
 
@@ -183,7 +192,10 @@ function calculateBaseline(data) {
     console.log(err);
     this.postMessage(err);
   }
-  sim.calcTimeLog.expressionsCompilationDone = new Date();
+  sim.calcTimeLog.push({
+    stage: "compile expressions",
+    endTime: new Date()
+  });
 
   if (sim.errorOccurred) return;
 
@@ -203,7 +215,7 @@ function calculateBaseline(data) {
         sim.errorOccurred = true;
       }
   });
-  sim.calcTimeLog.unitLoadingDone = new Date();
+  sim.calcTimeLog.push({ stage: "load units", endTime: new Date() });
 
   if (sim.errorOccurred) return;
 
@@ -269,7 +281,7 @@ function calculateBaseline(data) {
       sim.lastProgressReportTime = new Date();
     }
   }
-  sim.calcTimeLog.evaluationDone = new Date();
+  sim.calcTimeLog.push({ stage: "evaluate", endTime: new Date() });
 
   if (sim.errorOccurred) return;
 
@@ -299,25 +311,22 @@ function calculateBaseline(data) {
     }
   });
 
-  sim.calcTimeLog.endTime = new Date();
+  sim.calcTimeLog.push({ stage: "prepare results", endTime: new Date() });
 
-  let calcTimeMs = sim.calcTimeLog.endTime - sim.calcTimeLog.startTime;
   let log = sim.calcTimeLog;
-  let calcTimeStages = {
-    prepEnv: log.prepEnvDone - log.startTime,
-    prepForSort: log.prepForSortDone - log.prepEnvDone,
-    topoSort: log.topoSortDone - log.prepForSortDone,
-    timeSeriesPrep: log.timeSeriesPrepDone - log.topoSortDone,
-    currentValuesLoading: log.currentValuesLoadingDone - log.timeSeriesPrepDone,
-    expressionsLoading:
-      log.expressionsLoadingDone - log.currentValuesLoadingDone,
-    expressionsParsing: log.expressionsParsingDone - log.expressionsLoadingDone,
-    expressionsCompilation:
-      log.expressionsCompilationDone - log.expressionsParsingDone,
-    unitLoading: log.unitLoadingDone - log.expressionsCompilationDone,
-    evaluation: log.evaluationDone - log.unitLoadingDone,
-    prepResult: log.endTime - log.evaluationDone
-  };
+  let calcTimeMs = log[log.length - 1].endTime - log[0].endTime;
+  let calcTimeStages = [];
+  //let prevStage = null;
+  log.forEach(function(item, index) {
+    if (index > 0) {
+      calcTimeStages.push({
+        stageName: item.stage,
+        stageTimeMs: item.endTime - prevItem.endTime
+      });
+    }
+    prevItem = item;
+  });
+  //console.log(calcTimeStages);
 
   let resultsMessage = {
     resultsType: "baseline",
