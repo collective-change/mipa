@@ -53,25 +53,29 @@ function prepEnvironment(sim) {
 }
 
 function calculateBaseline(data) {
-  let sim = {};
-  sim.calcTimeLog = []; //used for tracking calculation times of different sections
+  let sim = {
+    calcTimeLog: [], //used for tracking calculation times of different sections
+    data: data,
+    errorOccurred: false,
+    params: data.simulationParams,
+    maxLoops: data.simulationParams.numTimeSteps + 1
+  };
+
   sim.calcTimeLog.push({ stage: "start", endTime: new Date() });
   this.postMessage({ progressValue: 0 });
   sim.lastProgressReportTime = new Date();
-  sim.data = data;
-
-  sim.errorOccurred = false;
-  let simulationParams = data.simulationParams;
-  let maxLoops = simulationParams.numTimeSteps + 1;
 
   prepEnvironment(sim);
   sim.calcTimeLog.push({ stage: "prepEnv", endTime: new Date() });
+  if (sim.errorOccurred) return;
 
-  let nodes = prepForSort(data.modelNodes);
+  sim.nodes = prepForSort(sim);
   sim.calcTimeLog.push({ stage: "prepForSort", endTime: new Date() });
+  if (sim.errorOccurred) return;
 
-  let sortedNodes = topoSort(nodes);
+  sim.sortedNodes = topoSort(sim);
   sim.calcTimeLog.push({ stage: "topoSort", endTime: new Date() });
+  if (sim.errorOccurred) return;
 
   //prepare scope object
   let initialTimeS = Math.floor(Date.now() / 1000);
@@ -79,14 +83,11 @@ function calculateBaseline(data) {
   let scope = {
     initialTimeS: initialTimeS, //this will remain constant throughout the simulation
     timeS: initialTimeS, //timeS will increment with each iteration
-    dt: math.unit(
-      simulationParams.timeStepNumber,
-      simulationParams.timeStepUnit
-    ), //delta time
+    dt: math.unit(sim.params.timeStepNumber, sim.params.timeStepUnit), //delta time
     timeSeries: { timeSPoints: [], nodes: {} }
   }; //todo: load timeSeries with current or historical values
 
-  sortedNodes.forEach(function(node, index) {
+  sim.sortedNodes.forEach(function(node, index) {
     scope.timeSeries.nodes[node.id] = [];
   });
 
@@ -96,7 +97,7 @@ function calculateBaseline(data) {
 
   // gather up current values from nodes into scope
   //console.log("begin loading currentValues");
-  sortedNodes.forEach(function(node, index) {
+  sim.sortedNodes.forEach(function(node, index) {
     if (!sim.errorOccurred)
       try {
         scope["$" + node.id + "_unit"] = node.unit;
@@ -123,7 +124,7 @@ function calculateBaseline(data) {
 
   // gather up formulas from nodes into an array ordered by calculation order
   var expressionsArray = [];
-  sortedNodes.forEach(function(node) {
+  sim.sortedNodes.forEach(function(node) {
     if (!sim.errorOccurred)
       try {
         //if formula includes a variable then save it
@@ -202,7 +203,7 @@ function calculateBaseline(data) {
   var expectedUnit = null;
   var expectedUnits = [];
 
-  sortedNodes.forEach(function(node) {
+  sim.sortedNodes.forEach(function(node) {
     if (!sim.errorOccurred)
       try {
         expectedUnits.push(math.unit(node.unit));
@@ -219,7 +220,7 @@ function calculateBaseline(data) {
 
   if (sim.errorOccurred) return;
 
-  while (completedLoops < maxLoops) {
+  while (completedLoops < sim.maxLoops) {
     // evaluate the formulas
     compiledExpressions.forEach(function(code, index) {
       if (!sim.errorOccurred)
@@ -232,20 +233,20 @@ function calculateBaseline(data) {
             expectedUnit = expectedUnits[index];
             if (
               !expectedUnits[index].equalBase(
-                scope["$" + sortedNodes[index].id]
+                scope["$" + sim.sortedNodes[index].id]
               )
             )
               throw `dimensions of expected units and calculated units do not match.
               <br/> Expected: "${expectedUnit.toString()}"
               <br/> Calculated: "${scope[
-                "$" + sortedNodes[index].id
+                "$" + sim.sortedNodes[index].id
               ].toString()}"`;
           }
         } catch (err) {
           //console.log(err);
           this.postMessage({
             errorType: "evaluation error",
-            errorMessage: `For node "${sortedNodes[index].name}",  <br/> ${err}`
+            errorMessage: `For node "${sim.sortedNodes[index].name}",  <br/> ${err}`
           });
           sim.errorOccurred = true;
         }
@@ -255,7 +256,7 @@ function calculateBaseline(data) {
       try {
         //save time and node values into results object
         scope.timeSeries.timeSPoints.push(scope.timeS);
-        sortedNodes.forEach(function(node, index) {
+        sim.sortedNodes.forEach(function(node, index) {
           scope.timeSeries.nodes[node.id].push(scope["$" + node.id]);
         });
       } catch (err) {
@@ -265,19 +266,16 @@ function calculateBaseline(data) {
       }
     if (sim.errorOccurred) return;
     if (completedLoops > 0)
-      scope.dt = math.multiply(
-        scope.dt,
-        1 + simulationParams.timeStepGrowthRate
-      );
+      scope.dt = math.multiply(scope.dt, 1 + sim.params.timeStepGrowthRate);
     scope.timeS = scope.timeS + scope.dt.toNumber("seconds");
     completedLoops++;
 
     //report progress every 500 ms
     if (
       new Date() - sim.lastProgressReportTime >= 500 ||
-      completedLoops == maxLoops
+      completedLoops == sim.maxLoops
     ) {
-      this.postMessage({ progressValue: completedLoops / maxLoops });
+      this.postMessage({ progressValue: completedLoops / sim.maxLoops });
       sim.lastProgressReportTime = new Date();
     }
   }
@@ -288,7 +286,7 @@ function calculateBaseline(data) {
   //clean up scope.timeSeries for posting back to main script
   //console.log(scope);
   let resultTimeSeriesNodesValues = {};
-  sortedNodes.forEach(function(node, index) {
+  sim.sortedNodes.forEach(function(node, index) {
     try {
       let nodeValues = scope.timeSeries.nodes[node.id].map(function(val) {
         //get only the numeric value of each value entry in the array
@@ -345,10 +343,11 @@ function calculateBaseline(data) {
   postMessage(resultsMessage);
 }
 
-function topoSort(nodes) {
+function topoSort(sim) {
+  //let nodes = sim.nodes;
   let L = []; //for storing sorted elements
-  let S = nodes.filter(node => node.blockingInDegree == 0); //nodes with no incoming edges
-  let unvisitedNodes = nodes.filter(node => node.blockingInDegree != 0);
+  let S = sim.nodes.filter(node => node.blockingInDegree == 0); //nodes with no incoming edges
+  let unvisitedNodes = sim.nodes.filter(node => node.blockingInDegree != 0);
   let n = null; //node to process
   let influencee = null; //a working variable
 
@@ -386,7 +385,8 @@ function topoSort(nodes) {
   return L;
 }
 
-function prepForSort(nodes) {
+function prepForSort(sim) {
+  nodes = sim.data.modelNodes;
   let preppedNodes = [];
   nodes.forEach(function(outerNode) {
     // calculate blockedInfluencees
