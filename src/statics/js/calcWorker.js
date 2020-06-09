@@ -140,6 +140,52 @@ function prepExpressionsArray(sim) {
   return expressionsArray;
 }
 
+function parseExpressions(sim) {
+  var parsedExpressions = [];
+  sim.expressionsArray.forEach(function(expression) {
+    if (!sim.errorOccurred)
+      try {
+        parsedExpressions.push(math.parse(expression));
+      } catch (err) {
+        let nodeName = replace$NodeIdsWithName(
+          expression.split(" =")[0]
+          //data.modelNodes
+        );
+        let replacedExpression = replace$NodeIdsWithSymbol(
+          expression
+          //data.modelNodes
+        );
+        this.postMessage({
+          errorType: "parse error",
+          errorMessage: `For node "${nodeName}"<br/>Expression: ${replacedExpression} <br/> ${err}`
+        });
+        sim.errorOccurred = true;
+      }
+  });
+  sim.calcTimeLog.push({
+    stage: "parse expressions",
+    endTime: new Date()
+  });
+  return parsedExpressions;
+}
+
+function compileExpressions(sim) {
+  try {
+    var compiledExpressions = sim.parsedExpressions.map(function(expression) {
+      return expression.compile();
+    });
+  } catch (err) {
+    console.log(err);
+    this.postMessage(err);
+    sim.errorOccurred = true;
+  }
+  sim.calcTimeLog.push({
+    stage: "compile expressions",
+    endTime: new Date()
+  });
+  return compiledExpressions;
+}
+
 function calculateBaseline(data) {
   let sim = {
     calcTimeLog: [], //used for tracking calculation times of different sections
@@ -171,47 +217,10 @@ function calculateBaseline(data) {
   sim.expressionsArray = prepExpressionsArray(sim);
   if (sim.errorOccurred) return;
 
-  var parsedExpressions = [];
-  sim.expressionsArray.forEach(function(expression) {
-    if (!sim.errorOccurred)
-      try {
-        parsedExpressions.push(math.parse(expression));
-      } catch (err) {
-        let nodeName = replace$NodeIdsWithName(
-          expression.split(" =")[0]
-          //data.modelNodes
-        );
-        let replacedExpression = replace$NodeIdsWithSymbol(
-          expression
-          //data.modelNodes
-        );
-        this.postMessage({
-          errorType: "parse error",
-          errorMessage: `For node "${nodeName}"<br/>Expression: ${replacedExpression} <br/> ${err}`
-        });
-        sim.errorOccurred = true;
-      }
-  });
-  sim.calcTimeLog.push({
-    stage: "parse expressions",
-    endTime: new Date()
-  });
-
+  sim.parsedExpressions = parseExpressions(sim);
   if (sim.errorOccurred) return;
 
-  try {
-    var compiledExpressions = parsedExpressions.map(function(expression) {
-      return expression.compile();
-    });
-  } catch (err) {
-    console.log(err);
-    this.postMessage(err);
-  }
-  sim.calcTimeLog.push({
-    stage: "compile expressions",
-    endTime: new Date()
-  });
-
+  sim.compiledExpressions = compileExpressions(sim);
   if (sim.errorOccurred) return;
 
   var expectedUnit = null;
@@ -236,7 +245,7 @@ function calculateBaseline(data) {
   let completedLoops = 0;
   while (completedLoops < sim.maxLoops) {
     // evaluate the formulas
-    compiledExpressions.forEach(function(code, index) {
+    sim.compiledExpressions.forEach(function(code, index) {
       if (!sim.errorOccurred)
         try {
           //todo: if timeS == initialTimeS then evaluate current value
