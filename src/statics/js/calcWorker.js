@@ -16,6 +16,40 @@ onmessage = function(e) {
   }
 };
 
+/*
+function coordinateScenarioSimulations({type, requestedIssues})
+  prep environment, scope, etc
+  baseline = simulateScenario({scenario: null})
+  save baseline to cookie
+  if (requestedIssues > 0)
+    if requestedIssues < all issues, add in blocked and children issues
+    topoSort issues
+    getDisjointSets(sortedIssues)
+    numLogicalProcessors = window.navigator.hardwareConcurrency
+    put disjoint sets into work packages
+    assign work packages to workers
+    onmessage, accumulate results
+    post available results to vuex store every 0.5 seconds
+    when all finished, merge issue's results into cookie 
+    and post back to caller for saving to cloud
+
+function getDisjointSets(sortedIssues)
+  for each issue in reverse topoSort order
+  getRootIssue of the issue
+  put issue into same set as root
+
+function getRootIssue()
+  if issue has no parent, then return issue
+  else return getRootIssue(parent)
+
+function doWork(sim, issuesPackage)
+  for each issue
+    gather status and impacts of blocked and children issues
+    simulateScenario including impacts from self, blocked and children issues
+    calculate aggregate deviations from baseline
+    post results to coordinator every 0.5 seconds and when finished
+*/
+
 function calculateBaseline(data) {
   let sim = {
     calcTimeLog: [], //used for tracking calculation times of different sections
@@ -55,6 +89,10 @@ function calculateBaseline(data) {
 
   sim.expectedUnits = prepExpectedUnits(sim);
   if (sim.errorOccurred) return;
+
+  //sim.baseline = simulateScenario(sim, scenario=baseline)
+  //simulate each scenario and calculate cost, value, ROI
+  //
 
   let completedLoops = 0;
   let expectedUnit = null;
