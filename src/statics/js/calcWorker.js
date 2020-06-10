@@ -24,6 +24,10 @@ Design to implement:
 * display issue's newest numers (from IndexedDb or from issue's own numbers)
 * on ActionSummary, if IndexedDb's numbers are newer and different from issue's own,
   then show button to publish issue's numbers 
+* if device is charging, auto-calculate displayed issues older than 1 day or older than model
+* if device is charging, every 5 minutes, recalculate up to 20 of user's 
+  involved issues older than model (highest roi first) and 20 older than
+  1 day (oldest first) 
 * after calculation of single issue, overlay baseline and 
   deviation in chart(s) for examined nodes, save timeSeries on IndexedDb 
   per device's setting on the issue
