@@ -17,7 +17,18 @@ onmessage = function(e) {
 };
 
 /*
-function coordinateScenarioSimulations({type, requestedIssues})
+Design to implement:
+* in store-calculator, when mass-calculation of issues posts back results,
+  update issue's numbers if roiLogPrecision2 has changed or if previous 
+  number update is more than 1 month ago.
+* display issue's newest numers (from IndexedDb or from issue's own numbers)
+* on ActionSummary, if IndexedDb's numbers are newer and different from issue's own,
+  then show button to publish issue's numbers 
+* after calculation of single issue, overlay baseline and 
+  deviation in chart(s) for examined nodes, save timeSeries on IndexedDb 
+  per device's setting on the issue
+
+function coordinateScenarioSimulations({type, requestedActions, requestedSituations})
   prep environment, scope, etc
   baseline = simulateScenario({scenario: null})
   save baseline to cookie
@@ -30,7 +41,7 @@ function coordinateScenarioSimulations({type, requestedIssues})
     assign work packages to workers
     onmessage, accumulate results
     post available results to vuex store every 0.5 seconds
-    when all finished, merge issue's results into cookie 
+    when all finished, save results to IndexedDb; briefResults [{i:id, b:benefit, c:cost, r:roi, t:calcStartTime}]
     and post back to caller for saving to cloud
 
 function getDisjointSets(sortedIssues)
