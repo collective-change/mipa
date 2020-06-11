@@ -16,11 +16,7 @@
       class="q-mt-sm"
     >
       <div class="absolute-full flex flex-center">
-        <q-badge
-          color="white"
-          text-color="secondary"
-          :label="calculationProgressLabel"
-        />
+        <q-badge color="white" text-color="secondary" :label="calculationProgressLabel" />
       </div>
     </q-linear-progress>
   </div>
@@ -51,8 +47,12 @@ export default {
   },
   methods: {
     calculate() {
+      let modelId = this.$route.params.modelId
+        ? this.$route.params.modelId
+        : this.$route.params.orgId;
       let payload = {
-        modelId: this.$route.params.modelId,
+        orgId: this.$route.params.orgId,
+        modelId: modelId,
         nodes: this.nodes,
         exchangeRates: this.exchangeRates,
         simulationParams: this.currentModel.simulationParams
@@ -62,7 +62,7 @@ export default {
           payload.calculationType = "baseline";
           break;
         case "actions":
-          payload.calculationType = "allActions";
+          payload.calculationType = "actions";
           payload.actions = this.actions;
           break;
         default:

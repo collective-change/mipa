@@ -46,12 +46,15 @@ const actions = {
   },
 
   async calculate({ commit, dispatch }, payload) {
+    //todo: add in blocked and children issues
+    let done = false;
     let calcWorker = await dispatch("getNewCalcWorker");
     calcWorker.postMessage({
       calculationType: payload.calculationType,
       modelNodes: payload.nodes,
       exchangeRates: payload.exchangeRates,
-      simulationParams: payload.simulationParams
+      simulationParams: payload.simulationParams,
+      actions: payload.actions ? payload.actions : null
     });
     //console.log("Message posted to worker");
 
@@ -76,15 +79,22 @@ const actions = {
         switch (e.data.resultsType) {
           case "baseline":
             dispatch("calcResults/setBaseline", payload2, { root: true });
+            if (payload.calculationType == "baseline") done = true;
+            break;
+          case "actionResults":
+            console.log("actionResults");
+            if (payload.calculationType == "actions") done = true;
             break;
         }
 
-        calcWorker.terminate();
-        commit("setCalculatorIsRunning", false);
-        Notify.create(
-          "Calculation time " + e.data.calcTimeMs / 1000 + " seconds."
-        );
-        console.table(e.data.calcTimeStages);
+        if (done) {
+          calcWorker.terminate();
+          commit("setCalculatorIsRunning", false);
+          Notify.create(
+            "Calculation time " + e.data.calcTimeMs / 1000 + " seconds."
+          );
+          console.table(e.data.calcTimeStages);
+        }
       } else if ("progressValue" in e.data) {
         commit("setCalculationProgress", e.data.progressValue);
         commit(

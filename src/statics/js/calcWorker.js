@@ -10,8 +10,12 @@ onmessage = function(e) {
       coordinateScenarioSimulations(e.data);
       //calculateBaseline(e.data);
       break;
+    case "actions":
+      coordinateScenarioSimulations(e.data);
+      //calculateBaseline(e.data);
+      break;
     default:
-      console.err(
+      console.error(
         `calculationType "${e.data.calculationType}" not recognized.`
       );
   }
@@ -22,17 +26,18 @@ function coordinateScenarioSimulations({calculationType, requestedActions, reque
   prep environment, scope, etc
   baseline = simulateScenario({scenario: null})
   save baseline to IndexedDb
-  if (requestedIssues > 0)
-    if requestedIssues < all issues, add in blocked and children issues
-    topoSort issues
+  return if calculatonType is baseline
+  if requestedIssues < all issues, add in blocked and children issues
+  topoSort issues
+  after initial release:
     getDisjointSets(sortedIssues)
     numLogicalProcessors = window.navigator.hardwareConcurrency
     put disjoint sets into work packages
     assign work packages to workers
     onmessage, accumulate results
-    post available results to vuex store every 0.5 seconds
-    when all finished, save results to IndexedDb; briefResults [{i:id, b:benefit, c:cost, r:roi, t:calcStartTime}]
-    and post back to caller for saving to cloud
+  post available results to vuex store every 0.5 seconds
+  when all finished, save results to IndexedDb; briefResults [{i:id, b:benefit, c:cost, r:roi, t:calcStartTime}]
+  and post back to caller for saving to cloud
 
 function getDisjointSets(sortedIssues)
   for each issue in reverse topoSort order
@@ -56,29 +61,108 @@ function coordinateScenarioSimulations(data) {
   let sim = prepSim(data);
   if (sim.errorOccurred) return;
   let baseline = calculateBaseline(sim);
+  //todo: save baseline to IndexedDb
   if (data.calculationType == "baseline") return;
 
-  //save baseline to IndexedDb
-  //if (requestedIssues > 0)
-  //if requestedIssues < all issues, add in blocked and children issues
-  //topoSort issues
-  //getDisjointSets(sortedIssues)
-  //numLogicalProcessors = window.navigator.hardwareConcurrency
-  //put disjoint sets into work packages
-  //assign work packages to workers
-  //onmessage, accumulate results
-  //post available results to vuex store every 0.5 seconds
+  let actions = data.actions;
+
+  //topoSortActions
+  let sortedActions = topoSortActions(actions); //todo: actually write topoSortActions
+  let actionResults = calculateActionsResults(sim, sortedActions);
+
+  //and post available results to vuex store every 0.5 seconds
   //when all finished, save results to IndexedDb; briefResults[{ i: id, b: benefit, c: cost, r: roi, t: calcStartTime }]
   //and post back to caller for saving to cloud
 }
 
-function simulateScenario(sim, scenario) {
-  iterateThroughTime(sim);
+function calculateActionsResults(sim, actions) {
+  //simulate each action
+  actions.forEach(function(action) {
+    scenario = { type: "action", action: action, actions: actions };
+    resetScope(sim);
+    iterateThroughTime(sim, scenario);
+  });
   if (sim.errorOccurred) return;
 }
 
+function iterateThroughTime(sim, scenario) {
+  let completedLoops = 0;
+  let expectedUnit = null;
+  while (completedLoops < sim.maxLoops) {
+    // evaluate the formulas
+    sim.compiledExpressions.forEach(function(code, index) {
+      if (!sim.errorOccurred)
+        try {
+          //todo: if timeS == initialTimeS then evaluate current value
+          code.evaluate(sim.scope);
+
+          //adjust the node value by action's impacts
+          //loop through each of action's impacts to see if it impacts the node just calculated
+          if (scenario.type == "action") {
+            //scenario.sim.scope["$" + sim.sortedNodes[index].id];
+          }
+
+          //on first 2 loops, check result of evaluation against units expected by user.
+          if (completedLoops < 2) {
+            expectedUnit = sim.expectedUnits[index];
+            if (
+              !sim.expectedUnits[index].equalBase(
+                sim.scope["$" + sim.sortedNodes[index].id]
+              )
+            )
+              throw `dimensions of expected units and calculated units do not match.
+              <br/> Expected: "${expectedUnit.toString()}"
+              <br/> Calculated: "${sim.scope[
+                "$" + sim.sortedNodes[index].id
+              ].toString()}"`;
+          }
+        } catch (err) {
+          //console.log(err);
+          this.postMessage({
+            errorType: "evaluation error",
+            errorMessage: `For node "${sim.sortedNodes[index].name}",  <br/> ${err}`
+          });
+          sim.errorOccurred = true;
+        }
+      if (sim.errorOccurred) return;
+    });
+    if (!sim.errorOccurred)
+      try {
+        //save time and node values into time points and value time series
+        sim.scope.timeSeries.timeSPoints.push(sim.scope.timeS);
+        sim.sortedNodes.forEach(function(node, index) {
+          sim.scope.timeSeries.nodes[node.id].push(sim.scope["$" + node.id]);
+        });
+      } catch (err) {
+        console.log(err);
+        this.postMessage(err);
+        sim.errorOccurred = true;
+      }
+    if (sim.errorOccurred) return;
+
+    if (completedLoops > 0)
+      sim.scope.dt = math.multiply(
+        sim.scope.dt,
+        1 + sim.params.timeStepGrowthRate
+      );
+    sim.scope.timeS = sim.scope.timeS + sim.scope.dt.toNumber("seconds");
+    completedLoops++;
+
+    //report progress every 500 ms
+    if (
+      new Date() - sim.lastProgressReportTime >= 500 ||
+      completedLoops == sim.maxLoops
+    ) {
+      this.postMessage({ progressValue: completedLoops / sim.maxLoops });
+      sim.lastProgressReportTime = new Date();
+    }
+  }
+  sim.calcTimeLog.push({ stage: "iterate", endTime: new Date() });
+}
+
 function calculateBaseline(sim) {
-  iterateThroughTime(sim);
+  let scenario = { type: "baseline" };
+  iterateThroughTime(sim, scenario);
   if (sim.errorOccurred) return;
 
   const resultTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
@@ -112,7 +196,7 @@ function prepSim(data) {
   sim.nodes = prepForSort(sim);
   if (sim.errorOccurred) return sim;
 
-  sim.sortedNodes = topoSort(sim);
+  sim.sortedNodes = topoSortNodes(sim);
   if (sim.errorOccurred) return sim;
 
   sim.scope = prepScope(sim);
@@ -205,6 +289,16 @@ function prepScope(sim) {
     endTime: new Date()
   });
   return scope;
+}
+
+function resetScope(sim) {
+  let scope = sim.scope;
+  scope.timeS = scope.initialTimeS;
+  scope.dt = math.unit(sim.params.timeStepNumber, sim.params.timeStepUnit);
+  scope.timeSeries = { timeSPoints: [], nodes: {} };
+  sim.sortedNodes.forEach(function(node, index) {
+    scope.timeSeries.nodes[node.id] = [];
+  });
 }
 
 function loadCurrentValues(sim) {
@@ -335,75 +429,6 @@ function prepExpectedUnits(sim) {
   return expectedUnits;
 }
 
-function iterateThroughTime(sim) {
-  let completedLoops = 0;
-  let expectedUnit = null;
-  while (completedLoops < sim.maxLoops) {
-    // evaluate the formulas
-    sim.compiledExpressions.forEach(function(code, index) {
-      if (!sim.errorOccurred)
-        try {
-          //todo: if timeS == initialTimeS then evaluate current value
-          code.evaluate(sim.scope);
-
-          //on first 2 loops, check result of evaluation against units expected by user.
-          if (completedLoops < 2) {
-            expectedUnit = sim.expectedUnits[index];
-            if (
-              !sim.expectedUnits[index].equalBase(
-                sim.scope["$" + sim.sortedNodes[index].id]
-              )
-            )
-              throw `dimensions of expected units and calculated units do not match.
-              <br/> Expected: "${expectedUnit.toString()}"
-              <br/> Calculated: "${sim.scope[
-                "$" + sim.sortedNodes[index].id
-              ].toString()}"`;
-          }
-        } catch (err) {
-          //console.log(err);
-          this.postMessage({
-            errorType: "evaluation error",
-            errorMessage: `For node "${sim.sortedNodes[index].name}",  <br/> ${err}`
-          });
-          sim.errorOccurred = true;
-        }
-      if (sim.errorOccurred) return;
-    });
-    if (!sim.errorOccurred)
-      try {
-        //save time and node values into time points and value time series
-        sim.scope.timeSeries.timeSPoints.push(sim.scope.timeS);
-        sim.sortedNodes.forEach(function(node, index) {
-          sim.scope.timeSeries.nodes[node.id].push(sim.scope["$" + node.id]);
-        });
-      } catch (err) {
-        console.log(err);
-        this.postMessage(err);
-        sim.errorOccurred = true;
-      }
-    if (sim.errorOccurred) return;
-
-    if (completedLoops > 0)
-      sim.scope.dt = math.multiply(
-        sim.scope.dt,
-        1 + sim.params.timeStepGrowthRate
-      );
-    sim.scope.timeS = sim.scope.timeS + sim.scope.dt.toNumber("seconds");
-    completedLoops++;
-
-    //report progress every 500 ms
-    if (
-      new Date() - sim.lastProgressReportTime >= 500 ||
-      completedLoops == sim.maxLoops
-    ) {
-      this.postMessage({ progressValue: completedLoops / sim.maxLoops });
-      sim.lastProgressReportTime = new Date();
-    }
-  }
-  sim.calcTimeLog.push({ stage: "iterate", endTime: new Date() });
-}
-
 function extractTimeSeriesNodesValues(sim) {
   //clean up scope.timeSeries for posting back to main script
   //console.log(scope);
@@ -450,7 +475,7 @@ function getCalcTimeStages(log) {
   return calcTimeStages;
 }
 
-function topoSort(sim) {
+function topoSortNodes(sim) {
   //let nodes = sim.nodes;
   let L = []; //for storing sorted elements
   let S = sim.nodes.filter(node => node.blockingInDegree == 0); //nodes with no incoming edges
@@ -491,6 +516,12 @@ function topoSort(sim) {
   }
   sim.calcTimeLog.push({ stage: "topoSort", endTime: new Date() });
   return L;
+}
+
+function topoSortActions(actions) {
+  //todo: actually do the topological sort
+  let sortedActions = actions;
+  return sortedActions;
 }
 
 function prepForSort(sim) {
