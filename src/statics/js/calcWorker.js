@@ -7,7 +7,8 @@ var modelNodes = [];
 onmessage = function(e) {
   switch (e.data.calculationType) {
     case "baseline":
-      calculateBaseline(e.data);
+      coordinateScenarioSimulations(e.data);
+      //calculateBaseline(e.data);
       break;
     default:
       console.err(
@@ -19,7 +20,7 @@ onmessage = function(e) {
 /*
 function coordinateScenarioSimulations({calculationType, requestedActions, requestedSituations})
   prep environment, scope, etc
-  baseline = simu lateScenario({scenario: null})
+  baseline = simulateScenario({scenario: null})
   save baseline to IndexedDb
   if (requestedIssues > 0)
     if requestedIssues < all issues, add in blocked and children issues
@@ -50,10 +51,33 @@ function doWork(sim, issuesPackage)
     post results to coordinator every 0.5 seconds and when finished
 */
 
-function calculateBaseline(data) {
+function coordinateScenarioSimulations(data) {
+  //prep environment, scope, etc
   let sim = prepSim(data);
   if (sim.errorOccurred) return;
+  let baseline = calculateBaseline(sim);
+  if (data.calculationType == "baseline") return;
 
+  //save baseline to IndexedDb
+  //if (requestedIssues > 0)
+  //if requestedIssues < all issues, add in blocked and children issues
+  //topoSort issues
+  //getDisjointSets(sortedIssues)
+  //numLogicalProcessors = window.navigator.hardwareConcurrency
+  //put disjoint sets into work packages
+  //assign work packages to workers
+  //onmessage, accumulate results
+  //post available results to vuex store every 0.5 seconds
+  //when all finished, save results to IndexedDb; briefResults[{ i: id, b: benefit, c: cost, r: roi, t: calcStartTime }]
+  //and post back to caller for saving to cloud
+}
+
+function simulateScenario(sim, scenario) {
+  iterateThroughTime(sim);
+  if (sim.errorOccurred) return;
+}
+
+function calculateBaseline(sim) {
   iterateThroughTime(sim);
   if (sim.errorOccurred) return;
 
@@ -77,35 +101,37 @@ function calculateBaseline(data) {
   console.log("calcTime:", calcTimeMs, "ms");
 
   postMessage(resultsMessage);
+
+  return resultsMessage;
 }
 
 function prepSim(data) {
   let sim = prepEnvironment(data);
-  if (sim.errorOccurred) return;
+  if (sim.errorOccurred) return sim;
 
   sim.nodes = prepForSort(sim);
-  if (sim.errorOccurred) return;
+  if (sim.errorOccurred) return sim;
 
   sim.sortedNodes = topoSort(sim);
-  if (sim.errorOccurred) return;
+  if (sim.errorOccurred) return sim;
 
   sim.scope = prepScope(sim);
-  if (sim.errorOccurred) return;
+  if (sim.errorOccurred) return sim;
 
   loadCurrentValues(sim);
-  if (sim.errorOccurred) return;
+  if (sim.errorOccurred) return sim;
 
   sim.expressionsArray = prepExpressionsArray(sim);
-  if (sim.errorOccurred) return;
+  if (sim.errorOccurred) return sim;
 
   sim.parsedExpressions = parseExpressions(sim);
-  if (sim.errorOccurred) return;
+  if (sim.errorOccurred) return sim;
 
   sim.compiledExpressions = compileExpressions(sim);
-  if (sim.errorOccurred) return;
+  if (sim.errorOccurred) return sim;
 
   sim.expectedUnits = prepExpectedUnits(sim);
-  if (sim.errorOccurred) return;
+  if (sim.errorOccurred) return sim;
 
   return sim;
 }
