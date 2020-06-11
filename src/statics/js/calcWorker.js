@@ -88,6 +88,8 @@ function calculateActionsResults(sim, actions) {
 function iterateThroughTime(sim, scenario) {
   let completedLoops = 0;
   let expectedUnit = null;
+  //let nodeValue = {};
+  if (scenario.type == "action") console.log(scenario);
   while (completedLoops < sim.maxLoops) {
     // evaluate the formulas
     sim.compiledExpressions.forEach(function(code, index) {
@@ -99,7 +101,22 @@ function iterateThroughTime(sim, scenario) {
           //adjust the node value by action's impacts
           //loop through each of action's impacts to see if it impacts the node just calculated
           if (scenario.type == "action") {
-            //scenario.sim.scope["$" + sim.sortedNodes[index].id];
+            scenario.action.impacts.forEach(function(impact) {
+              if (impact.nodeId == sim.sortedNodes[index].id) {
+                //todo: if impact affects current time
+                switch (impact.operation) {
+                  case "+":
+                    sim.scope["$" + sim.sortedNodes[index].id] = math.add(
+                      sim.scope["$" + sim.sortedNodes[index].id],
+                      math.multiply(impact.operand, sim.expectedUnits[index])
+                    );
+                    console.log(
+                      sim.scope["$" + sim.sortedNodes[index].id].value
+                    );
+                    break;
+                }
+              }
+            });
           }
 
           //on first 2 loops, check result of evaluation against units expected by user.
