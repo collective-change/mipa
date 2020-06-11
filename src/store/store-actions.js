@@ -1,5 +1,5 @@
 import { uid, Notify } from "quasar";
-import { firebaseDb, firebaseAuth } from "boot/firebase";
+import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
 import { firestoreAction } from "vuexfire";
 import { showErrorMessage } from "src/utils/util-show-error-message";
 
@@ -29,6 +29,9 @@ const actions = {
   //may be asynchronous or synchronous
   updateAction({ dispatch }, payload) {
     //let userId = firebaseAuth.currentUser.uid;
+    payload.updates.updateTime = firebase.firestore.FieldValue.serverTimestamp();
+    payload.updates.updatedBy = firebaseAuth.currentUser.uid;
+
     firebaseDb
       .collection("actions")
       .doc(payload.id)
@@ -60,6 +63,11 @@ const actions = {
     //let userId = firebaseAuth.currentUser.uid;
 
     action.initiator = firebaseAuth.currentUser.uid;
+    action.createTime = firebase.firestore.FieldValue.serverTimestamp();
+    action.createdBy = firebaseAuth.currentUser.uid;
+    action.updateTime = firebase.firestore.FieldValue.serverTimestamp();
+    action.updatedBy = firebaseAuth.currentUser.uid;
+
     firebaseDb
       .collection("actions")
       .add(action)
@@ -77,7 +85,7 @@ const actions = {
       "actions",
       firebaseDb.collection("actions").where("orgId", "==", orgId),
       //.where("users", "array-contains", userId)
-      //.orderBy("name", "asc"),
+      //.orderBy("updateTime", "desc"),
       //.orderBy("goal", "asc"),
       {
         maxRefDepth: 1,
