@@ -1,6 +1,8 @@
 //import { parse, format, toTex } from "mathjs";
 importScripts("https://unpkg.com/mathjs@6.6.4/dist/math.min.js");
 
+//var idb = {}; //placeholder for IndexedDB
+
 const parser = self.math.parser();
 var modelNodes = [];
 
@@ -55,7 +57,7 @@ function doWork(sim, issuesPackage)
     calculate aggregate deviations from baseline
     post results to coordinator every 0.5 seconds and when finished
 */
-function initializeIdb() {
+function testInitializeIdb() {
   let idb; //placeholder for IndexedDB
   let objectStore = {};
   let request = indexedDB.open("mipa", 1);
@@ -64,12 +66,11 @@ function initializeIdb() {
     let objectStore = idb.createObjectStore("actionsResults", {
       autoIncrement: false
     });
-    //self.postMessage("Successfully upgraded db");
     console.log("Successfully upgraded idb");
   };
   request.onsuccess = function(e) {
-    idb = request.result;
-    console.log("Initialized idb");
+    //idb = request.result;
+    //console.log("Initialized idb");
   };
   request.onerror = function(e) {
     //self.postMessage("error");
@@ -79,7 +80,6 @@ function initializeIdb() {
 
 function putActionResultsInIdb(actionResults, actionId) {
   let request = indexedDB.open("mipa", 1);
-  console.log("in putActionResultsInIdb");
   request.onsuccess = function(event) {
     let idb = request.result;
     let requesttrans = idb
@@ -90,9 +90,7 @@ function putActionResultsInIdb(actionResults, actionId) {
       console.log("Error putting to idb");
     };
 
-    requesttrans.onsuccess = function(event) {
-      //console.log("requesttrans", requesttrans.result);
-    };
+    requesttrans.onsuccess = function(event) {};
   };
   request.onerror = function(event) {
     self.postMessage("Couldn't open idb");
@@ -103,7 +101,7 @@ function coordinateScenarioSimulations(data) {
   //prep environment, scope, etc
   let sim = prepSim(data);
   if (sim.errorOccurred) return;
-  initializeIdb();
+  testInitializeIdb();
 
   let baseline = calculateBaseline(sim);
   //todo: save baseline to IndexedDb
@@ -133,10 +131,13 @@ function calculateActionsResults(sim, actions) {
     iterateThroughTime(sim, scenario);
     if (sim.errorOccurred) return;
 
+    //todo: only extract and save all node values if requested by
+    //user for this device
     resultTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
     calcTimeMs = new Date() - startTimeMs;
     console.log(calcTimeMs, "ms", action.title);
     //todo: add ROI calculation
+    //roiCalcResults =
     actionResults = {
       calcTimeMs: calcTimeMs,
       timeSPoints: sim.scope.timeSeries.timeSPoints,

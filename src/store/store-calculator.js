@@ -88,7 +88,7 @@ const actions = {
         }
 
         if (done) {
-          calcWorker.terminate();
+          //calcWorker.terminate();
           commit("setCalculatorIsRunning", false);
           Notify.create(
             "Calculation time " + e.data.calcTimeMs / 1000 + " seconds."
