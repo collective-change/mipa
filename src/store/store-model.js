@@ -41,7 +41,7 @@ const actions = {
     model.editors = { users: [firebaseAuth.currentUser.uid] };
     model.viewers = { org: [payload.orgId] };
     model.isOrgMainModel = true;
-    model.name = "Main;";
+    model.name = "Main";
     model.unwrittenChanges = [];
     firebaseDb
       .collection("models")

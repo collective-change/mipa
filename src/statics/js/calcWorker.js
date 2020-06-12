@@ -104,6 +104,7 @@ function iterateThroughTime(sim, scenario) {
             scenario.action.impacts.forEach(function(impact) {
               if (impact.nodeId == sim.sortedNodes[index].id) {
                 //todo: if impact affects current time
+                //if (sim.scope.timeS >= impact.startTime && sim.scope.timeS < impact.endTime)
                 switch (impact.operation) {
                   case "+":
                     sim.scope["$" + sim.sortedNodes[index].id] = math.add(
