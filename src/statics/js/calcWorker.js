@@ -76,20 +76,51 @@ function coordinateScenarioSimulations(data) {
 }
 
 function calculateActionsResults(sim, actions) {
+  actionResults = {};
+  let calcTimeMs = 0;
   //simulate each action
   actions.forEach(function(action) {
+    let startTimeMs = new Date();
     scenario = { type: "action", action: action, actions: actions };
     resetScope(sim);
     iterateThroughTime(sim, scenario);
+    if (sim.errorOccurred) return;
+
+    const resultTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
+    calcTimeMs = new Date() - startTimeMs;
+    console.log(calcTimeMs, "ms", action.title);
+    //todo: add ROI calculation
+    actionResults[action.id] = {
+      calcTimeMs: calcTimeMs,
+      timeSPoints: sim.scope.timeSeries.timeSPoints,
+      nodes: extractTimeSeriesNodesValues(sim)
+    };
+    if (sim.errorOccurred) return;
   });
-  if (sim.errorOccurred) return;
+
+  const log = sim.calcTimeLog;
+  calcTimeMs = log[log.length - 1].endTime - log[0].endTime;
+  const calcTimeStages = getCalcTimeStages(log);
+
+  const resultsMessage = {
+    resultsType: "action",
+    actionResults: actionResults,
+    calcTimeLog: sim.calcTimeLog,
+    calcTimeStages: calcTimeStages,
+    calcTimeMs: calcTimeMs
+  };
+  console.log(resultsMessage);
+  console.log("calcTime:", calcTimeMs, "ms");
+
+  postMessage(resultsMessage);
+
+  return resultsMessage;
 }
 
 function iterateThroughTime(sim, scenario) {
   let completedLoops = 0;
   let expectedUnit = null;
   //let nodeValue = {};
-  if (scenario.type == "action") console.log(scenario);
   while (completedLoops < sim.maxLoops) {
     // evaluate the formulas
     sim.compiledExpressions.forEach(function(code, index) {
@@ -111,9 +142,9 @@ function iterateThroughTime(sim, scenario) {
                       sim.scope["$" + sim.sortedNodes[index].id],
                       math.multiply(impact.operand, sim.expectedUnits[index])
                     );
-                    console.log(
+                    /*console.log(
                       sim.scope["$" + sim.sortedNodes[index].id].value
-                    );
+                    );*/
                     break;
                 }
               }
@@ -188,7 +219,6 @@ function calculateBaseline(sim) {
 
   const log = sim.calcTimeLog;
   const calcTimeMs = log[log.length - 1].endTime - log[0].endTime;
-
   const calcTimeStages = getCalcTimeStages(log);
 
   const resultsMessage = {

@@ -22,12 +22,7 @@
           icon="add"
         />-->
         <div class="row q-gutter-sm">
-          <q-btn
-            color="primary"
-            :disable="loading"
-            label="新增"
-            @click="showAddAction = true"
-          />
+          <q-btn color="primary" :disable="loading" label="新增" @click="showAddAction = true" />
           <calculator-ui calculationType="actions" buttonLabel="Recalculate" />
         </div>
 

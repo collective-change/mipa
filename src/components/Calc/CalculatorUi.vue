@@ -43,7 +43,7 @@ export default {
       "calculationProgressLabel"
     ]),
     ...mapState("adHocDocs", ["exchangeRates"]),
-    ...mapState("actions", ["actions"])
+    ...mapGetters("actions", ["actions"])
   },
   methods: {
     calculate() {

@@ -107,7 +107,10 @@ const actions = {
 
 const getters = {
   actions: state => {
-    return state.actions;
+    if (!state.actions) {
+      return [];
+    }
+    return state.actions.map(action => ({ ...action, id: action.id }));
   },
   actionsSorted: state => {
     let actionsSorted = {},

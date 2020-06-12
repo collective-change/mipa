@@ -55,9 +55,7 @@
           debounce="800"
         />
         <div v-if="parserError == '' && latexFormula">
-          <vue-mathjax
-            :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"
-          ></vue-mathjax>
+          <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
         </div>
         <div v-else class="text-negative">{{ parserError }}</div>
         <q-input
@@ -78,7 +76,7 @@
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
       </q-form>
-
+      <!--
       <p>nodeToSubmit: {{ nodeToSubmit.id }}</p>
       <p>symbolFormula</p>
       <pre>{{ nodeToSubmit.symbolFormula }}</pre>
@@ -87,7 +85,7 @@
       <p>sysFormula</p>
       <pre>{{ nodeToSubmit.sysFormula }}</pre>
       <p>nodeToSubmit</p>
-      <pre>{{ nodeToSubmit }}</pre>
+      <pre>{{ nodeToSubmit }}</pre>-->
     </div>
   </div>
 </template>
@@ -350,8 +348,8 @@ export default {
         if (sysFormula) {
           potentials.forEach(function(node) {
             sysFormula = sysFormula.replace(
-              new RegExp(node.symbol, "g"), //global replacement
-              " $" + node.id + " "
+              new RegExp("\\b" + node.symbol + "\\b", "g"), //global replacement
+              "$" + node.id
             );
           });
         }
