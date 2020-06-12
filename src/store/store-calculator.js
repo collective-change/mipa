@@ -72,17 +72,17 @@ const actions = {
         calcWorker.terminate();
         commit("setCalculatorIsRunning", false);
       } else if ("resultsType" in e.data) {
-        let payload2 = {
-          modelId: payload.modelId,
-          data: e.data
-        };
         switch (e.data.resultsType) {
           case "baseline":
+            let payload2 = {
+              modelId: payload.modelId,
+              data: e.data
+            };
             dispatch("calcResults/setBaseline", payload2, { root: true });
             if (payload.calculationType == "baseline") done = true;
             break;
-          case "actionResults":
-            console.log("actionResults");
+          case "action":
+            //console.log(e.data);
             if (payload.calculationType == "actions") done = true;
             break;
         }

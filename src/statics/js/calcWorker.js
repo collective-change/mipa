@@ -55,11 +55,56 @@ function doWork(sim, issuesPackage)
     calculate aggregate deviations from baseline
     post results to coordinator every 0.5 seconds and when finished
 */
+function initializeIdb() {
+  let idb; //placeholder for IndexedDB
+  let objectStore = {};
+  let request = indexedDB.open("mipa", 1);
+  request.onupgradeneeded = function(e) {
+    idb = request.result;
+    let objectStore = idb.createObjectStore("actionsResults", {
+      autoIncrement: false
+    });
+    //self.postMessage("Successfully upgraded db");
+    console.log("Successfully upgraded idb");
+  };
+  request.onsuccess = function(e) {
+    idb = request.result;
+    console.log("Initialized idb");
+  };
+  request.onerror = function(e) {
+    //self.postMessage("error");
+    console.log("Error initializing idb");
+  };
+}
+
+function putActionResultsInIdb(actionResults, actionId) {
+  let request = indexedDB.open("mipa", 1);
+  console.log("in putActionResultsInIdb");
+  request.onsuccess = function(event) {
+    let idb = request.result;
+    let requesttrans = idb
+      .transaction(["actionsResults"], "readwrite")
+      .objectStore("actionsResults")
+      .put(actionResults, actionId);
+    requesttrans.onerror = function(event) {
+      console.log("Error putting to idb");
+    };
+
+    requesttrans.onsuccess = function(event) {
+      //console.log("requesttrans", requesttrans.result);
+    };
+  };
+  request.onerror = function(event) {
+    self.postMessage("Couldn't open idb");
+  };
+}
 
 function coordinateScenarioSimulations(data) {
   //prep environment, scope, etc
   let sim = prepSim(data);
   if (sim.errorOccurred) return;
+  initializeIdb();
+
   let baseline = calculateBaseline(sim);
   //todo: save baseline to IndexedDb
   if (data.calculationType == "baseline") return;
@@ -78,6 +123,8 @@ function coordinateScenarioSimulations(data) {
 function calculateActionsResults(sim, actions) {
   actionResults = {};
   let calcTimeMs = 0;
+  let resultTimeSeriesNodesValues = {};
+
   //simulate each action
   actions.forEach(function(action) {
     let startTimeMs = new Date();
@@ -86,15 +133,16 @@ function calculateActionsResults(sim, actions) {
     iterateThroughTime(sim, scenario);
     if (sim.errorOccurred) return;
 
-    const resultTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
+    resultTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
     calcTimeMs = new Date() - startTimeMs;
     console.log(calcTimeMs, "ms", action.title);
     //todo: add ROI calculation
-    actionResults[action.id] = {
+    actionResults = {
       calcTimeMs: calcTimeMs,
       timeSPoints: sim.scope.timeSeries.timeSPoints,
-      nodes: extractTimeSeriesNodesValues(sim)
+      nodes: resultTimeSeriesNodesValues
     };
+    putActionResultsInIdb(actionResults, action.id);
     if (sim.errorOccurred) return;
   });
 
@@ -104,15 +152,16 @@ function calculateActionsResults(sim, actions) {
 
   const resultsMessage = {
     resultsType: "action",
-    actionResults: actionResults,
+    //actionResults: actionResults,
     calcTimeLog: sim.calcTimeLog,
     calcTimeStages: calcTimeStages,
     calcTimeMs: calcTimeMs
   };
-  console.log(resultsMessage);
+  //console.log(resultsMessage);
+
   console.log("calcTime:", calcTimeMs, "ms");
 
-  postMessage(resultsMessage);
+  self.postMessage(resultsMessage);
 
   return resultsMessage;
 }
@@ -167,7 +216,7 @@ function iterateThroughTime(sim, scenario) {
           }
         } catch (err) {
           //console.log(err);
-          this.postMessage({
+          self.postMessage({
             errorType: "evaluation error",
             errorMessage: `For node "${sim.sortedNodes[index].name}",  <br/> ${err}`
           });
@@ -184,7 +233,7 @@ function iterateThroughTime(sim, scenario) {
         });
       } catch (err) {
         console.log(err);
-        this.postMessage(err);
+        self.postMessage(err);
         sim.errorOccurred = true;
       }
     if (sim.errorOccurred) return;
@@ -202,11 +251,15 @@ function iterateThroughTime(sim, scenario) {
       new Date() - sim.lastProgressReportTime >= 500 ||
       completedLoops == sim.maxLoops
     ) {
-      this.postMessage({ progressValue: completedLoops / sim.maxLoops });
+      self.postMessage({ progressValue: completedLoops / sim.maxLoops });
       sim.lastProgressReportTime = new Date();
     }
   }
-  sim.calcTimeLog.push({ stage: "iterate", endTime: new Date() });
+  let stage =
+    "iterate for " +
+    scenario.type +
+    (scenario.type == "action" ? scenario.action.title : "");
+  sim.calcTimeLog.push({ stage: stage, endTime: new Date() });
 }
 
 function calculateBaseline(sim) {
@@ -230,7 +283,7 @@ function calculateBaseline(sim) {
     calcTimeMs: calcTimeMs
   };
 
-  console.log("calcTime:", calcTimeMs, "ms");
+  console.log("baseline calcTime:", calcTimeMs, "ms");
 
   postMessage(resultsMessage);
 
@@ -278,7 +331,7 @@ function prepEnvironment(data) {
   };
 
   sim.calcTimeLog.push({ stage: "start", endTime: new Date() });
-  this.postMessage({ progressValue: 0 });
+  self.postMessage({ progressValue: 0 });
   sim.lastProgressReportTime = new Date();
 
   modelNodes = data.modelNodes; //make modelNodes globally accessible
@@ -363,7 +416,7 @@ function loadCurrentValues(sim) {
           );
         }
       } catch (err) {
-        this.postMessage({
+        self.postMessage({
           errorType: "current value loading error",
           errorMessage: `For node "${node.name}", current value "${node.currentValue}", unit "${node.unit}" <br/> ${err}`
         });
@@ -399,7 +452,7 @@ function prepExpressionsArray(sim) {
         }
       } catch (err) {
         console.log(err);
-        this.postMessage({
+        self.postMessage({
           errorType: "expression array error",
           errorMessage: `For node "${node.name}" <br/> ${err}`
         });
@@ -428,7 +481,7 @@ function parseExpressions(sim) {
           expression
           //data.modelNodes
         );
-        this.postMessage({
+        self.postMessage({
           errorType: "parse error",
           errorMessage: `For node "${nodeName}"<br/>Expression: ${replacedExpression} <br/> ${err}`
         });
@@ -449,7 +502,7 @@ function compileExpressions(sim) {
     });
   } catch (err) {
     console.log(err);
-    this.postMessage(err);
+    self.postMessage(err);
     sim.errorOccurred = true;
   }
   sim.calcTimeLog.push({
@@ -466,7 +519,7 @@ function prepExpectedUnits(sim) {
       try {
         expectedUnits.push(math.unit(node.unit));
       } catch (err) {
-        this.postMessage({
+        self.postMessage({
           errorType: "unit loading error",
           errorMessage: `For node "${node.name}", unit "${node.unit}" <br/> ${err}`
         });
@@ -494,7 +547,7 @@ function extractTimeSeriesNodesValues(sim) {
       resultTimeSeriesNodesValues[node.id] = nodeValues;
     } catch (err) {
       //console.log(err);
-      this.postMessage({
+      self.postMessage({
         errorType: "results number extraction error",
         errorMessage: `For node "${node.name}", timeSeries [${
           sim.scope.timeSeries.nodes[node.id]
@@ -560,7 +613,7 @@ function topoSortNodes(sim) {
     }
   } catch (err) {
     console.log(err);
-    this.postMessage(err);
+    self.postMessage(err);
   }
   sim.calcTimeLog.push({ stage: "topoSort", endTime: new Date() });
   return L;
