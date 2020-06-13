@@ -57,45 +57,6 @@ function doWork(sim, issuesPackage)
     calculate aggregate deviations from baseline
     post results to coordinator every 0.5 seconds and when finished
 */
-function testInitializeIdb() {
-  let idb; //placeholder for IndexedDB
-  let objectStore = {};
-  let request = indexedDB.open("mipa", 1);
-  request.onupgradeneeded = function(e) {
-    idb = request.result;
-    let objectStore = idb.createObjectStore("actionsResults", {
-      autoIncrement: false
-    });
-    console.log("Successfully upgraded idb");
-  };
-  request.onsuccess = function(e) {
-    //idb = request.result;
-    //console.log("Initialized idb");
-  };
-  request.onerror = function(e) {
-    //self.postMessage("error");
-    console.log("Error initializing idb");
-  };
-}
-
-function putActionResultsInIdb(actionResults, actionId) {
-  let request = indexedDB.open("mipa", 1);
-  request.onsuccess = function(event) {
-    let idb = request.result;
-    let requesttrans = idb
-      .transaction(["actionsResults"], "readwrite")
-      .objectStore("actionsResults")
-      .put(actionResults, actionId);
-    requesttrans.onerror = function(event) {
-      console.log("Error putting to idb");
-    };
-
-    requesttrans.onsuccess = function(event) {};
-  };
-  request.onerror = function(event) {
-    self.postMessage("Couldn't open idb");
-  };
-}
 
 function coordinateScenarioSimulations(data) {
   //prep environment, scope, etc
@@ -828,6 +789,46 @@ function interpolateFromLookup(timeSPoints, values, targetTimeS) {
   } catch (err) {
     console.log(err);
   }
+}
+
+function testInitializeIdb() {
+  let idb; //placeholder for IndexedDB
+  let objectStore = {};
+  let request = indexedDB.open("mipa", 1);
+  request.onupgradeneeded = function(e) {
+    idb = request.result;
+    let objectStore = idb.createObjectStore("actionsResults", {
+      autoIncrement: false
+    });
+    console.log("Successfully upgraded idb");
+  };
+  request.onsuccess = function(e) {
+    //idb = request.result;
+    //console.log("Initialized idb");
+  };
+  request.onerror = function(e) {
+    //self.postMessage("error");
+    console.log("Error initializing idb");
+  };
+}
+
+function putActionResultsInIdb(actionResults, actionId) {
+  let request = indexedDB.open("mipa", 1);
+  request.onsuccess = function(event) {
+    let idb = request.result;
+    let requesttrans = idb
+      .transaction(["actionsResults"], "readwrite")
+      .objectStore("actionsResults")
+      .put(actionResults, actionId);
+    requesttrans.onerror = function(event) {
+      console.log("Error putting to idb");
+    };
+
+    requesttrans.onsuccess = function(event) {};
+  };
+  request.onerror = function(event) {
+    self.postMessage("Couldn't open idb");
+  };
 }
 
 function valueIsANumber(val) {
