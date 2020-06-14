@@ -96,6 +96,7 @@ module.exports = function(ctx) {
     build: {
       scopeHoisting: true,
       vueRouterMode: "history",
+      //devtool: "source-map",
       // vueCompiler: true,
       // gzip: true,
       // analyze: true,

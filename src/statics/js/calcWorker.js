@@ -390,7 +390,7 @@ function prepDefaultTimeSPoints(sim) {
 function resetScope(sim) {
   sim.scope.timeSeries = { timeSPoints: [], nodes: {} };
   sim.sortedNodes.forEach(function(node) {
-    scope.timeSeries.nodes[node.id] = [];
+    sim.scope.timeSeries.nodes[node.id] = [];
   });
 }
 

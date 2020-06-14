@@ -3,9 +3,7 @@
     <div v-if="selectedAction">
       <q-form @submit.prevent="submitForm">
         <div class="row">
-          <div
-            v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
-          >
+          <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
             <q-input
               class="text-h6"
               v-model="title"
@@ -27,28 +25,22 @@
             </q-input>
           </div>
 
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }"
-          >
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }">
             <div class="q-pa-xs q-gutter-xs">
-              <q-chip outline color="primary"
-                >Benefit
-                {{ formatNumber(uiAction.estTotalBenefitXdr) }} XDR</q-chip
-              >
-              <q-chip outline color="primary"
-                >Cost
+              <q-chip outline color="primary">
+                Benefit
+                {{ formatNumber(uiAction.estTotalBenefitXdr) }} XDR
+              </q-chip>
+              <q-chip outline color="primary">
+                Cost
                 {{ formatNumber(uiAction.outstandingCostXdr, 3) }}
-                XDR</q-chip
-              >
-              <q-chip color="primary" text-color="white"
-                >ROI {{ formatNumber(uiAction.estRoi, 2) }}</q-chip
-              >
+                XDR
+              </q-chip>
+              <q-chip color="primary" text-color="white">ROI {{ formatNumber(uiAction.estRoi, 2) }}</q-chip>
             </div>
           </div>
 
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }"
-          >
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }">
             <div class="q-pa-sm q-gutter-sm">
               <q-btn color="primary" label="Meet about this" />
               <q-btn color="primary" label="Mark as resolved" />
@@ -56,10 +48,8 @@
           </div>
         </div>
 
-        <div class="row ">
-          <div
-            v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
-          >
+        <div class="row">
+          <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
             <q-input v-model="notes" label="筆記" filled autogrow />
 
             <impacts />
@@ -173,20 +163,12 @@
                 style="max-width: 160px;"
                 debounce="500"
               />
-            </div> -->
+            </div>-->
 
             <modal-save-button />
           </div>
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
-          >
-            middle column
-          </div>
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
-          >
-            right column
-          </div>
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">middle column</div>
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">right column</div>
         </div>
       </q-form>
     </div>
@@ -224,7 +206,7 @@ export default {
   computed: {
     ...mapState("orgs", ["currentOrg"]),
     ...mapState("ui", ["selectedActionId"]),
-    ...mapState("actions", ["actions"]),
+    ...mapGetters("actions", ["actions"]),
     //fields calculated in the uiAction store, for display only
     //(do not modify their values in the component)
     ...mapState("uiAction", ["uiAction", "uiActionChanged"]),
