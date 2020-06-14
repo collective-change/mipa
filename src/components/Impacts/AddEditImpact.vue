@@ -73,7 +73,7 @@
             map-options
           />
           <q-input
-            v-show="impact.durationType == 'for_period'"
+            v-show="['for_period', 'with_half_life'].includes(impact.durationType)"
             v-model="impact.durationExpression"
             placeholder="how many"
             filled
@@ -81,7 +81,7 @@
             style="width: 8em"
           />
           <q-select
-            v-show="impact.durationType == 'for_period'"
+            v-show="['for_period', 'with_half_life'].includes(impact.durationType)"
             filled
             v-model="impact.durationUnit"
             :options="durationUnitOptions"
@@ -91,7 +91,10 @@
         </div>
       </q-card-section>
       <q-card-section class="q-gutter-sm q-pt-none">
-        <div v-if="validationError" class="text-negative">
+        <div
+          v-if="validationError"
+          class="text-negative"
+        >
           Please fill in all visible fields.
         </div>
       </q-card-section>
@@ -113,7 +116,7 @@ export default {
       .default
   },
 
-  data() {
+  data () {
     return {
       validationError: false,
       impact: {
@@ -169,12 +172,16 @@ export default {
       ],
       durationTypeOptions: [
         {
+          label: "just once",
+          value: "just_once"
+        },
+        {
           label: "for",
           value: "for_period"
         },
         {
-          label: "just once",
-          value: "just_once"
+          label: "with half life of",
+          value: "with_half_life"
         },
         {
           label: "forever",
@@ -202,7 +209,7 @@ export default {
     };
   },
 
-  created: function() {
+  created: function () {
     //compose option values first, so we don't need to wait
     //for filteredNodeOptions to compute, which results in q-select
     //displaying option value instead of option label.
@@ -213,15 +220,15 @@ export default {
     }
   },
 
-  mounted: function() {},
+  mounted: function () { },
 
   computed: {
-    nodeOptions() {
+    nodeOptions () {
       return this.nodes.map(node => {
         return { label: node.name, value: node.id };
       });
     },
-    operandFieldWidthEm() {
+    operandFieldWidthEm () {
       let operandWidthEm = 4;
       if (typeof this.impact.operand != "undefined") {
         operandWidthEm = Math.min(
@@ -231,7 +238,7 @@ export default {
       }
       return operandWidthEm + this.unitDisplay.length * 0.7;
     },
-    unitDisplay() {
+    unitDisplay () {
       if (this.impact.nodeId) {
         if (["+", "-", "="].includes(this.impact.operation))
           return this.getNodeUnit(this.impact.nodeId);
@@ -243,7 +250,7 @@ export default {
   },
 
   methods: {
-    filterFn(val, update, abort) {
+    filterFn (val, update, abort) {
       // call abort() at any time if you can't retrieve data somehow
 
       //setTimeout(() => {
@@ -260,16 +267,16 @@ export default {
       //}, 100);
     },
 
-    abortFilterFn() {
+    abortFilterFn () {
       // console.log('delayed filter aborted')
     },
 
-    getNodeUnit(nodeId) {
+    getNodeUnit (nodeId) {
       const found = this.nodes.find(node => node.id == nodeId);
       return found.unit;
     },
 
-    submitImpact() {
+    submitImpact () {
       //validate inputs
       if (
         !this.impact.thenText ||
