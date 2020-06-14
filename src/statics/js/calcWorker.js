@@ -132,13 +132,20 @@ function iterateThroughTime(sim, scenario) {
   //todo: gather begin and end times of impacts
   //todo: if extra timepoints are required than build customTimeSPoints
   //todo: simulate using either default or customTimeSPoints
+  let timeSPoints = sim.defaultTimeSPoints;
+
   let completedLoops = 0;
   let expectedUnit = null;
-  //let nodeValue = {};
-  let timeSPoints = sim.defaultTimeSPoints;
-  sim.scope.dt = sim.initialDt; //delta time
+
   timeSPoints.forEach(function(timeS, timeSIndex) {
     sim.scope.timeS = timeS;
+    //prepare dt
+    if (timeSIndex == 0) {
+      sim.scope.dt = sim.initialDt; //delta time
+    } else {
+      //we're not on the first timeSPoint
+      sim.scope.dt = math.unit(timeS - timeSPoints[timeSIndex - 1], "seconds");
+    }
     // evaluate the expressions for each node
     sim.compiledExpressions.forEach(function(code, nodeIndex) {
       if (!sim.errorOccurred)
@@ -209,16 +216,6 @@ function iterateThroughTime(sim, scenario) {
       }
     if (sim.errorOccurred) return;
 
-    /*if (completedLoops > 0)
-      sim.scope.dt = math.multiply(
-        sim.scope.dt,
-        1 + sim.params.timeStepGrowthRate
-      );*/
-    //sim.scope.timeS = sim.scope.timeS + sim.scope.dt.toNumber("seconds");
-    if (timeSIndex + 1 < timeSPoints.length) {
-      //if we're not on the last timeSPoint
-      sim.scope.dt = math.unit(timeSPoints[timeSIndex + 1] - timeS, "seconds");
-    }
     //report progress every 500 ms
     if (
       new Date() - sim.lastProgressReportTime >= 500 ||
@@ -370,18 +367,20 @@ function prepScope(sim) {
   return scope;
 }
 
-// has implicit unit of seconds; not wrapped with math.unit
 function prepDefaultTimeSPoints(sim) {
-  //with units
   let timeSPoint = sim.scope.initialTimeS;
   let completedLoops = 0;
   let defaultTimeSPoints = [];
   let dt = sim.initialDt;
   while (completedLoops < sim.maxLoops) {
-    //save time point into default time series
+    //Save time point into defaultTimeSPoints.
+    //Has implicit unit of seconds; not wrapped with math.unit
     defaultTimeSPoints.push(timeSPoint);
-    if (completedLoops > 0)
-      dt = math.multiply(dt, 1 + sim.params.timeStepGrowthRate);
+    if (completedLoops > 0) {
+      if (sim.params.timeStepGrowthRate != 0) {
+        dt = math.multiply(dt, 1 + sim.params.timeStepGrowthRate);
+      }
+    }
     timeSPoint = timeSPoint + dt.toNumber("seconds");
     completedLoops++;
   }
@@ -389,9 +388,6 @@ function prepDefaultTimeSPoints(sim) {
 }
 
 function resetScope(sim) {
-  //let scope = sim.scope;
-  //scope.timeS = scope.initialTimeS;
-  //scope.dt = math.unit(sim.params.timeStepNumber, sim.params.timeStepUnit);
   sim.scope.timeSeries = { timeSPoints: [], nodes: {} };
   sim.sortedNodes.forEach(function(node) {
     scope.timeSeries.nodes[node.id] = [];
