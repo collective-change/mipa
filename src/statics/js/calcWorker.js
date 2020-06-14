@@ -98,7 +98,7 @@ function calculateActionsResults(sim, actions) {
     calcTimeMs = new Date() - startTimeMs;
     console.log(calcTimeMs, "ms", action.title);
     //TODO: add ROI calculation
-    //roiCalcResults =
+    //roiCalcResults = prepRoiResults(sim);
     actionResults = {
       calcTimeMs: calcTimeMs,
       timeSPoints: sim.scope.timeSeries.timeSPoints,
@@ -126,6 +126,35 @@ function calculateActionsResults(sim, actions) {
   self.postMessage(resultsMessage);
 
   return resultsMessage;
+}
+
+function prepRoiResults(sim) {
+  //calculate npv
+
+  //marginal benefit npv = marginal value npv - marginal cost npv
+  //roi = marginal benefit npv / marginal cost npv
+  sim.scope.timeSeries.timeSPoints.forEach(function(timeS, timeSIndex) {});
+}
+
+function getMarginalNpv(
+  deviationSeries,
+  baselineSeries,
+  timeSPoints,
+  yearlyDiscountRate
+) {
+  //marginal npv = sum of discounted difference of the same node in the deviation and the baseline
+  let tYears; //time since beginning of simulation in years
+  let deviationMinusBaseline;
+  let Rt; //the Rt in NPV formula: sum over t of Rt/(1+i)^t
+  let npv = 0;
+  timeSPoints.forEach(function(timeS, index) {
+    deviationMinusBaseline = deviationSeries[index] - baselineSeries[index];
+    if (index == 0) prevDeviationMinusBaseline = 0;
+    tYears = (timeS - timeSPoints[0]) / 31556952; // 31556952 seconds in a year
+    Rt = deviationMinusBaseline - prevDeviationMinusBaseline;
+    npv += Rt / ((1 + yearlyDiscountRate) ^ tYears);
+    prevDiffBtwCases = diffBtwCases;
+  });
 }
 
 function iterateThroughTime(sim, scenario) {
