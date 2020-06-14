@@ -129,12 +129,18 @@ function calculateActionsResults(sim, actions) {
 }
 
 function iterateThroughTime(sim, scenario) {
+  //todo: gather begin and end times of impacts
+  //todo: if extra timepoints are required than build customTimeSPoints
+  //todo: simulate using either default or customTimeSPoints
   let completedLoops = 0;
   let expectedUnit = null;
   //let nodeValue = {};
-  while (completedLoops < sim.maxLoops) {
-    // evaluate the formulas
-    sim.compiledExpressions.forEach(function(code, index) {
+  let timeSPoints = sim.defaultTimeSPoints;
+  sim.scope.dt = sim.initialDt; //delta time
+  timeSPoints.forEach(function(timeS, timeSIndex) {
+    sim.scope.timeS = timeS;
+    // evaluate the expressions for each node
+    sim.compiledExpressions.forEach(function(code, nodeIndex) {
       if (!sim.errorOccurred)
         try {
           //todo: if timeS == initialTimeS then evaluate current value
@@ -144,14 +150,17 @@ function iterateThroughTime(sim, scenario) {
           //loop through each of action's impacts to see if it impacts the node just calculated
           if (scenario.type == "action") {
             scenario.action.impacts.forEach(function(impact) {
-              if (impact.nodeId == sim.sortedNodes[index].id) {
+              if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
                 //todo: if impact affects current time
                 //if (sim.scope.timeS >= impact.startTime && sim.scope.timeS < impact.endTime)
                 switch (impact.operation) {
                   case "+":
-                    sim.scope["$" + sim.sortedNodes[index].id] = math.add(
-                      sim.scope["$" + sim.sortedNodes[index].id],
-                      math.multiply(impact.operand, sim.expectedUnits[index])
+                    sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.add(
+                      sim.scope["$" + sim.sortedNodes[nodeIndex].id],
+                      math.multiply(
+                        impact.operand,
+                        sim.expectedUnits[nodeIndex]
+                      )
                     );
                     /*console.log(
                       sim.scope["$" + sim.sortedNodes[index].id].value
@@ -163,24 +172,24 @@ function iterateThroughTime(sim, scenario) {
           }
 
           //on first 2 loops, check result of evaluation against units expected by user.
-          if (completedLoops < 2) {
-            expectedUnit = sim.expectedUnits[index];
+          if (timeSIndex < 2) {
+            expectedUnit = sim.expectedUnits[nodeIndex];
             if (
-              !sim.expectedUnits[index].equalBase(
-                sim.scope["$" + sim.sortedNodes[index].id]
+              !sim.expectedUnits[nodeIndex].equalBase(
+                sim.scope["$" + sim.sortedNodes[nodeIndex].id]
               )
             )
               throw `dimensions of expected units and calculated units do not match.
               <br/> Expected: "${expectedUnit.toString()}"
               <br/> Calculated: "${sim.scope[
-                "$" + sim.sortedNodes[index].id
+                "$" + sim.sortedNodes[nodeIndex].id
               ].toString()}"`;
           }
         } catch (err) {
           //console.log(err);
           self.postMessage({
             errorType: "evaluation error",
-            errorMessage: `For node "${sim.sortedNodes[index].name}",  <br/> ${err}`
+            errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`
           });
           sim.errorOccurred = true;
         }
@@ -200,14 +209,16 @@ function iterateThroughTime(sim, scenario) {
       }
     if (sim.errorOccurred) return;
 
-    if (completedLoops > 0)
+    /*if (completedLoops > 0)
       sim.scope.dt = math.multiply(
         sim.scope.dt,
         1 + sim.params.timeStepGrowthRate
-      );
-    sim.scope.timeS = sim.scope.timeS + sim.scope.dt.toNumber("seconds");
-    completedLoops++;
-
+      );*/
+    //sim.scope.timeS = sim.scope.timeS + sim.scope.dt.toNumber("seconds");
+    if (timeSIndex + 1 < timeSPoints.length) {
+      //if we're not on the last timeSPoint
+      sim.scope.dt = math.unit(timeSPoints[timeSIndex + 1] - timeS, "seconds");
+    }
     //report progress every 500 ms
     if (
       new Date() - sim.lastProgressReportTime >= 500 ||
@@ -216,7 +227,7 @@ function iterateThroughTime(sim, scenario) {
       self.postMessage({ progressValue: completedLoops / sim.maxLoops });
       sim.lastProgressReportTime = new Date();
     }
-  }
+  });
   let stage =
     "iterate for " +
     scenario.type +
@@ -265,6 +276,9 @@ function prepSim(data) {
   sim.scope = prepScope(sim);
   if (sim.errorOccurred) return sim;
 
+  sim.defaultTimeSPoints = prepDefaultTimeSPoints(sim);
+  if (sim.errorOccurred) return sim;
+
   loadCurrentValues(sim);
   if (sim.errorOccurred) return sim;
 
@@ -289,7 +303,11 @@ function prepEnvironment(data) {
     data: data,
     errorOccurred: false,
     params: data.simulationParams,
-    maxLoops: data.simulationParams.numTimeSteps + 1
+    maxLoops: data.simulationParams.numTimeSteps + 1,
+    initialDt: math.unit(
+      data.simulationParams.timeStepNumber,
+      data.simulationParams.timeStepUnit
+    ) //delta time
   };
 
   sim.calcTimeLog.push({ stage: "start", endTime: new Date() });
@@ -334,16 +352,14 @@ function prepEnvironment(data) {
 
 function prepScope(sim) {
   //prepare scope object
-  let initialTimeS = Math.floor(Date.now() / 1000);
 
   let scope = {
-    initialTimeS: initialTimeS, //this will remain constant throughout the simulation
-    timeS: initialTimeS, //timeS will increment with each iteration
-    dt: math.unit(sim.params.timeStepNumber, sim.params.timeStepUnit), //delta time
+    initialTimeS: Math.floor(Date.now() / 1000), //this will remain constant throughout the simulation
+    //timeS: initialTimeS, //timeS will increment with each iteration
     timeSeries: { timeSPoints: [], nodes: {} }
   }; //todo: load timeSeries with current or historical values
 
-  sim.sortedNodes.forEach(function(node, index) {
+  sim.sortedNodes.forEach(function(node) {
     scope.timeSeries.nodes[node.id] = [];
   });
 
@@ -354,12 +370,30 @@ function prepScope(sim) {
   return scope;
 }
 
+// has implicit unit of seconds; not wrapped with math.unit
+function prepDefaultTimeSPoints(sim) {
+  //with units
+  let timeSPoint = sim.scope.initialTimeS;
+  let completedLoops = 0;
+  let defaultTimeSPoints = [];
+  let dt = sim.initialDt;
+  while (completedLoops < sim.maxLoops) {
+    //save time point into default time series
+    defaultTimeSPoints.push(timeSPoint);
+    if (completedLoops > 0)
+      dt = math.multiply(dt, 1 + sim.params.timeStepGrowthRate);
+    timeSPoint = timeSPoint + dt.toNumber("seconds");
+    completedLoops++;
+  }
+  return defaultTimeSPoints;
+}
+
 function resetScope(sim) {
-  let scope = sim.scope;
-  scope.timeS = scope.initialTimeS;
-  scope.dt = math.unit(sim.params.timeStepNumber, sim.params.timeStepUnit);
-  scope.timeSeries = { timeSPoints: [], nodes: {} };
-  sim.sortedNodes.forEach(function(node, index) {
+  //let scope = sim.scope;
+  //scope.timeS = scope.initialTimeS;
+  //scope.dt = math.unit(sim.params.timeStepNumber, sim.params.timeStepUnit);
+  sim.scope.timeSeries = { timeSPoints: [], nodes: {} };
+  sim.sortedNodes.forEach(function(node) {
     scope.timeSeries.nodes[node.id] = [];
   });
 }
