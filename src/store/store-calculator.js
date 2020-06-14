@@ -46,7 +46,7 @@ const actions = {
   },
 
   async calculate({ commit, dispatch }, payload) {
-    //todo: add in blocked and children issues
+    //TODO: add in blocked and children issues
     let done = false;
     let calcWorker = await dispatch("getNewCalcWorker");
     calcWorker.postMessage({

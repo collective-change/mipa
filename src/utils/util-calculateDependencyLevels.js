@@ -1,4 +1,4 @@
-// todo: Only consider influeners and influencees present in input nodes
+// TODO: Only consider influeners and influencees present in input nodes
 
 export function calculateDependencyLevels(nodes) {
   //if a node has an influencer, increase dependencyLevel number to one above influencer

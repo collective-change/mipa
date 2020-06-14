@@ -149,7 +149,7 @@ const getters = {
     }
     return actionsSorted;
   },
-  actionsTodo: (state, getters) => {
+  actionsTODO: (state, getters) => {
     let actionsFiltered = getters.actionsFiltered;
     let actions = {};
     Object.keys(actionsFiltered).forEach(function(key) {

@@ -71,7 +71,7 @@ function classifyInfluencers(payload) {
       let initialValue = args[2];
       if (initialValue == "best_guess") {
         //console.log("processing best_guess for ", args[0]);
-        let historyAvailable = false; //todo: check if history is available
+        let historyAvailable = false; //TODO: check if history is available
         let influencerNode = nodes.find(function(node) {
           return node.id == influencerId;
         });

@@ -212,7 +212,7 @@ const getters = {
     }
     return tasksSorted;
   },
-  tasksTodo: (state, getters) => {
+  tasksTODO: (state, getters) => {
     let tasksFiltered = getters.tasksFiltered;
     let tasks = {};
     Object.keys(tasksFiltered).forEach(function(key) {

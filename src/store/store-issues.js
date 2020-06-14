@@ -135,7 +135,7 @@ const getters = {
     }
     return issuesSorted;
   },
-  issuesTodo: (state, getters) => {
+  issuesTODO: (state, getters) => {
     let issuesFiltered = getters.issuesFiltered;
     let issues = {};
     Object.keys(issuesFiltered).forEach(function(key) {

@@ -47,7 +47,7 @@ const actions = {
       });
 
     dispatch("model/deleteModel", orgId, { root: true });
-    //todo: delete all non-public models solely owned by org
+    //TODO: delete all non-public models solely owned by org
   },
   addOrg({ dispatch }, org) {
     //add organization and its main model

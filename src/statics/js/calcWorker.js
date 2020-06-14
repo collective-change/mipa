@@ -65,13 +65,13 @@ function coordinateScenarioSimulations(data) {
   testInitializeIdb();
 
   let baseline = calculateBaseline(sim);
-  //todo: save baseline to IndexedDb
+  //TODO: save baseline to IndexedDb
   if (data.calculationType == "baseline") return;
 
   let actions = data.actions;
 
   //topoSortActions
-  let sortedActions = topoSortActions(actions); //todo: actually write topoSortActions
+  let sortedActions = topoSortActions(actions); //TODO: actually write topoSortActions
   let actionResults = calculateActionsResults(sim, sortedActions);
 
   //and post available results to vuex store every 0.5 seconds
@@ -92,12 +92,12 @@ function calculateActionsResults(sim, actions) {
     iterateThroughTime(sim, scenario);
     if (sim.errorOccurred) return;
 
-    //todo: only extract and save all node values if requested by
+    //TODO: only extract and save all node values if requested by
     //user for this device
     resultTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
     calcTimeMs = new Date() - startTimeMs;
     console.log(calcTimeMs, "ms", action.title);
-    //todo: add ROI calculation
+    //TODO: add ROI calculation
     //roiCalcResults =
     actionResults = {
       calcTimeMs: calcTimeMs,
@@ -129,9 +129,9 @@ function calculateActionsResults(sim, actions) {
 }
 
 function iterateThroughTime(sim, scenario) {
-  //todo: gather begin and end times of impacts
-  //todo: if extra timepoints are required than build customTimeSPoints
-  //todo: simulate using either default or customTimeSPoints
+  //TODO: gather begin and end times of impacts
+  //TODO: if extra timepoints are required than build customTimeSPoints
+  //TODO: simulate using either default or customTimeSPoints
   let timeSPoints = sim.defaultTimeSPoints;
 
   let completedLoops = 0;
@@ -150,7 +150,7 @@ function iterateThroughTime(sim, scenario) {
     sim.compiledExpressions.forEach(function(code, nodeIndex) {
       if (!sim.errorOccurred)
         try {
-          //todo: if timeS == initialTimeS then evaluate current value
+          //TODO: if timeS == initialTimeS then evaluate current value
           code.evaluate(sim.scope);
 
           //adjust the node value by action's impacts
@@ -158,7 +158,7 @@ function iterateThroughTime(sim, scenario) {
           if (scenario.type == "action") {
             scenario.action.impacts.forEach(function(impact) {
               if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
-                //todo: if impact affects current time
+                //TODO: if impact affects current time
                 //if (sim.scope.timeS >= impact.startTime && sim.scope.timeS < impact.endTime)
                 switch (impact.operation) {
                   case "+":
@@ -354,7 +354,7 @@ function prepScope(sim) {
     initialTimeS: Math.floor(Date.now() / 1000), //this will remain constant throughout the simulation
     //timeS: initialTimeS, //timeS will increment with each iteration
     timeSeries: { timeSPoints: [], nodes: {} }
-  }; //todo: load timeSeries with current or historical values
+  }; //TODO: load timeSeries with current or historical values
 
   sim.sortedNodes.forEach(function(node) {
     scope.timeSeries.nodes[node.id] = [];
@@ -612,7 +612,7 @@ function topoSortNodes(sim) {
 }
 
 function topoSortActions(actions) {
-  //todo: actually do the topological sort
+  //TODO: actually do the topological sort
   let sortedActions = actions;
   return sortedActions;
 }
@@ -728,7 +728,7 @@ function interpolate(
   let timeSPoints = [];
   let values = [];
   //extract only available data points
-  //todo: only extract data points surrounding targetTimeS
+  //TODO: only extract data points surrounding targetTimeS
   for (var i = 0; i < rawTimeSPoints.length; i++) {
     //if (typeof rawValuesWithUnits[i] == "number") {
     timeSPoints.push(rawTimeSPoints[i]);
