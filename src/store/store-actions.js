@@ -27,8 +27,10 @@ const mutations = {
 
 const actions = {
   //may be asynchronous or synchronous
-  updateAction({ dispatch }, payload) {
-    //let userId = firebaseAuth.currentUser.uid;
+  updateAction({ dispatch }, originalPayload) {
+    //Clone the original payload so we don't modify it (it's
+    //passed by reference) when setting the serverTimestamp.
+    let payload = JSON.parse(JSON.stringify(originalPayload));
     payload.updates.updateTime = firebase.firestore.FieldValue.serverTimestamp();
     payload.updates.updatedBy = firebaseAuth.currentUser.uid;
 
