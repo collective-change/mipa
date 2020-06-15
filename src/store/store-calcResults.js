@@ -16,10 +16,7 @@ const state = {
 const mutations = {};
 
 const actions = {
-  /*setBaseline({ commit }, baseline) {
-    commit("setBaseline", baseline);
-  },*/
-  setBaseline({ dispatch }, payload) {
+  /*setBaseline({ dispatch }, payload) {
     let modelId = payload.modelId;
     //let nodeId = payload.updates.id;
 
@@ -40,7 +37,7 @@ const actions = {
       .catch(function(error) {
         showErrorMessage("Error updating baseline", error.message);
       });
-  },
+  },*/
   bindBaseline: firestoreAction(({ bindFirestoreRef }, modelId) => {
     let userId = firebaseAuth.currentUser.uid;
     // return the promise returned by `bindFirestoreRef`

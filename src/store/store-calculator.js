@@ -60,6 +60,7 @@ const actions = {
     //console.log("Message posted to worker");
 
     calcWorker.onmessage = function(e) {
+      let payload2;
       //console.log(e.data);
       if (typeof e.data == "string") {
         showErrorMessage("Calculation error", e.data);
@@ -75,15 +76,10 @@ const actions = {
       } else if ("resultsType" in e.data) {
         switch (e.data.resultsType) {
           case "baseline":
-            let payload2 = {
-              modelId: payload.modelId,
-              data: e.data
-            };
-            dispatch("calcResults/setBaseline", payload2, { root: true });
             if (payload.calculationType == "baseline") done = true;
             break;
-          case "action":
-            //console.log(e.data);
+          case "actions":
+            dispatch("actions/updateActionsRoiResults", e.data, { root: true });
             if (payload.calculationType == "actions") done = true;
             break;
         }

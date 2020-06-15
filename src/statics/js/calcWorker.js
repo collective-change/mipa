@@ -82,13 +82,14 @@ function coordinateScenarioSimulations(data) {
 }
 
 function calculateResultsOfActions(sim, actions, defaultBaseline) {
-  //let defaultBaseline = calculateBaseline(sim);
   let baselineTimeSeriesNodesValues,
     deviationTimeSeriesNodesValues,
     roiCalcResults;
   let yearlyDiscountRate = 0.05;
 
-  actionResults = {};
+  let actionResults = {}; // for one action
+  let actionsRoiResults = []; // for multiple actions
+
   let calcTimeMs = 0;
 
   //simulate each action
@@ -124,6 +125,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       nodesValues: deviationTimeSeriesNodesValues,
       roiCalcResults
     };
+    actionsRoiResults.push({ actionId: action.id, ...roiCalcResults });
     putActionResultsInIdb(actionResults, action.id);
     if (sim.errorOccurred) return;
   });
@@ -132,20 +134,20 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
   calcTimeMs = log[log.length - 1].endTime - log[0].endTime;
   const calcTimeStages = getCalcTimeStages(log);
 
-  const resultsMessage = {
-    resultsType: "action",
-    //actionResults: actionResults,
+  const results = {
+    resultsType: "actions",
+    actionsRoiResults,
     calcTimeLog: sim.calcTimeLog,
-    calcTimeStages: calcTimeStages,
-    calcTimeMs: calcTimeMs
+    calcTimeStages,
+    calcTimeMs
   };
   //console.log(resultsMessage);
 
   console.log("calcTime:", calcTimeMs, "ms");
 
-  self.postMessage(resultsMessage);
+  self.postMessage(results);
 
-  return resultsMessage;
+  return results;
 }
 
 function prepRoiResults(
@@ -333,8 +335,7 @@ function calculateBaseline(sim) {
   const calcTimeMs = log[log.length - 1].endTime - log[0].endTime;
   const calcTimeStages = getCalcTimeStages(log);
 
-  const resultsMessage = {
-    resultsType: "baseline",
+  const results = {
     timeSPoints: sim.scope.timeSeries.timeSPoints,
     nodesValues: resultTimeSeriesNodesValues,
     calcTimeLog: sim.calcTimeLog,
@@ -342,11 +343,19 @@ function calculateBaseline(sim) {
     calcTimeMs: calcTimeMs
   };
 
+  //save to IndexedDb
+  putBaselineResultsInIdb(results);
+
   console.log("baseline calcTime:", calcTimeMs, "ms");
 
-  postMessage(resultsMessage);
+  postMessage({
+    resultsType: "baseline",
+    calcTimeLog: sim.calcTimeLog,
+    calcTimeStages: calcTimeStages,
+    calcTimeMs: calcTimeMs
+  });
 
-  return resultsMessage;
+  return results;
 }
 
 function prepSim(data) {
@@ -917,7 +926,10 @@ function testInitializeIdb() {
   let request = indexedDB.open("mipa", 1);
   request.onupgradeneeded = function(e) {
     idb = request.result;
-    let objectStore = idb.createObjectStore("actionsResults", {
+    idb.createObjectStore("actionsResults", {
+      autoIncrement: false
+    });
+    idb.createObjectStore("adHocDocs", {
       autoIncrement: false
     });
     console.log("Successfully upgraded idb");
@@ -932,16 +944,34 @@ function testInitializeIdb() {
   };
 }
 
+function putBaselineResultsInIdb(baselineResults) {
+  putDataInIdb({
+    data: baselineResults,
+    objectStore: "adHocDocs",
+    docId: "baselineResults"
+  });
+}
+
 function putActionResultsInIdb(actionResults, actionId) {
+  putDataInIdb({
+    data: actionResults,
+    objectStore: "actionsResults",
+    docId: actionId
+  });
+}
+
+function putDataInIdb(payload) {
   let request = indexedDB.open("mipa", 1);
   request.onsuccess = function(event) {
     let idb = request.result;
     let requesttrans = idb
-      .transaction(["actionsResults"], "readwrite")
-      .objectStore("actionsResults")
-      .put(actionResults, actionId);
+      .transaction([payload.objectStore], "readwrite")
+      .objectStore(payload.objectStore)
+      .put(payload.data, payload.docId);
     requesttrans.onerror = function(event) {
-      console.log("Error putting to idb");
+      console.log(
+        `Error putting ${payload.docId} to idb store ${payload.objectStore}`
+      );
     };
 
     requesttrans.onsuccess = function(event) {};

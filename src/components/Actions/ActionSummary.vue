@@ -10,7 +10,10 @@
               :rules="[val => !!val || 'Field is required']"
               ref="actionTitle"
             >
-              <template v-slot:after v-if="embedded">
+              <template
+                v-slot:after
+                v-if="embedded"
+              >
                 <q-btn
                   dense
                   label="details"
@@ -27,30 +30,55 @@
 
           <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }">
             <div class="q-pa-xs q-gutter-xs">
-              <q-chip outline color="primary">
+              <q-chip
+                outline
+                color="primary"
+              >
                 Benefit
                 {{ formatNumber(uiAction.estTotalBenefitXdr) }} XDR
               </q-chip>
-              <q-chip outline color="primary">
+              <q-chip
+                outline
+                color="primary"
+              >
                 Cost
                 {{ formatNumber(uiAction.outstandingCostXdr, 3) }}
                 XDR
               </q-chip>
-              <q-chip color="primary" text-color="white">ROI {{ formatNumber(uiAction.estRoi, 2) }}</q-chip>
+              <q-chip
+                color="primary"
+                text-color="white"
+              >ROI {{ formatNumber(uiAction.estRoi, 2) }}</q-chip>
+              <calculator-ui
+                calculationType="uiAction"
+                buttonLabel="Recalculate"
+                :uiAction="uiAction"
+              />
             </div>
           </div>
 
           <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }">
             <div class="q-pa-sm q-gutter-sm">
-              <q-btn color="primary" label="Meet about this" />
-              <q-btn color="primary" label="Mark as resolved" />
+              <q-btn
+                color="primary"
+                label="Meet about this"
+              />
+              <q-btn
+                color="primary"
+                label="Mark as resolved"
+              />
             </div>
           </div>
         </div>
 
         <div class="row">
           <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
-            <q-input v-model="notes" label="筆記" filled autogrow />
+            <q-input
+              v-model="notes"
+              label="筆記"
+              filled
+              autogrow
+            />
 
             <impacts />
 
@@ -191,10 +219,11 @@ export default {
   components: {
     "modal-save-button": require("components/Shared/ModalComponents/ModalSaveButton.vue")
       .default,
-    impacts: require("components/Impacts/Impacts.vue").default
+    impacts: require("components/Impacts/Impacts.vue").default,
+    "calculator-ui": require("components/Calc/CalculatorUi.vue").default
   },
 
-  data() {
+  data () {
     return {
       embedded: false, //whether this component is embedded or a full page
       actionId: null,
@@ -223,7 +252,7 @@ export default {
     ]),
     ...mapMultiRowFields(["uiAction.impacts"]),
 
-    selectedAction() {
+    selectedAction () {
       let that = this;
       if (this.$route.params.actionId) {
         this.actionId = this.$route.params.actionId;
@@ -233,7 +262,7 @@ export default {
         this.embedded = true;
       }
       let actionId = this.actionId;
-      return this.actions.find(function(action) {
+      return this.actions.find(function (action) {
         return action.id == actionId;
       });
     }
@@ -243,13 +272,13 @@ export default {
     ...mapActions("model", ["updateAction"]),
     formatNumber,
 
-    submitForm() {
+    submitForm () {
       this.$refs.actionTitle.validate();
       if (!this.$refs.actionTitle.hasError) {
         this.submitAction();
       }
     },
-    submitAction() {
+    submitAction () {
       let payload = {
         id: this.actionId,
         updates: this.uiAction
@@ -258,7 +287,7 @@ export default {
     }
   },
 
-  created() {
+  created () {
     (async () => {
       while (
         !firebaseAuth.currentUser // define the condition as you like
@@ -273,7 +302,7 @@ export default {
     })();
   },
   watch: {
-    selectedAction: function(newAction, oldAction) {
+    selectedAction: function (newAction, oldAction) {
       let action = {};
       Object.assign(action, this.selectedAction);
       this.$store.dispatch("uiAction/setUiAction", action);

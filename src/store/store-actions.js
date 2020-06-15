@@ -48,6 +48,47 @@ const actions = {
         showErrorMessage("Error updating action", error.message);
       });
   },
+
+  updateActionsRoiResults({ dispatch }, data) {
+    //get actions from store
+    //for each action in actionsRoiResults, compare with action in store
+    let actionsRoiResults = data.actionsRoiResults;
+    let newRoiResults, matchedStoreAction;
+    //console.log(state.actions);
+    let batch = firebaseDb.batch();
+    let actionsRef = firebaseDb.collection("actions");
+    let batchedWrites = 0;
+    actionsRoiResults.forEach(function(actionRoiResults, index, fullArray) {
+      newRoiResults = Object.assign({}, actionRoiResults);
+      matchedStoreAction = state.actions.find(
+        action => action.id == actionRoiResults.actionId
+      );
+      if (roiResultsChangedSignificantly(newRoiResults, matchedStoreAction)) {
+        //add action to update list
+        console.log("roi changed significantly");
+        delete newRoiResults.actionId;
+        batch.update(actionsRef.doc(actionRoiResults.actionId), newRoiResults);
+        batchedWrites++;
+      }
+      if (
+        batchedWrites == 500 ||
+        (batchedWrites > 0 && index == fullArray.length - 1)
+      ) {
+        batch
+          .commit()
+          .then(function() {
+            batchedWrites = 0;
+            batch = firebaseDb.batch();
+            console.log("action results updated");
+            Notify.create("Action results updated!");
+          })
+          .catch(function(error) {
+            showErrorMessage("Error updating actions results", error.message);
+          });
+      }
+    });
+  },
+
   deleteAction({ dispatch }, actionId) {
     let userId = firebaseAuth.currentUser.uid;
     firebaseDb
@@ -180,3 +221,12 @@ export default {
   actions,
   getters
 };
+
+function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
+  //console.log(newRoiResults);
+  //console.log(matchedStoreAction);
+  if (typeof matchedStoreAction.roi == "undefined") return true;
+  if (newRoiResults.roi / matchedStoreAction.roi > 1.05) return true;
+  if (matchedStoreAction.roi / newRoiResults.roi > 1.05) return true;
+  return false;
+}

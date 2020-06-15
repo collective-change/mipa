@@ -30,7 +30,7 @@
 import { mapGetters, mapState } from "vuex";
 
 export default {
-  props: ["calculationType", "buttonLabel"],
+  props: ["calculationType", "buttonLabel", "uiAction"],
   components: {},
   data () {
     return {
@@ -69,6 +69,10 @@ export default {
         case "actions":
           payload.calculationType = "actions";
           payload.actions = this.actions;
+          break;
+        case "uiAction":
+          payload.calculationType = "actions";
+          payload.actions = [this.uiAction];
           break;
         default:
           throw `Calculation type "${this.calculationType}" not recognized.`;
