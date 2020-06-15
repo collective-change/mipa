@@ -166,14 +166,12 @@ function prepRoiResults(
     baselineTimeSeriesNodesValues[roleNodes.totalCost];
 
   //calculate NPVs
-  console.log("marginal value NPV:");
   let marginalValueNpv = getMarginalNpv(
     deviationTotalValueSeries,
     baselineTotalValueSeries,
     timeSPoints,
     yearlyDiscountRate
   );
-  console.log("marginal cost NPV:");
   let marginalCostNpv = getMarginalNpv(
     deviationTotalCostSeries,
     baselineTotalCostSeries,
@@ -204,7 +202,7 @@ function getMarginalNpv(
   let tYears; //time since beginning of simulation in years
   let deviationMinusBaseline;
   let Rt; //the Rt in NPV formula: sum over t of Rt/(1+i)^t
-  let npvIncrement;
+  let npvIncrement, denominator;
   let npv = 0;
   let debuggingArr = [];
   timeSPoints.forEach(function(timeS, index) {
@@ -212,18 +210,16 @@ function getMarginalNpv(
     if (index == 0) prevDeviationMinusBaseline = 0;
     tYears = (timeS - timeSPoints[0]) / 31556952; // 31556952 seconds in a year
     Rt = deviationMinusBaseline - prevDeviationMinusBaseline;
-    npvIncrement = Rt / ((1 + yearlyDiscountRate) ^ tYears);
-    npv += npvIncrement;
-    debuggingArr.push({
+    npv += Rt / Math.pow(1 + yearlyDiscountRate, tYears);
+    /*debuggingArr.push({
       deviationMinusBaseline: deviationMinusBaseline,
       tYears: tYears,
       Rt: Rt,
-      npvIncrement: npvIncrement,
       npv: npv
-    });
+    });*/
     prevDeviationMinusBaseline = deviationMinusBaseline;
   });
-  console.table(debuggingArr);
+  //console.table(debuggingArr);
   return npv;
 }
 
