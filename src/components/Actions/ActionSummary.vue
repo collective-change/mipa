@@ -48,7 +48,7 @@
               <q-chip
                 color="primary"
                 text-color="white"
-              >ROI {{ formatNumber(uiAction.estRoi, 2) }}</q-chip>
+              >ROI {{ formatNumber(uiAction.roi, 2) }}</q-chip>
               <calculator-ui
                 calculationType="uiAction"
                 buttonLabel="Recalculate"
@@ -112,7 +112,7 @@
               />
 
               <q-input
-                v-bind:value="formatNumber(uiAction.estRoi, 2)"
+                v-bind:value="formatNumber(uiAction.roi, 2)"
                 label="估計 SROI"
                 style="max-width: 150px;"
                 readonly
@@ -228,7 +228,7 @@ export default {
       embedded: false, //whether this component is embedded or a full page
       actionId: null,
       //action: {},
-      estimatedRoi: null
+      //estimatedRoi: null
     };
   },
 

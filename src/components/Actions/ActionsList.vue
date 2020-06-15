@@ -22,12 +22,25 @@
           icon="add"
         />-->
         <div class="row q-gutter-sm">
-          <q-btn color="primary" :disable="loading" label="新增" @click="showAddAction = true" />
-          <calculator-ui calculationType="actions" buttonLabel="Recalculate" />
+          <q-btn
+            color="primary"
+            :disable="loading"
+            label="新增"
+            @click="showAddAction = true"
+          />
+          <calculator-ui
+            calculationType="actions"
+            buttonLabel="Recalculate"
+          />
         </div>
 
         <q-space />
-        <q-input dense debounce="300" color="primary" v-model="filter">
+        <q-input
+          dense
+          debounce="300"
+          color="primary"
+          v-model="filter"
+        >
           <template v-slot:append>
             <q-icon name="search" />
           </template>
@@ -48,7 +61,7 @@ export default {
     "add-action": require("components/Actions/Modals/AddAction.vue").default,
     "calculator-ui": require("components/Calc/CalculatorUi.vue").default
   },
-  data() {
+  data () {
     return {
       showAddAction: false,
       loading: false,
@@ -67,12 +80,12 @@ export default {
           required: true,
           align: "right",
           label: "SROI",
-          field: "estRoi",
+          field: "roi",
           format: val =>
             `${
-              typeof val !== "undefined" && val != null
-                ? val.toLocaleString()
-                : ""
+            typeof val !== "undefined" && val != null
+              ? val.toLocaleString()
+              : ""
             }`,
           sortable: true,
           sortBy: "desc"
@@ -99,9 +112,9 @@ export default {
           field: "estTotalBenefitXdr",
           format: val =>
             `${
-              typeof val !== "undefined" && val != null
-                ? val.toLocaleString()
-                : ""
+            typeof val !== "undefined" && val != null
+              ? val.toLocaleString()
+              : ""
             }`,
           sortable: true
         },
@@ -112,9 +125,9 @@ export default {
           field: "outstandingCostXdr",
           format: val =>
             `${
-              typeof val !== "undefined" && val != null
-                ? val.toLocaleString()
-                : ""
+            typeof val !== "undefined" && val != null
+              ? val.toLocaleString()
+              : ""
             }`,
           sortable: true
         },
@@ -137,7 +150,7 @@ export default {
   },
 
   methods: {
-    onRowClick(evt, row) {
+    onRowClick (evt, row) {
       //console.log("clicked on", row.id);
       if (this.selectedActionId == row.id) {
         return;
@@ -157,7 +170,7 @@ export default {
       } else this.$store.dispatch("ui/setSelectedActionId", row.id);
     },
     // emulate fetching data from server
-    addRow() {
+    addRow () {
       this.loading = true;
       setTimeout(() => {
         const index = Math.floor(Math.random() * (this.data.length + 1)),
@@ -176,7 +189,7 @@ export default {
       }, 500);
     },
 
-    removeRow() {
+    removeRow () {
       this.loading = true;
       setTimeout(() => {
         const index = Math.floor(Math.random() * this.data.length);
