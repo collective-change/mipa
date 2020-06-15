@@ -16,7 +16,11 @@
       class="q-mt-sm"
     >
       <div class="absolute-full flex flex-center">
-        <q-badge color="white" text-color="secondary" :label="calculationProgressLabel" />
+        <q-badge
+          color="white"
+          text-color="secondary"
+          :label="calculationProgressLabel"
+        />
       </div>
     </q-linear-progress>
   </div>
@@ -28,7 +32,7 @@ import { mapGetters, mapState } from "vuex";
 export default {
   props: ["calculationType", "buttonLabel"],
   components: {},
-  data() {
+  data () {
     return {
       showBaselineCalculator: false,
       calcWorker: null
@@ -46,7 +50,7 @@ export default {
     ...mapGetters("actions", ["actions"])
   },
   methods: {
-    calculate() {
+    calculate () {
       let modelId = this.$route.params.modelId
         ? this.$route.params.modelId
         : this.$route.params.orgId;
@@ -55,7 +59,8 @@ export default {
         modelId: modelId,
         nodes: this.nodes,
         exchangeRates: this.exchangeRates,
-        simulationParams: this.currentModel.simulationParams
+        simulationParams: this.currentModel.simulationParams,
+        roleNodes: this.currentModel.roleNodes
       };
       switch (this.calculationType) {
         case "baseline":
@@ -71,8 +76,8 @@ export default {
       this.$store.dispatch("calculator/calculate", payload);
     }
   },
-  created() {},
-  mounted() {},
-  beforeDestroy() {}
+  created () { },
+  mounted () { },
+  beforeDestroy () { }
 };
 </script>

@@ -10,11 +10,9 @@ onmessage = function(e) {
   switch (e.data.calculationType) {
     case "baseline":
       coordinateScenarioSimulations(e.data);
-      //calculateBaseline(e.data);
       break;
     case "actions":
       coordinateScenarioSimulations(e.data);
-      //calculateBaseline(e.data);
       break;
     default:
       console.error(
@@ -64,7 +62,7 @@ function coordinateScenarioSimulations(data) {
   if (sim.errorOccurred) return;
   testInitializeIdb();
 
-  let baseline = calculateBaseline(sim);
+  let defaultBaseline = calculateBaseline(sim);
   //TODO: save baseline to IndexedDb
   if (data.calculationType == "baseline") return;
 
@@ -72,20 +70,33 @@ function coordinateScenarioSimulations(data) {
 
   //topoSortActions
   let sortedActions = topoSortActions(actions); //TODO: actually write topoSortActions
-  let actionResults = calculateActionsResults(sim, sortedActions);
+  let resultsOfActions = calculateResultsOfActions(
+    sim,
+    sortedActions,
+    defaultBaseline
+  );
 
   //and post available results to vuex store every 0.5 seconds
   //when all finished, save results to IndexedDb; briefResults[{ i: id, b: benefit, c: cost, r: roi, t: calcStartTime }]
   //and post back to caller for saving to cloud
 }
 
-function calculateActionsResults(sim, actions) {
+function calculateResultsOfActions(sim, actions, defaultBaseline) {
+  //let defaultBaseline = calculateBaseline(sim);
+  let baselineTimeSeriesNodesValues,
+    deviationTimeSeriesNodesValues,
+    roiCalcResults;
+  let yearlyDiscountRate = 0.05;
+
   actionResults = {};
   let calcTimeMs = 0;
-  let resultTimeSeriesNodesValues = {};
 
   //simulate each action
   actions.forEach(function(action) {
+    //TODO: gather begin and end times of impacts
+    //TODO: if extra timepoints are required then build customTimeSPoints
+    //TODO: simulate using either default or customTimeSPoints
+    //TODO: also simulate baseline using customTimeSPoints, if any
     let startTimeMs = new Date();
     scenario = { type: "action", action: action, actions: actions };
     resetScope(sim);
@@ -94,15 +105,24 @@ function calculateActionsResults(sim, actions) {
 
     //TODO: only extract and save all node values if requested by
     //user for this device
-    resultTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
+    deviationTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
     calcTimeMs = new Date() - startTimeMs;
     console.log(calcTimeMs, "ms", action.title);
-    //TODO: add ROI calculation
-    //roiCalcResults = prepRoiResults(sim);
+    //TODO: feed in either default or custom baseline
+    baselineTimeSeriesNodesValues = defaultBaseline.nodesValues;
+    timeSPoints = defaultBaseline.timeSPoints;
+    roiCalcResults = prepRoiResults(
+      deviationTimeSeriesNodesValues,
+      baselineTimeSeriesNodesValues,
+      timeSPoints,
+      sim.roleNodes,
+      yearlyDiscountRate
+    );
     actionResults = {
       calcTimeMs: calcTimeMs,
       timeSPoints: sim.scope.timeSeries.timeSPoints,
-      nodes: resultTimeSeriesNodesValues
+      nodesValues: deviationTimeSeriesNodesValues,
+      roiCalcResults
     };
     putActionResultsInIdb(actionResults, action.id);
     if (sim.errorOccurred) return;
@@ -128,12 +148,50 @@ function calculateActionsResults(sim, actions) {
   return resultsMessage;
 }
 
-function prepRoiResults(sim) {
-  //calculate npv
+function prepRoiResults(
+  deviationTimeSeriesNodesValues,
+  baselineTimeSeriesNodesValues,
+  timeSPoints,
+  roleNodes,
+  yearlyDiscountRate
+) {
+  //prepare inputs for calculating NPVs
+  let deviationTotalValueSeries =
+    deviationTimeSeriesNodesValues[roleNodes.totalValue];
+  let baselineTotalValueSeries =
+    baselineTimeSeriesNodesValues[roleNodes.totalValue];
+  let deviationTotalCostSeries =
+    deviationTimeSeriesNodesValues[roleNodes.totalCost];
+  let baselineTotalCostSeries =
+    baselineTimeSeriesNodesValues[roleNodes.totalCost];
 
-  //marginal benefit npv = marginal value npv - marginal cost npv
-  //roi = marginal benefit npv / marginal cost npv
-  sim.scope.timeSeries.timeSPoints.forEach(function(timeS, timeSIndex) {});
+  //calculate NPVs
+  console.log("marginal value NPV:");
+  let marginalValueNpv = getMarginalNpv(
+    deviationTotalValueSeries,
+    baselineTotalValueSeries,
+    timeSPoints,
+    yearlyDiscountRate
+  );
+  console.log("marginal cost NPV:");
+  let marginalCostNpv = getMarginalNpv(
+    deviationTotalCostSeries,
+    baselineTotalCostSeries,
+    timeSPoints,
+    yearlyDiscountRate
+  );
+  let marginalBenefitNpv = marginalValueNpv - marginalCostNpv;
+
+  //calculate ROI and prepare results
+  let roi = marginalBenefitNpv / marginalCostNpv;
+  let roiResults = {
+    marginalValueNpv: marginalValueNpv,
+    marginalCostNpv: marginalCostNpv,
+    marginalBenefitNpv: marginalBenefitNpv,
+    roi: roi
+  };
+  console.log({ roiResults });
+  return roiResults;
 }
 
 function getMarginalNpv(
@@ -146,21 +204,30 @@ function getMarginalNpv(
   let tYears; //time since beginning of simulation in years
   let deviationMinusBaseline;
   let Rt; //the Rt in NPV formula: sum over t of Rt/(1+i)^t
+  let npvIncrement;
   let npv = 0;
+  let debuggingArr = [];
   timeSPoints.forEach(function(timeS, index) {
     deviationMinusBaseline = deviationSeries[index] - baselineSeries[index];
     if (index == 0) prevDeviationMinusBaseline = 0;
     tYears = (timeS - timeSPoints[0]) / 31556952; // 31556952 seconds in a year
     Rt = deviationMinusBaseline - prevDeviationMinusBaseline;
-    npv += Rt / ((1 + yearlyDiscountRate) ^ tYears);
-    prevDiffBtwCases = diffBtwCases;
+    npvIncrement = Rt / ((1 + yearlyDiscountRate) ^ tYears);
+    npv += npvIncrement;
+    debuggingArr.push({
+      deviationMinusBaseline: deviationMinusBaseline,
+      tYears: tYears,
+      Rt: Rt,
+      npvIncrement: npvIncrement,
+      npv: npv
+    });
+    prevDeviationMinusBaseline = deviationMinusBaseline;
   });
+  console.table(debuggingArr);
+  return npv;
 }
 
 function iterateThroughTime(sim, scenario) {
-  //TODO: gather begin and end times of impacts
-  //TODO: if extra timepoints are required than build customTimeSPoints
-  //TODO: simulate using either default or customTimeSPoints
   let timeSPoints = sim.defaultTimeSPoints;
 
   let completedLoops = 0;
@@ -198,9 +265,6 @@ function iterateThroughTime(sim, scenario) {
                         sim.expectedUnits[nodeIndex]
                       )
                     );
-                    /*console.log(
-                      sim.scope["$" + sim.sortedNodes[index].id].value
-                    );*/
                     break;
                 }
               }
@@ -276,7 +340,7 @@ function calculateBaseline(sim) {
   const resultsMessage = {
     resultsType: "baseline",
     timeSPoints: sim.scope.timeSeries.timeSPoints,
-    nodes: resultTimeSeriesNodesValues,
+    nodesValues: resultTimeSeriesNodesValues,
     calcTimeLog: sim.calcTimeLog,
     calcTimeStages: calcTimeStages,
     calcTimeMs: calcTimeMs
@@ -329,6 +393,7 @@ function prepEnvironment(data) {
     data: data,
     errorOccurred: false,
     params: data.simulationParams,
+    roleNodes: data.roleNodes,
     maxLoops: data.simulationParams.numTimeSteps + 1,
     initialDt: math.unit(
       data.simulationParams.timeStepNumber,

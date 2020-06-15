@@ -54,6 +54,7 @@ const actions = {
       modelNodes: payload.nodes,
       exchangeRates: payload.exchangeRates,
       simulationParams: payload.simulationParams,
+      roleNodes: payload.roleNodes,
       actions: payload.actions ? payload.actions : null
     });
     //console.log("Message posted to worker");
