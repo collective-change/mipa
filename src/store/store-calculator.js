@@ -76,6 +76,7 @@ const actions = {
       } else if ("resultsType" in e.data) {
         switch (e.data.resultsType) {
           case "baseline":
+            dispatch("calcResults/setBaseline", e.data, { root: true });
             if (payload.calculationType == "baseline") done = true;
             break;
           case "actions":

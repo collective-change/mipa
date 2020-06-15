@@ -13,9 +13,45 @@ const state = {
   }
 };*/
 
-const mutations = {};
+const mutations = {
+  setShow12HourTimeFormat(state, value) {
+    state.settings.show12HourTimeFormat = value;
+  },
+  setShowTasksInOneList(state, value) {
+    state.settings.showTasksInOneList = value;
+  },
+  setSettings(state, settings) {
+    Object.assign(state.settings, settings);
+  },
+  setBaseline(state, baseline) {
+    Object.assign(state.baseline, baseline);
+  }
+};
 
 const actions = {
+  /*setShow12HourTimeFormat({ commit, dispatch }, value) {
+    commit("setShow12HourTimeFormat", value);
+    dispatch("saveSettings");
+  },
+  setShowTasksInOneList({ commit, dispatch }, value) {
+    commit("setShowTasksInOneList", value);
+    dispatch("saveSettings");
+  },*/
+  setBaseline({ commit, dispatch }, baseline) {
+    console.log("setBaseline");
+    commit("setBaseline", baseline);
+    //dispatch("saveSettings");
+  },
+  /*saveSettings({ state }) {
+    LocalStorage.set("settings", state.settings);
+  },
+  getSettings({ commit }) {
+    let settings = LocalStorage.getItem("settings");
+    if (settings) {
+      commit("setSettings", settings);
+    }
+  }*/
+
   /*setBaseline({ dispatch }, payload) {
     let modelId = payload.modelId;
     //let nodeId = payload.updates.id;
