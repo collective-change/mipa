@@ -239,6 +239,7 @@ export default {
       // if baseline.nodes contains the selected node then load baseline for this nde
       if (
         this.selectedNodeId !== "null" &&
+        typeof this.baseline !== "undefined" &&
         typeof this.baseline.nodesValues != "undefined" &&
         this.selectedNodeId in this.baseline.nodesValues
       ) {

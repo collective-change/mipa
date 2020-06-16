@@ -78,11 +78,7 @@ const actions = {
       } else if ("resultsType" in e.data) {
         switch (e.data.resultsType) {
           case "baseline":
-            dispatch(
-              "calcResults/saveBaseline",
-              { id: payload.modelId, ...e.data },
-              { root: true }
-            );
+            dispatch("calcResults/saveBaseline", e.data, { root: true });
             if (payload.calculationType == "baseline") {
               dispatch("calcResults/loadBaseline", payload.modelId, {
                 root: true

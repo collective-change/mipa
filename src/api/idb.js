@@ -24,8 +24,8 @@ export default {
       request.onupgradeneeded = e => {
         console.log("onupgradeneeded");
         let db = e.target.result;
-        db.createObjectStore("baselines", { keyPath: "id" });
-        db.createObjectStore("resultsOfActions", { keyPath: "id" });
+        db.createObjectStore("baselines");
+        db.createObjectStore("resultsOfActions");
       };
     });
   },
@@ -93,7 +93,7 @@ export default {
       };
 
       let store = trans.objectStore("baselines");
-      store.put(baseline);
+      store.put(baseline, baseline.modelId);
     });
   },
 

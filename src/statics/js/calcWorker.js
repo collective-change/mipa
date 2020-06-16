@@ -60,10 +60,10 @@ function coordinateScenarioSimulations(data) {
   //prep environment, scope, etc
   let sim = prepSim(data);
   if (sim.errorOccurred) return;
-  //testInitializeIdb();
+  testInitializeIdb();
 
   let defaultBaseline = calculateBaseline(sim);
-  //TODO: save baseline to IndexedDb
+
   if (data.calculationType == "baseline") return;
 
   let actions = data.actions;
@@ -107,8 +107,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
     //TODO: only extract and save all node values if requested by
     //user for this device
     deviationTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
-    calcTimeMs = new Date() - startTimeMs;
-    console.log(calcTimeMs, "ms", action.title);
+
     //TODO: feed in either default or custom baseline
     baselineTimeSeriesNodesValues = defaultBaseline.nodesValues;
     timeSPoints = defaultBaseline.timeSPoints;
@@ -119,14 +118,23 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       sim.roleNodes,
       yearlyDiscountRate
     );
+
+    calcTimeMs = new Date() - startTimeMs;
+    console.log(calcTimeMs, "ms", action.title);
+
     actionResults = {
+      id: action.id,
+      calcDate: sim.scope.calcDate,
+      startTimeS: sim.scope.initialTimeS,
       calcTimeMs: calcTimeMs,
       timeSPoints: sim.scope.timeSeries.timeSPoints,
       nodesValues: deviationTimeSeriesNodesValues,
+      baselineNodeValues: baselineTimeSeriesNodesValues,
       roiCalcResults
     };
-    actionsRoiResults.push({ actionId: action.id, ...roiCalcResults });
+    //actionsRoiResults.push({ actionId: action.id, ...roiCalcResults });
     putActionResultsInIdb(actionResults, action.id);
+    //self.postMessage(actionResults);
     if (sim.errorOccurred) return;
   });
 
@@ -336,6 +344,10 @@ function calculateBaseline(sim) {
   const calcTimeStages = getCalcTimeStages(log);
 
   const results = {
+    resultsType: "baseline",
+    modelId: sim.data.modelId,
+    calcDate: sim.scope.calcDate,
+    startTimeS: sim.scope.initialTimeS,
     timeSPoints: sim.scope.timeSeries.timeSPoints,
     nodesValues: resultTimeSeriesNodesValues,
     calcTimeLog: sim.calcTimeLog,
@@ -344,18 +356,11 @@ function calculateBaseline(sim) {
   };
 
   //save to IndexedDb
-  //putBaselineResultsInIdb(results);
+  //putBaselineResultsInIdb(results, sim.data.modelId);
 
   console.log("baseline calcTime:", calcTimeMs, "ms");
 
-  postMessage({
-    resultsType: "baseline",
-    timeSPoints: sim.scope.timeSeries.timeSPoints,
-    nodesValues: resultTimeSeriesNodesValues,
-    calcTimeLog: sim.calcTimeLog,
-    calcTimeStages: calcTimeStages,
-    calcTimeMs: calcTimeMs
-  });
+  postMessage(results);
 
   return results;
 }
@@ -450,9 +455,10 @@ function prepEnvironment(data) {
 
 function prepScope(sim) {
   //prepare scope object
-
+  let calcDate = Date.now();
   let scope = {
-    initialTimeS: Math.floor(Date.now() / 1000), //this will remain constant throughout the simulation
+    calcDate: calcDate,
+    initialTimeS: Math.floor(calcDate / 1000), //this will remain constant throughout the simulation
     //timeS: initialTimeS, //timeS will increment with each iteration
     timeSeries: { timeSPoints: [], nodes: {} }
   }; //TODO: load timeSeries with current or historical values
@@ -922,18 +928,13 @@ function interpolateFromLookup(timeSPoints, values, targetTimeS) {
   }
 }
 
-/*function testInitializeIdb() {
+function testInitializeIdb() {
   let idb; //placeholder for IndexedDB
-  let objectStore = {};
   let request = indexedDB.open("mipa", 1);
   request.onupgradeneeded = function(e) {
     idb = request.result;
-    idb.createObjectStore("actionsResults", {
-      autoIncrement: false
-    });
-    idb.createObjectStore("adHocDocs", {
-      autoIncrement: false
-    });
+    idb.createObjectStore("baselines");
+    idb.createObjectStore("resultsOfActions");
     console.log("Successfully upgraded idb");
   };
   request.onsuccess = function(e) {
@@ -945,20 +946,19 @@ function interpolateFromLookup(timeSPoints, values, targetTimeS) {
     console.log("Error initializing idb");
   };
 }
-*/
-function putBaselineResultsInIdb(baselineResults) {
+function putBaselineResultsInIdb(baselineResults, modelId) {
   putDataInIdb({
     data: baselineResults,
-    objectStore: "adHocDocs",
-    docId: "baselineResults"
+    objectStore: "baselines",
+    key: modelId
   });
 }
 
 function putActionResultsInIdb(actionResults, actionId) {
   putDataInIdb({
     data: actionResults,
-    objectStore: "actionsResults",
-    docId: actionId
+    objectStore: "resultsOfActions",
+    key: actionId
   });
 }
 
@@ -969,10 +969,10 @@ function putDataInIdb(payload) {
     let requesttrans = idb
       .transaction([payload.objectStore], "readwrite")
       .objectStore(payload.objectStore)
-      .put(payload.data, payload.docId);
+      .put(payload.data, payload.key);
     requesttrans.onerror = function(event) {
       console.log(
-        `Error putting ${payload.docId} to idb store ${payload.objectStore}`
+        `Error putting ${payload.key} to idb store ${payload.objectStore}`
       );
     };
 

@@ -19,13 +19,6 @@ import uiAction from "./store-uiAction";
 
 Vue.use(Vuex);
 
-/*const vuexIndexedDb = new VuexPersistence({
-  storage: localForage,
-  asyncStorage: true,
-  modules: ["calcResults"],
-  strictMode: process.env.DEV
-});*/
-
 /*
  * If not building with SSR mode, you can
  * directly export the Store instantiation
@@ -36,9 +29,6 @@ export default function(/* { ssrContext } */) {
     mutations: {
       // other mutations
       ...vuexfireMutations
-      //RESTORE_MUTATION: vuexIndexedDb.RESTORE_MUTATION
-      /*RESTORE_MUTATION: (state, { moduleName }) =>
-        moduleName && Object.assign(state, moduleName) */
     },
     modules: {
       auth,
@@ -56,8 +46,6 @@ export default function(/* { ssrContext } */) {
       uiIssue,
       uiAction
     },
-
-    //plugins: [vuexIndexedDb.plugin],
 
     // enable strict mode (adds overhead!)
     // for dev mode only
