@@ -5,12 +5,19 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 import idb from "src/api/idb";
 
 const state = {
-  baseline: {}
+  baseline: {},
+  resultsOfAction: {}
 };
 
 const mutations = {
   setBaseline(state, baseline) {
     state.baseline = baseline;
+  },
+  setResultsOfAction(state, resultsOfAction) {
+    state.resultsOfAction = resultsOfAction;
+  },
+  clearResultsOfAction(state) {
+    state.resultsOfAction = {};
   }
 };
 
@@ -19,8 +26,16 @@ const actions = {
     await idb.saveBaseline(baseline);
   },
 
-  async loadBaseline({ commit }, id) {
-    commit("setBaseline", await idb.getBaseline(id));
+  async loadBaseline({ commit }, modelId) {
+    commit("setBaseline", await idb.getBaseline(modelId));
+  },
+
+  async loadResultsOfAction({ commit }, actionId) {
+    commit("setResultsOfAction", await idb.getResultsOfAction(actionId));
+  },
+
+  clearResultsOfAction({ commit }, actionId) {
+    commit("clearResultsOfAction");
   }
 };
 

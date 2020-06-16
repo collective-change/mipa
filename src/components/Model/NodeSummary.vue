@@ -78,8 +78,9 @@
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
       </q-form>
-      <!--
+
       <p>nodeToSubmit: {{ nodeToSubmit.id }}</p>
+      <!--
       <p>symbolFormula</p>
       <pre>{{ nodeToSubmit.symbolFormula }}</pre>
       <p>parsedSymbolFormula</p>

@@ -129,7 +129,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       calcTimeMs: calcTimeMs,
       timeSPoints: sim.scope.timeSeries.timeSPoints,
       nodesValues: deviationTimeSeriesNodesValues,
-      baselineNodeValues: baselineTimeSeriesNodesValues,
+      baselineNodesValues: baselineTimeSeriesNodesValues,
       roiCalcResults
     };
     actionsRoiResults.push({ actionId: action.id, ...roiCalcResults });

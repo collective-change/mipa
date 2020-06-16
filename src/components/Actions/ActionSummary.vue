@@ -186,6 +186,12 @@
             v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
           >
             middle column
+            <gchart
+              v-if="chartData.length > 0"
+              type="LineChart"
+              :data="chartData"
+              :options="chartOptions"
+            />
           </div>
           <div
             v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
@@ -204,6 +210,7 @@ import { mapActions, mapGetters, mapState } from "vuex";
 //import { mapFields } from 'vuex-map-fields';
 import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
 import { formatNumber } from "src/utils/util-formatNumber";
+import { GChart } from "vue-google-charts";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
@@ -215,21 +222,26 @@ export default {
     "modal-save-button": require("components/Shared/ModalComponents/ModalSaveButton.vue")
       .default,
     impacts: require("components/Impacts/Impacts.vue").default,
-    "calculator-ui": require("components/Calc/CalculatorUi.vue").default
+    "calculator-ui": require("components/Calc/CalculatorUi.vue").default,
+    gchart: GChart
   },
 
   data() {
     return {
       embedded: false, //whether this component is embedded or a full page
-      actionId: null
-      //action: {},
-      //estimatedRoi: null
+      actionId: null,
+      selectedNodeId: "gZJSr2ccS8FJohr5qK2A",
+      chartData: [],
+      chartOptions: {
+        legend: { position: "bottom" }
+      }
     };
   },
 
   computed: {
     ...mapState("orgs", ["currentOrg"]),
     ...mapState("ui", ["selectedActionId"]),
+    ...mapState("calcResults", ["resultsOfAction"]),
     ...mapGetters("actions", ["actions"]),
     //fields calculated in the uiAction store, for display only
     //(do not modify their values in the component)
@@ -279,6 +291,34 @@ export default {
         updates: this.uiAction
       };
       this.$store.dispatch("actions/updateAction", payload);
+    },
+
+    updateChartData() {
+      console.log(this.resultsOfAction);
+      // if baseline.nodes contains the selected node then load baseline for this nde
+      if (this.resultsOfAction.timeSPoints.length && this.selectedNodeId) {
+        let timeSPoints = this.resultsOfAction.timeSPoints;
+        let baselineValues = this.resultsOfAction.baselineNodesValues[
+          this.selectedNodeId
+        ];
+        let actionValues = this.resultsOfAction.nodesValues[
+          this.selectedNodeId
+        ];
+        this.chartData = [];
+        if (actionValues.length > 0) {
+          this.chartData.push(["time", "baseline", "with action"]);
+          for (var i = 0; i < timeSPoints.length; i++) {
+            this.chartData.push([
+              new Date(timeSPoints[i] * 1000),
+              baselineValues[i],
+              actionValues[i]
+            ]);
+          }
+        }
+      } else {
+        //console.log("nope");
+        this.chartData = [];
+      }
     }
   },
 
@@ -297,10 +337,20 @@ export default {
     })();
   },
   watch: {
-    selectedAction: function(newAction, oldAction) {
+    selectedAction: async function(newAction, oldAction) {
       let action = {};
       Object.assign(action, this.selectedAction);
       this.$store.dispatch("uiAction/setUiAction", action);
+      if (this.embedded == false) {
+        console.log("going to load results");
+        await this.$store.dispatch(
+          "calcResults/loadResultsOfAction",
+          action.id
+        );
+        this.updateChartData();
+      } else {
+        this.$store.dispatch("calcResults/clearResultsOfAction");
+      }
     }
   }
 };
