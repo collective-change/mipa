@@ -1,8 +1,6 @@
 import Vue from "vue";
 import Vuex from "vuex";
 import { vuexfireMutations } from "vuexfire";
-import VuexPersistence from "vuex-persist";
-import localForage from "localforage";
 
 import auth from "./store-auth";
 import settings from "./store-settings";
@@ -21,12 +19,12 @@ import uiAction from "./store-uiAction";
 
 Vue.use(Vuex);
 
-const vuexIndexedDb = new VuexPersistence({
+/*const vuexIndexedDb = new VuexPersistence({
   storage: localForage,
   asyncStorage: true,
   modules: ["calcResults"],
-  strictMode: true
-});
+  strictMode: process.env.DEV
+});*/
 
 /*
  * If not building with SSR mode, you can
@@ -37,8 +35,10 @@ export default function(/* { ssrContext } */) {
   const Store = new Vuex.Store({
     mutations: {
       // other mutations
-      ...vuexfireMutations,
-      RESTORE_MUTATION: vuexIndexedDb.RESTORE_MUTATION
+      ...vuexfireMutations
+      //RESTORE_MUTATION: vuexIndexedDb.RESTORE_MUTATION
+      /*RESTORE_MUTATION: (state, { moduleName }) =>
+        moduleName && Object.assign(state, moduleName) */
     },
     modules: {
       auth,
@@ -57,7 +57,7 @@ export default function(/* { ssrContext } */) {
       uiAction
     },
 
-    plugins: [vuexIndexedDb.plugin],
+    //plugins: [vuexIndexedDb.plugin],
 
     // enable strict mode (adds overhead!)
     // for dev mode only

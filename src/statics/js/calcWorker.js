@@ -344,12 +344,14 @@ function calculateBaseline(sim) {
   };
 
   //save to IndexedDb
-  putBaselineResultsInIdb(results);
+  //putBaselineResultsInIdb(results);
 
   console.log("baseline calcTime:", calcTimeMs, "ms");
 
   postMessage({
     resultsType: "baseline",
+    timeSPoints: sim.scope.timeSeries.timeSPoints,
+    nodesValues: resultTimeSeriesNodesValues,
     calcTimeLog: sim.calcTimeLog,
     calcTimeStages: calcTimeStages,
     calcTimeMs: calcTimeMs

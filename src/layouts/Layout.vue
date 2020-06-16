@@ -375,7 +375,7 @@ export default {
       this.$store.dispatch("actions/unbindActions");
       this.$store.dispatch("model/unbindCurrentModel");
       this.$store.dispatch("model/unbindNodes");
-      this.$store.dispatch("calcResults/unbindBaseline");
+      //this.$store.dispatch("calcResults/unbindBaseline");
     }
   },
   created() {

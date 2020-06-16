@@ -124,7 +124,7 @@ export default {
       this.$store.dispatch("model/bindCurrentModel", modelId);
       this.$store.dispatch("model/bindNodes", modelId);
       this.$store.dispatch("adHocDocs/bindExchangeRates");
-      this.$store.dispatch("calcResults/bindBaseline", modelId);
+      this.$store.dispatch("calcResults/getBaseline", modelId);
 
       //bind to currentModel's nodes
       //this.$store.dispatch("orgs/bindCurrentOrg", this.$route.params.orgId);
