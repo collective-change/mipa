@@ -21,14 +21,24 @@ const mutations = {
 };
 
 const actions = {
-  async saveBaseline(context, baseline) {
+  async saveBaseline({ dispatch }, baseline) {
     await idb.saveBaseline(baseline);
   },
 
+  async loadBaseline({ commit }, id) {
+    commit("setBaseline", await idb.getBaseline(id));
+    /*let cats = await idb.getCats();
+    cats.forEach(c => {
+      context.state.cats.push(c);
+    });I/*/
+  }
+
+  /*
   setBaseline({ commit, dispatch }, baseline) {
     //console.log(baseline);
     commit("setBaseline", baseline);
-  }
+  }*/
+
   /*getBaseline({ commit }) {
     let settings = LocalStorage.getItem("settings");
     if (settings) {

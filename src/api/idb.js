@@ -64,6 +64,24 @@ export default {
     });
   },
 
+  async getBaseline(key) {
+    let db = await this.getDb();
+
+    return new Promise(resolve => {
+      let trans = db.transaction(["baselines"], "readonly");
+      trans.oncomplete = () => {
+        resolve(baseline);
+      };
+
+      let store = trans.objectStore("baselines");
+      let baseline = {};
+
+      store.get(key).onsuccess = e => {
+        baseline = e.target.result;
+      };
+    });
+  },
+
   async saveBaseline(baseline) {
     console.log("saveBaseline");
     let db = await this.getDb();

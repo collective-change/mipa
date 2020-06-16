@@ -83,7 +83,12 @@ const actions = {
               { id: payload.modelId, ...e.data },
               { root: true }
             );
-            if (payload.calculationType == "baseline") done = true;
+            if (payload.calculationType == "baseline") {
+              dispatch("calcResults/loadBaseline", payload.modelId, {
+                root: true
+              });
+              done = true;
+            }
             break;
           case "actions":
             dispatch("actions/updateActionsRoiResults", e.data, { root: true });
