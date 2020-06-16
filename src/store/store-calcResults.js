@@ -2,6 +2,7 @@ import { uid, Notify } from "quasar";
 import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
 import { firestoreAction } from "vuexfire";
 import { showErrorMessage } from "src/utils/util-show-error-message";
+import idb from "src/api/idb";
 
 const state = {
   baseline: {}
@@ -20,6 +21,10 @@ const mutations = {
 };
 
 const actions = {
+  async saveBaseline(context, baseline) {
+    await idb.saveBaseline(baseline);
+  },
+
   setBaseline({ commit, dispatch }, baseline) {
     //console.log(baseline);
     commit("setBaseline", baseline);

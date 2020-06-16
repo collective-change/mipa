@@ -51,6 +51,8 @@ const actions = {
     let calcWorker = await dispatch("getNewCalcWorker");
     calcWorker.postMessage({
       calculationType: payload.calculationType,
+      orgId: payload.orgId,
+      modelId: payload.modelId,
       modelNodes: payload.nodes,
       exchangeRates: payload.exchangeRates,
       simulationParams: payload.simulationParams,
@@ -76,7 +78,11 @@ const actions = {
       } else if ("resultsType" in e.data) {
         switch (e.data.resultsType) {
           case "baseline":
-            dispatch("calcResults/setBaseline", e.data, { root: true });
+            dispatch(
+              "calcResults/saveBaseline",
+              { id: payload.modelId, ...e.data },
+              { root: true }
+            );
             if (payload.calculationType == "baseline") done = true;
             break;
           case "actions":

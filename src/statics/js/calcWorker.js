@@ -60,7 +60,7 @@ function coordinateScenarioSimulations(data) {
   //prep environment, scope, etc
   let sim = prepSim(data);
   if (sim.errorOccurred) return;
-  testInitializeIdb();
+  //testInitializeIdb();
 
   let defaultBaseline = calculateBaseline(sim);
   //TODO: save baseline to IndexedDb
@@ -922,7 +922,7 @@ function interpolateFromLookup(timeSPoints, values, targetTimeS) {
   }
 }
 
-function testInitializeIdb() {
+/*function testInitializeIdb() {
   let idb; //placeholder for IndexedDB
   let objectStore = {};
   let request = indexedDB.open("mipa", 1);
@@ -945,7 +945,7 @@ function testInitializeIdb() {
     console.log("Error initializing idb");
   };
 }
-
+*/
 function putBaselineResultsInIdb(baselineResults) {
   putDataInIdb({
     data: baselineResults,
