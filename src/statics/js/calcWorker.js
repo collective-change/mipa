@@ -132,9 +132,9 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       baselineNodeValues: baselineTimeSeriesNodesValues,
       roiCalcResults
     };
-    //actionsRoiResults.push({ actionId: action.id, ...roiCalcResults });
+    actionsRoiResults.push({ actionId: action.id, ...roiCalcResults });
     putActionResultsInIdb(actionResults, action.id);
-    //self.postMessage(actionResults);
+
     if (sim.errorOccurred) return;
   });
 

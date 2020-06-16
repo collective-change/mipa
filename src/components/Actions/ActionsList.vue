@@ -28,19 +28,11 @@
             label="新增"
             @click="showAddAction = true"
           />
-          <calculator-ui
-            calculationType="actions"
-            buttonLabel="Recalculate"
-          />
+          <calculator-ui calculationType="actions" buttonLabel="Recalculate" />
         </div>
 
         <q-space />
-        <q-input
-          dense
-          debounce="300"
-          color="primary"
-          v-model="filter"
-        >
+        <q-input dense debounce="300" color="primary" v-model="filter">
           <template v-slot:append>
             <q-icon name="search" />
           </template>
@@ -56,12 +48,14 @@
 <script>
 import { mapGetters, mapState } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
+import { formatNumber } from "src/utils/util-formatNumber";
+
 export default {
   components: {
     "add-action": require("components/Actions/Modals/AddAction.vue").default,
     "calculator-ui": require("components/Calc/CalculatorUi.vue").default
   },
-  data () {
+  data() {
     return {
       showAddAction: false,
       loading: false,
@@ -81,12 +75,7 @@ export default {
           align: "right",
           label: "SROI",
           field: "roi",
-          format: val =>
-            `${
-            typeof val !== "undefined" && val != null
-              ? val.toLocaleString()
-              : ""
-            }`,
+          format: val => `${formatNumber(val, 2)}`,
           sortable: true,
           sortBy: "desc"
         },
@@ -106,29 +95,19 @@ export default {
           sortable: true
         },
         {
-          name: "benefit",
+          name: "value",
           align: "right",
           label: "總效益 (XDR)",
-          field: "estTotalBenefitXdr",
-          format: val =>
-            `${
-            typeof val !== "undefined" && val != null
-              ? val.toLocaleString()
-              : ""
-            }`,
+          field: "marginalValueNpv",
+          format: val => `${formatNumber(val, 3)}`,
           sortable: true
         },
         {
-          name: "totalCost",
+          name: "cost",
           align: "right",
           label: "需再付出成本 (XDR)",
-          field: "outstandingCostXdr",
-          format: val =>
-            `${
-            typeof val !== "undefined" && val != null
-              ? val.toLocaleString()
-              : ""
-            }`,
+          field: "marginalCostNpv",
+          format: val => `${formatNumber(val, 3)}`,
           sortable: true
         },
         {
@@ -150,7 +129,8 @@ export default {
   },
 
   methods: {
-    onRowClick (evt, row) {
+    formatNumber,
+    onRowClick(evt, row) {
       //console.log("clicked on", row.id);
       if (this.selectedActionId == row.id) {
         return;
@@ -170,7 +150,7 @@ export default {
       } else this.$store.dispatch("ui/setSelectedActionId", row.id);
     },
     // emulate fetching data from server
-    addRow () {
+    addRow() {
       this.loading = true;
       setTimeout(() => {
         const index = Math.floor(Math.random() * (this.data.length + 1)),
@@ -189,7 +169,7 @@ export default {
       }, 500);
     },
 
-    removeRow () {
+    removeRow() {
       this.loading = true;
       setTimeout(() => {
         const index = Math.floor(Math.random() * this.data.length);
