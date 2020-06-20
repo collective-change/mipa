@@ -305,16 +305,18 @@ function doImpactIfItAffectsCurrentTime(sim, timeS, nodeIndex, impact) {
       doImpact(sim, nodeIndex, impact);
       break;
     case "for_period":
-      //if timeS <= initialTimeS + unit(durationExpression, durationUnit).to('seconds')
+      //if timeS <= initialTimeS + unit(durationNumber, durationUnit).to('seconds')
       if (
         timeS <=
         sim.scope.initialTimeS +
           math
-            .unit(impact.durationExpression, impact.durationUnit)
+            .unit(impact.durationNumber, impact.durationUnit)
             .toNumber("seconds")
       ) {
         doImpact(sim, nodeIndex, impact);
       }
+      break;
+    case "with_half_life":
       break;
   }
 }
@@ -325,6 +327,30 @@ function doImpact(sim, nodeIndex, impact) {
       sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.add(
         sim.scope["$" + sim.sortedNodes[nodeIndex].id],
         math.multiply(impact.operand, sim.expectedUnits[nodeIndex])
+      );
+      break;
+    case "-":
+      sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.subtract(
+        sim.scope["$" + sim.sortedNodes[nodeIndex].id],
+        math.multiply(impact.operand, sim.expectedUnits[nodeIndex])
+      );
+      break;
+    case "*":
+      sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.multiply(
+        sim.scope["$" + sim.sortedNodes[nodeIndex].id],
+        impact.operand
+      );
+      break;
+    case "/":
+      sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.divide(
+        sim.scope["$" + sim.sortedNodes[nodeIndex].id],
+        impact.operand
+      );
+      break;
+    case "=":
+      sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.multiply(
+        impact.operand,
+        sim.expectedUnits[nodeIndex]
       );
       break;
   }

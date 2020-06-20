@@ -22,9 +22,7 @@
               {{ mathSymbols[impact.operation] }} {{ impact.operand }}
               {{ impact.durationType }}
               {{
-                impact.durationType == "for_period"
-                  ? impact.durationExpression
-                  : ""
+                impact.durationType == "for_period" ? impact.durationNumber : ""
               }}
               {{
                 impact.durationType == "for_period" ? impact.durationUnit : ""
