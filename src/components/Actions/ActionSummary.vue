@@ -187,10 +187,11 @@
           >
             middle column
             <gchart
-              v-if="chartData.length > 0"
+              v-for="chart in chartsArr"
+              :key="chart.nodeId"
               type="LineChart"
-              :data="chartData"
-              :options="chartOptions"
+              :data="chart.chartData"
+              :options="chart.chartOptions"
             />
           </div>
           <div
@@ -231,16 +232,19 @@ export default {
       embedded: false, //whether this component is embedded or a full page
       actionId: null,
       selectedNodeId: "gZJSr2ccS8FJohr5qK2A",
-      chartData: [],
-      chartOptions: {
+      //chartData: [],
+      chartsArr: []
+      /*chartOptions: {
         legend: { position: "bottom" }
-      }
+      } */
     };
   },
 
   computed: {
     ...mapState("orgs", ["currentOrg"]),
     ...mapState("ui", ["selectedActionId"]),
+    ...mapState("model", ["currentModel"]),
+    ...mapGetters("model", ["nodes"]),
     ...mapState("calcResults", ["resultsOfAction"]),
     ...mapGetters("actions", ["actions"]),
     //fields calculated in the uiAction store, for display only
@@ -293,32 +297,67 @@ export default {
       this.$store.dispatch("actions/updateAction", payload);
     },
 
-    updateChartData() {
+    updateChartDataForNode(nodeId) {
       console.log(this.resultsOfAction);
       // if baseline.nodes contains the selected node then load baseline for this nde
-      if (this.resultsOfAction.timeSPoints.length && this.selectedNodeId) {
+      if (this.resultsOfAction.timeSPoints.length) {
         let timeSPoints = this.resultsOfAction.timeSPoints;
-        let baselineValues = this.resultsOfAction.baselineNodesValues[
-          this.selectedNodeId
-        ];
-        let actionValues = this.resultsOfAction.nodesValues[
-          this.selectedNodeId
-        ];
-        this.chartData = [];
+        let baselineValues = this.resultsOfAction.baselineNodesValues[nodeId];
+        let actionValues = this.resultsOfAction.nodesValues[nodeId];
+        //if nodeId does not exist in chartsDataArr then create it
+        let chart = this.chartsArr.find(chart => chart.nodeId == nodeId);
+        if (typeof chart == "undefined") {
+          let unit = (chart = {
+            nodeId: nodeId,
+            chartData: [],
+            chartOptions: {
+              title: this.getNodeName(nodeId),
+              vAxis: { title: this.getNodeUnit(nodeId) },
+              legend: { position: "bottom" }
+            }
+          });
+          this.chartsArr.push(chart);
+        } else chart.chartData = [];
         if (actionValues.length > 0) {
-          this.chartData.push(["time", "baseline", "with action"]);
+          chart.chartData.push(["time", "baseline", "with action"]);
           for (var i = 0; i < timeSPoints.length; i++) {
-            this.chartData.push([
+            chart.chartData.push([
               new Date(timeSPoints[i] * 1000),
               baselineValues[i],
               actionValues[i]
             ]);
           }
         }
+        console.log(chart);
       } else {
         //console.log("nope");
-        this.chartData = [];
+        chart.chartData = [];
       }
+    },
+    updateDefaultChartsArr() {
+      if (!this.currentModel) return;
+      let defaultNodesToChart = [];
+      //get impacted nodes
+      this.uiAction.impacts.forEach(function(impact) {
+        defaultNodesToChart.push(impact.nodeId);
+      });
+      //get totalValue and totalCost nodes
+      defaultNodesToChart.push(this.currentModel.roleNodes.totalValue);
+      defaultNodesToChart.push(this.currentModel.roleNodes.totalCost);
+      //load data into each node
+      defaultNodesToChart.forEach(nodeId =>
+        this.updateChartDataForNode(nodeId)
+      );
+    },
+    getNodeName(nodeId) {
+      const found = this.nodes.find(node => node.id == nodeId);
+      if (found) return found.name;
+      else return nodeId;
+    },
+    getNodeUnit(nodeId) {
+      const found = this.nodes.find(node => node.id == nodeId);
+      if (found) return found.unit;
+      else return "";
     }
   },
 
@@ -347,7 +386,7 @@ export default {
           "calcResults/loadResultsOfAction",
           action.id
         );
-        this.updateChartData();
+        this.updateDefaultChartsArr();
       } else {
         this.$store.dispatch("calcResults/clearResultsOfAction");
       }
