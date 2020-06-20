@@ -262,8 +262,25 @@ function iterateThroughTime(sim, scenario) {
             scenario.action.impacts.forEach(function(impact) {
               if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
                 //TODO: if impact affects current time
-                if (impact.durationType == "just_once" && completedLoops == 0) {
-                  doImpact(sim, nodeIndex, impact);
+                switch (impact.durationType) {
+                  case "just_once":
+                    if (completedLoops == 0) doImpact(sim, nodeIndex, impact);
+                    break;
+                  case "forever":
+                    doImpact(sim, nodeIndex, impact);
+                    break;
+                  case "for_period":
+                    //if timeS <= initialTimeS + unit(durationExpression, durationUnit).to('seconds')
+                    if (
+                      timeS <=
+                      sim.scope.initialTimeS +
+                        math
+                          .unit(impact.durationExpression, impact.durationUnit)
+                          .toNumber("seconds")
+                    ) {
+                      doImpact(sim, nodeIndex, impact);
+                    }
+                    break;
                 }
                 //if (sim.scope.timeS >= impact.startTime && sim.scope.timeS < impact.endTime)
               }

@@ -335,7 +335,6 @@ export default {
       }
     },
     updateDefaultChartsArr() {
-      console.log("updateDefaultChartsArr");
       if (!this.currentModel) return;
       let defaultNodesToChart = [];
       //get impacted nodes
@@ -382,7 +381,6 @@ export default {
       Object.assign(action, this.selectedAction);
       this.$store.dispatch("uiAction/setUiAction", action);
       if (this.embedded == false) {
-        console.log("going to load results");
         await this.$store.dispatch(
           "calcResults/loadResultsOfAction",
           action.id
