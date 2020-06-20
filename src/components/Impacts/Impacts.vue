@@ -20,12 +20,16 @@
             <div class="row items-center">
               <q-chip>{{ getNodeName(impact.nodeId) }}</q-chip>
               {{ mathSymbols[impact.operation] }} {{ impact.operand }}
-              {{ impact.durationType }}
+              {{ durationTypeText[impact.durationType] }}
               {{
-                impact.durationType == "for_period" ? impact.durationNumber : ""
+                durationTypesWithDuration.includes(impact.durationType)
+                  ? impact.durationNumber
+                  : ""
               }}
               {{
-                impact.durationType == "for_period" ? impact.durationUnit : ""
+                durationTypesWithDuration.includes(impact.durationType)
+                  ? impact.durationUnit
+                  : ""
               }}
             </div>
           </q-item-label>
@@ -110,7 +114,14 @@ export default {
         "*": "×",
         "/": "÷",
         "=": "="
-      }
+      },
+      durationTypeText: {
+        just_once: "just once",
+        for_period: "for period of",
+        with_half_life: "with half life of",
+        forever: "forever"
+      },
+      durationTypesWithDuration: ["for_period", "with_half_life"]
     };
   },
 
