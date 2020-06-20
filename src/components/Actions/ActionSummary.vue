@@ -70,7 +70,7 @@
             <impacts />
 
             <div class="row q-gutter-md q-mt-md items-start">
-              <q-input
+              <!-- <q-input
                 v-model.number="estTotalBenefitXdr"
                 label="預估總效益"
                 type="number"
@@ -78,32 +78,31 @@
                 filled
                 style="max-width: 150px;"
                 debounce="500"
-              />
-
-              <q-input
+              />-->
+              <!-- <q-input
                 v-bind:value="uiAction.estTotalCostXdr"
                 label="預估總成本"
                 type="number"
                 suffix="XDR"
                 style="max-width: 150px;"
                 readonly
-              />
+              /> -->
 
-              <q-input
+              <!-- <q-input
                 v-bind:value="formatNumber(uiAction.outstandingCostXdr, 3)"
                 label="需再付出成本"
                 type="number"
                 suffix="XDR"
                 style="max-width: 150px;"
                 readonly
-              />
+              /> -->
 
-              <q-input
+              <!-- <q-input
                 v-bind:value="formatNumber(uiAction.roi, 2)"
                 label="估計 SROI"
                 style="max-width: 150px;"
                 readonly
-              />
+              /> -->
             </div>
 
             <div class="row q-gutter-md q-mt-md items-start">
@@ -208,7 +207,6 @@
 <script>
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { mapActions, mapGetters, mapState } from "vuex";
-//import { mapFields } from 'vuex-map-fields';
 import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
 import { formatNumber } from "src/utils/util-formatNumber";
 import { GChart } from "vue-google-charts";
@@ -231,12 +229,7 @@ export default {
     return {
       embedded: false, //whether this component is embedded or a full page
       actionId: null,
-      selectedNodeId: "gZJSr2ccS8FJohr5qK2A",
-      //chartData: [],
       chartsArr: []
-      /*chartOptions: {
-        legend: { position: "bottom" }
-      } */
     };
   },
 
