@@ -261,48 +261,13 @@ function iterateThroughTime(sim, scenario) {
           if (scenario.type == "action") {
             scenario.action.impacts.forEach(function(impact) {
               if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
-                //TODO: if impact affects current time
-                switch (impact.durationType) {
-                  case "just_once":
-                    if (completedLoops == 0) doImpact(sim, nodeIndex, impact);
-                    break;
-                  case "forever":
-                    doImpact(sim, nodeIndex, impact);
-                    break;
-                  case "for_period":
-                    //if timeS <= initialTimeS + unit(durationExpression, durationUnit).to('seconds')
-                    if (
-                      timeS <=
-                      sim.scope.initialTimeS +
-                        math
-                          .unit(impact.durationExpression, impact.durationUnit)
-                          .toNumber("seconds")
-                    ) {
-                      doImpact(sim, nodeIndex, impact);
-                    }
-                    break;
-                }
-                //if (sim.scope.timeS >= impact.startTime && sim.scope.timeS < impact.endTime)
+                doImpactIfItAffectsCurrentTime(sim, timeS, nodeIndex, impact);
               }
             });
           }
-
           //on first 2 loops, check result of evaluation against units expected by user.
-          if (timeSIndex < 2) {
-            expectedUnit = sim.expectedUnits[nodeIndex];
-            if (
-              !sim.expectedUnits[nodeIndex].equalBase(
-                sim.scope["$" + sim.sortedNodes[nodeIndex].id]
-              )
-            )
-              throw `dimensions of expected units and calculated units do not match.
-              <br/> Expected: "${expectedUnit.toString()}"
-              <br/> Calculated: "${sim.scope[
-                "$" + sim.sortedNodes[nodeIndex].id
-              ].toString()}"`;
-          }
+          if (timeSIndex < 2) checkUnits(sim, nodeIndex);
         } catch (err) {
-          //console.log(err);
           self.postMessage({
             errorType: "evaluation error",
             errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`
@@ -311,18 +276,7 @@ function iterateThroughTime(sim, scenario) {
         }
       if (sim.errorOccurred) return;
     });
-    if (!sim.errorOccurred)
-      try {
-        //save time and node values into time points and value time series
-        sim.scope.timeSeries.timeSPoints.push(sim.scope.timeS);
-        sim.sortedNodes.forEach(function(node, index) {
-          sim.scope.timeSeries.nodes[node.id].push(sim.scope["$" + node.id]);
-        });
-      } catch (err) {
-        console.log(err);
-        self.postMessage(err);
-        sim.errorOccurred = true;
-      }
+    if (!sim.errorOccurred) composeTimeSeries(sim);
     if (sim.errorOccurred) return;
 
     completedLoops++;
@@ -342,6 +296,29 @@ function iterateThroughTime(sim, scenario) {
   sim.calcTimeLog.push({ stage: stage, endTime: new Date() });
 }
 
+function doImpactIfItAffectsCurrentTime(sim, timeS, nodeIndex, impact) {
+  switch (impact.durationType) {
+    case "just_once":
+      if (timeS == sim.scope.initialTimeS) doImpact(sim, nodeIndex, impact);
+      break;
+    case "forever":
+      doImpact(sim, nodeIndex, impact);
+      break;
+    case "for_period":
+      //if timeS <= initialTimeS + unit(durationExpression, durationUnit).to('seconds')
+      if (
+        timeS <=
+        sim.scope.initialTimeS +
+          math
+            .unit(impact.durationExpression, impact.durationUnit)
+            .toNumber("seconds")
+      ) {
+        doImpact(sim, nodeIndex, impact);
+      }
+      break;
+  }
+}
+
 function doImpact(sim, nodeIndex, impact) {
   switch (impact.operation) {
     case "+":
@@ -350,6 +327,34 @@ function doImpact(sim, nodeIndex, impact) {
         math.multiply(impact.operand, sim.expectedUnits[nodeIndex])
       );
       break;
+  }
+}
+
+function checkUnits(sim, nodeIndex) {
+  expectedUnit = sim.expectedUnits[nodeIndex];
+  if (
+    !sim.expectedUnits[nodeIndex].equalBase(
+      sim.scope["$" + sim.sortedNodes[nodeIndex].id]
+    )
+  )
+    throw `dimensions of expected units and calculated units do not match.
+              <br/> Expected: "${expectedUnit.toString()}"
+              <br/> Calculated: "${sim.scope[
+                "$" + sim.sortedNodes[nodeIndex].id
+              ].toString()}"`;
+}
+
+function composeTimeSeries(sim) {
+  try {
+    //save time and node values into time points and value time series
+    sim.scope.timeSeries.timeSPoints.push(sim.scope.timeS);
+    sim.sortedNodes.forEach(function(node, index) {
+      sim.scope.timeSeries.nodes[node.id].push(sim.scope["$" + node.id]);
+    });
+  } catch (err) {
+    console.log(err);
+    self.postMessage(err);
+    sim.errorOccurred = true;
   }
 }
 
