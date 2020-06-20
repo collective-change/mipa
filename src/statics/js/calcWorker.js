@@ -95,6 +95,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
   //simulate each action
   actions.forEach(function(action) {
     //TODO: gather begin and end times of impacts
+    action.impacts.forEach(impact => console.log(impact.nodeId));
     //TODO: if extra timepoints are required then build customTimeSPoints
     //TODO: simulate using either default or customTimeSPoints
     //TODO: also simulate baseline using customTimeSPoints, if any
@@ -188,17 +189,17 @@ function prepRoiResults(
     timeSPoints,
     yearlyDiscountRate
   );
-  let marginalBenefitNpv = marginalValueNpv - marginalCostNpv;
+  //let marginalBenefitNpv = marginalValueNpv - marginalCostNpv;
 
   //calculate ROI and prepare results
-  let roi = marginalBenefitNpv / marginalCostNpv;
+  let roi = marginalValueNpv / marginalCostNpv;
   let roiResults = {
     marginalValueNpv: marginalValueNpv,
     marginalCostNpv: marginalCostNpv,
-    marginalBenefitNpv: marginalBenefitNpv,
+    //marginalBenefitNpv: marginalBenefitNpv,
     roi: roi
   };
-  console.log({ roiResults });
+  //console.log({ roiResults });
   return roiResults;
 }
 
@@ -261,18 +262,10 @@ function iterateThroughTime(sim, scenario) {
             scenario.action.impacts.forEach(function(impact) {
               if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
                 //TODO: if impact affects current time
-                //if (sim.scope.timeS >= impact.startTime && sim.scope.timeS < impact.endTime)
-                switch (impact.operation) {
-                  case "+":
-                    sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.add(
-                      sim.scope["$" + sim.sortedNodes[nodeIndex].id],
-                      math.multiply(
-                        impact.operand,
-                        sim.expectedUnits[nodeIndex]
-                      )
-                    );
-                    break;
+                if (impact.durationType == "just_once" && completedLoops == 0) {
+                  doImpact(sim, nodeIndex, impact);
                 }
+                //if (sim.scope.timeS >= impact.startTime && sim.scope.timeS < impact.endTime)
               }
             });
           }
@@ -315,6 +308,7 @@ function iterateThroughTime(sim, scenario) {
       }
     if (sim.errorOccurred) return;
 
+    completedLoops++;
     //report progress every 500 ms
     if (
       new Date() - sim.lastProgressReportTime >= 500 ||
@@ -329,6 +323,17 @@ function iterateThroughTime(sim, scenario) {
     scenario.type +
     (scenario.type == "action" ? scenario.action.title : "");
   sim.calcTimeLog.push({ stage: stage, endTime: new Date() });
+}
+
+function doImpact(sim, nodeIndex, impact) {
+  switch (impact.operation) {
+    case "+":
+      sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.add(
+        sim.scope["$" + sim.sortedNodes[nodeIndex].id],
+        math.multiply(impact.operand, sim.expectedUnits[nodeIndex])
+      );
+      break;
+  }
 }
 
 function calculateBaseline(sim) {

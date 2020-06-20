@@ -298,7 +298,6 @@ export default {
     },
 
     updateChartDataForNode(nodeId) {
-      console.log(this.resultsOfAction);
       // if baseline.nodes contains the selected node then load baseline for this nde
       if (this.resultsOfAction.timeSPoints.length) {
         let timeSPoints = this.resultsOfAction.timeSPoints;
@@ -328,7 +327,7 @@ export default {
             ]);
           }
         }
-        console.log(chart);
+        //console.log(chart);
       } else {
         //console.log("nope");
         chart.chartData = [];

@@ -101,7 +101,7 @@ export default {
   },
 
   async saveBaseline(baseline) {
-    console.log("saveBaseline");
+    //console.log("saveBaseline");
     let db = await this.getDb();
 
     return new Promise(resolve => {

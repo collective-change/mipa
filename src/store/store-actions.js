@@ -228,5 +228,19 @@ function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
   if (typeof matchedStoreAction.roi == "undefined") return true;
   if (newRoiResults.roi / matchedStoreAction.roi > 1.05) return true;
   if (matchedStoreAction.roi / newRoiResults.roi > 1.05) return true;
+  if (
+    newRoiResults.marginalValueNpv / matchedStoreAction.marginalValueNpv >
+    1.05
+  )
+    return true;
+  if (
+    matchedStoreAction.marginalValueNpv / newRoiResults.marginalValueNpv >
+    1.05
+  )
+    return true;
+  if (newRoiResults.marginalCostNpv / matchedStoreAction.marginalCostNpv > 1.05)
+    return true;
+  if (matchedStoreAction.marginalCostNpv / newRoiResults.marginalCostNpv > 1.05)
+    return true;
   return false;
 }
