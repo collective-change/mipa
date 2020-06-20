@@ -94,8 +94,15 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
 
   //simulate each action
   actions.forEach(function(action) {
-    //TODO: gather begin and end times of impacts
-    action.impacts.forEach(impact => console.log(impact.nodeId));
+    //TODO: gather begin and end times of impacts and calculate halfLife in seconds
+    action.impacts.forEach(function(impact) {
+      console.log(impact.nodeId);
+      if (impact.durationType == "with_half_life") {
+        impact.halfLifeS = math
+          .unit(impact.durationNumber, impact.durationUnit)
+          .toNumber("seconds");
+      }
+    });
     //TODO: if extra timepoints are required then build customTimeSPoints
     //TODO: simulate using either default or customTimeSPoints
     //TODO: also simulate baseline using customTimeSPoints, if any
@@ -317,43 +324,59 @@ function doImpactIfItAffectsCurrentTime(sim, timeS, nodeIndex, impact) {
       }
       break;
     case "with_half_life":
+      doImpactWithHalfLife(sim, nodeIndex, impact);
       break;
   }
 }
 
-function doImpact(sim, nodeIndex, impact) {
+function doImpact(sim, nodeIndex, impact, operandScalingFactor = 1) {
   switch (impact.operation) {
     case "+":
       sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.add(
         sim.scope["$" + sim.sortedNodes[nodeIndex].id],
-        math.multiply(impact.operand, sim.expectedUnits[nodeIndex])
+        math.multiply(
+          impact.operand * operandScalingFactor,
+          sim.expectedUnits[nodeIndex]
+        )
       );
       break;
     case "-":
       sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.subtract(
         sim.scope["$" + sim.sortedNodes[nodeIndex].id],
-        math.multiply(impact.operand, sim.expectedUnits[nodeIndex])
+        math.multiply(
+          impact.operand * operandScalingFactor,
+          sim.expectedUnits[nodeIndex]
+        )
       );
       break;
     case "*":
       sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.multiply(
         sim.scope["$" + sim.sortedNodes[nodeIndex].id],
-        impact.operand
+        impact.operand * operandScalingFactor
       );
       break;
     case "/":
       sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.divide(
         sim.scope["$" + sim.sortedNodes[nodeIndex].id],
-        impact.operand
+        impact.operand * operandScalingFactor
       );
       break;
     case "=":
       sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.multiply(
-        impact.operand,
+        impact.operand * operandScalingFactor,
         sim.expectedUnits[nodeIndex]
       );
       break;
   }
+}
+
+function doImpactWithHalfLife(sim, nodeIndex, impact) {
+  let timeElapsedS = sim.scope.timeS - sim.scope.initialTimeS;
+  let scalingFactor = Math.pow(0.5, timeElapsedS / impact.halfLifeS);
+  //determine scaling factor due to half life
+  console.log({ impact });
+  //doImpact() with scaling factor
+  doImpact(sim, nodeIndex, impact, scalingFactor);
 }
 
 function checkUnits(sim, nodeIndex) {
