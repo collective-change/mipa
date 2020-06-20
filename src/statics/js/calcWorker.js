@@ -94,9 +94,27 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
 
   //simulate each action
   actions.forEach(function(action) {
-    //TODO: gather begin and end times of impacts and calculate halfLife in seconds
+    //for each action, calculate halfLife in seconds
+    //TODO: compose effort and expense impacts
+    let effortImpact = {
+      nodeId: sim.roleNodes.effort,
+      durationType: "just_once",
+      impactType: "if_done",
+      operation: "+",
+      operand:
+        action.estEffortHrs * (100 - action.effortCompletionPercentage) * 0.01
+    };
+    action.impacts.push(effortImpact);
+    let purchaseImpact = {
+      nodeId: sim.roleNodes.purchase,
+      durationType: "just_once",
+      impactType: "if_done",
+      operation: "+",
+      operand: action.estPurchaseCostXdr
+    };
+    action.impacts.push(purchaseImpact);
+    //TODO: gather begin and end times
     action.impacts.forEach(function(impact) {
-      console.log(impact.nodeId);
       if (impact.durationType == "with_half_life") {
         impact.halfLifeS = math
           .unit(impact.durationNumber, impact.durationUnit)
@@ -374,7 +392,6 @@ function doImpactWithHalfLife(sim, nodeIndex, impact) {
   let timeElapsedS = sim.scope.timeS - sim.scope.initialTimeS;
   let scalingFactor = Math.pow(0.5, timeElapsedS / impact.halfLifeS);
   //determine scaling factor due to half life
-  console.log({ impact });
   //doImpact() with scaling factor
   doImpact(sim, nodeIndex, impact, scalingFactor);
 }

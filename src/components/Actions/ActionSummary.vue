@@ -107,10 +107,10 @@
 
             <div class="row q-gutter-md q-mt-md items-start">
               <q-input
-                v-model.number="estEffortCostXdr"
-                label="預估人力成本"
+                v-model.number="estEffortHrs"
+                label="預估人力時間"
                 type="number"
-                suffix="XDR"
+                suffix="hours"
                 :rules="[
                   val => val == null || val >= 0 || 'Should be at least 0'
                 ]"
@@ -246,8 +246,7 @@ export default {
     //fields for 2-way sync between component and store
     ...mapFields([
       "uiAction.title",
-      "uiAction.estTotalBenefitXdr",
-      "uiAction.estEffortCostXdr",
+      "uiAction.estEffortHrs",
       "uiAction.effortCompletionPercentage",
       "uiAction.estPurchaseCostXdr",
       "uiAction.purchasedAmount",
@@ -334,6 +333,11 @@ export default {
       this.uiAction.impacts.forEach(function(impact) {
         defaultNodesToChart.push(impact.nodeId);
       });
+
+      //get effort and purchase nodes
+      //defaultNodesToChart.push(this.currentModel.roleNodes.effort);
+      //defaultNodesToChart.push(this.currentModel.roleNodes.purchase);
+
       //get totalValue and totalCost nodes
       defaultNodesToChart.push(this.currentModel.roleNodes.totalValue);
       defaultNodesToChart.push(this.currentModel.roleNodes.totalCost);
@@ -369,16 +373,15 @@ export default {
     })();
   },
   watch: {
-    selectedAction: async function(newAction, oldAction) {
+    resultsOfAction: function() {
+      this.updateDefaultChartsArr();
+    },
+    selectedAction: function(newAction, oldAction) {
       let action = {};
       Object.assign(action, this.selectedAction);
       this.$store.dispatch("uiAction/setUiAction", action);
       if (this.embedded == false) {
-        await this.$store.dispatch(
-          "calcResults/loadResultsOfAction",
-          action.id
-        );
-        this.updateDefaultChartsArr();
+        this.$store.dispatch("calcResults/loadResultsOfAction", action.id);
       } else {
         this.$store.dispatch("calcResults/clearResultsOfAction");
       }

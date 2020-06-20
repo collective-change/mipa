@@ -32,7 +32,7 @@ import { mapGetters, mapState } from "vuex";
 export default {
   props: ["calculationType", "buttonLabel", "uiAction"],
   components: {},
-  data () {
+  data() {
     return {
       showBaselineCalculator: false,
       calcWorker: null
@@ -50,7 +50,7 @@ export default {
     ...mapGetters("actions", ["actions"])
   },
   methods: {
-    calculate () {
+    calculate() {
       let modelId = this.$route.params.modelId
         ? this.$route.params.modelId
         : this.$route.params.orgId;
@@ -80,8 +80,8 @@ export default {
       this.$store.dispatch("calculator/calculate", payload);
     }
   },
-  created () { },
-  mounted () { },
-  beforeDestroy () { }
+  created() {},
+  mounted() {},
+  beforeDestroy() {}
 };
 </script>
