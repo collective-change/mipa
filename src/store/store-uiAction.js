@@ -1,8 +1,7 @@
 import { getField, updateField } from "vuex-map-fields";
 
 const fieldsToTriggerRecalculation = [
-  "estTotalBenefitXdr",
-  "estEffortCostXdr",
+  "estEffortHrs",
   "effortCompletionPercentage",
   "estPurchaseCostXdr",
   "purchasedAmount"
@@ -21,7 +20,7 @@ const mutations = {
   updateUiActionField(state, field) {
     let fieldName = field.path.replace("uiAction.", "");
     updateField(state, field);
-    if (fieldsToTriggerRecalculation.includes(fieldName)) recalculate(state);
+    //if (fieldsToTriggerRecalculation.includes(fieldName)) recalculate(state);
     state.uiActionChanged = true;
     //console.log("updated", state.uiAction[fieldName]);
   },
@@ -42,7 +41,7 @@ const mutations = {
   }
 };
 
-function recalculate(state) {
+/*function recalculate(state) {
   //console.log("recalculating");
   let uiAction = state.uiAction;
   uiAction.estEffortCostXdr = uiAction.estEffortCostXdr
@@ -70,7 +69,7 @@ function recalculate(state) {
   uiAction.estRoi =
     (uiAction.estTotalBenefitXdr - uiAction.outstandingCostXdr) /
     uiAction.outstandingCostXdr;
-}
+}*/
 
 const actions = {
   setUiAction({ commit }, action) {
