@@ -8,7 +8,7 @@ export default {
       if (DB) {
         return resolve(DB);
       }
-      console.log("OPENING DB", DB);
+      //console.log("OPENING DB", DB);
       let request = window.indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = e => {

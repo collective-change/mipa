@@ -312,7 +312,8 @@ export default {
             chartOptions: {
               title: this.getNodeName(nodeId),
               vAxis: { title: this.getNodeUnit(nodeId) },
-              legend: { position: "bottom" }
+              legend: { position: "bottom" },
+              explorer: {}
             }
           });
           this.chartsArr.push(chart);
@@ -334,6 +335,7 @@ export default {
       }
     },
     updateDefaultChartsArr() {
+      console.log("updateDefaultChartsArr");
       if (!this.currentModel) return;
       let defaultNodesToChart = [];
       //get impacted nodes
