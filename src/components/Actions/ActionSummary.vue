@@ -32,8 +32,8 @@
           >
             <div class="q-pa-xs q-gutter-xs">
               <q-chip outline color="primary">
-                Value
-                {{ formatNumber(uiAction.marginalValueNpv, 4) }} XDR
+                Benefit
+                {{ formatNumber(uiAction.marginalBenefitNpv, 4) }} XDR
               </q-chip>
               <q-chip outline color="primary">
                 Cost
@@ -338,8 +338,8 @@ export default {
       //defaultNodesToChart.push(this.currentModel.roleNodes.effort);
       //defaultNodesToChart.push(this.currentModel.roleNodes.purchase);
 
-      //get totalValue and totalCost nodes
-      defaultNodesToChart.push(this.currentModel.roleNodes.totalValue);
+      //get totalBenefit and totalCost nodes
+      defaultNodesToChart.push(this.currentModel.roleNodes.totalBenefit);
       defaultNodesToChart.push(this.currentModel.roleNodes.totalCost);
       //load data into each node
       defaultNodesToChart.forEach(nodeId =>

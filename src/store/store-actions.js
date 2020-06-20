@@ -230,13 +230,13 @@ function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
   if (Math.abs(matchedStoreAction.roi / newRoiResults.roi) > 1.05) return true;
   if (
     Math.abs(
-      newRoiResults.marginalValueNpv / matchedStoreAction.marginalValueNpv
+      newRoiResults.marginalBenefitNpv / matchedStoreAction.marginalBenefitNpv
     ) > 1.05
   )
     return true;
   if (
     Math.abs(
-      matchedStoreAction.marginalValueNpv / newRoiResults.marginalValueNpv
+      matchedStoreAction.marginalBenefitNpv / newRoiResults.marginalBenefitNpv
     ) > 1.05
   )
     return true;

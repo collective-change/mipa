@@ -126,7 +126,7 @@ export default {
         hasDeadline: false,
         operation: "+",
         durationType: "for_period",
-        durationUnit: "days"
+        durationUnit: "months"
       },
       filteredNodeOptions: [],
       typeOptions: [

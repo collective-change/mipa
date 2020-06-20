@@ -192,19 +192,19 @@ function prepRoiResults(
   yearlyDiscountRate
 ) {
   //prepare inputs for calculating NPVs
-  let deviationTotalValueSeries =
-    deviationTimeSeriesNodesValues[roleNodes.totalValue];
-  let baselineTotalValueSeries =
-    baselineTimeSeriesNodesValues[roleNodes.totalValue];
+  let deviationTotalBenefitSeries =
+    deviationTimeSeriesNodesValues[roleNodes.totalBenefit];
+  let baselineTotalBenefitSeries =
+    baselineTimeSeriesNodesValues[roleNodes.totalBenefit];
   let deviationTotalCostSeries =
     deviationTimeSeriesNodesValues[roleNodes.totalCost];
   let baselineTotalCostSeries =
     baselineTimeSeriesNodesValues[roleNodes.totalCost];
 
   //calculate NPVs
-  let marginalValueNpv = getMarginalNpv(
-    deviationTotalValueSeries,
-    baselineTotalValueSeries,
+  let marginalBenefitNpv = getMarginalNpv(
+    deviationTotalBenefitSeries,
+    baselineTotalBenefitSeries,
     timeSPoints,
     yearlyDiscountRate
   );
@@ -214,12 +214,12 @@ function prepRoiResults(
     timeSPoints,
     yearlyDiscountRate
   );
-  //let marginalBenefitNpv = marginalValueNpv - marginalCostNpv;
+  //let marginalBenefitNpv = marginalBenefitNpv - marginalCostNpv;
 
   //calculate ROI and prepare results
-  let roi = marginalValueNpv / marginalCostNpv;
+  let roi = marginalBenefitNpv / marginalCostNpv;
   let roiResults = {
-    marginalValueNpv: marginalValueNpv,
+    marginalBenefitNpv: marginalBenefitNpv,
     marginalCostNpv: marginalCostNpv,
     //marginalBenefitNpv: marginalBenefitNpv,
     roi: roi

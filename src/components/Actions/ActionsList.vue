@@ -98,7 +98,7 @@ export default {
           name: "value",
           align: "right",
           label: "總效益 (XDR)",
-          field: "marginalValueNpv",
+          field: "marginalBenefitNpv",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
         },
