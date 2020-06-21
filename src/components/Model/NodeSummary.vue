@@ -295,7 +295,8 @@ export default {
               "sysFormula",
               "class",
               "blockingInfluencers",
-              "unusedInfluencers"
+              "unusedInfluencers",
+              "updateTime"
             ].includes(item);
           });
           if (differences.length) {
