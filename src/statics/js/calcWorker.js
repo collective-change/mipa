@@ -540,7 +540,11 @@ function prepEnvironment(data) {
   math.createUnit({
     person: {
       baseName: "person",
-      aliases: ["persons", "people"]
+      aliases: ["persons", "people", "user", "users"]
+    },
+    operation: {
+      baseName: "operation",
+      aliases: ["operations", "ops"]
     }
   });
 
