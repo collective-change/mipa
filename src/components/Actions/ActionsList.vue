@@ -11,7 +11,7 @@
       @row-click="onRowClick"
     >
       <template v-slot:top>
-        <div class="col-2 q-table__title">事項</div>
+        <div class="col-2 q-table__title">行動</div>
 
         <!-- <q-btn
           @click="showAddAction = true"
@@ -105,7 +105,7 @@ export default {
         {
           name: "cost",
           align: "right",
-          label: "需再付出成本 (XDR)",
+          label: "總成本 (XDR)",
           field: "marginalCostNpv",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
