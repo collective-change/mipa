@@ -120,6 +120,7 @@ export default {
 
       chartData: [],
       chartOptions: {
+        vAxis: { scaleType: "log" },
         legend: { position: "none" }
       }
     };
@@ -230,8 +231,8 @@ export default {
         updates: this.nodeToSubmit,
         currentValueExistenceChanged: currentValueExistenceChanged,
         symbolChanged: symbolChanged
-        /* "symbolChanged" doesn't actually work yet to classify influencers 
-        of node's influencees, because classifyInfluencers currently 
+        /* "symbolChanged" doesn't actually work yet to classify influencers
+        of node's influencees, because classifyInfluencers currently
         starts with sysFormula, which would not change until it's recomposed.
         */
       });
