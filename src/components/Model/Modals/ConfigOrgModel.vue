@@ -13,8 +13,12 @@
           :rules="[val => !!val || 'Field is required']"
           filled
         />
-        <div class="text-h6">Simulation parameters</div>
-        <!-- <q-select
+      </q-card-section>
+      <div class="row">
+        <div class="col">
+          <q-card-section>
+            <div class="text-h6">Simulation parameters</div>
+            <!-- <q-select
           v-model="modelToSubmit.simulationParams.timeStepType"
           :options="timeStepTypeOptions"
           label="Time step type"
@@ -24,113 +28,134 @@
           filled
         />-->
 
-        <div class="row">
-          <q-input
-            v-model.number="modelToSubmit.simulationParams.timeStepNumber"
-            label="initial time step"
-            :rules="[val => val > 0 || 'A number greater than 0 is required']"
-            filled
-          />
-          <q-select
-            v-model="modelToSubmit.simulationParams.timeStepUnit"
-            :options="timeUnitOptions"
-            label="units"
-            emit-value
-            map-options
-            :rules="[val => !!val || 'Field is required']"
-            filled
-          />
+            <div class="row">
+              <q-input
+                v-model.number="modelToSubmit.simulationParams.timeStepNumber"
+                label="initial time step"
+                :rules="[
+                  val => val > 0 || 'A number greater than 0 is required'
+                ]"
+                filled
+              />
+              <q-select
+                v-model="modelToSubmit.simulationParams.timeStepUnit"
+                :options="timeUnitOptions"
+                label="units"
+                emit-value
+                map-options
+                :rules="[val => !!val || 'Field is required']"
+                filled
+              />
+            </div>
+            <q-input
+              v-model.number="modelToSubmit.simulationParams.numTimeSteps"
+              label="number of time steps"
+              :rules="[
+                val =>
+                  (val == parseInt(val) && val > 0) ||
+                  'A number greater than 0 is required'
+              ]"
+              filled
+            />
+            <q-input
+              v-model.number="modelToSubmit.simulationParams.timeStepGrowthRate"
+              label="time step growth rate"
+              filled
+            />
+            <div class="row">
+              <q-input
+                v-model.number="modelToSubmit.simulationParams.finalTimeNumber"
+                label="final time"
+                readonly
+              />
+              <q-select
+                v-model="modelToSubmit.simulationParams.finalTimeUnit"
+                :options="timeUnitOptions"
+                label="units"
+                emit-value
+                map-options
+                readonly
+              />
+            </div>
+          </q-card-section>
         </div>
-        <q-input
-          v-model.number="modelToSubmit.simulationParams.numTimeSteps"
-          label="number of time steps"
-          :rules="[
-            val =>
-              (val == parseInt(val) && val > 0) ||
-              'A number greater than 0 is required'
-          ]"
-          filled
-        />
-        <q-input
-          v-model.number="modelToSubmit.simulationParams.timeStepGrowthRate"
-          label="time step growth rate"
-          filled
-        />
-        <div class="row">
-          <q-input
-            v-model.number="modelToSubmit.simulationParams.finalTimeNumber"
-            label="final time"
-            readonly
-          />
-          <q-select
-            v-model="modelToSubmit.simulationParams.finalTimeUnit"
-            :options="timeUnitOptions"
-            label="units"
-            emit-value
-            map-options
-            readonly
-          />
+        <div class="col">
+          <q-card-section v-if="modelToSubmit.isOrgMainModel">
+            <div class="text-h6">Node assignments</div>
+            <q-select
+              label="Average effort cost per hour"
+              v-model="modelToSubmit.roleNodes.averageEffortCostPerHour"
+              @filter="filterFn"
+              @filter-abort="abortFilterFn"
+              :options="filteredNodeOptions"
+              :rules="[val => !!val || 'Field is required']"
+              emit-value
+              map-options
+              filled
+              use-input
+              hide-selected
+              fill-input
+            />
+            <q-select
+              label="One-time effort (time)"
+              v-model="modelToSubmit.roleNodes.effort"
+              @filter="filterFn"
+              @filter-abort="abortFilterFn"
+              :options="filteredNodeOptions"
+              :rules="[val => !!val || 'Field is required']"
+              emit-value
+              map-options
+              filled
+              use-input
+              hide-selected
+              fill-input
+            />
+            <q-select
+              label="One-time spending"
+              v-model="modelToSubmit.roleNodes.spending"
+              @filter="filterFn"
+              @filter-abort="abortFilterFn"
+              :options="filteredNodeOptions"
+              :rules="[val => !!val || 'Field is required']"
+              emit-value
+              map-options
+              filled
+              use-input
+              hide-selected
+              fill-input
+            />
+            <q-select
+              label="Total benefit"
+              v-model="modelToSubmit.roleNodes.totalBenefit"
+              @filter="filterFn"
+              @filter-abort="abortFilterFn"
+              :options="filteredNodeOptions"
+              :rules="[val => !!val || 'Field is required']"
+              emit-value
+              map-options
+              filled
+              use-input
+              hide-selected
+              fill-input
+            />
+            <q-select
+              label="Total cost"
+              v-model="modelToSubmit.roleNodes.totalCost"
+              @filter="filterFn"
+              @filter-abort="abortFilterFn"
+              :options="filteredNodeOptions"
+              :rules="[val => !!val || 'Field is required']"
+              emit-value
+              map-options
+              filled
+              use-input
+              hide-selected
+              fill-input
+            />
+          </q-card-section>
         </div>
-      </q-card-section>
-      <q-card-section v-if="modelToSubmit.isOrgMainModel">
-        <div class="text-h6">Node assignments</div>
-        <q-select
-          label="One-time Effort (time)"
-          v-model="modelToSubmit.roleNodes.effort"
-          @filter="filterFn"
-          @filter-abort="abortFilterFn"
-          :options="filteredNodeOptions"
-          :rules="[val => !!val || 'Field is required']"
-          emit-value
-          map-options
-          filled
-          use-input
-          hide-selected
-          fill-input
-        />
-        <q-select
-          label="One-time Spending"
-          v-model="modelToSubmit.roleNodes.spending"
-          @filter="filterFn"
-          @filter-abort="abortFilterFn"
-          :options="filteredNodeOptions"
-          :rules="[val => !!val || 'Field is required']"
-          emit-value
-          map-options
-          filled
-          use-input
-          hide-selected
-          fill-input
-        />
-        <q-select
-          label="Total benefit"
-          v-model="modelToSubmit.roleNodes.totalBenefit"
-          @filter="filterFn"
-          @filter-abort="abortFilterFn"
-          :options="filteredNodeOptions"
-          :rules="[val => !!val || 'Field is required']"
-          emit-value
-          map-options
-          filled
-          use-input
-          hide-selected
-          fill-input
-        />
-        <q-select
-          label="Total cost"
-          v-model="modelToSubmit.roleNodes.totalCost"
-          @filter="filterFn"
-          @filter-abort="abortFilterFn"
-          :options="filteredNodeOptions"
-          :rules="[val => !!val || 'Field is required']"
-          emit-value
-          map-options
-          filled
-          use-input
-          hide-selected
-          fill-input
-        />
-      </q-card-section>
+      </div>
+
       <modal-buttons />
     </q-form>
   </q-card>
