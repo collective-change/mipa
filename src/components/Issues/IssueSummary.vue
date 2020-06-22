@@ -160,7 +160,7 @@
 
             <div class="q-gutter-md q-mt-md row items-start">
               <q-input
-                v-model.number="estPurchaseCostXdr"
+                v-model.number="estSpending"
                 label="預估採購金額"
                 type="number"
                 suffix="XDR"
@@ -172,7 +172,7 @@
                 debounce="500"
               />
               <q-input
-                v-model.number="purchasedAmount"
+                v-model.number="spentAmount"
                 label="已採購金額"
                 type="number"
                 suffix="XDR"
@@ -251,8 +251,8 @@ export default {
       "uiIssue.estTotalBenefitXdr",
       "uiIssue.estEffortCostXdr",
       "uiIssue.effortCompletionPercentage",
-      "uiIssue.estPurchaseCostXdr",
-      "uiIssue.purchasedAmount",
+      "uiIssue.estSpending",
+      "uiIssue.spentAmount",
       "uiIssue.dueDate",
       "uiIssue.notes"
     ]),

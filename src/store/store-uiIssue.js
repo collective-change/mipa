@@ -28,22 +28,17 @@ function recalculate(state) {
   uiIssue.estEffortCostXdr = uiIssue.estEffortCostXdr
     ? uiIssue.estEffortCostXdr
     : 0;
-  uiIssue.estPurchaseCostXdr = uiIssue.estPurchaseCostXdr
-    ? uiIssue.estPurchaseCostXdr
-    : 0;
-  uiIssue.estTotalCostXdr =
-    uiIssue.estEffortCostXdr + uiIssue.estPurchaseCostXdr;
+  uiIssue.estSpending = uiIssue.estSpending ? uiIssue.estSpending : 0;
+  uiIssue.estTotalCostXdr = uiIssue.estEffortCostXdr + uiIssue.estSpending;
   uiIssue.effortCompletionPercentage = uiIssue.effortCompletionPercentage
     ? uiIssue.effortCompletionPercentage
     : 0;
   uiIssue.outstandingEffortCost =
     uiIssue.estEffortCostXdr * (1 - uiIssue.effortCompletionPercentage / 100);
-  uiIssue.purchasedAmount = uiIssue.purchasedAmount
-    ? uiIssue.purchasedAmount
-    : 0;
+  uiIssue.spentAmount = uiIssue.spentAmount ? uiIssue.spentAmount : 0;
   uiIssue.outstandingPurchaseCost = Math.max(
     0,
-    uiIssue.estPurchaseCostXdr - uiIssue.purchasedAmount
+    uiIssue.estSpending - uiIssue.spentAmount
   );
   uiIssue.outstandingCostXdr =
     uiIssue.outstandingEffortCost + uiIssue.outstandingPurchaseCost;

@@ -111,8 +111,8 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       impactType: "if_done",
       operation: "+",
       operand:
-        action.estPurchaseCostXdr -
-        (isNaN(action.purchasedAmount) ? 0 : action.purchasedAmount)
+        action.estSpending -
+        (isNaN(action.spentAmount) ? 0 : action.spentAmount)
     };
     action.impacts.push(purchaseImpact);
     //TODO: gather begin and end times

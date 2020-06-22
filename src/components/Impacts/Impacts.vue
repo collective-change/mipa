@@ -139,8 +139,8 @@ export default {
       "uiAction.estTotalBenefitXdr",
       "uiAction.estEffortCostXdr",
       "uiAction.effortCompletionPercentage",
-      "uiAction.estPurchaseCostXdr",
-      "uiAction.purchasedAmount",
+      "uiAction.estSpending",
+      "uiAction.spentAmount",
       "uiAction.dueDate",
       "uiAction.notes",
       "uiAction.impacts"

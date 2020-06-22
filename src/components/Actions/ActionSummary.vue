@@ -144,8 +144,8 @@
 
             <div class="q-gutter-md q-mt-md row items-start">
               <q-input
-                v-model.number="estPurchaseCostXdr"
-                label="預估採購金額"
+                v-model.number="estSpending"
+                label="預估支出金額"
                 type="number"
                 suffix="XDR"
                 :rules="[
@@ -156,8 +156,8 @@
                 debounce="500"
               />
               <q-input
-                v-model.number="purchasedAmount"
-                label="已採購金額"
+                v-model.number="spentAmount"
+                label="已支出金額"
                 type="number"
                 suffix="XDR"
                 :rules="[
@@ -248,8 +248,8 @@ export default {
       "uiAction.title",
       "uiAction.estEffortHrs",
       "uiAction.effortCompletionPercentage",
-      "uiAction.estPurchaseCostXdr",
-      "uiAction.purchasedAmount",
+      "uiAction.estSpending",
+      "uiAction.spentAmount",
       "uiAction.dueDate",
       "uiAction.notes"
     ]),

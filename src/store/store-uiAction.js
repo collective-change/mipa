@@ -3,8 +3,8 @@ import { getField, updateField } from "vuex-map-fields";
 const fieldsToTriggerRecalculation = [
   "estEffortHrs",
   "effortCompletionPercentage",
-  "estPurchaseCostXdr",
-  "purchasedAmount"
+  "estSpending",
+  "spentAmount"
 ];
 
 const state = {
@@ -47,22 +47,22 @@ const mutations = {
   uiAction.estEffortCostXdr = uiAction.estEffortCostXdr
     ? uiAction.estEffortCostXdr
     : 0;
-  uiAction.estPurchaseCostXdr = uiAction.estPurchaseCostXdr
-    ? uiAction.estPurchaseCostXdr
+  uiAction.estSpending = uiAction.estSpending
+    ? uiAction.estSpending
     : 0;
   uiAction.estTotalCostXdr =
-    uiAction.estEffortCostXdr + uiAction.estPurchaseCostXdr;
+    uiAction.estEffortCostXdr + uiAction.estSpending;
   uiAction.effortCompletionPercentage = uiAction.effortCompletionPercentage
     ? uiAction.effortCompletionPercentage
     : 0;
   uiAction.outstandingEffortCost =
     uiAction.estEffortCostXdr * (1 - uiAction.effortCompletionPercentage / 100);
-  uiAction.purchasedAmount = uiAction.purchasedAmount
-    ? uiAction.purchasedAmount
+  uiAction.spentAmount = uiAction.spentAmount
+    ? uiAction.spentAmount
     : 0;
   uiAction.outstandingPurchaseCost = Math.max(
     0,
-    uiAction.estPurchaseCostXdr - uiAction.purchasedAmount
+    uiAction.estSpending - uiAction.spentAmount
   );
   uiAction.outstandingCostXdr =
     uiAction.outstandingEffortCost + uiAction.outstandingPurchaseCost;

@@ -29,8 +29,8 @@ export default {
         estTotalBenefitXdr: null,
         estEffortCostXdr: null,
         effortCompletionPercentage: null,
-        estPurchaseCostXdr: null,
-        purchasedAmount: null
+        estSpending: null,
+        spentAmount: null
       }
     };
   },
