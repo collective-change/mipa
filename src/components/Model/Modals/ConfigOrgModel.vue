@@ -75,7 +75,7 @@
       <q-card-section v-if="modelToSubmit.isOrgMainModel">
         <div class="text-h6">Node assignments</div>
         <q-select
-          label="Effort (time)"
+          label="One-time Effort (time)"
           v-model="modelToSubmit.roleNodes.effort"
           @filter="filterFn"
           @filter-abort="abortFilterFn"
@@ -89,8 +89,8 @@
           fill-input
         />
         <q-select
-          label="Purchase (expense)"
-          v-model="modelToSubmit.roleNodes.purchase"
+          label="One-time Spending"
+          v-model="modelToSubmit.roleNodes.spending"
           @filter="filterFn"
           @filter-abort="abortFilterFn"
           :options="filteredNodeOptions"

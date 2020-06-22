@@ -106,7 +106,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
     };
     action.impacts.push(effortImpact);
     let purchaseImpact = {
-      nodeId: sim.roleNodes.purchase,
+      nodeId: sim.roleNodes.spending,
       durationType: "just_once",
       impactType: "if_done",
       operation: "+",

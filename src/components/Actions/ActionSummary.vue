@@ -336,7 +336,7 @@ export default {
 
       //get effort and purchase nodes
       //defaultNodesToChart.push(this.currentModel.roleNodes.effort);
-      //defaultNodesToChart.push(this.currentModel.roleNodes.purchase);
+      //defaultNodesToChart.push(this.currentModel.roleNodes.spending);
 
       //get totalBenefit and totalCost nodes
       defaultNodesToChart.push(this.currentModel.roleNodes.totalBenefit);
