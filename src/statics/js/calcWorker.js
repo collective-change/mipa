@@ -1088,11 +1088,7 @@ function valueIsANumber(val) {
 }
 
 function replace$NodeIdsWithName(workingString) {
-  /*modelNodes.forEach(
-    node => (workingString = workingString.replace("$" + node.id, node.name))
-  );
-  return workingString;*/
-  return replaceNodeIdsWithName("$" + workingString);
+  return replaceNodeIdsWithName(workingString.substr(1));
 }
 
 function replaceNodeIdsWithName(workingString) {
