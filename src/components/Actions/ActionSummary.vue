@@ -108,7 +108,7 @@
             <div class="row q-gutter-md q-mt-md items-start">
               <q-input
                 v-model.number="estEffortHrs"
-                label="預估人力時間"
+                label="預估人員時間"
                 type="number"
                 suffix="hours"
                 :rules="[
@@ -122,6 +122,27 @@
                 v-model.number="effortCompletionPercentage"
                 type="number"
                 suffix="% 完成"
+                :rules="[
+                  val => val == null || val >= 0 || 'Should be at least 0'
+                ]"
+                filled
+                style="max-width: 150px;"
+                debounce="500"
+              />
+              <q-select
+                v-model="effortCostPerHrType"
+                label="每小時人員成本"
+                :options="effortCostPerHrTypeOptions"
+                emit-value
+                map-options
+                filled
+              />
+              <q-input
+                v-if="effortCostPerHrType == 'use_custom'"
+                v-model.number="customEffortCostPerHr"
+                label="每小時人員成本"
+                type="number"
+                suffix="XDR/h"
                 :rules="[
                   val => val == null || val >= 0 || 'Should be at least 0'
                 ]"
@@ -229,7 +250,17 @@ export default {
     return {
       embedded: false, //whether this component is embedded or a full page
       actionId: null,
-      chartsArr: []
+      chartsArr: [],
+      effortCostPerHrTypeOptions: [
+        {
+          label: "use average effort cost per hour",
+          value: "use_average"
+        },
+        {
+          label: "use custom effort cost per hour",
+          value: "use_custom"
+        }
+      ]
     };
   },
 
@@ -248,6 +279,8 @@ export default {
       "uiAction.title",
       "uiAction.estEffortHrs",
       "uiAction.effortCompletionPercentage",
+      "uiAction.effortCostPerHrType",
+      "uiAction.customEffortCostPerHr",
       "uiAction.estSpending",
       "uiAction.spentAmount",
       "uiAction.dueDate",

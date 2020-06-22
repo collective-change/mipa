@@ -26,9 +26,9 @@ export default {
         isProject: false,
         notes: "",
         impacts: [],
-        estTotalBenefitXdr: null,
-        estEffortCostXdr: null,
         effortCompletionPercentage: null,
+        effortCostPerHrType: null,
+        customEffortCostPerHr: null,
         estSpending: null,
         spentAmount: null
       }
