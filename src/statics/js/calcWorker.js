@@ -297,7 +297,7 @@ function iterateThroughTime(sim, scenario) {
         } catch (err) {
           self.postMessage({
             errorType: "evaluation error",
-            errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`
+            errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err} <br/> ${nodeIndex}`
           });
           sim.errorOccurred = true;
         }
@@ -401,13 +401,19 @@ function doImpactWithHalfLife(sim, nodeIndex, impact) {
 function checkUnits(sim, nodeIndex) {
   expectedUnit = sim.expectedUnits[nodeIndex];
   if (
-    !sim.expectedUnits[nodeIndex].equalBase(
-      sim.scope["$" + sim.sortedNodes[nodeIndex].id]
-    )
+    // calculation result is a unitless number and the expected isn't
+    (typeof sim.scope["$" + sim.sortedNodes[nodeIndex].id] == "number" &&
+      sim.expectedUnits[nodeIndex].units.length > 0) ||
+    // or calculation result is an object (should be a math.unit) and
+    // doesn't have the same base as the expected unit
+    (typeof sim.scope["$" + sim.sortedNodes[nodeIndex].id] == "object" &&
+      !sim.expectedUnits[nodeIndex].equalBase(
+        sim.scope["$" + sim.sortedNodes[nodeIndex].id]
+      ))
   )
     throw `dimensions of expected units and calculated units do not match.
-              <br/> Expected: "${expectedUnit.toString()}"
-              <br/> Calculated: "${sim.scope[
+              <br/> Expected unit: "${expectedUnit.toString()}"
+              <br/> Calculated result: "${sim.scope[
                 "$" + sim.sortedNodes[nodeIndex].id
               ].toString()}"`;
 }
@@ -638,6 +644,7 @@ function prepExpressionsArray(sim) {
           expressionsArray.push("$" + node.id + " = " + node.sysFormula);
         } else {
           //else set as value and units
+          if (node.unit == "") throw "missing unit";
           expressionsArray.push(
             "$" +
               node.id +

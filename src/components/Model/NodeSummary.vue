@@ -312,7 +312,6 @@ export default {
     },
 
     baseline: function() {
-      console.log("baseline changed");
       this.updateChartData();
     },
 
