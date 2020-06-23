@@ -206,13 +206,24 @@
             v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
           >
             middle column
-            <gchart
-              v-for="chart in chartsArr"
-              :key="chart.nodeId"
-              type="LineChart"
-              :data="chart.chartData"
-              :options="chart.chartOptions"
-            />
+            <div v-for="chart in chartsArr" :key="chart.nodeId" class="q-pb-md">
+              <gchart
+                type="LineChart"
+                :data="chart.chartData"
+                :options="chart.chartOptions"
+              />
+              <div class="row justify-center">
+                <q-btn-toggle
+                  v-model="chart.chartOptions.vAxis.scaleType"
+                  toggle-color="primary"
+                  size="xs"
+                  :options="[
+                    { label: 'linear', value: 'linear' },
+                    { label: 'log', value: 'log' }
+                  ]"
+                />
+              </div>
+            </div>
           </div>
           <div
             v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
@@ -336,7 +347,7 @@ export default {
             chartData: [],
             chartOptions: {
               title: this.getNodeName(nodeId),
-              vAxis: { title: this.getNodeUnit(nodeId), scaleType: "log" },
+              vAxis: { title: this.getNodeUnit(nodeId), scaleType: "linear" },
               legend: { position: "bottom" }
               //explorer: {}
             }
