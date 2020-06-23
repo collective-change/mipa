@@ -337,8 +337,8 @@ export default {
             chartOptions: {
               title: this.getNodeName(nodeId),
               vAxis: { title: this.getNodeUnit(nodeId), scaleType: "log" },
-              legend: { position: "bottom" },
-              explorer: {}
+              legend: { position: "bottom" }
+              //explorer: {}
             }
           });
           this.chartsArr.push(chart);
