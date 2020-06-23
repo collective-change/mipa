@@ -344,12 +344,18 @@ export default {
           this.chartsArr.push(chart);
         } else chart.chartData = [];
         if (actionValues.length > 0) {
-          chart.chartData.push(["time", "baseline", "with action"]);
+          chart.chartData.push([
+            "time",
+            //"baseline",
+            //"with action",
+            "difference"
+          ]);
           for (var i = 0; i < timeSPoints.length; i++) {
             chart.chartData.push([
               new Date(timeSPoints[i] * 1000),
-              baselineValues[i],
-              actionValues[i]
+              //baselineValues[i],
+              //actionValues[i],
+              actionValues[i] - baselineValues[i]
             ]);
           }
         }
@@ -360,7 +366,8 @@ export default {
       }
     },
     updateDefaultChartsArr() {
-      if (!this.currentModel) return;
+      if (!this.currentModel || typeof this.uiAction.impacts == "undefined")
+        return;
       let defaultNodesToChart = [];
       //get impacted nodes
       this.uiAction.impacts.forEach(function(impact) {
@@ -406,8 +413,11 @@ export default {
     })();
   },
   watch: {
+    nodes: function() {
+      if (this.embedded == false) this.updateDefaultChartsArr();
+    },
     resultsOfAction: function() {
-      this.updateDefaultChartsArr();
+      if (this.embedded == false) this.updateDefaultChartsArr();
     },
     selectedAction: function(newAction, oldAction) {
       let action = {};
