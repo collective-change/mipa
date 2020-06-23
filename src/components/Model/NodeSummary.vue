@@ -67,13 +67,25 @@
           :suffix="nodeToSubmit.unit"
           debounce="300"
         />
-
-        <gchart
-          v-if="chartData.length > 0"
-          type="LineChart"
-          :data="chartData"
-          :options="chartOptions"
-        />
+        <div v-if="chartData.length > 0">
+          <gchart
+            v-if="chartData.length > 0"
+            type="LineChart"
+            :data="chartData"
+            :options="chartOptions"
+          />
+          <div class="row justify-center">
+            <q-btn-toggle
+              v-model="chartOptions.vAxis.scaleType"
+              toggle-color="primary"
+              size="xs"
+              :options="[
+                { label: 'linear', value: 'linear' },
+                { label: 'log', value: 'log' }
+              ]"
+            />
+          </div>
+        </div>
 
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
@@ -120,7 +132,7 @@ export default {
 
       chartData: [],
       chartOptions: {
-        vAxis: { scaleType: "log" },
+        vAxis: { scaleType: "linear" },
         legend: { position: "none" }
       }
     };
