@@ -180,7 +180,7 @@ const actions = {
       .doc(nodeId)
       .set(payload.updates, { merge: true })
       .then(function() {
-        let keys = Object.keys(payload.updates);
+        //let keys = Object.keys(payload.updates);
         Notify.create("Node updated!");
         //if existence of currentValue changed, then run
         //updateClassifiedInfluencersOf on the node's influencees
@@ -382,25 +382,26 @@ const actions = {
     //console.log("updateClassifiedInfluencersOf");
     let modelId = payload.modelId;
     let influenceeIds = payload.influenceeIds;
-    influenceeIds.forEach(function(influenceeId) {
-      //get influencee node
-      let influenceeNode = state.nodes.find(node => node.id == influenceeId);
-      //run classifyInfluencers
-      let classifiedInfluencers = classifyInfluencers({
-        thisNode: influenceeNode,
-        nodes: state.nodes
-      });
+    if (typeof influenceeIds != "undefined")
+      influenceeIds.forEach(function(influenceeId) {
+        //get influencee node
+        let influenceeNode = state.nodes.find(node => node.id == influenceeId);
+        //run classifyInfluencers
+        let classifiedInfluencers = classifyInfluencers({
+          thisNode: influenceeNode,
+          nodes: state.nodes
+        });
 
-      //save results
-      dispatch("updateNode", {
-        modelId: modelId,
-        updates: {
-          id: influenceeId,
-          unusedInfluencers: classifiedInfluencers.unused,
-          blockingInfluencers: classifiedInfluencers.blocking
-        }
+        //save results
+        dispatch("updateNode", {
+          modelId: modelId,
+          updates: {
+            id: influenceeId,
+            unusedInfluencers: classifiedInfluencers.unused,
+            blockingInfluencers: classifiedInfluencers.blocking
+          }
+        });
       });
-    });
     //console.log("end updateClassifiedInfluencersOf");
   }
 };
