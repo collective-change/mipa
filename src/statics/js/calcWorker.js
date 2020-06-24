@@ -281,6 +281,10 @@ function iterateThroughTime(sim, scenario) {
       if (!sim.errorOccurred)
         try {
           //TODO: if timeS == initialTimeS then evaluate current value
+          //TODO: if simulating an action, set a changedFromBaseline
+          //flag for each node. If influencer nodes of the current node
+          //haven't changed for this iteration, then use the baseline's
+          //value instead of evaluating.
           code.evaluate(sim.scope);
 
           //adjust the node value by action's impacts
