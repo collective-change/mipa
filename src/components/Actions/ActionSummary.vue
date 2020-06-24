@@ -335,7 +335,10 @@ export default {
 
     updateChartDataForNode(nodeId) {
       // if baseline.nodes contains the selected node then load baseline for this nde
-      if (this.resultsOfAction.timeSPoints.length) {
+      if (
+        typeof this.resultsOfAction != "undefined" &&
+        this.resultsOfAction.timeSPoints.length
+      ) {
         let timeSPoints = this.resultsOfAction.timeSPoints;
         let baselineValues = this.resultsOfAction.baselineNodesValues[nodeId];
         let actionValues = this.resultsOfAction.nodesValues[nodeId];
@@ -372,8 +375,7 @@ export default {
         }
         //console.log(chart);
       } else {
-        //console.log("nope");
-        chart.chartData = [];
+        this.chartsArr = [];
       }
     },
     updateDefaultChartsArr() {

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="text-h6">Impacts</div>
+    <div class="text-h6">Direct impacts</div>
     <q-list bordered>
       <q-item
         v-for="impact in impacts"
