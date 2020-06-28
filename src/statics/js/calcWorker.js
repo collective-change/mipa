@@ -96,10 +96,10 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
   actions.forEach(function(action) {
     let startTimeMs = new Date();
 
-    let averageEffortCostPerHourNode = modelNodes.find(
+    /*let averageEffortCostPerHourNode = modelNodes.find(
       node => node.id == sim.roleNodes.averageEffortCostPerHour
-    );
-    let effortCostPerHour = averageEffortCostPerHourNode.symbolFormula;
+    );*/
+    /*let effortCostPerHour = averageEffortCostPerHourNode.symbolFormula;*/
     /*let directEffortCost = action.estEffortHrs * effortCostPerHour;*/
     let outstandingDirectEffortHrs =
       action.estEffortHrs * (100 - action.effortCompletionPercentage) * 0.01;

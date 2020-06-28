@@ -147,9 +147,9 @@
               <q-input
                 v-if="effortCostPerHrType == 'use_custom'"
                 v-model.number="customEffortCostPerHr"
-                label="每小時人員成本"
+                label="特殊每小時人員成本"
                 type="number"
-                suffix="XDR/h"
+                :suffix="averageEffortCostPerHourNode.unit"
                 :rules="[
                   val => val == null || val >= 0 || 'Should be at least 0'
                 ]"
@@ -321,6 +321,12 @@ export default {
       return this.actions.find(function(action) {
         return action.id == actionId;
       });
+    },
+
+    averageEffortCostPerHourNode() {
+      return this.nodes.find(
+        node => node.id == this.currentModel.roleNodes.averageEffortCostPerHour
+      );
     },
 
     directCost() {
