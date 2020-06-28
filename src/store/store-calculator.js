@@ -88,7 +88,7 @@ const actions = {
             break;
           case "actions":
             dispatch("actions/updateActionsRoiResults", e.data, { root: true });
-            console.log(e.data);
+            //console.log(e.data);
             if (payload.calculationType == "actions") {
               if (e.data.actionsRoiResults.length == 1)
                 dispatch(

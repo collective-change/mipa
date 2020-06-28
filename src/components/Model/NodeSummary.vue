@@ -315,6 +315,7 @@ export default {
           if (differences.length) {
             this.$store.commit("ui/setUiNodeChanged", true);
             this.$store.commit("ui/addUiNodeChangedFields", differences);
+            console.log({ differences });
           }
         } else {
           this.nodeToSubmitIsFreshlyAssigned = false;

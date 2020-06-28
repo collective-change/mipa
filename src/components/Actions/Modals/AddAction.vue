@@ -26,8 +26,8 @@ export default {
         isProject: false,
         notes: "",
         impacts: [],
-        effortCompletionPercentage: null,
-        effortCostPerHrType: null,
+        effortCompletionPercentage: 0,
+        effortCostPerHrType: "use_average",
         customEffortCostPerHr: null,
         estSpending: null,
         spentAmount: null

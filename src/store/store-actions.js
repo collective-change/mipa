@@ -223,7 +223,7 @@ export default {
 };
 
 function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
-  //console.log(newRoiResults);
+  console.log(newRoiResults);
   //console.log(matchedStoreAction);
   if (typeof matchedStoreAction.roi == "undefined") return true;
   if (Math.abs(newRoiResults.roi / matchedStoreAction.roi) > 1.05) return true;
@@ -252,5 +252,6 @@ function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
     ) > 1.05
   )
     return true;
+
   return false;
 }

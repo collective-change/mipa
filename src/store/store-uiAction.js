@@ -7,6 +7,11 @@ const fieldsToTriggerRecalculation = [
   "spentAmount"
 ];
 
+const fieldsToIgnoreForUiActionChanged = [
+  "totalDirectCost", //a computed field
+  "outstandingDirectCost" //a computed field
+];
+
 const state = {
   uiAction: {},
   uiActionChanged: false
@@ -18,11 +23,12 @@ const mutations = {
     state.uiActionChanged = false;
   },
   updateUiActionField(state, field) {
+    if (typeof state.uiAction.id == "undefined") return;
     let fieldName = field.path.replace("uiAction.", "");
     updateField(state, field);
-    //if (fieldsToTriggerRecalculation.includes(fieldName)) recalculate(state);
-    state.uiActionChanged = true;
-    //console.log("updated", state.uiAction[fieldName]);
+    if (!fieldsToIgnoreForUiActionChanged.includes(fieldName))
+      state.uiActionChanged = true;
+    //console.log("updated ", fieldName, "to", state.uiAction[fieldName]);
   },
   addImpact(state, impact) {
     state.uiAction.impacts.push(impact);

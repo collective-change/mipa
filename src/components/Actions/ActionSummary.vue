@@ -43,6 +43,13 @@
               <q-chip color="primary" text-color="white"
                 >ROI {{ formatNumber(uiAction.roi, 3) }}</q-chip
               >
+              <q-chip outline color="primary">
+                Direct cost
+                {{ formatNumber(uiAction.outstandingDirectCost, 4) }} /
+                {{ formatNumber(uiAction.totalDirectCost, 4) }}
+                XDR
+              </q-chip>
+
               <calculator-ui
                 calculationType="uiAction"
                 buttonLabel="Recalculate"
@@ -294,6 +301,8 @@ export default {
       "uiAction.customEffortCostPerHr",
       "uiAction.estSpending",
       "uiAction.spentAmount",
+      "uiAction.totalDirectCost",
+      "uiAction.outstandingDirectCost",
       "uiAction.dueDate",
       "uiAction.notes"
     ]),
@@ -312,6 +321,37 @@ export default {
       return this.actions.find(function(action) {
         return action.id == actionId;
       });
+    },
+
+    directCost() {
+      if (this.currentModel == null || this.nodes.length == 0) return;
+      let averageEffortCostPerHourNode = this.nodes.find(
+        node => node.id == this.currentModel.roleNodes.averageEffortCostPerHour
+      );
+      let effortCostPerHour = averageEffortCostPerHourNode.symbolFormula;
+      let directEffortCost =
+        (isNaN(this.estEffortHrs) ? 0 : this.estEffortHrs) * effortCostPerHour;
+      let outstandingDirectEffortHrs =
+        (isNaN(this.estEffortHrs) ? 0 : this.estEffortHrs) *
+        (100 -
+          (isNaN(this.effortCompletionPercentage)
+            ? 0
+            : this.effortCompletionPercentage)) *
+        0.01;
+      let outstandingDirectEffortCost =
+        outstandingDirectEffortHrs * effortCostPerHour;
+      let outstandingSpending =
+        (isNaN(this.estSpending) ? 0 : this.estSpending) -
+        (isNaN(this.spentAmount) ? 0 : this.spentAmount);
+      let totalDirectCost =
+        directEffortCost + (isNaN(this.estSpending) ? 0 : this.estSpending);
+      let outstandingDirectCost =
+        outstandingDirectEffortCost + outstandingSpending;
+      let directCost = {
+        total: totalDirectCost,
+        outstanding: outstandingDirectCost
+      };
+      return directCost;
     }
   },
 
@@ -334,9 +374,12 @@ export default {
     },
 
     updateChartDataForNode(nodeId) {
+      //console.log(this.resultsOfAction.timeSPoints);
+
       // if baseline.nodes contains the selected node then load baseline for this nde
       if (
-        typeof this.resultsOfAction != "undefined" &&
+        typeof this.resultsOfAction !== "undefined" &&
+        //this.resultsofAction.timeSPoints &&
         this.resultsOfAction.timeSPoints.length
       ) {
         let timeSPoints = this.resultsOfAction.timeSPoints;
@@ -441,6 +484,11 @@ export default {
       } else {
         this.$store.dispatch("calcResults/clearResultsOfAction");
       }
+    },
+    directCost: function() {
+      if (typeof this.directCost == "undefined") return;
+      this.totalDirectCost = this.directCost.total;
+      this.outstandingDirectCost = this.directCost.outstanding;
     }
   }
 };

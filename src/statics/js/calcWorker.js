@@ -94,15 +94,33 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
 
   //simulate each action
   actions.forEach(function(action) {
-    //for each action, calculate halfLife in seconds
-    //TODO: compose effort and expense impacts
+    let startTimeMs = new Date();
+
+    let averageEffortCostPerHourNode = modelNodes.find(
+      node => node.id == sim.roleNodes.averageEffortCostPerHour
+    );
+    let effortCostPerHour = averageEffortCostPerHourNode.symbolFormula;
+    /*let directEffortCost = action.estEffortHrs * effortCostPerHour;*/
+    let outstandingDirectEffortHrs =
+      action.estEffortHrs * (100 - action.effortCompletionPercentage) * 0.01;
+    /*let outstandingDirectEffortCost =
+      outstandingDirectEffortHrs * effortCostPerHour;*/
+    let outstandingSpending =
+      action.estSpending - (isNaN(action.spentAmount) ? 0 : action.spentAmount);
+
+    /*let directCosts = {
+      directEffortCost,
+      outstandingDirectEffortCost,
+      directSpending: action.estSpending,
+      outstandingSpending
+    };*/
+
     let effortImpact = {
       nodeId: sim.roleNodes.effort,
       durationType: "just_once",
       impactType: "if_done",
       operation: "+",
-      operand:
-        action.estEffortHrs * (100 - action.effortCompletionPercentage) * 0.01
+      operand: outstandingDirectEffortHrs
     };
     action.impacts.push(effortImpact);
     let purchaseImpact = {
@@ -110,9 +128,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       durationType: "just_once",
       impactType: "if_done",
       operation: "+",
-      operand:
-        action.estSpending -
-        (isNaN(action.spentAmount) ? 0 : action.spentAmount)
+      operand: outstandingSpending
     };
     action.impacts.push(purchaseImpact);
     //TODO: gather begin and end times
@@ -126,7 +142,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
     //TODO: if extra timepoints are required then build customTimeSPoints
     //TODO: simulate using either default or customTimeSPoints
     //TODO: also simulate baseline using customTimeSPoints, if any
-    let startTimeMs = new Date();
+
     scenario = { type: "action", action: action, actions: actions };
     resetScope(sim);
     iterateThroughTime(sim, scenario);
@@ -146,9 +162,15 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       sim.roleNodes,
       yearlyDiscountRate
     );
+    //roiCalcResults = { ...directCosts, ...roiCalcResults };
+
+    actionsRoiResults.push({
+      actionId: action.id,
+      ...roiCalcResults
+    });
 
     calcTimeMs = new Date() - startTimeMs;
-    console.log(calcTimeMs, "ms", action.title);
+    //console.log(calcTimeMs, "ms", action.title);
 
     actionResults = {
       id: action.id,
@@ -160,7 +182,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       baselineNodesValues: baselineTimeSeriesNodesValues,
       roiCalcResults
     };
-    actionsRoiResults.push({ actionId: action.id, ...roiCalcResults });
+
     putActionResultsInIdb(actionResults, action.id);
 
     if (sim.errorOccurred) return;
