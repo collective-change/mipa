@@ -87,13 +87,13 @@ export default {
           field: row => row.title,
           sortable: true
         },
-        {
+        /*{
           name: "isProject",
           align: "center",
           label: "專案",
           field: "isProject",
           sortable: true
-        },
+        },*/
         {
           name: "value",
           align: "right",
@@ -108,6 +108,22 @@ export default {
           label: "總成本 (XDR)",
           field: "marginalCostNpv",
           format: val => `${formatNumber(val, 3)}`,
+          sortable: true
+        },
+        {
+          name: "direct cost",
+          align: "right",
+          label: "直接成本 (XDR)",
+          field: "totalDirectCost",
+          format: val => `${formatNumber(val, 3)}`,
+          sortable: true
+        },
+        {
+          name: "effortCompletionRate",
+          align: "right",
+          label: "完成度",
+          field: "effortCompletionPercentage",
+          format: val => `${formatNumber(val, 3)}%`,
           sortable: true
         },
         {
