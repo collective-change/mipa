@@ -82,9 +82,6 @@ function coordinateScenarioSimulations(data) {
 }
 
 function calculateResultsOfActions(sim, actions, defaultBaseline) {
-  let baselineTimeSeriesNodesValues,
-    deviationTimeSeriesNodesValues,
-    roiCalcResults;
   let yearlyDiscountRate = 0.05;
 
   let actionResults = {}; // for one action
@@ -102,11 +99,17 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
     /*let effortCostPerHour = averageEffortCostPerHourNode.symbolFormula;*/
     /*let directEffortCost = action.estEffortHrs * effortCostPerHour;*/
     let outstandingDirectEffortHrs =
-      action.estEffortHrs * (100 - action.effortCompletionPercentage) * 0.01;
+      (isNaN(action.estEffortHrs) ? 0 : action.estEffortHrs) *
+      (100 -
+        (isNaN(action.effortCompletionPercentage)
+          ? 0
+          : action.effortCompletionPercentage)) *
+      0.01;
     /*let outstandingDirectEffortCost =
       outstandingDirectEffortHrs * effortCostPerHour;*/
     let outstandingSpending =
-      action.estSpending - (isNaN(action.spentAmount) ? 0 : action.spentAmount);
+      (isNaN(action.estSpending) ? 0 : action.estSpending) -
+      (isNaN(action.spentAmount) ? 0 : action.spentAmount);
 
     /*let directCosts = {
       directEffortCost,
@@ -142,27 +145,51 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
     //TODO: if extra timepoints are required then build customTimeSPoints
     //TODO: simulate using either default or customTimeSPoints
     //TODO: also simulate baseline using customTimeSPoints, if any
+    //TODO: split action into if_done and if_not_done impacts and iterate for each
+    let hasIfNotDoneImpacts = false;
+    action.impacts.forEach(function(impact) {
+      if (impact.impactType == "if_not_done") hasIfNotDoneImpacts = true;
+    });
 
-    scenario = { type: "action", action: action, actions: actions };
+    scenario = {
+      type: "action",
+      impactType: "if_done",
+      action: action,
+      actions: actions
+    };
     resetScope(sim);
     iterateThroughTime(sim, scenario);
     if (sim.errorOccurred) return;
-
     //TODO: only extract and save all node values if requested by
     //user for this device
-    deviationTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
+    let ifDoneTimeSeriesNodesValues, ifNotDoneTimeSeriesNodesValues;
+    ifDoneTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
 
-    //TODO: feed in either default or custom baseline
-    baselineTimeSeriesNodesValues = defaultBaseline.nodesValues;
+    if (hasIfNotDoneImpacts) {
+      scenario = {
+        type: "action",
+        impactType: "if_not_done",
+        action: action,
+        actions: actions
+      };
+      resetScope(sim);
+      iterateThroughTime(sim, scenario);
+      if (sim.errorOccurred) return;
+      //TODO: only extract and save all node values if requested by
+      //user for this device
+      ifNotDoneTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
+    } else {
+      ifNotDoneTimeSeriesNodesValues = defaultBaseline.nodesValues;
+    }
+
     timeSPoints = defaultBaseline.timeSPoints;
-    roiCalcResults = prepRoiResults(
-      deviationTimeSeriesNodesValues,
-      baselineTimeSeriesNodesValues,
+    let roiCalcResults = prepRoiResults(
+      ifDoneTimeSeriesNodesValues,
+      ifNotDoneTimeSeriesNodesValues,
       timeSPoints,
       sim.roleNodes,
       yearlyDiscountRate
     );
-    //roiCalcResults = { ...directCosts, ...roiCalcResults };
 
     actionsRoiResults.push({
       actionId: action.id,
@@ -178,8 +205,8 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       startTimeS: sim.scope.initialTimeS,
       calcTimeMs: calcTimeMs,
       timeSPoints: sim.scope.timeSeries.timeSPoints,
-      nodesValues: deviationTimeSeriesNodesValues,
-      baselineNodesValues: baselineTimeSeriesNodesValues,
+      ifDoneNodesValues: ifDoneTimeSeriesNodesValues,
+      ifNotDoneNodesValues: ifNotDoneTimeSeriesNodesValues,
       roiCalcResults
     };
 
@@ -209,43 +236,41 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
 }
 
 function prepRoiResults(
-  deviationTimeSeriesNodesValues,
-  baselineTimeSeriesNodesValues,
+  ifDoneTimeSeriesNodesValues,
+  ifNotDoneTimeSeriesNodesValues,
   timeSPoints,
   roleNodes,
   yearlyDiscountRate
 ) {
   //prepare inputs for calculating NPVs
-  let deviationTotalBenefitSeries =
-    deviationTimeSeriesNodesValues[roleNodes.totalBenefit];
-  let baselineTotalBenefitSeries =
-    baselineTimeSeriesNodesValues[roleNodes.totalBenefit];
-  let deviationTotalCostSeries =
-    deviationTimeSeriesNodesValues[roleNodes.totalCost];
-  let baselineTotalCostSeries =
-    baselineTimeSeriesNodesValues[roleNodes.totalCost];
+  let ifDoneTotalBenefitSeries =
+    ifDoneTimeSeriesNodesValues[roleNodes.totalBenefit];
+  let ifNotDoneTotalBenefitSeries =
+    ifNotDoneTimeSeriesNodesValues[roleNodes.totalBenefit];
+  let ifDoneTotalCostSeries = ifDoneTimeSeriesNodesValues[roleNodes.totalCost];
+  let ifNotDoneTotalCostSeries =
+    ifNotDoneTimeSeriesNodesValues[roleNodes.totalCost];
 
   //calculate NPVs
   let marginalBenefitNpv = getMarginalNpv(
-    deviationTotalBenefitSeries,
-    baselineTotalBenefitSeries,
+    ifDoneTotalBenefitSeries,
+    ifNotDoneTotalBenefitSeries,
     timeSPoints,
     yearlyDiscountRate
   );
+
   let marginalCostNpv = getMarginalNpv(
-    deviationTotalCostSeries,
-    baselineTotalCostSeries,
+    ifDoneTotalCostSeries,
+    ifNotDoneTotalCostSeries,
     timeSPoints,
     yearlyDiscountRate
   );
-  //let marginalBenefitNpv = marginalBenefitNpv - marginalCostNpv;
 
   //calculate ROI and prepare results
   let roi = marginalBenefitNpv / marginalCostNpv;
   let roiResults = {
     marginalBenefitNpv: marginalBenefitNpv,
     marginalCostNpv: marginalCostNpv,
-    //marginalBenefitNpv: marginalBenefitNpv,
     roi: roi
   };
   //console.log({ roiResults });
@@ -314,7 +339,8 @@ function iterateThroughTime(sim, scenario) {
           if (scenario.type == "action") {
             scenario.action.impacts.forEach(function(impact) {
               if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
-                doImpactIfItAffectsCurrentTime(sim, timeS, nodeIndex, impact);
+                if (impact.impactType == scenario.impactType)
+                  doImpactIfItAffectsCurrentTime(sim, timeS, nodeIndex, impact);
               }
             });
           }

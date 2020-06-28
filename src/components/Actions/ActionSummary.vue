@@ -389,8 +389,8 @@ export default {
         this.resultsOfAction.timeSPoints.length
       ) {
         let timeSPoints = this.resultsOfAction.timeSPoints;
-        let baselineValues = this.resultsOfAction.baselineNodesValues[nodeId];
-        let actionValues = this.resultsOfAction.nodesValues[nodeId];
+        let ifNotDoneValues = this.resultsOfAction.ifNotDoneNodesValues[nodeId];
+        let ifDoneValues = this.resultsOfAction.ifDoneNodesValues[nodeId];
         //if nodeId does not exist in chartsDataArr then create it
         let chart = this.chartsArr.find(chart => chart.nodeId == nodeId);
         if (typeof chart == "undefined") {
@@ -406,19 +406,19 @@ export default {
           });
           this.chartsArr.push(chart);
         } else chart.chartData = [];
-        if (actionValues.length > 0) {
+        if (ifDoneValues.length > 0) {
           chart.chartData.push([
             "time",
-            //"baseline",
-            //"with action",
-            "difference"
+            "if not done",
+            "if done"
+            //"difference"
           ]);
           for (var i = 0; i < timeSPoints.length; i++) {
             chart.chartData.push([
               new Date(timeSPoints[i] * 1000),
-              //baselineValues[i],
-              //actionValues[i],
-              actionValues[i] - baselineValues[i]
+              ifNotDoneValues[i],
+              ifDoneValues[i]
+              //ifDoneValues[i] - ifNotDoneValues[i]
             ]);
           }
         }

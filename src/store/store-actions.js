@@ -226,30 +226,58 @@ function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
   //console.log(newRoiResults);
   //console.log(matchedStoreAction);
   if (typeof matchedStoreAction.roi == "undefined") return true;
-  if (Math.abs(newRoiResults.roi / matchedStoreAction.roi) > 1.05) return true;
-  if (Math.abs(matchedStoreAction.roi / newRoiResults.roi) > 1.05) return true;
+
+  if (isNaN(matchedStoreAction.roi) && !isNaN(newRoiResults.roi)) return true;
+  if (!isNaN(matchedStoreAction.roi) && isNaN(newRoiResults.roi)) return true;
+
+  if (
+    isNaN(matchedStoreAction.marginalBenefitNpv) &&
+    !isNaN(newRoiResults.marginalBenefitNpv)
+  )
+    return true;
+  if (
+    !isNaN(matchedStoreAction.marginalBenefitNpv) &&
+    isNaN(newRoiResults.marginalBenefitNpv)
+  )
+    return true;
+
+  if (
+    isNaN(matchedStoreAction.marginalCostNpv) &&
+    !isNaN(newRoiResults.marginalCostNpv)
+  )
+    return true;
+  if (
+    !isNaN(matchedStoreAction.marginalCostNpv) &&
+    isNaN(newRoiResults.marginalCostNpv)
+  )
+    return true;
+
+  if (Math.abs(newRoiResults.roi / matchedStoreAction.roi) > 1.001) return true;
+  if (Math.abs(matchedStoreAction.roi / newRoiResults.roi) > 1.001) return true;
+
   if (
     Math.abs(
       newRoiResults.marginalBenefitNpv / matchedStoreAction.marginalBenefitNpv
-    ) > 1.05
+    ) > 1.001
   )
     return true;
   if (
     Math.abs(
       matchedStoreAction.marginalBenefitNpv / newRoiResults.marginalBenefitNpv
-    ) > 1.05
+    ) > 1.001
   )
     return true;
+
   if (
     Math.abs(
       newRoiResults.marginalCostNpv / matchedStoreAction.marginalCostNpv
-    ) > 1.05
+    ) > 1.001
   )
     return true;
   if (
     Math.abs(
       matchedStoreAction.marginalCostNpv / newRoiResults.marginalCostNpv
-    ) > 1.05
+    ) > 1.001
   )
     return true;
 
