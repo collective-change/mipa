@@ -205,6 +205,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       startTimeS: sim.scope.initialTimeS,
       calcTimeMs: calcTimeMs,
       timeSPoints: sim.scope.timeSeries.timeSPoints,
+      baselineNodesValues: defaultBaseline.nodesValues,
       ifDoneNodesValues: ifDoneTimeSeriesNodesValues,
       ifNotDoneNodesValues: ifNotDoneTimeSeriesNodesValues,
       roiCalcResults

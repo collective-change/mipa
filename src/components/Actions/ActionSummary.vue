@@ -404,6 +404,7 @@ export default {
         this.resultsOfAction.timeSPoints.length
       ) {
         let timeSPoints = this.resultsOfAction.timeSPoints;
+        let baselineValues = this.resultsOfAction.baselineNodesValues[nodeId];
         let ifNotDoneValues = this.resultsOfAction.ifNotDoneNodesValues[nodeId];
         let ifDoneValues = this.resultsOfAction.ifDoneNodesValues[nodeId];
         //if nodeId does not exist in chartsDataArr then create it
@@ -415,7 +416,8 @@ export default {
             chartOptions: {
               title: this.getNodeName(nodeId),
               vAxis: { title: this.getNodeUnit(nodeId), scaleType: "linear" },
-              legend: { position: "bottom" }
+              legend: { position: "bottom" },
+              series: { 0: { lineWidth: 5 } }
               //explorer: {}
             }
           });
@@ -424,15 +426,19 @@ export default {
         if (ifDoneValues.length > 0) {
           chart.chartData.push([
             "time",
-            "if not done",
-            "if done"
+            "baseline",
+            "if done",
+            "if not done"
+
             //"difference"
           ]);
           for (var i = 0; i < timeSPoints.length; i++) {
             chart.chartData.push([
               new Date(timeSPoints[i] * 1000),
-              ifNotDoneValues[i],
-              ifDoneValues[i]
+              baselineValues[i],
+              ifDoneValues[i],
+              ifNotDoneValues[i]
+
               //ifDoneValues[i] - ifNotDoneValues[i]
             ]);
           }
