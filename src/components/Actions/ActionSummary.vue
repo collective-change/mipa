@@ -12,6 +12,11 @@
               :rules="[val => !!val || 'Field is required']"
               ref="actionTitle"
             >
+              <template v-slot:prepend>
+                <q-chip square color="primary" text-color="white">
+                  {{ uiAction.actionMchState.value }}
+                </q-chip>
+              </template>
               <template v-slot:after v-if="embedded">
                 <q-btn
                   dense
@@ -62,21 +67,20 @@
             v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }"
           >
             <div class="q-pa-sm q-gutter-sm">
-              <q-btn color="primary" label="Meet about this" />
-              <q-btn color="primary" label="Mark as resolved" />
               <q-btn
-                v-if="uiAction.actionMchState"
-                @click="actionService.send('TOGGLE')"
-              >
-                {{
-                  uiAction.actionMchState.matches("eligible")
-                    ? "eligible"
-                    : "done"
-                }}
-              </q-btn>
-              <pre v-if="uiAction.actionMchState">{{
-                uiAction.actionMchState.value
-              }}</pre>
+                v-if="['eligible'].includes(uiAction.actionMchState.value)"
+                label="Mark as done"
+                @click="actionService.send('FINISH')"
+                color="primary"
+              />
+              <q-btn
+                v-if="['done'].includes(uiAction.actionMchState.value)"
+                label="Revert"
+                @click="actionService.send('REVERT_FINISH')"
+                color="primary"
+              />
+
+              <q-btn color="primary" label="Meet about this" />
             </div>
           </div>
         </div>

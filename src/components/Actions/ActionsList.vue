@@ -80,19 +80,19 @@ export default {
           sortBy: "desc"
         },
         {
-          name: "title",
-          required: true,
-          label: "標題",
-          align: "left",
-          field: row => row.title,
-          sortable: true
-        },
-        {
           name: "state",
           align: "center",
           label: "狀態",
           field: "actionMchState",
           format: val => `${val.value}`,
+          sortable: true
+        },
+        {
+          name: "title",
+          required: true,
+          label: "標題",
+          align: "left",
+          field: row => row.title,
           sortable: true
         },
         /*{
@@ -133,14 +133,14 @@ export default {
           field: "effortCompletionPercentage",
           format: val => `${formatNumber(val, 3)}%`,
           sortable: true
-        },
-        {
+        }
+        /*{
           name: "dueDate",
           align: "center",
           label: "截止日期",
           field: "dueDate",
           sortable: true
-        }
+        }*/
       ]
     };
   },
