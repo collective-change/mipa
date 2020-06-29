@@ -220,9 +220,9 @@
                 :options="chart.chartOptions"
               />
               <div class="row justify-center">
-                <q-btn-toggle
+                <q-btn-action
                   v-model="chart.chartOptions.vAxis.scaleType"
-                  toggle-color="primary"
+                  action-color="primary"
                   size="xs"
                   :options="[
                     { label: 'linear', value: 'linear' },
@@ -236,6 +236,9 @@
             v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
           >
             right column
+            <q-btn @click="send('TOGGLE')">
+              {{ current.matches("inactive") ? "Off" : "On" }}
+            </q-btn>
           </div>
         </div>
       </q-form>
@@ -247,6 +250,8 @@
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { mapActions, mapGetters, mapState } from "vuex";
 import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
+import { interpret } from "xstate";
+import { actionMachine } from "src/state-machines/actionMachine";
 import { formatNumber } from "src/utils/util-formatNumber";
 import { GChart } from "vue-google-charts";
 
@@ -278,7 +283,15 @@ export default {
           label: "use custom effort cost per hour",
           value: "use_custom"
         }
-      ]
+      ],
+      // Interpret the machine and store it in data
+      actionService: interpret(actionMachine),
+
+      // Start with the machine's initial state
+      current: actionMachine.initialState,
+
+      // Start with the machine's initial context
+      context: actionMachine.context
     };
   },
 
@@ -457,6 +470,10 @@ export default {
       const found = this.nodes.find(node => node.id == nodeId);
       if (found) return found.unit;
       else return "";
+    },
+    // Send events to the service
+    send(event) {
+      this.actionService.send(event);
     }
   },
 
@@ -473,6 +490,15 @@ export default {
       this.$store.dispatch("model/bindCurrentModel", modelId);
       this.$store.dispatch("model/bindNodes", modelId);
     })();
+    // Start service on component creation
+    this.actionService
+      .onTransition(state => {
+        // Update the current state component data property with the next state
+        this.current = state;
+        // Update the context component data property with the updated context
+        this.context = state.context;
+      })
+      .start();
   },
   watch: {
     nodes: function() {
@@ -496,6 +522,14 @@ export default {
       this.totalDirectCost = this.directCost.total;
       this.outstandingDirectCost = this.directCost.outstanding;
     }
+  },
+
+  setup() {
+    const { state, send } = useMachine(actionMachine);
+    return {
+      state,
+      send
+    };
   }
 };
 </script>
