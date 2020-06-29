@@ -64,6 +64,19 @@
             <div class="q-pa-sm q-gutter-sm">
               <q-btn color="primary" label="Meet about this" />
               <q-btn color="primary" label="Mark as resolved" />
+              <q-btn
+                v-if="uiAction.actionMchState"
+                @click="actionService.send('TOGGLE')"
+              >
+                {{
+                  uiAction.actionMchState.matches("eligible")
+                    ? "eligible"
+                    : "done"
+                }}
+              </q-btn>
+              <pre v-if="uiAction.actionMchState">{{
+                uiAction.actionMchState.value
+              }}</pre>
             </div>
           </div>
         </div>
@@ -196,16 +209,6 @@
                 debounce="500"
               />
             </div>
-            <!--<div class="q-gutter-md q-mt-md items-start">
-              <q-input
-                v-model="dueDate"
-                filled
-                type="date"
-                label="截止日期"
-                style="max-width: 160px;"
-                debounce="500"
-              />
-            </div>-->
 
             <modal-save-button />
           </div>
@@ -220,7 +223,7 @@
                 :options="chart.chartOptions"
               />
               <div class="row justify-center">
-                <q-btn-action
+                <q-btn-toggle
                   v-model="chart.chartOptions.vAxis.scaleType"
                   action-color="primary"
                   size="xs"
@@ -236,19 +239,6 @@
             v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
           >
             right column
-            <q-btn
-              v-if="uiAction.actionMchState"
-              @click="actionService.send('TOGGLE')"
-            >
-              {{
-                uiAction.actionMchState.matches("eligible")
-                  ? "eligible"
-                  : "done"
-              }}
-            </q-btn>
-            <pre v-if="uiAction.actionMchState">{{
-              uiAction.actionMchState.value
-            }}</pre>
           </div>
         </div>
       </q-form>
