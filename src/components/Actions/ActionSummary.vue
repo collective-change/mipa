@@ -236,9 +236,19 @@
             v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
           >
             right column
-            <q-btn @click="send('TOGGLE')">
-              {{ current.matches("inactive") ? "Off" : "On" }}
+            <q-btn
+              v-if="uiAction.actionMchState"
+              @click="actionService.send('TOGGLE')"
+            >
+              {{
+                uiAction.actionMchState.matches("eligible")
+                  ? "eligible"
+                  : "done"
+              }}
             </q-btn>
+            <pre v-if="uiAction.actionMchState">{{
+              uiAction.actionMchState.value
+            }}</pre>
           </div>
         </div>
       </q-form>
@@ -251,7 +261,7 @@ import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { mapActions, mapGetters, mapState } from "vuex";
 import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
 import { interpret } from "xstate";
-import { actionMachine } from "src/state-machines/actionMachine";
+import { actionMachine } from "src/state-machines/machine-action";
 import { formatNumber } from "src/utils/util-formatNumber";
 import { GChart } from "vue-google-charts";
 
@@ -284,14 +294,10 @@ export default {
           value: "use_custom"
         }
       ],
-      // Interpret the machine and store it in data
+
       actionService: interpret(actionMachine),
 
-      // Start with the machine's initial state
-      current: actionMachine.initialState,
-
-      // Start with the machine's initial context
-      context: actionMachine.context
+      actionStateContext: null
     };
   },
 
@@ -308,6 +314,7 @@ export default {
     //fields for 2-way sync between component and store
     ...mapFields([
       "uiAction.title",
+      "uiAction.actionMchState",
       "uiAction.estEffortHrs",
       "uiAction.effortCompletionPercentage",
       "uiAction.effortCostPerHrType",
@@ -331,6 +338,7 @@ export default {
         this.embedded = true;
       }
       let actionId = this.actionId;
+      //TODO: if embedded, get and return action from firestore
       return this.actions.find(function(action) {
         return action.id == actionId;
       });
@@ -470,10 +478,6 @@ export default {
       const found = this.nodes.find(node => node.id == nodeId);
       if (found) return found.unit;
       else return "";
-    },
-    // Send events to the service
-    send(event) {
-      this.actionService.send(event);
     }
   },
 
@@ -491,14 +495,15 @@ export default {
       this.$store.dispatch("model/bindNodes", modelId);
     })();
     // Start service on component creation
-    this.actionService
+    /*this.actionService
       .onTransition(state => {
         // Update the current state component data property with the next state
-        this.current = state;
+        this.actionMchState = state;
+
         // Update the context component data property with the updated context
-        this.context = state.context;
+        this.actionStateContext = state.context;
       })
-      .start();
+      .start();*/
   },
   watch: {
     nodes: function() {
@@ -516,20 +521,43 @@ export default {
       } else {
         this.$store.dispatch("calcResults/clearResultsOfAction");
       }
+
+      // Interpret the machine and store it in data
+      //this.actionService = interpret(actionMachine);
+
+      // Start with saved state or the machine's initial state
+      if (!this.uiAction.actionMchState) {
+        //this.actionMchState = actionMachine.initialState;
+        //console.log(actionMachine.initialState);
+        this.$store.commit(
+          "uiAction/setActionMchState",
+          actionMachine.initialState
+        );
+        console.log(this.uiAction.actionMchState);
+      }
+
+      // Start with the machine's initial context
+      this.actionStateContext = actionMachine.context;
+
+      //start actionService
+      this.actionService
+        .onTransition(state => {
+          // Update the current state component data property with the next state
+          this.actionMchState = state;
+          this.$store.commit("uiAction/setActionMchState", state);
+          //console.log("committed");
+
+          // Update the context component data property with the updated context
+          this.actionStateContext = state.context;
+        })
+        .start();
     },
+
     directCost: function() {
       if (typeof this.directCost == "undefined") return;
       this.totalDirectCost = this.directCost.total;
       this.outstandingDirectCost = this.directCost.outstanding;
     }
-  },
-
-  setup() {
-    const { state, send } = useMachine(actionMachine);
-    return {
-      state,
-      send
-    };
   }
 };
 </script>

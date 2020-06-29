@@ -6,13 +6,13 @@ export const actionMachine = Machine({
   context: {
     /* some data */
   },
-  initial: "inactive",
+  initial: "eligible",
   states: {
-    inactive: {
-      on: { TOGGLE: "active" }
+    eligible: {
+      on: { FINISH: "done", TOGGLE: "done" }
     },
-    active: {
-      on: { TOGGLE: "inactive" }
+    done: {
+      on: { REVERT_FINISH: "eligible", TOGGLE: "eligible" }
     }
   }
 });

@@ -25,6 +25,7 @@ export default {
         title: "",
         isProject: false,
         notes: "",
+        actionMchState: {},
         impacts: [],
         effortCompletionPercentage: 0,
         effortCostPerHrType: "use_average",
