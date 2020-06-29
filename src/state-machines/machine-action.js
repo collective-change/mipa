@@ -9,10 +9,10 @@ export const actionMachine = Machine({
   initial: "eligible",
   states: {
     eligible: {
-      on: { FINISH: "done", TOGGLE: "done" }
+      on: { FINISH: "done" }
     },
     done: {
-      on: { REVERT_FINISH: "eligible", TOGGLE: "eligible" }
+      on: { REVERT_FINISH: "eligible" }
     }
   }
 });

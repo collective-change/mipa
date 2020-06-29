@@ -429,7 +429,6 @@ export default {
             "baseline",
             "if done",
             "if not done"
-
             //"difference"
           ]);
           for (var i = 0; i < timeSPoints.length; i++) {
@@ -438,12 +437,10 @@ export default {
               baselineValues[i],
               ifDoneValues[i],
               ifNotDoneValues[i]
-
               //ifDoneValues[i] - ifNotDoneValues[i]
             ]);
           }
         }
-        //console.log(chart);
       } else {
         this.chartsArr = [];
       }
@@ -456,10 +453,6 @@ export default {
       this.uiAction.impacts.forEach(function(impact) {
         defaultNodesToChart.push(impact.nodeId);
       });
-
-      //get effort and purchase nodes
-      //defaultNodesToChart.push(this.currentModel.roleNodes.effort);
-      //defaultNodesToChart.push(this.currentModel.roleNodes.spending);
 
       //get totalBenefit and totalCost nodes
       defaultNodesToChart.push(this.currentModel.roleNodes.totalBenefit);
@@ -494,16 +487,6 @@ export default {
       this.$store.dispatch("model/bindCurrentModel", modelId);
       this.$store.dispatch("model/bindNodes", modelId);
     })();
-    // Start service on component creation
-    /*this.actionService
-      .onTransition(state => {
-        // Update the current state component data property with the next state
-        this.actionMchState = state;
-
-        // Update the context component data property with the updated context
-        this.actionStateContext = state.context;
-      })
-      .start();*/
   },
   watch: {
     nodes: function() {
@@ -522,13 +505,8 @@ export default {
         this.$store.dispatch("calcResults/clearResultsOfAction");
       }
 
-      // Interpret the machine and store it in data
-      //this.actionService = interpret(actionMachine);
-
       // Start with saved state or the machine's initial state
       if (!this.uiAction.actionMchState) {
-        //this.actionMchState = actionMachine.initialState;
-        //console.log(actionMachine.initialState);
         this.$store.commit(
           "uiAction/setActionMchState",
           actionMachine.initialState
@@ -545,7 +523,6 @@ export default {
           // Update the current state component data property with the next state
           this.actionMchState = state;
           this.$store.commit("uiAction/setActionMchState", state);
-          //console.log("committed");
 
           // Update the context component data property with the updated context
           this.actionStateContext = state.context;
