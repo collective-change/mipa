@@ -87,6 +87,14 @@ export default {
           field: row => row.title,
           sortable: true
         },
+        {
+          name: "state",
+          align: "center",
+          label: "狀態",
+          field: "actionMchState",
+          format: val => `${val.value}`,
+          sortable: true
+        },
         /*{
           name: "isProject",
           align: "center",
