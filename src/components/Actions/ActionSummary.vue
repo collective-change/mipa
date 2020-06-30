@@ -67,6 +67,7 @@
             v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }"
           >
             <div class="q-pa-sm q-gutter-sm">
+              {{ uiAction.actionMchState.value }}
               <q-btn
                 v-if="['eligible'].includes(uiAction.actionMchState.value)"
                 label="Mark as done"
@@ -332,10 +333,15 @@ export default {
         this.embedded = true;
       }
       let actionId = this.actionId;
-      //TODO: if embedded, get and return action from firestore
-      return this.actions.find(function(action) {
-        return action.id == actionId;
-      });
+
+      if (actionId) {
+        //TODO: if embedded, get and return action from firestore
+        return this.actions.find(function(action) {
+          return action.id == actionId;
+        });
+      } else {
+        return null;
+      }
     },
 
     averageEffortCostPerHourNode() {
@@ -496,23 +502,7 @@ export default {
       if (this.embedded == false) this.updateDefaultChartsArr();
     },
     selectedAction: function(newAction, oldAction) {
-      let action = {};
-      Object.assign(action, this.selectedAction);
-      this.$store.dispatch("uiAction/setUiAction", action);
-      if (this.embedded == false) {
-        this.$store.dispatch("calcResults/loadResultsOfAction", action.id);
-      } else {
-        this.$store.dispatch("calcResults/clearResultsOfAction");
-      }
-
-      // Start with saved state or the machine's initial state
-      if (!this.uiAction.actionMchState) {
-        this.$store.commit(
-          "uiAction/setActionMchState",
-          actionMachine.initialState
-        );
-        console.log(this.uiAction.actionMchState);
-      }
+      if (newAction && oldAction && newAction.id == oldAction.id) return;
 
       // Start with the machine's initial context
       this.actionStateContext = actionMachine.context;
@@ -523,11 +513,33 @@ export default {
           // Update the current state component data property with the next state
           this.actionMchState = state;
           this.$store.commit("uiAction/setActionMchState", state);
+          //console.log("set state: ", this.uiAction.actionMchState);
 
           // Update the context component data property with the updated context
           this.actionStateContext = state.context;
         })
         .start();
+
+      let action = {};
+      Object.assign(action, this.selectedAction);
+      this.$store.dispatch("uiAction/setUiAction", action);
+      if (this.embedded == false) {
+        this.$store.dispatch("calcResults/loadResultsOfAction", action.id);
+      } else {
+        this.$store.dispatch("calcResults/clearResultsOfAction");
+      }
+
+      // Start with saved state or the machine's initial state
+      //console.log(this.uiAction.actionMchState);
+      if (!this.uiAction.actionMchState.hasOwnProperty("value")) {
+        this.$store.commit(
+          "uiAction/setActionMchState",
+          actionMachine.initialState
+        );
+        //console.log("set to initial state: ", this.uiAction.actionMchState);
+      } else {
+        //console.log("existing state: ", this.uiAction.actionMchState);
+      }
     },
 
     directCost: function() {
