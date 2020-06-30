@@ -167,7 +167,11 @@
                 v-model.number="customEffortCostPerHr"
                 label="特殊每小時人員成本"
                 type="number"
-                :suffix="averageEffortCostPerHourNode.unit"
+                :suffix="
+                  averageEffortCostPerHourNode
+                    ? averageEffortCostPerHourNode.unit
+                    : ''
+                "
                 :rules="[
                   val => val == null || val >= 0 || 'Should be at least 0'
                 ]"
@@ -405,8 +409,8 @@ export default {
 
       // if baseline.nodes contains the selected node then load baseline for this nde
       if (
-        typeof this.resultsOfAction !== "undefined" &&
-        //this.resultsofAction.timeSPoints &&
+        this.resultsOfAction !== undefined &&
+        this.resultsOfAction.timeSPoints !== undefined &&
         this.resultsOfAction.timeSPoints.length
       ) {
         let timeSPoints = this.resultsOfAction.timeSPoints;
