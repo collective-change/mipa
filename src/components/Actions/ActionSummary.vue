@@ -67,7 +67,6 @@
             v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }"
           >
             <div class="q-pa-sm q-gutter-sm">
-              {{ uiAction.actionMchState.value }}
               <q-btn
                 v-if="['eligible'].includes(uiAction.actionMchState.value)"
                 label="Mark as done"
