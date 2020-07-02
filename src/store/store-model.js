@@ -403,6 +403,29 @@ const actions = {
         });
       });
     //console.log("end updateClassifiedInfluencersOf");
+  },
+
+  createNodeGroup({}, nodeId) {
+    let nodeGroupElement = {
+      type: "nodeGroup",
+      id: uid(),
+      label: "untitled node group",
+      children: [{ type: "node", nodeId: nodeId }]
+    };
+    //TODO: create nodeGroupElement under nested node groups
+    //use bredcrumb
+    console.log(nodeId);
+    var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
+    modelRef
+      .update({
+        nodeGroups: firebase.firestore.FieldValue.arrayUnion(nodeGroupElement)
+      })
+      .then(function() {
+        Notify.create("Node group created!");
+      })
+      .catch(function(error) {
+        showErrorMessage("Error creating node group", error.message);
+      });
   }
 };
 

@@ -30,6 +30,7 @@
         <div class="row">
           <q-tree :nodes="exampleTree" node-key="label" />
         </div>
+        <pre>{{ currentModel.nodeGroups }}</pre>
       </div>
 
       <div class="col-12 col-md-7">

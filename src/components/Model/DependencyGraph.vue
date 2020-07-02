@@ -216,7 +216,7 @@ export default {
   },
 
   methods: {
-    ...mapActions("model", ["addLink", "deleteLink"]),
+    ...mapActions("model", ["addLink", "deleteLink", "createNodeGroup"]),
     ...mapActions("ui", ["setSelectedNodeId"]),
 
     tick() {
@@ -337,6 +337,14 @@ export default {
           }
         }
       );
+
+      nodeContextMenu.items({
+        label: "Start node group",
+        handler: function() {
+          console.log(that.selectedNodeId);
+          that.createNodeGroup(that.selectedNodeId);
+        }
+      });
 
       var linkContextMenu = this.contextMenu().items({
         label: "Delete link",
