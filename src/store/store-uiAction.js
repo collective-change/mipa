@@ -10,7 +10,8 @@ const fieldsToTriggerRecalculation = [
 const fieldsToIgnoreForUiActionChanged = [
   "actionMchState",
   "totalDirectCost", //a computed field
-  "outstandingDirectCost" //a computed field
+  "outstandingDirectCost", //a computed field
+  "sunkenDirectCost" //a computed field
 ];
 
 const state = {
@@ -30,7 +31,7 @@ const mutations = {
     //console.log("updated ", fieldName, "to", state.uiAction[fieldName]);
     if (!fieldsToIgnoreForUiActionChanged.includes(fieldName)) {
       state.uiActionChanged = true;
-      //console.log("uiActionChanged = true");
+      console.log("uiActionChanged due to ", fieldName);
     }
   },
   setActionMchState(state, actionMchState) {
