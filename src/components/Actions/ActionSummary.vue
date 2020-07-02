@@ -50,7 +50,7 @@
               >
               <q-chip outline color="primary">
                 Direct cost
-                {{ formatNumber(uiAction.outstandingDirectCost, 4) }} /
+                {{ formatNumber(uiAction.sunkenDirectCost, 4) }} /
                 {{ formatNumber(uiAction.totalDirectCost, 4) }}
                 XDR
               </q-chip>
@@ -349,6 +349,7 @@ export default {
       "uiAction.spentAmount",
       "uiAction.totalDirectCost",
       "uiAction.outstandingDirectCost",
+      "uiAction.sunkenDirectCost",
       "uiAction.dueDate",
       "uiAction.notes"
     ]),
@@ -407,7 +408,8 @@ export default {
         outstandingDirectEffortCost + outstandingSpending;
       let directCost = {
         total: totalDirectCost,
-        outstanding: outstandingDirectCost
+        outstanding: outstandingDirectCost,
+        sunken: totalDirectCost - outstandingDirectCost
       };
       return directCost;
     }
@@ -577,6 +579,7 @@ export default {
       if (typeof this.directCost == "undefined") return;
       this.totalDirectCost = this.directCost.total;
       this.outstandingDirectCost = this.directCost.outstanding;
+      this.sunkenDirectCost = this.directCost.sunken;
     }
   }
 };
