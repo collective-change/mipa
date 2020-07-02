@@ -231,7 +231,23 @@
                 :data="chart.chartData"
                 :options="chart.chartOptions"
               />
-              <div class="row justify-center">
+              <div class="row justify-center q-gutter-x-md">
+                <q-btn-toggle
+                  v-model="chart.chartOptions.series"
+                  action-color="primary"
+                  size="xs"
+                  :options="[
+                    {
+                      label: 'values',
+                      value: showValuesConfig
+                    },
+                    {
+                      label: 'difference',
+                      value: showDifferenceConfig
+                    }
+                  ]"
+                />
+
                 <q-btn-toggle
                   v-model="chart.chartOptions.vAxis.scaleType"
                   action-color="primary"
@@ -293,7 +309,18 @@ export default {
           value: "use_custom"
         }
       ],
-
+      showValuesConfig: {
+        0: { lineWidth: 5, visibleInLegend: true },
+        1: { lineWidth: 2, visibleInLegend: true },
+        2: { lineWidth: 2, visibleInLegend: true },
+        3: { lineWidth: 0, visibleInLegend: false }
+      },
+      showDifferenceConfig: {
+        0: { lineWidth: 0, visibleInLegend: false },
+        1: { lineWidth: 0, visibleInLegend: false },
+        2: { lineWidth: 0, visibleInLegend: false },
+        3: { lineWidth: 2, visibleInLegend: true }
+      },
       actionService: interpret(actionMachine),
 
       actionStateContext: null
@@ -427,7 +454,7 @@ export default {
               title: this.getNodeName(nodeId),
               vAxis: { title: this.getNodeUnit(nodeId), scaleType: "linear" },
               legend: { position: "bottom" },
-              series: { 0: { lineWidth: 5 } }
+              series: this.showValuesConfig
               //explorer: {}
             }
           });
@@ -438,16 +465,16 @@ export default {
             "time",
             "baseline",
             "if done",
-            "if not done"
-            //"difference"
+            "if not done",
+            "difference between if done and not done"
           ]);
           for (var i = 0; i < timeSPoints.length; i++) {
             chart.chartData.push([
               new Date(timeSPoints[i] * 1000),
               baselineValues[i],
               ifDoneValues[i],
-              ifNotDoneValues[i]
-              //ifDoneValues[i] - ifNotDoneValues[i]
+              ifNotDoneValues[i],
+              ifDoneValues[i] - ifNotDoneValues[i]
             ]);
           }
         }
