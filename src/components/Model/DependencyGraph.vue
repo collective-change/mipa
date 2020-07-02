@@ -341,7 +341,6 @@ export default {
       nodeContextMenu.items({
         label: "Start node group",
         handler: function() {
-          console.log(that.selectedNodeId);
           that.createNodeGroup(that.selectedNodeId);
         }
       });

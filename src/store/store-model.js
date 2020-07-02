@@ -414,7 +414,6 @@ const actions = {
     };
     //TODO: create nodeGroupElement under nested node groups
     //use bredcrumb
-    console.log(nodeId);
     var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
     modelRef
       .update({
