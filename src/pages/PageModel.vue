@@ -47,9 +47,6 @@
                   color="primary"
                   right
                 ></q-icon>
-                <!--<div class="">
-                  {{ node.label }}
-                </div>-->
                 <q-popup-edit v-model="node.label">
                   <q-input
                     :value="node.label"
@@ -67,8 +64,8 @@
             </template>
           </q-tree>
         </div>
-        <pre>selectedNodeGroupId {{ selectedNodeGroupId }}</pre>
-        <pre>selectedNodeGroup {{ selectedNodeGroup }}</pre>
+        <!-- <pre>selectedNodeGroupId {{ selectedNodeGroupId }}</pre>
+        <pre>selectedNodeGroup {{ selectedNodeGroup }}</pre> -->
       </div>
 
       <div class="col-12 col-md-7">
