@@ -10,6 +10,7 @@
       color="primary"
       label="Add node"
     />
+    <pre>selectedNodeGroup {{ selectedNodeGroup }}</pre>
     <svg
       :width="svgWidth"
       :height="svgHeight"
@@ -852,9 +853,9 @@ export default {
           }
         });
         if (!selectedNodeGroupFound)
-          that.$store.commit("ui/setSelectedNodeGroup", {});
+          that.$store.commit("ui/setSelectedNodeGroup", null);
       } else {
-        that.$store.commit("ui/setSelectedNodeGroup", {});
+        that.$store.commit("ui/setSelectedNodeGroup", null);
       }
 
       //ui.setSelectedNodeGroup (only committed if not pinned)

@@ -134,7 +134,9 @@ export default {
     },
     //sync ui.selectedNodeGroup to selectedNodeGroupId
     selectedNodeGroup() {
-      this.selectedNodeGroupId = this.selectedNodeGroup.id;
+      if (this.selectedNodeGroup)
+        this.selectedNodeGroupId = this.selectedNodeGroup.id;
+      else this.selectedNodeGroupId = null;
     }
   },
   created() {
