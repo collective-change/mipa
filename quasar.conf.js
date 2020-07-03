@@ -82,7 +82,8 @@ module.exports = function(ctx) {
         "QLinearProgress",
         "QMarkupTable",
         "QChip",
-        "QBtnToggle"
+        "QBtnToggle",
+        "QPopupEdit"
       ],
 
       directives: ["Ripple", "ClosePopup", "TouchHold"],

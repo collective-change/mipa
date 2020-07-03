@@ -30,12 +30,42 @@
         <div class="row">
           Node groups
         </div>
-        <div class="row">
+        <div>
           <q-tree
             :nodes="nodeGroupsForTree"
+            selected-color="primary"
             :selected.sync="selectedNodeGroupId"
             node-key="groupId"
-          />
+          >
+            <template v-slot:default-header="{ node }">
+              <div class="">{{ node.label }}</div>
+              <div class="row items-center" @click.stop>
+                <q-icon
+                  v-if="node.groupId == selectedNodeGroupId"
+                  :name="node.icon || 'edit'"
+                  class="q-mr-sm"
+                  color="primary"
+                  right
+                ></q-icon>
+                <!--<div class="">
+                  {{ node.label }}
+                </div>-->
+                <q-popup-edit v-model="node.label">
+                  <q-input
+                    :value="node.label"
+                    dense
+                    autofocus
+                    @change="
+                      v => {
+                        node.label = v.target.value;
+                        saveNodeGroupName(node.groupId, v.target.value);
+                      }
+                    "
+                  ></q-input>
+                </q-popup-edit>
+              </div>
+            </template>
+          </q-tree>
         </div>
         <pre>selectedNodeGroupId {{ selectedNodeGroupId }}</pre>
         <pre>selectedNodeGroup {{ selectedNodeGroup }}</pre>
@@ -91,7 +121,7 @@ export default {
 
     nodeGroupsForTree() {
       if (!this.currentModel) return [];
-      let list = this.currentModel.nodeGroups,
+      let list = JSON.parse(JSON.stringify(this.currentModel.nodeGroups)),
         map = {},
         group,
         groupToPush,
@@ -116,6 +146,24 @@ export default {
         }
       }
       return roots;
+    }
+  },
+
+  methods: {
+    saveNodeGroupName(groupId, name) {
+      let clonedNodeGroups = JSON.parse(
+        JSON.stringify(this.currentModel.nodeGroups)
+      );
+      let nodeGroup = clonedNodeGroups.find(
+        nodeGroup => nodeGroup.id == groupId
+      );
+      nodeGroup.name = name;
+      //save name to model
+      let payload = {
+        modelId: this.currentModel.id,
+        updates: { nodeGroups: clonedNodeGroups }
+      };
+      this.$store.dispatch("model/updateModel", payload);
     }
   },
 
