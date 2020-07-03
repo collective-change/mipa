@@ -10,7 +10,6 @@
       color="primary"
       label="Add node"
     />
-    <pre>selectedNodeGroup {{ selectedNodeGroup }}</pre>
     <svg
       :width="svgWidth"
       :height="svgHeight"
@@ -280,7 +279,7 @@ export default {
       graph.selectAll("text").attr("transform", transform);
       //console.log("alpha: ", this.simulation.alpha());
     },
-    updateData() {
+    updateData(restartForceSimulation = true) {
       var that = this;
 
       /*console.log(
@@ -288,8 +287,8 @@ export default {
         this.storeDataChangeCount,
         "****************"
       );*/
-      // stop the previous simulation if it is still running
-      this.simulation.stop();
+      // stop the previous simulation
+      if (restartForceSimulation) this.simulation.stop();
       this.simulation.nodes(this.d3Data.nodes);
       this.simulation.force("link").links(this.d3Data.links);
 
@@ -432,7 +431,7 @@ export default {
         .selectAll("path")
         .attr("marker-end", "url(#end)");
 
-      this.simulation.alpha(1).restart();
+      if (restartForceSimulation) this.simulation.alpha(1).restart();
     },
     updateNodeClassAndText(restartSimulation = false) {
       const graph = this.selections.graph;
@@ -472,7 +471,7 @@ export default {
         )
         .call(this.wrap, nodeRadius * 2); // wrap the text in <= node diameter
       //update circle styles as well
-      if (restartSimulation) this.simulation.alpha(0.01).restart();
+      if (restartSimulation) this.simulation.alpha(0.001).restart();
     },
     updateForces() {
       const { simulation, forceProperties, svgWidth, svgHeight, d3Data } = this;
@@ -849,7 +848,6 @@ export default {
             //TODO: dispatch ui.setSelectedNodeGroup (only committed if not pinned)
             that.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
             selectedNodeGroupFound = true;
-            console.log("selectedNodeGroup.id", that.selectedNodeGroup.id);
           }
         });
         if (!selectedNodeGroupFound)
@@ -857,8 +855,14 @@ export default {
       } else {
         that.$store.commit("ui/setSelectedNodeGroup", null);
       }
+      this.updateNodeClassAndText();
+    },
 
-      //ui.setSelectedNodeGroup (only committed if not pinned)
+    selectedNodeGroup: {
+      deep: true,
+      handler() {
+        this.updateNodeClassAndText(true);
+      }
     },
 
     // watcher for store nodes
@@ -1047,7 +1051,7 @@ circle.selected {
 
 circle.nodeGroupSelected {
   stroke: gray;
-  stroke-width: 2px;
+  stroke-width: 3px;
 }
 
 @keyframes selected {
