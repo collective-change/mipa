@@ -642,7 +642,6 @@ export default {
               //nodeGroup.nodeIds.includes(selectedNode.id)
               nodeGroup.nodeIds.includes(d.id)
             ) {
-              //TODO: only committed if regular click (move this whole function to nodeClick() )
               that.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
               selectedNodeGroupFound = true;
             }
