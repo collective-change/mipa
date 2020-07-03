@@ -418,10 +418,13 @@ export default {
         .on("mouseout", this.nodeMouseOut)
         .on("contextmenu", function(d) {
           d3.event.preventDefault();
-          that.nodeClick(d);
+          that.nodeClick(d, null, "contextMenuClick");
           nodeContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
         })
-        .on("click", this.nodeClick);
+        //.on("click", this.nodeClick);
+        .on("click", function(d, i) {
+          that.nodeClick(d, i, "regularClick");
+        });
 
       this.updateNodeClassAndText();
 
@@ -591,7 +594,7 @@ export default {
       // This ensures that tick is called so the node count is updated
       this.simulation.restart();
     },
-    nodeClick(d) {
+    nodeClick(d, i, clickType) {
       const circles = this.selections.graph.selectAll("circle");
 
       let correspondingStoreNode = this.storeData.nodes.find(function(
@@ -627,6 +630,29 @@ export default {
         this.setSelectedNodeId(correspondingStoreNode.id);
         circles.classed("selected", false);
         circles.filter(td => td === d).classed("selected", true);
+      }
+      if (clickType == "regularClick") {
+        const that = this;
+        //look for node in model.nodeGroups
+        if (this.currentModel.hasOwnProperty("nodeGroups")) {
+          let selectedNodeGroupFound = false;
+          this.currentModel.nodeGroups.forEach(function(nodeGroup) {
+            if (
+              nodeGroup.hasOwnProperty("nodeIds") &&
+              //nodeGroup.nodeIds.includes(selectedNode.id)
+              nodeGroup.nodeIds.includes(d.id)
+            ) {
+              //TODO: only committed if regular click (move this whole function to nodeClick() )
+              that.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
+              selectedNodeGroupFound = true;
+            }
+          });
+          if (!selectedNodeGroupFound)
+            that.$store.commit("ui/setSelectedNodeGroup", null);
+        } else {
+          that.$store.commit("ui/setSelectedNodeGroup", null);
+        }
+        this.updateNodeClassAndText();
       }
     },
 
@@ -835,7 +861,7 @@ export default {
       deep: true
     },
 
-    selectedNode(selectedNode) {
+    /*XselectedNode(selectedNode) {
       const that = this;
       //look for node in model.nodeGroups
       if (this.currentModel.hasOwnProperty("nodeGroups")) {
@@ -845,7 +871,7 @@ export default {
             nodeGroup.hasOwnProperty("nodeIds") &&
             nodeGroup.nodeIds.includes(selectedNode.id)
           ) {
-            //TODO: dispatch ui.setSelectedNodeGroup (only committed if not pinned)
+            //TODO: only committed if left click (move this whole function to nodeClick() )
             that.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
             selectedNodeGroupFound = true;
           }
@@ -856,7 +882,7 @@ export default {
         that.$store.commit("ui/setSelectedNodeGroup", null);
       }
       this.updateNodeClassAndText();
-    },
+    },*/
 
     selectedNodeGroup: {
       deep: true,
