@@ -1,5 +1,6 @@
 const state = {
   selectedNodeId: null,
+  selectedNodeGroup: null,
   uiNodeChanged: false,
   uiNodeChangedFields: [],
 
@@ -15,6 +16,9 @@ const mutations = {
     state.selectedNodeId = nodeId;
     state.uiNodeChanged = false;
     state.uiNodeChangedFields = [];
+  },
+  setSelectedNodeGroup(state, nodeGroup) {
+    state.selectedNodeGroup = nodeGroup;
   },
   setUiNodeChanged(state, value) {
     state.uiNodeChanged = value;

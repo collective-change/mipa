@@ -406,18 +406,15 @@ const actions = {
   },
 
   createNodeGroup({}, nodeId) {
-    let nodeGroupElement = {
-      type: "nodeGroup",
+    let nodeGroup = {
       id: uid(),
-      label: "untitled node group",
-      children: [{ type: "node", nodeId: nodeId }]
+      name: "untitled node group",
+      nodeIds: [nodeId]
     };
-    //TODO: create nodeGroupElement under nested node groups
-    //use bredcrumb
     var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
     modelRef
       .update({
-        nodeGroups: firebase.firestore.FieldValue.arrayUnion(nodeGroupElement)
+        nodeGroups: firebase.firestore.FieldValue.arrayUnion(nodeGroup)
       })
       .then(function() {
         Notify.create("Node group created!");

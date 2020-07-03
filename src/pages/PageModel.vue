@@ -30,7 +30,10 @@
         <div class="row">
           <q-tree :nodes="exampleTree" node-key="label" />
         </div>
-        <pre>{{ currentModel.nodeGroups }}</pre>
+        <pre>{{ currentModel ? currentModel.nodeGroups : "" }}</pre>
+        {{
+          selectedNodeGroup ? selectedNodeGroup.id : "no node group selected"
+        }}
       </div>
 
       <div class="col-12 col-md-7">
@@ -109,7 +112,11 @@ export default {
   computed: {
     ...mapState("orgs", ["currentOrg"]),
     ...mapState("model", ["currentModel"]),
-    ...mapState("ui", ["uiNodeChanged", "uiNodeChangedFields"])
+    ...mapState("ui", [
+      "uiNodeChanged",
+      "uiNodeChangedFields",
+      "selectedNodeGroup"
+    ])
   },
   created() {
     (async () => {

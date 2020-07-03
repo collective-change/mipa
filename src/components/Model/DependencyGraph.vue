@@ -125,10 +125,12 @@ export default {
   computed: {
     ...mapState("ui", [
       "selectedNodeId",
+      "selectedNodeGroup",
       "uiNodeChanged",
       "uiNodeChangedFields"
     ]),
     ...mapGetters("model", ["nodes", "links"]),
+    ...mapState("model", ["currentModel"]),
     selectedNode() {
       let that = this;
       return this.nodes.find(function(node) {
@@ -398,6 +400,7 @@ export default {
 
       // Nodes should always be redrawn to avoid lines above them
       graph.selectAll("circle").remove();
+
       graph
         .selectAll("circle")
         .data(this.d3Data.nodes)
@@ -433,6 +436,9 @@ export default {
     updateNodeClassAndText(restartSimulation = false) {
       const graph = this.selections.graph;
       const selectedCircle = graph.selectAll("circle.selected");
+      const nodeIdsInNodeGroup = this.selectedNodeGroup
+        ? this.selectedNodeGroup.nodeIds
+        : [];
       graph
         .selectAll("circle")
         .data(this.d3Data.nodes)
@@ -441,7 +447,8 @@ export default {
           d.class.concat(
             d.isSelfBlocking ? " selfBlocking" : "",
             d.isNew ? " new" : "",
-            d.symbolFormula ? "" : " noFormula"
+            d.symbolFormula ? "" : " noFormula",
+            nodeIdsInNodeGroup.includes(d.id) ? " nodeGroupSelected" : ""
           )
         );
       selectedCircle.classed("selected", true);
@@ -820,12 +827,39 @@ export default {
       },
       deep: true
     },
+
     forceProperties: {
       handler(newForce) {
         this.updateForces();
       },
       deep: true
     },
+
+    selectedNode(selectedNode) {
+      const that = this;
+      //look for node in model.nodeGroups
+      if (this.currentModel.hasOwnProperty("nodeGroups")) {
+        let selectedNodeGroupFound = false;
+        this.currentModel.nodeGroups.forEach(function(nodeGroup) {
+          if (
+            nodeGroup.hasOwnProperty("nodeIds") &&
+            nodeGroup.nodeIds.includes(selectedNode.id)
+          ) {
+            //TODO: dispatch ui.setSelectedNodeGroup (only committed if not pinned)
+            that.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
+            selectedNodeGroupFound = true;
+            console.log("selectedNodeGroup.id", that.selectedNodeGroup.id);
+          }
+        });
+        if (!selectedNodeGroupFound)
+          that.$store.commit("ui/setSelectedNodeGroup", {});
+      } else {
+        that.$store.commit("ui/setSelectedNodeGroup", {});
+      }
+
+      //ui.setSelectedNodeGroup (only committed if not pinned)
+    },
+
     // watcher for store nodes
     nodes: {
       immediate: true,
@@ -1008,6 +1042,11 @@ circle.selfBlocking {
 
 circle.selected {
   animation: selected 1s infinite alternate ease-in-out;
+}
+
+circle.nodeGroupSelected {
+  stroke: gray;
+  stroke-width: 2px;
 }
 
 @keyframes selected {
