@@ -28,12 +28,17 @@
           />
         </div>
         <div class="row">
-          <q-tree :nodes="exampleTree" node-key="label" />
+          Node groups
         </div>
-        <pre>{{ currentModel ? currentModel.nodeGroups : "" }}</pre>
-        {{
-          selectedNodeGroup ? selectedNodeGroup.id : "no node group selected"
-        }}
+        <div class="row">
+          <q-tree
+            :nodes="nodeGroupsForTree"
+            :selected.sync="selectedNodeGroupId"
+            node-key="groupId"
+          />
+        </div>
+        <pre>selectedNodeGroupId {{ selectedNodeGroupId }}</pre>
+        <pre>selectedNodeGroup {{ selectedNodeGroup }}</pre>
       </div>
 
       <div class="col-12 col-md-7">
@@ -52,6 +57,12 @@
 <script>
 import { mapGetters, mapState } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
+import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
+
+const { mapFields } = createHelpers({
+  getterType: "uiAction/getField",
+  mutationType: "uiAction/updateUiActionField"
+});
 
 export default {
   components: {
@@ -66,47 +77,7 @@ export default {
       showConfigOrgModel: false,
       models: null,
       modelOptions: ["Tzu Chi", "Human-Earth system model"],
-      exampleTree: [
-        { label: "Goal and cost" },
-        {
-          label: "Chart of accounts",
-          children: [
-            { label: "income statement accounts" },
-            { label: "balance sheet accounts" }
-          ]
-        },
-        {
-          label: "World3 (imported)",
-          //icon: "public",
-          //iconColor: "blue-4",
-          children: [
-            {
-              label: "ESCiMO",
-              //icon: "folder",
-              children: [
-                { label: "top level" },
-                { label: "sub-model 1" },
-                { label: "sub-model 2" }
-              ]
-            },
-            {
-              label: "Planetary Boundaries",
-              //icon: "folder",
-              //disabled: true,
-              children: [{ label: "child 1" }, { label: "child 2" }]
-            },
-            {
-              label: "17 SDGs",
-              //icon: "folder",
-              children: [
-                { label: "overall" },
-                { label: "1 No Poverty" },
-                { label: "2 Zero Hunger" }
-              ]
-            }
-          ]
-        }
-      ]
+      selectedNodeGroupId: null
     };
   },
   computed: {
@@ -116,7 +87,55 @@ export default {
       "uiNodeChanged",
       "uiNodeChangedFields",
       "selectedNodeGroup"
-    ])
+    ]),
+
+    nodeGroupsForTree() {
+      if (!this.currentModel) return [];
+      let list = this.currentModel.nodeGroups,
+        map = {},
+        group,
+        groupToPush,
+        roots = [],
+        i;
+      for (i = 0; i < list.length; i += 1) {
+        map[list[i].id] = i; // initialize the map
+        list[i].children = []; // initialize the children
+      }
+      for (i = 0; i < list.length; i += 1) {
+        group = list[i];
+        groupToPush = {
+          label: group.name,
+          groupId: group.id
+        };
+        //if (group.nodeIds) groupToPush.children = group.nodeIds;
+        if (group.parentId && group.parentId !== "0") {
+          // if you have dangling branches check that map[node.parentId] exists
+          list[map[group.parentId]].children.push(groupToPush);
+        } else {
+          roots.push(groupToPush);
+        }
+      }
+      return roots;
+    }
+  },
+
+  watch: {
+    //sync selectedNodeGroupId to ui.selectedNodeGroup
+    selectedNodeGroupId() {
+      if (
+        this.selectedNodeGroup == null ||
+        this.selectedNodeGroup.id != this.selectedNodeGroupId
+      ) {
+        let nodeGroup = this.currentModel.nodeGroups.find(
+          nodeGroup => nodeGroup.id == this.selectedNodeGroupId
+        );
+        this.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
+      }
+    },
+    //sync ui.selectedNodeGroup to selectedNodeGroupId
+    selectedNodeGroup() {
+      this.selectedNodeGroupId = this.selectedNodeGroup.id;
+    }
   },
   created() {
     (async () => {
