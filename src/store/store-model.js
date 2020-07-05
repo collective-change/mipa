@@ -424,22 +424,24 @@ const actions = {
       });
   },
 
-  async addToNodeGroup({}, nodeId, nodeGroupId) {
+  async addToNodeGroup({}, payload) {
+    let nodeId = payload.nodeId;
+    let nodeGroupId = payload.nodeGroupId;
     try {
       var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
       await firebaseDb.runTransaction(async t => {
         const doc = await t.get(modelRef);
-        let nodeGroups = doc.data().model.nodeGroups;
-        let nodeGroup = nodeGroups.find(
-          nodeGroup => nodeGroup.id == nodeGroupId
-        );
+        let nodeGroups = doc.data().nodeGroups;
+        console.log("nodeGroups", nodeGroups);
+        let nodeGroup = nodeGroups.find(ng => ng.id == nodeGroupId);
+        console.log("nodeGroup", nodeGroup);
         nodeGroup.nodeIds.push(nodeId);
         t.update(modelRef, { nodeGroups: nodeGroups });
       });
       Notify.create("Node added to group");
     } catch (e) {
       Notify.create("Failed to add node to group");
-      console.log("Transaction failure:", e);
+      console.log("addToNodeGroup transaction failure:", e);
     }
   }
 };

@@ -58,71 +58,6 @@ var nodeRadius = 30;
 const svgWidth = 800;
 const svgHeight = 800;
 
-function composeNodeContextMenuItems(conditions) {
-  const baseNodeContextMenuItems = [
-    {
-      label: "Add new influencer",
-      handler: function() {
-        that.showAddNode = true;
-        that.addNodeProps.sourceNodeId = that.selectedNodeId;
-        that.addNodeProps.newNodeRole = "influencer";
-      }
-    },
-    {
-      label: "Add new influencee",
-      handler: function() {
-        that.showAddNode = true;
-        that.addNodeProps.sourceNodeId = that.selectedNodeId;
-        that.addNodeProps.newNodeRole = "influencee";
-      }
-    },
-    {
-      label: "Link to influencer",
-      handler: function() {
-        that.showAddLink = true;
-        that.linkToSubmit.sourceNodeId = that.selectedNodeId;
-        that.linkToSubmit.targetNodeId = "";
-        that.linkToSubmit.targetType = "influencer";
-      }
-    },
-    {
-      label: "Link to influencee",
-      handler: function() {
-        that.showAddLink = true;
-        that.linkToSubmit.sourceNodeId = that.selectedNodeId;
-        that.linkToSubmit.targetNodeId = "";
-        that.linkToSubmit.targetType = "influencee";
-      }
-    },
-
-    {
-      label: "Delete node",
-      handler: function() {
-        that.showDeleteNode = true;
-      }
-    }
-  ];
-
-  const notInNodeGroupContextMenuItems = [
-    {
-      label: "Start node group",
-      handler: function() {
-        that.createNodeGroup(that.selectedNodeId);
-      }
-    },
-    {
-      label: "Add to selected node group",
-      handler: function() {
-        that.addToNodeGroup(that.selectedNodeId, that.selectedNodeGroup.id);
-      }
-    }
-  ];
-  let items = [];
-  items.push(...baseNodeContextMenuItems);
-  if (!conditions.nodeIsInGroup) items.push(...notInNodeGroupContextMenuItems);
-  return items;
-}
-
 export default {
   name: "dependency-graph",
   components: {
@@ -283,7 +218,12 @@ export default {
   },
 
   methods: {
-    ...mapActions("model", ["addLink", "deleteLink", "createNodeGroup"]),
+    ...mapActions("model", [
+      "addLink",
+      "deleteLink",
+      "createNodeGroup",
+      "addToNodeGroup"
+    ]),
     ...mapActions("ui", ["setSelectedNodeId"]),
 
     tick() {
@@ -313,30 +253,6 @@ export default {
           linkEndPoints.ty
         );
       };
-
-      /*const alink = d => {
-        const arcRadius = getDistance(d) * 0.6;
-        return (
-          "M" +
-          d.source.x +
-          "," +
-          d.source.y +
-          " A " +
-          arcRadius +
-          "," +
-          arcRadius +
-          "," +
-          0 +
-          "," +
-          0 +
-          "," +
-          0 +
-          "," +
-          d.target.x +
-          "," +
-          d.target.y
-        );
-      }; */
 
       const graph = this.selections.graph;
       graph.selectAll("path").attr("d", link);
@@ -460,13 +376,92 @@ export default {
           let nodeIsInGroup = false;
           that.currentModel.nodeGroups.forEach(function(nodeGroup) {
             if (nodeGroup.nodeIds.includes(that.selectedNodeId)) {
-              console.log("nodeIsInGroup");
+              //console.log("nodeIsInGroup");
               nodeIsInGroup = true;
             }
           });
 
-          let menuItems = composeNodeContextMenuItems({ nodeIsInGroup });
-          console.log(menuItems);
+          let someNodeGroupIsSelected = that.selectedNodeGroup ? true : false;
+
+          function composeNodeContextMenuItems(conditions) {
+            const baseNodeContextMenuItems = [
+              {
+                label: "Add new influencer",
+                handler: function() {
+                  that.showAddNode = true;
+                  that.addNodeProps.sourceNodeId = that.selectedNodeId;
+                  that.addNodeProps.newNodeRole = "influencer";
+                }
+              },
+              {
+                label: "Add new influencee",
+                handler: function() {
+                  that.showAddNode = true;
+                  that.addNodeProps.sourceNodeId = that.selectedNodeId;
+                  that.addNodeProps.newNodeRole = "influencee";
+                }
+              },
+              {
+                label: "Link to influencer",
+                handler: function() {
+                  that.showAddLink = true;
+                  that.linkToSubmit.sourceNodeId = that.selectedNodeId;
+                  that.linkToSubmit.targetNodeId = "";
+                  that.linkToSubmit.targetType = "influencer";
+                }
+              },
+              {
+                label: "Link to influencee",
+                handler: function() {
+                  that.showAddLink = true;
+                  that.linkToSubmit.sourceNodeId = that.selectedNodeId;
+                  that.linkToSubmit.targetNodeId = "";
+                  that.linkToSubmit.targetType = "influencee";
+                }
+              },
+
+              {
+                label: "Delete node",
+                handler: function() {
+                  that.showDeleteNode = true;
+                }
+              }
+            ];
+
+            const notInNodeGroupContextMenuItems = [
+              {
+                label: "Start node group",
+                handler: function() {
+                  that.createNodeGroup(that.selectedNodeId);
+                }
+              }
+            ];
+
+            const addToSelectedNodeGroupMenuItems = [
+              {
+                label: "Add to selected node group",
+                handler: function() {
+                  that.addToNodeGroup({
+                    nodeId: that.selectedNodeId,
+                    nodeGroupId: that.selectedNodeGroup.id
+                  });
+                }
+              }
+            ];
+
+            let items = [];
+            items.push(...baseNodeContextMenuItems);
+            if (!conditions.nodeIsInGroup)
+              items.push(...notInNodeGroupContextMenuItems);
+            if (!conditions.nodeIsInGroup && conditions.someNodeGroupIsSelected)
+              items.push(...addToSelectedNodeGroupMenuItems);
+            return items;
+          }
+
+          let menuItems = composeNodeContextMenuItems({
+            nodeIsInGroup,
+            someNodeGroupIsSelected
+          });
           let nodeContextMenu = that.contextMenu().items(...menuItems);
           nodeContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
         })
