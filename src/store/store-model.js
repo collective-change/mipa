@@ -422,6 +422,25 @@ const actions = {
       .catch(function(error) {
         showErrorMessage("Error creating node group", error.message);
       });
+  },
+
+  async addToNodeGroup({}, nodeId, nodeGroupId) {
+    try {
+      var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
+      await firebaseDb.runTransaction(async t => {
+        const doc = await t.get(modelRef);
+        let nodeGroups = doc.data().model.nodeGroups;
+        let nodeGroup = nodeGroups.find(
+          nodeGroup => nodeGroup.id == nodeGroupId
+        );
+        nodeGroup.nodeIds.push(nodeId);
+        t.update(modelRef, { nodeGroups: nodeGroups });
+      });
+      Notify.create("Node added to group");
+    } catch (e) {
+      Notify.create("Failed to add node to group");
+      console.log("Transaction failure:", e);
+    }
   }
 };
 
