@@ -109,6 +109,7 @@ export default {
         },
         link: {
           distance: 90,
+          strength: 1.5,
           iterations: 1
         }
       },
@@ -603,6 +604,7 @@ export default {
       simulation
         .force("link")
         .distance(forceProperties.link.distance)
+        .strength(forceProperties.link.strength)
         .iterations(forceProperties.link.iterations);
 
       // updates ignored until this is run
@@ -1148,7 +1150,7 @@ circle.selected {
 }
 
 circle.nodeGroupSelected {
-  stroke: gray;
+  stroke: #666;
   stroke-width: 3px;
 }
 
