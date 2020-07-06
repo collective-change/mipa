@@ -32,7 +32,11 @@
               'Cannot start with a number'
           ]"
         />
-        <q-markup-table flat bordered v-if="influencerNodesInfo.length">
+        <q-markup-table
+          flat
+          bordered
+          v-if="influencerNodesInfo.length"
+        >
           <thead>
             <tr>
               <th class="text-left">Influencer</th>
@@ -40,7 +44,10 @@
               <th class="text-left">Unit</th>
             </tr>
           </thead>
-          <tr v-for="influencer in influencerNodesInfo" :key="influencer.id">
+          <tr
+            v-for="influencer in influencerNodesInfo"
+            :key="influencer.id"
+          >
             <td>{{ influencer.name }}</td>
             <td>{{ influencer.symbol }}</td>
             <td>{{ influencer.unit }}</td>
@@ -55,11 +62,12 @@
           debounce="800"
         />
         <div v-if="parserError == '' && latexFormula">
-          <vue-mathjax
-            :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"
-          ></vue-mathjax>
+          <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
         </div>
-        <div v-else class="text-negative">{{ parserError }}</div>
+        <div
+          v-else
+          class="text-negative"
+        >{{ parserError }}</div>
         <q-input
           v-model="nodeToSubmit.currentValue"
           label="Current value"
@@ -87,7 +95,11 @@
           </div>
         </div>
 
-        <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
+        <q-input
+          v-model="nodeToSubmit.notes"
+          label="Notes"
+          autogrow
+        />
         <modal-buttons />
       </q-form>
 
@@ -122,7 +134,7 @@ export default {
     "vue-mathjax": VueMathjax
   },
 
-  data() {
+  data () {
     return {
       nodeToSubmit: {},
       oldNodeToSubmit: {}, //used for comparing changes to nodeToSubmit
@@ -147,14 +159,14 @@ export default {
     ...mapState("calcResults", ["baseline"]),
     ...mapGetters("model", ["nodes", "links"]),
 
-    selectedNode() {
+    selectedNode () {
       let that = this;
-      return this.nodes.find(function(node) {
+      return this.nodes.find(function (node) {
         return node.id == that.selectedNodeId;
       });
     },
 
-    influencerNodesInfo() {
+    influencerNodesInfo () {
       let nodeToSubmit = this.nodeToSubmit;
       let influencerNodesInfo = [];
       if (typeof nodeToSubmit.influencers == "undefined")
@@ -162,7 +174,7 @@ export default {
       let influencerNodes = this.nodes.filter(node =>
         nodeToSubmit.influencers.includes(node.id)
       );
-      influencerNodes.forEach(function(influencerNode) {
+      influencerNodes.forEach(function (influencerNode) {
         let influencerNodeInfo = {
           id: influencerNode.id,
           name: influencerNode.name,
@@ -179,7 +191,7 @@ export default {
     },
 
     //parse symbol formula
-    parsedSymbolFormula() {
+    parsedSymbolFormula () {
       try {
         let parsedSymbolFormula = this.nodeToSubmit.symbolFormula
           ? parse(this.nodeToSubmit.symbolFormula)
@@ -192,7 +204,7 @@ export default {
       }
     },
 
-    watchedObjectForNodePropertyRecalculation() {
+    watchedObjectForNodePropertyRecalculation () {
       return {
         currentValue: this.nodeToSubmit.currentValue,
         parsedFormula: this.parsedSymbolFormula
@@ -200,12 +212,12 @@ export default {
     },
 
     //latexFormula from parsedSymbolFormula
-    latexFormula() {
+    latexFormula () {
       return this.parsedSymbolFormula
         ? this.parsedSymbolFormula.toTex({
-            parenthesis: "keep",
-            implicit: "hide"
-          })
+          parenthesis: "keep",
+          implicit: "hide"
+        })
         : "";
       console.log("LaTeX expression:", latex);
     }
@@ -213,13 +225,13 @@ export default {
 
   methods: {
     ...mapActions("model", ["updateNode"]),
-    submitForm() {
+    submitForm () {
       this.$refs.nodeName.validate();
       if (!this.$refs.nodeName.hasError) {
         this.submitNode();
       }
     },
-    submitNode() {
+    submitNode () {
       let oldCurrentVal = this.selectedNode.currentValue;
       let newCurrentVal = this.nodeToSubmit.currentValue;
       let oldCurrentValIsANumber =
@@ -249,7 +261,7 @@ export default {
         */
       });
     },
-    updateChartData() {
+    updateChartData () {
       // if baseline.nodes contains the selected node then load baseline for this nde
       if (
         this.selectedNodeId !== "null" &&
@@ -258,7 +270,7 @@ export default {
         this.selectedNodeId in this.baseline.nodesValues
       ) {
         let timeSPoints = this.baseline.timeSPoints;
-        let values = this.baseline.nodesValues[this.selectedNode.id];
+        let values = this.baseline.nodesValues[this.selectedNodeId];
         this.chartData = [];
         if (values.length > 0) {
           this.chartData.push(["time", "value"]);
@@ -273,7 +285,7 @@ export default {
     }
   },
 
-  mounted() {
+  mounted () {
     //load mathjax
     const plugin = document.createElement("script");
     plugin.setAttribute(
@@ -285,7 +297,7 @@ export default {
   },
 
   watch: {
-    selectedNode: function(newNode, oldNode) {
+    selectedNode: function (newNode, oldNode) {
       this.nodeToSubmitIsFreshlyAssigned = true;
       this.nodeToSubmit = Object.assign({}, this.selectedNode);
       this.$store.commit("ui/setUiNodeChanged", false);
@@ -294,7 +306,7 @@ export default {
 
     nodeToSubmit: {
       deep: true,
-      handler: function(newNode) {
+      handler: function (newNode) {
         if (!this.nodeToSubmitIsFreshlyAssigned) {
           let oldNode = this.oldNodeToSubmit;
           let differences = Object.keys(newNode).filter(
@@ -303,7 +315,7 @@ export default {
               (oldNode[k] ? oldNode[k] : {}).toString()
           );
 
-          differences = differences.filter(function(item) {
+          differences = differences.filter(function (item) {
             return ![
               "sysFormula",
               "class",
@@ -324,11 +336,11 @@ export default {
       }
     },
 
-    baseline: function() {
+    baseline: function () {
       this.updateChartData();
     },
 
-    watchedObjectForNodePropertyRecalculation: function(/*newVersion, oldVersion*/) {
+    watchedObjectForNodePropertyRecalculation: function (/*newVersion, oldVersion*/) {
       let parsedSymbolFormula = this.parsedSymbolFormula
         ? this.parsedSymbolFormula
         : "";
@@ -349,8 +361,8 @@ export default {
           "influencers" in this.nodeToSubmit &&
           this.nodeToSubmit.influencers.length > 0
         ) {
-          this.nodeToSubmit.influencers.forEach(function(influencerNodeId) {
-            influencerNode = nodes.find(function(node) {
+          this.nodeToSubmit.influencers.forEach(function (influencerNodeId) {
+            influencerNode = nodes.find(function (node) {
               return node.id == influencerNodeId;
             });
             potentials.push({
@@ -359,13 +371,13 @@ export default {
             });
           });
         }
-        potentials.sort(function(a, b) {
+        potentials.sort(function (a, b) {
           return b.symbol.length - a.symbol.length;
         });
 
         var sysFormula = parsedSymbolFormula.toString();
         if (sysFormula) {
-          potentials.forEach(function(node) {
+          potentials.forEach(function (node) {
             sysFormula = sysFormula.replace(
               new RegExp("\\b" + node.symbol + "\\b", "g"), //global replacement
               "$" + node.id
