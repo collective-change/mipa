@@ -27,7 +27,10 @@
       />
     </q-dialog>
     <q-dialog v-model="showDeleteNode">
-      <delete-node :node="selectedNode" @close="showDeleteNode = false" />
+      <delete-node
+        :node="selectedNode"
+        @close="showDeleteNode = false"
+      />
     </q-dialog>
     <q-dialog v-model="showAddLink">
       <add-link
@@ -65,7 +68,7 @@ export default {
     "delete-node": require("components/Model/Modals/DeleteNode.vue").default,
     "add-link": require("components/Model/Modals/AddLink.vue").default
   },
-  data() {
+  data () {
     return {
       showAddNode: false,
       showDeleteNode: false,
@@ -131,23 +134,29 @@ export default {
     ]),
     ...mapGetters("model", ["nodes", "links"]),
     ...mapState("model", ["currentModel"]),
-    selectedNode() {
+    selectedNode () {
       let that = this;
-      return this.nodes.find(function(node) {
+      return this.nodes.find(function (node) {
         return node.id == that.selectedNodeId;
       });
     },
-    storeData() {
+
+    nodeGroups () {
+      if (this.currentModel) return this.currentModel.nodeGroups;
+      else return null;
+    },
+
+    storeData () {
       return { nodes: this.nodes, links: this.links };
     }
   },
 
-  created() {
+  created () {
     this.simulation = d3
       .forceSimulation()
       .force(
         "link",
-        d3.forceLink().id(function(d) {
+        d3.forceLink().id(function (d) {
           return d.id;
         })
       )
@@ -163,7 +172,7 @@ export default {
     this.updateForces();
   },
 
-  mounted() {
+  mounted () {
     //set up svg
     this.selections.svg = d3.select(this.$el.querySelector("svg"));
     const svg = this.selections.svg;
@@ -200,7 +209,7 @@ export default {
     svg.call(this.zoom);
 
     //require ctrlKey in addition to mouse
-    this.zoom.filter(function() {
+    this.zoom.filter(function () {
       return d3.event.ctrlKey;
     });
 
@@ -210,10 +219,10 @@ export default {
     this.updateData();
   },
 
-  beforeUpdate() {
+  beforeUpdate () {
     //console.log("beforeUpdate()");
   },
-  updated() {
+  updated () {
     //console.log("updated()");
   },
 
@@ -222,11 +231,12 @@ export default {
       "addLink",
       "deleteLink",
       "createNodeGroup",
-      "addToNodeGroup"
+      "addToNodeGroup",
+      "removeNodeFromGroup"
     ]),
     ...mapActions("ui", ["setSelectedNodeId"]),
 
-    tick() {
+    tick () {
       // If no data is ready, do nothing
       if (!this.d3Data) {
         return;
@@ -260,7 +270,7 @@ export default {
       graph.selectAll("text").attr("transform", transform);
       //console.log("alpha: ", this.simulation.alpha());
     },
-    updateData(restartForceSimulation = true) {
+    updateData (restartForceSimulation = true) {
       var that = this;
 
       /*console.log(
@@ -279,7 +289,7 @@ export default {
 
       var linkContextMenu = this.contextMenu().items({
         label: "Delete link",
-        handler: function() {
+        handler: function () {
           //"this" is the parameter of handler.call(parameter); a link in this case
           that.deleteLink({
             link: {
@@ -323,7 +333,7 @@ export default {
             (d.isBlocking ? "" : "nonBlocking ") +
             (d.isUnused ? "unused " : "")
         )
-        .on("contextmenu", function(d) {
+        .on("contextmenu", function (d) {
           d3.event.preventDefault();
           linkContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
         });
@@ -346,14 +356,14 @@ export default {
         )
         .on("mouseover", this.nodeMouseOver)
         .on("mouseout", this.nodeMouseOut)
-        .on("contextmenu", function(d) {
-          Function.prototype.clone = function() {
+        .on("contextmenu", function (d) {
+          Function.prototype.clone = function () {
             var cloneObj = this;
             if (this.__isClone) {
               cloneObj = this.__clonedFrom;
             }
 
-            var temp = function() {
+            var temp = function () {
               return cloneObj.apply(this, arguments);
             };
             for (var key in this) {
@@ -374,7 +384,7 @@ export default {
           //loop through nodeGroups to find selectedNodeId
 
           let nodeIsInGroup = false;
-          that.currentModel.nodeGroups.forEach(function(nodeGroup) {
+          that.currentModel.nodeGroups.forEach(function (nodeGroup) {
             if (nodeGroup.nodeIds.includes(that.selectedNodeId)) {
               //console.log("nodeIsInGroup");
               nodeIsInGroup = true;
@@ -383,11 +393,11 @@ export default {
 
           let someNodeGroupIsSelected = that.selectedNodeGroup ? true : false;
 
-          function composeNodeContextMenuItems(conditions) {
+          function composeNodeContextMenuItems (conditions) {
             const baseNodeContextMenuItems = [
               {
                 label: "Add new influencer",
-                handler: function() {
+                handler: function () {
                   that.showAddNode = true;
                   that.addNodeProps.sourceNodeId = that.selectedNodeId;
                   that.addNodeProps.newNodeRole = "influencer";
@@ -395,7 +405,7 @@ export default {
               },
               {
                 label: "Add new influencee",
-                handler: function() {
+                handler: function () {
                   that.showAddNode = true;
                   that.addNodeProps.sourceNodeId = that.selectedNodeId;
                   that.addNodeProps.newNodeRole = "influencee";
@@ -403,7 +413,7 @@ export default {
               },
               {
                 label: "Link to influencer",
-                handler: function() {
+                handler: function () {
                   that.showAddLink = true;
                   that.linkToSubmit.sourceNodeId = that.selectedNodeId;
                   that.linkToSubmit.targetNodeId = "";
@@ -412,7 +422,7 @@ export default {
               },
               {
                 label: "Link to influencee",
-                handler: function() {
+                handler: function () {
                   that.showAddLink = true;
                   that.linkToSubmit.sourceNodeId = that.selectedNodeId;
                   that.linkToSubmit.targetNodeId = "";
@@ -422,7 +432,7 @@ export default {
 
               {
                 label: "Delete node",
-                handler: function() {
+                handler: function () {
                   that.showDeleteNode = true;
                 }
               }
@@ -431,7 +441,7 @@ export default {
             const notInNodeGroupContextMenuItems = [
               {
                 label: "Start node group",
-                handler: function() {
+                handler: function () {
                   that.createNodeGroup(that.selectedNodeId);
                 }
               }
@@ -439,14 +449,40 @@ export default {
 
             const addToSelectedNodeGroupMenuItems = [
               {
-                label: "Add to selected node group",
-                handler: function() {
-                  that.addToNodeGroup({
+                label: "Add to selected group",
+                handler: async function () {
+                  await that.addToNodeGroup({
                     nodeId: that.selectedNodeId,
                     nodeGroupId: that.selectedNodeGroup.id
                   });
+                  //set selectedNodeGroup contents
                 }
               }
+            ];
+
+            const selectedInNodeGroupMenuItems = [
+              {
+                label: "Remove node from group",
+                handler: async function () {
+                  await that.removeNodeFromGroup({
+                    nodeId: that.selectedNodeId,
+                    nodeGroupId: that.selectedNodeGroup.id
+                  });
+                  //set selectedNodeGroup contents
+                }
+              },
+              {
+                label: "Collapse node group",
+                handler: async function () {
+                  await that.collapseNodeGroup(that.selectedNodeGroup.id);
+                }
+              },
+              {
+                label: "Disband node group",
+                handler: async function () {
+                  await that.disbandNodeGroup(that.selectedNodeGroup.id);
+                }
+              },
             ];
 
             let items = [];
@@ -455,6 +491,8 @@ export default {
               items.push(...notInNodeGroupContextMenuItems);
             if (!conditions.nodeIsInGroup && conditions.someNodeGroupIsSelected)
               items.push(...addToSelectedNodeGroupMenuItems);
+            if (conditions.nodeIsInGroup && conditions.someNodeGroupIsSelected)
+              items.push(...selectedInNodeGroupMenuItems);
             return items;
           }
 
@@ -466,7 +504,7 @@ export default {
           nodeContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
         })
         //.on("click", this.nodeClick);
-        .on("click", function(d, i) {
+        .on("click", function (d, i) {
           that.nodeClick(d, i, "regularClick");
         });
 
@@ -480,7 +518,7 @@ export default {
 
       if (restartForceSimulation) this.simulation.alpha(1).restart();
     },
-    updateNodeClassAndText(restartSimulation = false) {
+    updateNodeClassAndText (restartSimulation = false) {
       const graph = this.selections.graph;
       const selectedCircle = graph.selectAll("circle.selected");
       const nodeIdsInNodeGroup = this.selectedNodeGroup
@@ -520,7 +558,7 @@ export default {
       //update circle styles as well
       if (restartSimulation) this.simulation.alpha(0.001).restart();
     },
-    updateForces() {
+    updateForces () {
       const { simulation, forceProperties, svgWidth, svgHeight, d3Data } = this;
       simulation
         .force("gravity")
@@ -540,7 +578,7 @@ export default {
       simulation
         .force("forceX")
         .x(forceProperties.forceX.x)
-        .strength(function(d) {
+        .strength(function (d) {
           if (d.class == "unlinked") {
             return forceProperties.forceX.strength;
           } else {
@@ -567,29 +605,29 @@ export default {
       // restarts the simulation (important if simulation has already slowed down)
       simulation.alpha(1).restart();
     },
-    zoomed() {
+    zoomed () {
       const transform = d3.event.transform;
       this.selections.graph.attr("transform", transform);
     },
-    nodeDragStarted(d) {
+    nodeDragStarted (d) {
       if (!d3.event.active) {
         this.simulation.alphaTarget(0.3).restart();
       }
       d.fx = d.x;
       d.fy = d.y;
     },
-    nodeDragged(d) {
+    nodeDragged (d) {
       d.fx = d3.event.x;
       d.fy = d3.event.y;
     },
-    nodeDragEnded(d) {
+    nodeDragEnded (d) {
       if (!d3.event.active) {
         this.simulation.alphaTarget(0.0001);
       }
       d.fx = null;
       d.fy = null;
     },
-    nodeMouseOver(d) {
+    nodeMouseOver (d) {
       const graph = this.selections.graph;
       const circles = graph.selectAll("circle");
       const paths = graph.selectAll("path");
@@ -623,7 +661,7 @@ export default {
       // This ensures that tick is called so the node count is updated
       this.simulation.alphaTarget(0.0001).restart();
     },
-    nodeMouseOut(d) {
+    nodeMouseOut (d) {
       const graph = this.selections.graph;
       const circles = graph.selectAll("circle");
       const paths = graph.selectAll("path");
@@ -638,10 +676,10 @@ export default {
       // This ensures that tick is called so the node count is updated
       this.simulation.restart();
     },
-    nodeClick(d, i, clickType) {
+    nodeClick (d, i, clickType) {
       const circles = this.selections.graph.selectAll("circle");
 
-      let correspondingStoreNode = this.storeData.nodes.find(function(
+      let correspondingStoreNode = this.storeData.nodes.find(function (
         storeNode
       ) {
         return storeNode.id == d.id;
@@ -680,7 +718,7 @@ export default {
         //look for node in model.nodeGroups
         if (this.currentModel.hasOwnProperty("nodeGroups")) {
           let selectedNodeGroupFound = false;
-          this.currentModel.nodeGroups.forEach(function(nodeGroup) {
+          this.currentModel.nodeGroups.forEach(function (nodeGroup) {
             if (
               nodeGroup.hasOwnProperty("nodeIds") &&
               //nodeGroup.nodeIds.includes(selectedNode.id)
@@ -699,7 +737,7 @@ export default {
       }
     },
 
-    contextMenu(hostD) {
+    contextMenu (hostD) {
       var height,
         that = this,
         width,
@@ -723,7 +761,7 @@ export default {
           }
         };
 
-      function menu(x, y, hostD) {
+      function menu (x, y, hostD) {
         d3.select(".context-menu").remove();
         scaleItems();
 
@@ -737,12 +775,12 @@ export default {
           .append("g")
           .attr("class", "menu-entry")
           .style("cursor", "pointer")
-          .on("mouseover", function() {
+          .on("mouseover", function () {
             d3.select(this)
               .select("rect")
               .styles(style.rect.mouseover);
           })
-          .on("mouseout", function() {
+          .on("mouseout", function () {
             d3.select(this)
               .select("rect")
               .styles(style.rect.mouseout);
@@ -751,23 +789,23 @@ export default {
         d3.selectAll(".menu-entry")
           .append("rect")
           .attr("x", x)
-          .attr("y", function(d, i) {
+          .attr("y", function (d, i) {
             return y + i * height;
           })
           .attr("width", width)
           .attr("height", height)
           .styles(style.rect.mouseout)
-          .on("click", function(d) {
+          .on("click", function (d) {
             d.handler.call(hostD);
           });
 
         d3.selectAll(".menu-entry")
           .append("text")
-          .text(function(d) {
+          .text(function (d) {
             return d.label;
           })
           .attr("x", x)
-          .attr("y", function(d, i) {
+          .attr("y", function (d, i) {
             return y + i * height;
           })
           .attr("dy", height - margin / 2)
@@ -775,12 +813,12 @@ export default {
           .styles(style.text);
 
         // Other interactions
-        d3.select("body").on("click", function() {
+        d3.select("body").on("click", function () {
           d3.select(".context-menu").remove();
         });
       }
 
-      menu.items = function(e) {
+      menu.items = function (e) {
         if (!arguments.length) return items;
         for (var i in arguments) items.push(arguments[i]);
         rescale = true;
@@ -788,14 +826,14 @@ export default {
       };
 
       // Automatically set width, height, and margin;
-      function scaleItems() {
+      function scaleItems () {
         if (rescale) {
           d3.select("svg")
             .selectAll("tmp")
             .data(items)
             .enter()
             .append("text")
-            .text(function(d) {
+            .text(function (d) {
               return d.label;
             })
             .styles(style.text)
@@ -805,18 +843,18 @@ export default {
           var z = d3
             .selectAll(".tmp")
             .nodes()
-            .map(function(x) {
+            .map(function (x) {
               return x.getBBox();
             });
           width = d3.max(
-            z.map(function(x) {
+            z.map(function (x) {
               return x.width;
             })
           );
           margin = margin * width;
           width = width + 2 * margin;
           height = d3.max(
-            z.map(function(x) {
+            z.map(function (x) {
               return x.height + margin / 2;
             })
           );
@@ -829,8 +867,8 @@ export default {
 
       return menu;
     },
-    wrap(texts, width) {
-      texts.each(function() {
+    wrap (texts, width) {
+      texts.each(function () {
         var text = d3.select(this),
           words = text
             .text()
@@ -879,7 +917,7 @@ export default {
         }
       });
     },
-    submitLink() {
+    submitLink () {
       this.addLink({
         link: this.linkToSubmit,
         modelId: this.$route.params.modelId
@@ -890,7 +928,7 @@ export default {
 
   watch: {
     storeDataChangeCount: {
-      handler(/*newValue, oldValue*/) {
+      handler (/*newValue, oldValue*/) {
         //console.log("watch / storeDataChangeCount");
         this.updateData();
       },
@@ -898,39 +936,26 @@ export default {
     },
 
     forceProperties: {
-      handler(newForce) {
+      handler (newForce) {
         this.updateForces();
       },
       deep: true
     },
 
-    /*XselectedNode(selectedNode) {
-      const that = this;
-      //look for node in model.nodeGroups
-      if (this.currentModel.hasOwnProperty("nodeGroups")) {
-        let selectedNodeGroupFound = false;
-        this.currentModel.nodeGroups.forEach(function(nodeGroup) {
-          if (
-            nodeGroup.hasOwnProperty("nodeIds") &&
-            nodeGroup.nodeIds.includes(selectedNode.id)
-          ) {
-            //TODO: only committed if left click (move this whole function to nodeClick() )
-            that.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
-            selectedNodeGroupFound = true;
-          }
-        });
-        if (!selectedNodeGroupFound)
-          that.$store.commit("ui/setSelectedNodeGroup", null);
-      } else {
-        that.$store.commit("ui/setSelectedNodeGroup", null);
-      }
-      this.updateNodeClassAndText();
-    },*/
-
     selectedNodeGroup: {
       deep: true,
-      handler() {
+      handler () {
         this.updateNodeClassAndText(true);
+      }
+    },
+
+    nodeGroups: {
+      deep: true,
+      handler (nodeGroups) {
+        if (nodeGroups && this.selectedNodeGroup) {
+          let nodeGroup = nodeGroups.find(ng => ng.id == this.selectedNodeGroup.id);
+          this.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
+        }
       }
     },
 
@@ -938,7 +963,7 @@ export default {
     nodes: {
       immediate: true,
       deep: true,
-      handler(/*newNodes, oldNodes*/) {
+      handler (/*newNodes, oldNodes*/) {
         /*console.log(
           "nodes handler running on ",
           this.storeData.nodes.length,
@@ -949,13 +974,13 @@ export default {
         var graphTextChange = false;
         //mark each node in d3Data.nodes as unconfirmed
         if (this.d3Data.nodes.length > 0) {
-          this.d3Data.nodes.forEach(function(d3Node) {
+          this.d3Data.nodes.forEach(function (d3Node) {
             d3Node.unconfirmed = "true";
           });
         }
         let matchedD3Node = null;
         //for each in storeNodes,
-        this.storeData.nodes.forEach(function(storeNode) {
+        this.storeData.nodes.forEach(function (storeNode) {
           //if storeNode exists in d3Data.nodes already
           if (
             //declaration inside if conditional intended
@@ -995,7 +1020,7 @@ export default {
         //remove unconfirmed nodes in data.nodes
         if (that.d3Data.nodes.length > 0) {
           var originalNodeCount = that.d3Data.nodes.length;
-          that.d3Data.nodes = that.d3Data.nodes.filter(function(node) {
+          that.d3Data.nodes = that.d3Data.nodes.filter(function (node) {
             return typeof node.unconfirmed === "undefined"; //node does not have 'unconfirmed' property
           });
           if (that.d3Data.nodes.length != originalNodeCount) {
@@ -1007,13 +1032,13 @@ export default {
         //console.log("finished handling nodes; starting on links");
         //mark each link in data.links as unconfirmed
         if (this.d3Data.links.length > 0) {
-          this.d3Data.links.forEach(function(d3Link) {
+          this.d3Data.links.forEach(function (d3Link) {
             d3Link.unconfirmed = "true";
           });
         }
         let matchedD3Link = null;
         //for each in storeLinks,
-        this.storeData.links.forEach(function(storeLink) {
+        this.storeData.links.forEach(function (storeLink) {
           if (
             //if a match in d3Data.links is found
             (matchedD3Link = that.d3Data.links.filter(
@@ -1036,7 +1061,7 @@ export default {
         //remove unconfirmed links in data.links
         if (that.d3Data.links.length > 0) {
           var originalLinkCount = that.d3Data.links.length;
-          that.d3Data.links = that.d3Data.links.filter(function(link) {
+          that.d3Data.links = that.d3Data.links.filter(function (link) {
             //only keep links that do not have 'unconfirmed' property
             return typeof link.unconfirmed === "undefined";
           });

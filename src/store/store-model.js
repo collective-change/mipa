@@ -432,9 +432,7 @@ const actions = {
       await firebaseDb.runTransaction(async t => {
         const doc = await t.get(modelRef);
         let nodeGroups = doc.data().nodeGroups;
-        console.log("nodeGroups", nodeGroups);
         let nodeGroup = nodeGroups.find(ng => ng.id == nodeGroupId);
-        console.log("nodeGroup", nodeGroup);
         nodeGroup.nodeIds.push(nodeId);
         t.update(modelRef, { nodeGroups: nodeGroups });
       });
@@ -442,6 +440,26 @@ const actions = {
     } catch (e) {
       Notify.create("Failed to add node to group");
       console.log("addToNodeGroup transaction failure:", e);
+    }
+  },
+
+  async removeNodeFromGroup({}, payload) {
+    let nodeId = payload.nodeId;
+    let nodeGroupId = payload.nodeGroupId;
+    try {
+      var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
+      await firebaseDb.runTransaction(async t => {
+        const doc = await t.get(modelRef);
+        let nodeGroups = doc.data().nodeGroups;
+        let nodeGroup = nodeGroups.find(ng => ng.id == nodeGroupId);
+        let index = nodeGroup.nodeIds.indexOf(nodeId);
+        if (index !== -1) nodeGroup.nodeIds.splice(index, 1);
+        t.update(modelRef, { nodeGroups: nodeGroups });
+      });
+      Notify.create("Node removed from group");
+    } catch (e) {
+      Notify.create("Failed to frmove node from group");
+      console.log("removeNodeFromGroup transaction failure:", e);
     }
   }
 };
