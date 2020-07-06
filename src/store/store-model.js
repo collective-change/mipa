@@ -405,23 +405,24 @@ const actions = {
     //console.log("end updateClassifiedInfluencersOf");
   },
 
-  createNodeGroup({}, nodeId) {
+  async createNodeGroup({}, nodeId) {
+    let success = false;
     let nodeGroup = {
       id: uid(),
       name: "untitled node group",
       nodeIds: [nodeId]
     };
     var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
-    modelRef
-      .update({
+    try {
+      const res = await modelRef.update({
         nodeGroups: firebase.firestore.FieldValue.arrayUnion(nodeGroup)
-      })
-      .then(function() {
-        Notify.create("Node group created!");
-      })
-      .catch(function(error) {
-        showErrorMessage("Error creating node group", error.message);
       });
+      success = true;
+      Notify.create("Node group created!");
+    } catch (error) {
+      showErrorMessage("Error creating node group", error.message);
+    }
+    if (success) return nodeGroup;
   },
 
   async addToNodeGroup({}, payload) {
@@ -460,6 +461,22 @@ const actions = {
     } catch (e) {
       Notify.create("Failed to frmove node from group");
       console.log("removeNodeFromGroup transaction failure:", e);
+    }
+  },
+
+  async disbandNodeGroup({}, nodeGroupId) {
+    try {
+      var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
+      await firebaseDb.runTransaction(async t => {
+        const doc = await t.get(modelRef);
+        let nodeGroups = doc.data().nodeGroups;
+        nodeGroups = nodeGroups.filter(group => group.id != nodeGroupId);
+        t.update(modelRef, { nodeGroups: nodeGroups });
+      });
+      Notify.create("Group disbanded");
+    } catch (e) {
+      Notify.create("Failed disband group");
+      console.log("disbandNodeGroup transaction failure:", e);
     }
   }
 };
