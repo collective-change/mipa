@@ -33,13 +33,19 @@
         <div>
           <q-tree
             :nodes="nodeGroupsForTree"
+            node-key="groupId"
             selected-color="primary"
             :selected.sync="selectedNodeGroupId"
-            node-key="groupId"
+            tick-strategy="strict"
+            :ticked.sync="visibilityOfNodeGroups"
+            :expanded.sync="expanded"
           >
             <template v-slot:default-header="{ node }">
               <div class="">{{ node.label }}</div>
-              <div class="row items-center" @click.stop>
+              <div
+                class="row items-center"
+                @click.stop
+              >
                 <q-icon
                   v-if="node.groupId == selectedNodeGroupId"
                   :name="node.icon || 'edit'"
@@ -84,12 +90,6 @@
 <script>
 import { mapGetters, mapState } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
-
-const { mapFields } = createHelpers({
-  getterType: "uiAction/getField",
-  mutationType: "uiAction/updateUiActionField"
-});
 
 export default {
   components: {
@@ -99,12 +99,14 @@ export default {
     "dependency-graph": require("components/Model/DependencyGraph.vue").default,
     "node-summary": require("components/Model/NodeSummary.vue").default
   },
-  data() {
+  data () {
     return {
       showConfigOrgModel: false,
       models: null,
       modelOptions: ["Tzu Chi", "Human-Earth system model"],
-      selectedNodeGroupId: null
+      selectedNodeGroupId: null,
+      //ticked: null,
+      expanded: null
     };
   },
   computed: {
@@ -115,8 +117,16 @@ export default {
       "uiNodeChangedFields",
       "selectedNodeGroup"
     ]),
+    visibilityOfNodeGroups: {
+      get () {
+        return this.$store.state.ui.visibilityOfNodeGroups
+      },
+      set (value) {
+        this.$store.commit('ui/setVisibilityOfNodeGroups', value)
+      }
+    },
 
-    nodeGroupsForTree() {
+    nodeGroupsForTree () {
       if (!this.currentModel) return [];
       let list = JSON.parse(JSON.stringify(this.currentModel.nodeGroups)),
         map = {},
@@ -147,7 +157,7 @@ export default {
   },
 
   methods: {
-    saveNodeGroupName(groupId, name) {
+    saveNodeGroupName (groupId, name) {
       let clonedNodeGroups = JSON.parse(
         JSON.stringify(this.currentModel.nodeGroups)
       );
@@ -166,7 +176,7 @@ export default {
 
   watch: {
     //sync selectedNodeGroupId to ui.selectedNodeGroup
-    selectedNodeGroupId() {
+    selectedNodeGroupId () {
       if (
         this.selectedNodeGroup == null ||
         this.selectedNodeGroup.id != this.selectedNodeGroupId
@@ -178,13 +188,13 @@ export default {
       }
     },
     //sync ui.selectedNodeGroup to selectedNodeGroupId
-    selectedNodeGroup() {
+    selectedNodeGroup () {
       if (this.selectedNodeGroup)
         this.selectedNodeGroupId = this.selectedNodeGroup.id;
       else this.selectedNodeGroupId = null;
     }
   },
-  created() {
+  created () {
     (async () => {
       //console.log("waiting for currentUser to be defined");
       while (
@@ -206,9 +216,9 @@ export default {
     })();
     //console.log("above code doesn't block main function stack");
   },
-  mounted() {},
+  mounted () { },
 
-  beforeRouteLeave(to, from, next) {
+  beforeRouteLeave (to, from, next) {
     if (this.uiNodeChanged) {
       this.$q
         .dialog({
@@ -228,7 +238,7 @@ export default {
     } else next();
   },
 
-  beforeDestroy() {
+  beforeDestroy () {
     // don't unbind firestore refs here; leave it until org change in Layout.vue
   }
 };

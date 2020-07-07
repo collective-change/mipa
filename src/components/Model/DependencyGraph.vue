@@ -497,8 +497,10 @@ export default {
 
           let someNodeGroupIsSelected = that.selectedNodeGroup ? true : false;
           let selectedNodeIsInSelectedGroup = false;
-          if (that.selectedNodeGroup && that.selectedNodeId && that.selectedNodeGroup.nodeIds.includes(that.selectedNodeId)) { console.log('both true'); selectedNodeIsInSelectedGroup = true; }
-
+          if (that.selectedNodeGroup &&
+            that.selectedNodeId &&
+            that.selectedNodeGroup.nodeIds.includes(that.selectedNodeId))
+            selectedNodeIsInSelectedGroup = true;
 
           let menuItems = composeNodeContextMenuItems({
             nodeIsInGroup,

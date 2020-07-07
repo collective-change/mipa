@@ -3,12 +3,10 @@ const state = {
   selectedNodeGroup: null,
   uiNodeChanged: false,
   uiNodeChangedFields: [],
-
   selectedIssueId: null,
-
   selectedActionId: null,
-
-  selectedSituationId: null
+  selectedSituationId: null,
+  visibilityOfNodeGroups: null
 };
 
 const mutations = {
@@ -19,6 +17,9 @@ const mutations = {
   },
   setSelectedNodeGroup(state, nodeGroup) {
     state.selectedNodeGroup = nodeGroup;
+  },
+  setVisibilityOfNodeGroups(state, visibilityOfNodeGroups) {
+    state.visibilityOfNodeGroups = visibilityOfNodeGroups;
   },
   setUiNodeChanged(state, value) {
     state.uiNodeChanged = value;
