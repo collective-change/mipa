@@ -292,7 +292,7 @@ export default {
       let nodes = [...this.storeData.nodes];
       let links = [...this.storeData.links];
 
-      return { nodes, links };
+      //return { nodes, links };
 
       //compute hiddenNodeGroups
       if (this.currentModel.nodeGroups && this.visibilityOfNodeGroups)
@@ -336,9 +336,8 @@ export default {
         })
       });
 
+      //TODO: remove duplicate group-to-group links and add count
 
-      //remove duplicate group-to-group links and add count
-      console.log(links);
       return { nodes, links };
     },
     prepD3DataAndUpdate () {
@@ -899,12 +898,12 @@ export default {
           })
 
           .onOk(() => {
-            this.setSelectedNodeId(correspondingStoreNode.id);
+            this.setSelectedNodeId(d.id);
             circles.classed("selected", false);
             circles.filter(td => td === d).classed("selected", true);
           });
       } else {
-        this.setSelectedNodeId(correspondingStoreNode.id);
+        this.setSelectedNodeId(d.id);
         circles.classed("selected", false);
         circles.filter(td => td === d).classed("selected", true);
       }
