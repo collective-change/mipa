@@ -105,7 +105,6 @@ export default {
       models: null,
       modelOptions: ["Tzu Chi", "Human-Earth system model"],
       selectedNodeGroupId: null,
-      //ticked: null,
       expanded: null
     };
   },
