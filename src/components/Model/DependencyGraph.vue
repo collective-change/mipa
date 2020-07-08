@@ -297,7 +297,7 @@ export default {
         circlePositions.push({ id: thisCircle.data()[0].id, x: thisCircle.attr('x'), y: thisCircle.attr('y') })
       });
       this.simulation.on("end", null); //remove savePositions function from simulation on end
-      let saveFile = { modelId: this.currentModel.id, circlePositions }
+      let saveFile = { modelId: this.currentModel.id, expandedNodeGroups: this.expandedNodeGroups, circlePositions }
       console.log('saveing positions');
       idb.saveDependencyGraphDisplay(saveFile);
     },
@@ -475,7 +475,7 @@ export default {
       var that = this;
 
       // stop the previous simulation
-      if (restartForceSimulation) this.simulation.stop();
+      if (restartForceSimulation && this.simulation) this.simulation.stop();
       this.simulation.nodes(this.d3Data.nodes);
       this.simulation.force("link").links(this.d3Data.links);
 
