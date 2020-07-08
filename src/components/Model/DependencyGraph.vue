@@ -39,6 +39,7 @@
         @close="showAddLink = false"
       />
     </q-dialog>
+    <pre>{{debugLinks}}</pre>
   </div>
 </template>
 
@@ -135,6 +136,9 @@ export default {
     ]),
     ...mapGetters("model", ["nodes", "links"]),
     ...mapState("model", ["currentModel"]),
+    debugLinks () {
+      return this.d3Data.links.map(link => { return { source: link.source.id, target: link.target.id } })
+    },
     visibilityOfNodeGroups: {
       get () {
         return this.$store.state.ui.visibilityOfNodeGroups
@@ -280,13 +284,72 @@ export default {
       graph.selectAll("text").attr("transform", transform);
       //console.log("alpha: ", this.simulation.alpha());
     },
+    getVisibleData () {
+      console.log('visibility', this.visibilityOfNodeGroups);
+      console.log('currentModel', this.currentModel);
+      console.log('nodeGroups', this.currentModel.nodeGroups);
+      let that = this;
+      let hiddenNodeGroups, nodesInHiddenGroup;
+
+      let nodes = [...this.storeData.nodes];
+      let links = [...this.storeData.links];
+      console.log(links);
+
+      //compute hiddenNodeGroups
+      if (this.currentModel.nodeGroups && this.visibilityOfNodeGroups)
+        hiddenNodeGroups = this.currentModel.nodeGroups.filter(group => !that.visibilityOfNodeGroups.includes(group.id))
+      else if (this.currentModel.nodeGroups)
+        hiddenNodeGroups = [...this.currentModel.nodeGroups];
+      else hiddenNodeGroups = [];
+      //console.log({ hiddenNodeGroups });
+      //TODO: topoSort hiddenNodeGroups
+      //hiddenNodeGroups.forEach
+      hiddenNodeGroups.forEach(function (hiddenGroup) {
+        let hiddenGroupObj = { id: hiddenGroup.id, name: hiddenGroup.name, isNodeGroup: true, class: 'group', isNew: false, isSelfBlocking: false, symbolFormula: 'exist' };
+        //collect problems from nodes in group then remove the nodes
+        nodesInHiddenGroup = nodes.filter(node => hiddenGroup.nodeIds.includes(node.id));
+        nodesInHiddenGroup.forEach(function (node) {
+          if (node.isNew) hiddenGroupObj.isNew = true;
+          if (node.isSelfBlocking) hiddenGroupObj.isSelfBlocking = true;
+          if (node.symbolFormula == '') hiddenGroupObj.symbolFormula = '';
+        });
+        nodes = nodes.filter(node => !hiddenGroup.nodeIds.includes(node.id));
+        //add group node
+        //console.log('node 0', nodes[0]);
+        nodes.push(hiddenGroupObj);
+        //remove links with both ends in group
+        //console.log('link 0:', links[0])
+        links = links.filter(function (link) {
+          return !(hiddenGroup.nodeIds.includes(link.source) && hiddenGroup.nodeIds.includes(link.target))
+        });
+        //redirect links w/ one end in group to group node; do not allow delete
+        links.forEach(function (link, index, linksArray) {
+          if (hiddenGroup.nodeIds.includes(link.source) && !hiddenGroup.nodeIds.includes(link.target)) {
+            let newLink = Object.assign({}, link);
+            newLink.source = hiddenGroup.id;
+            links.splice(index, 1, newLink)
+          }
+          if (!hiddenGroup.nodeIds.includes(link.source) && hiddenGroup.nodeIds.includes(link.target)) {
+            let newLink = Object.assign({}, link);
+            newLink.target = hiddenGroup.id;
+            links.splice(index, 1, newLink)
+          }
+        })
+      });
+
+
+      //remove duplicate group-to-group links and add count
+      console.log(links);
+      return { nodes, links };
+    },
     prepD3DataAndUpdate () {
+      if (this.nodes && this.currentModel) {
+        /*continue*/
+      } else return;
       var that = this;
-      //let visibleData = getVisibleData();
-      //let visibleNodes = visibleData.nodes;
-      //let visibleLinks = visibleData.links;
-      let visibleNodes = this.storeData.nodes;
-      let visibleLinks = this.storeData.links;
+      let visibleData = this.getVisibleData();
+      let visibleNodes = visibleData.nodes;
+      let visibleLinks = visibleData.links;
 
       var dataChanged = false;
       var graphTextChange = false;
@@ -355,24 +418,24 @@ export default {
         });
       }
       let matchedD3Link = null;
-      //for each in storeLinks,
-      this.storeData.links.forEach(function (storeLink) {
+      //for each in visibleLinks,
+      visibleLinks.forEach(function (visibleLink) {
         if (
           //if a match in d3Data.links is found
           (matchedD3Link = that.d3Data.links.filter(
             d3Link =>
-              d3Link.source.id == storeLink.source &&
-              d3Link.target.id == storeLink.target &&
-              d3Link.hasReciprocal == storeLink.hasReciprocal &&
-              d3Link.isBlocking == storeLink.isBlocking &&
-              d3Link.isUnused == storeLink.isUnused
+              d3Link.source.id == visibleLink.source &&
+              d3Link.target.id == visibleLink.target &&
+              d3Link.hasReciprocal == visibleLink.hasReciprocal &&
+              d3Link.isBlocking == visibleLink.isBlocking &&
+              d3Link.isUnused == visibleLink.isUnused
           )[0])
         ) {
           //then remove "unconfirmed" mark
           delete matchedD3Link.unconfirmed;
-        } //else storeLink does not exist in data; clone it there
+        } //else visibleLink does not exist in data; clone it there
         else {
-          that.d3Data.links.push(Object.assign({}, storeLink));
+          that.d3Data.links.push(Object.assign({}, visibleLink));
           dataChanged = true;
         }
       });
@@ -611,12 +674,13 @@ export default {
           //loop through nodeGroups to find selectedNodeId
 
           let nodeIsInGroup = false;
-          that.currentModel.nodeGroups.forEach(function (nodeGroup) {
-            if (nodeGroup.nodeIds.includes(that.selectedNodeId)) {
-              //console.log("nodeIsInGroup");
-              nodeIsInGroup = true;
-            }
-          });
+          if (that.currentModel.nodeGroups)
+            that.currentModel.nodeGroups.forEach(function (nodeGroup) {
+              if (nodeGroup.nodeIds.includes(that.selectedNodeId)) {
+                //console.log("nodeIsInGroup");
+                nodeIsInGroup = true;
+              }
+            });
 
           let someNodeGroupIsSelected = that.selectedNodeGroup ? true : false;
           let selectedNodeIsInSelectedGroup = false;
@@ -662,8 +726,9 @@ export default {
           d.class.concat(
             d.isSelfBlocking ? " selfBlocking" : "",
             d.isNew ? " new" : "",
-            d.symbolFormula ? "" : " noFormula",
-            nodeIdsInNodeGroup.includes(d.id) ? " nodeGroupSelected" : ""
+            d.symbolFormula && d.symbolFormula ? "" : " noFormula",
+            nodeIdsInNodeGroup.includes(d.id) ? " nodeGroupSelected" : "",
+            d.isNodeGroup && this.selectedNodeGroup && d.id == this.selectedNodeGroup.id ? ' nodeGroupSelected' : ''
           )
         );
       selectedCircle.classed("selected", true);
@@ -1094,7 +1159,12 @@ export default {
       immediate: true,
       deep: true,
       handler (/*newNodes, oldNodes*/) {
-        this.prepD3DataAndUpdate();
+        console.log('nodes changed');
+        if (this.nodes && this.currentModel) {
+          console.log('nodes watcher calling prepD3DataAndUpdate')
+          this.prepD3DataAndUpdate();
+        }
+
       }
     },
 
@@ -1102,9 +1172,12 @@ export default {
       immediate: true,
       deep: true,
       handler (/*newNodes, oldNodes*/) {
-        console.log('visibilityOfNodeGroups changed')
-        if (this.nodes)
+        console.log('visibilityOfNodeGroups changed');
+        if (this.nodes && this.currentModel) {
+          console.log('visibilityOfNodeGroups watcher calling prepD3DataAndUpdate')
           this.prepD3DataAndUpdate();
+        }
+
       }
     }
   }
@@ -1159,6 +1232,10 @@ circle.output {
 circle.input {
   fill: #b2e48a;
   stroke: #005000;
+}
+circle.group {
+  fill: #e0e0e0;
+  stroke: #666;
 }
 circle.new,
 circle.noFormula,

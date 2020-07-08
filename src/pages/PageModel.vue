@@ -28,7 +28,7 @@
           />
         </div>
         <div class="row">
-          Node groups
+          Expand node groups
         </div>
         <div>
           <q-tree
@@ -39,6 +39,7 @@
             tick-strategy="strict"
             :ticked.sync="visibilityOfNodeGroups"
             :expanded.sync="expanded"
+            no-nodes-label="None available"
           >
             <template v-slot:default-header="{ node }">
               <div class="">{{ node.label }}</div>
@@ -126,7 +127,7 @@ export default {
     },
 
     nodeGroupsForTree () {
-      if (!this.currentModel) return [];
+      if (!this.currentModel || !this.currentModel.nodeGroups) return [];
       let list = JSON.parse(JSON.stringify(this.currentModel.nodeGroups)),
         map = {},
         group,
