@@ -532,6 +532,8 @@ export default {
         .enter()
         .append("circle")
         .attr("r", nodeRadius)
+        .attr("x", this.svgWidth * 0.5)
+        .attr("y", this.svgWidth * 0.5)
         .call(
           d3
             .drag()
