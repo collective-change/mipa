@@ -287,50 +287,49 @@ export default {
     },
     getVisibleData () {
       let that = this;
-      let hiddenNodeGroups, nodesInHiddenGroup;
+      let collapsedNodeGroups, nodesInCollapsedGroup;
 
       let nodes = [...this.storeData.nodes];
       let links = [...this.storeData.links];
 
-      //return { nodes, links };
-
-      //compute hiddenNodeGroups
+      //compute collapsedNodeGroups
       if (this.currentModel.nodeGroups && this.visibilityOfNodeGroups)
-        hiddenNodeGroups = this.currentModel.nodeGroups.filter(group => !that.visibilityOfNodeGroups.includes(group.id))
+        collapsedNodeGroups = this.currentModel.nodeGroups.filter(group => !that.visibilityOfNodeGroups.includes(group.id))
       else if (this.currentModel.nodeGroups)
-        hiddenNodeGroups = [...this.currentModel.nodeGroups];
-      else hiddenNodeGroups = [];
-      //console.log({ hiddenNodeGroups });
-      //TODO: topoSort hiddenNodeGroups
-      //hiddenNodeGroups.forEach
-      hiddenNodeGroups.forEach(function (hiddenGroup) {
-        let hiddenGroupObj = { id: hiddenGroup.id, name: hiddenGroup.name, isNodeGroup: true, class: 'group', isNew: false, isSelfBlocking: false, symbolFormula: 'exist' };
+        collapsedNodeGroups = [...this.currentModel.nodeGroups];
+      else collapsedNodeGroups = [];
+
+      //TODO: topoSort collapsedNodeGroups
+      collapsedNodeGroups.forEach(function (collapsedGroup) {
+        let nodeForCollapsedGroup = { id: collapsedGroup.id, name: collapsedGroup.name, isNodeGroup: true, class: 'group', isNew: false, isSelfBlocking: false, symbolFormula: 'exist' };
         //collect problems from nodes in group then remove the nodes
-        nodesInHiddenGroup = nodes.filter(node => hiddenGroup.nodeIds.includes(node.id));
-        nodesInHiddenGroup.forEach(function (node) {
-          if (node.isNew) hiddenGroupObj.isNew = true;
-          if (node.isSelfBlocking) hiddenGroupObj.isSelfBlocking = true;
-          if (node.symbolFormula == '') hiddenGroupObj.symbolFormula = '';
+        nodesInCollapsedGroup = nodes.filter(node => collapsedGroup.nodeIds.includes(node.id));
+        nodesInCollapsedGroup.forEach(function (node) {
+          if (node.isNew) nodeForCollapsedGroup.isNew = true;
+          if (node.isSelfBlocking) nodeForCollapsedGroup.isSelfBlocking = true;
+          if (node.symbolFormula == '') nodeForCollapsedGroup.symbolFormula = '';
         });
-        nodes = nodes.filter(node => !hiddenGroup.nodeIds.includes(node.id));
+        nodes = nodes.filter(node => !collapsedGroup.nodeIds.includes(node.id));
+
         //add group node
-        //console.log('node 0', nodes[0]);
-        nodes.push(hiddenGroupObj);
+        nodes.push(nodeForCollapsedGroup);
+
         //remove links with both ends in group
         //console.log('link 0:', links[0])
         links = links.filter(function (link) {
-          return !(hiddenGroup.nodeIds.includes(link.source) && hiddenGroup.nodeIds.includes(link.target))
+          return !(collapsedGroup.nodeIds.includes(link.source) && collapsedGroup.nodeIds.includes(link.target))
         });
+
         //redirect links w/ one end in group to group node; do not allow delete
         links.forEach(function (link, index, linksArray) {
-          if (hiddenGroup.nodeIds.includes(link.source) && !hiddenGroup.nodeIds.includes(link.target)) {
+          if (collapsedGroup.nodeIds.includes(link.source) && !collapsedGroup.nodeIds.includes(link.target)) {
             let newLink = Object.assign({}, link);
-            newLink.source = hiddenGroup.id;
+            newLink.source = collapsedGroup.id;
             links.splice(index, 1, newLink)
           }
-          if (!hiddenGroup.nodeIds.includes(link.source) && hiddenGroup.nodeIds.includes(link.target)) {
+          if (!collapsedGroup.nodeIds.includes(link.source) && collapsedGroup.nodeIds.includes(link.target)) {
             let newLink = Object.assign({}, link);
-            newLink.target = hiddenGroup.id;
+            newLink.target = collapsedGroup.id;
             links.splice(index, 1, newLink)
           }
         })
