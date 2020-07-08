@@ -184,8 +184,7 @@ export default {
       .alphaDecay(0.0667457) //about 100 iterations
       .alphaTarget(0)
       .velocityDecay(0.1)
-      .on("tick", this.tick)
-      .on("end", this.onForceSimulationEnd);
+      .on("tick", this.tick);
     // Call first time to setup default values
     this.updateForces();
   },
@@ -290,8 +289,15 @@ export default {
       //console.log("alpha: ", this.simulation.alpha());
     },
 
-    onForceSimulationEnd () {
-      console.log('onForceSimulationEnd');
+    savePositions () {
+      const graph = this.selections.graph;
+      let circlePositions = [];
+      graph.selectAll('circle').each(function () {
+        const thisCircle = d3.select(this);
+        circlePositions.push({ id: thisCircle.data()[0].id, x: thisCircle.attr('x'), y: thisCircle.attr('y') })
+      });
+      this.simulation.on("end", null); //remove savePositions function from simulation on end
+      console.log(circlePositions);
     },
 
     getVisibleData () {
@@ -699,7 +705,10 @@ export default {
         .selectAll("path")
         .attr("marker-end", "url(#end)");
 
-      if (restartForceSimulation) this.simulation.alpha(1).restart();
+      if (restartForceSimulation) {
+        this.simulation.on("end", this.savePositions);
+        this.simulation.alpha(1).restart();
+      }
     },
     updateNodeClassAndText (restartSimulation = false) {
       const graph = this.selections.graph;
@@ -740,7 +749,9 @@ export default {
         )
         .call(this.wrap, nodeRadius * 2); // wrap the text in <= node diameter
       //update circle styles as well
-      if (restartSimulation) this.simulation.alpha(0.001).restart();
+      if (restartSimulation) {
+        this.simulation.alpha(0.001).restart();
+      }
     },
     updateForces () {
       const { simulation, forceProperties, svgWidth, svgHeight, d3Data } = this;
@@ -796,6 +807,7 @@ export default {
     },
     nodeDragStarted (d) {
       if (!d3.event.active) {
+        this.simulation.on("end", this.savePositions);
         this.simulation.alphaTarget(0.3).restart();
       }
       d.fx = d.x;
@@ -804,6 +816,7 @@ export default {
     nodeDragged (d) {
       d.fx = d3.event.x;
       d.fy = d3.event.y;
+      this.simulation.alphaTarget(0.3).restart();
     },
     nodeDragEnded (d) {
       if (!d3.event.active) {
