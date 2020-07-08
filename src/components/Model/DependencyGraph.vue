@@ -135,6 +135,14 @@ export default {
     ]),
     ...mapGetters("model", ["nodes", "links"]),
     ...mapState("model", ["currentModel"]),
+    visibilityOfNodeGroups: {
+      get () {
+        return this.$store.state.ui.visibilityOfNodeGroups
+      },
+      set (value) {
+        this.$store.commit('ui/setVisibilityOfNodeGroups', value)
+      }
+    },
     selectedNode () {
       let that = this;
       return this.nodes.find(function (node) {
@@ -274,6 +282,12 @@ export default {
     },
     prepD3DataAndUpdate () {
       var that = this;
+      //let visibleData = getVisibleData();
+      //let visibleNodes = visibleData.nodes;
+      //let visibleLinks = visibleData.links;
+      let visibleNodes = this.storeData.nodes;
+      let visibleLinks = this.storeData.links;
+
       var dataChanged = false;
       var graphTextChange = false;
       //mark each node in d3Data.nodes as unconfirmed
@@ -283,41 +297,41 @@ export default {
         });
       }
       let matchedD3Node = null;
-      //for each in storeNodes,
-      this.storeData.nodes.forEach(function (storeNode) {
-        //if storeNode exists in d3Data.nodes already
+      //for each in visibleNodes, update in d3Data.nodes, add it, or remove it
+      visibleNodes.forEach(function (visibleNode) {
+        //if visibleNode exists in d3Data.nodes already
         if (
           //declaration inside if conditional intended
           (matchedD3Node = that.d3Data.nodes.filter(
-            d3Node => d3Node.id == storeNode.id
+            d3Node => d3Node.id == visibleNode.id
           )[0])
         ) {
           //remove "unconfirmed" flag
           delete matchedD3Node.unconfirmed;
-          //update d3Data node with values from storeNode
-          if (matchedD3Node.name != storeNode.name) {
-            matchedD3Node.name = storeNode.name;
+          //update d3Data node with values from visibleNode
+          if (matchedD3Node.name != visibleNode.name) {
+            matchedD3Node.name = visibleNode.name;
             graphTextChange = true;
           }
-          if (matchedD3Node.class != storeNode.class) {
-            matchedD3Node.class = storeNode.class;
+          if (matchedD3Node.class != visibleNode.class) {
+            matchedD3Node.class = visibleNode.class;
             dataChanged = true;
           }
-          if (matchedD3Node.isSelfBlocking != storeNode.isSelfBlocking) {
-            matchedD3Node.isSelfBlocking = storeNode.isSelfBlocking;
+          if (matchedD3Node.isSelfBlocking != visibleNode.isSelfBlocking) {
+            matchedD3Node.isSelfBlocking = visibleNode.isSelfBlocking;
             graphTextChange = true;
           }
-          if (matchedD3Node.isNew != storeNode.isNew) {
-            matchedD3Node.isNew = storeNode.isNew;
+          if (matchedD3Node.isNew != visibleNode.isNew) {
+            matchedD3Node.isNew = visibleNode.isNew;
             graphTextChange = true;
           }
-          if (matchedD3Node.symbolFormula != storeNode.symbolFormula) {
-            matchedD3Node.symbolFormula = storeNode.symbolFormula;
+          if (matchedD3Node.symbolFormula != visibleNode.symbolFormula) {
+            matchedD3Node.symbolFormula = visibleNode.symbolFormula;
             graphTextChange = true;
           }
         } else {
-          // storeNode does not exist in d3Data; clone it there
-          that.d3Data.nodes.push(Object.assign({}, storeNode));
+          // visibleNode does not exist in d3Data; clone it there
+          that.d3Data.nodes.push(Object.assign({}, visibleNode));
           dataChanged = true;
         }
       });
@@ -380,7 +394,6 @@ export default {
       if (graphTextChange && !dataChanged) {
         this.updateNodeClassAndText(true);
       }
-      console.log('prepD3DataAndUpdate finished');
     },
     updateData (restartForceSimulation = true) {
       var that = this;
@@ -798,9 +811,9 @@ export default {
       const circles = this.selections.graph.selectAll("circle");
 
       let correspondingStoreNode = this.storeData.nodes.find(function (
-        storeNode
+        sNode
       ) {
-        return storeNode.id == d.id;
+        return sNode.id == d.id;
       });
 
       if (this.selectedNodeId == correspondingStoreNode.id) {
@@ -1082,6 +1095,16 @@ export default {
       deep: true,
       handler (/*newNodes, oldNodes*/) {
         this.prepD3DataAndUpdate();
+      }
+    },
+
+    visibilityOfNodeGroups: {
+      immediate: true,
+      deep: true,
+      handler (/*newNodes, oldNodes*/) {
+        console.log('visibilityOfNodeGroups changed')
+        if (this.nodes)
+          this.prepD3DataAndUpdate();
       }
     }
   }
