@@ -84,7 +84,6 @@ export default {
         nodes: [],
         links: []
       },
-      storeDataChangeCount: 0,
       simulation: null,
       forceProperties: {
         gravity: {
@@ -466,8 +465,7 @@ export default {
         }
       }
       if (dataChanged) {
-        //console.log("incrementing storeDataChangeCount");
-        this.storeDataChangeCount++;
+        this.updateData();
       }
       if (graphTextChange && !dataChanged) {
         this.updateNodeClassAndText(true);
@@ -476,11 +474,6 @@ export default {
     updateData (restartForceSimulation = true) {
       var that = this;
 
-      /*console.log(
-        "updateData; change count ",
-        this.storeDataChangeCount,
-        "****************"
-      );*/
       // stop the previous simulation
       if (restartForceSimulation) this.simulation.stop();
       this.simulation.nodes(this.d3Data.nodes);
@@ -1121,14 +1114,6 @@ export default {
   },
 
   watch: {
-    storeDataChangeCount: {
-      handler (/*newValue, oldValue*/) {
-        //console.log("watch / storeDataChangeCount");
-        this.updateData();
-      },
-      deep: true
-    },
-
     forceProperties: {
       handler (newForce) {
         this.updateForces();
