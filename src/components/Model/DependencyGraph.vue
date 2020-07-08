@@ -11,6 +11,7 @@
       label="Add node"
     />
     <svg
+      id="dependencyGraph"
       :width="svgWidth"
       :height="svgHeight"
       style="border: black; border-style: solid; border-width: 0px"
@@ -39,7 +40,7 @@
         @close="showAddLink = false"
       />
     </q-dialog>
-    <pre>{{debugLinks}}</pre>
+    <pre>{{visibilityOfNodeGroups}}</pre>
   </div>
 </template>
 
@@ -187,7 +188,7 @@ export default {
 
   mounted () {
     //set up svg
-    this.selections.svg = d3.select(this.$el.querySelector("svg"));
+    this.selections.svg = d3.select(this.$el.querySelector("svg#dependencyGraph"));
     const svg = this.selections.svg;
 
     svg
@@ -285,15 +286,13 @@ export default {
       //console.log("alpha: ", this.simulation.alpha());
     },
     getVisibleData () {
-      console.log('visibility', this.visibilityOfNodeGroups);
-      console.log('currentModel', this.currentModel);
-      console.log('nodeGroups', this.currentModel.nodeGroups);
       let that = this;
       let hiddenNodeGroups, nodesInHiddenGroup;
 
       let nodes = [...this.storeData.nodes];
       let links = [...this.storeData.links];
-      console.log(links);
+
+      return { nodes, links };
 
       //compute hiddenNodeGroups
       if (this.currentModel.nodeGroups && this.visibilityOfNodeGroups)
@@ -884,7 +883,7 @@ export default {
       if (this.selectedNodeId == correspondingStoreNode.id) {
         circles.classed("selected", false);
         circles.filter(td => td === d).classed("selected", true);
-        return;
+        //return;
       }
       if (this.uiNodeChanged) {
         this.$q
@@ -933,6 +932,7 @@ export default {
       }
     },
     contextMenu (hostD) {
+      let svg = this.selections.svg;
       var height,
         that = this,
         width,
@@ -961,7 +961,8 @@ export default {
         scaleItems();
 
         // Draw the menu
-        d3.select("svg")
+        //d3.select("svg")
+        svg
           .append("g")
           .attr("class", "context-menu")
           .selectAll("tmp")
@@ -1023,7 +1024,8 @@ export default {
       // Automatically set width, height, and margin;
       function scaleItems () {
         if (rescale) {
-          d3.select("svg")
+          //d3.select("svg")
+          svg
             .selectAll("tmp")
             .data(items)
             .enter()
@@ -1059,7 +1061,6 @@ export default {
           rescale = false;
         }
       }
-
       return menu;
     },
     wrap (texts, width) {
@@ -1159,9 +1160,9 @@ export default {
       immediate: true,
       deep: true,
       handler (/*newNodes, oldNodes*/) {
-        console.log('nodes changed');
+        //console.log('nodes changed');
         if (this.nodes && this.currentModel) {
-          console.log('nodes watcher calling prepD3DataAndUpdate')
+          //console.log('nodes watcher calling prepD3DataAndUpdate')
           this.prepD3DataAndUpdate();
         }
 
@@ -1172,9 +1173,9 @@ export default {
       immediate: true,
       deep: true,
       handler (/*newNodes, oldNodes*/) {
-        console.log('visibilityOfNodeGroups changed');
+        //console.log('visibilityOfNodeGroups changed');
         if (this.nodes && this.currentModel) {
-          console.log('visibilityOfNodeGroups watcher calling prepD3DataAndUpdate')
+          //console.log('visibilityOfNodeGroups watcher calling prepD3DataAndUpdate')
           this.prepD3DataAndUpdate();
         }
 
