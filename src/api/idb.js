@@ -1,5 +1,5 @@
 const DB_NAME = "mipa";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 let DB;
 
 export default {
@@ -26,6 +26,32 @@ export default {
         let db = e.target.result;
         db.createObjectStore("baselines");
         db.createObjectStore("resultsOfActions");
+        db.createObjectStore("dependencyGraphDisplay");
+      };
+
+      request.onupgradeneeded = function(event) {
+        //db = request.result;
+        let db = event.target.result;
+
+        db.onerror = function(errorEvent) {
+          note.innerHTML += "<li>Error loading database.</li>";
+        };
+
+        if (event.oldVersion < 1) {
+          // Version 1 is the first version of the database.
+          db.createObjectStore("baselines");
+          db.createObjectStore("resultsOfActions");
+          /*var store = db.createObjectStore("books", { keyPath: "isbn" });
+          var titleIndex = store.createIndex("by_title", "title", { unique: true });
+          var authorIndex = store.createIndex("by_author", "author");*/
+        }
+        if (event.oldVersion < 2) {
+          db.createObjectStore("dependencyGraphDisplay", {
+            keyPath: "modelId"
+          });
+          /*var bookStore = request.transaction.objectStore("books");
+          var yearIndex = bookStore.createIndex("by_year", "year");*/
+        }
       };
     });
   },
@@ -126,6 +152,21 @@ export default {
 
       let store = trans.objectStore("resultsOfActions");
       store.put(resultsOfActions);
+    });
+  },
+
+  async saveDependencyGraphDisplay(saveFile) {
+    let db = await this.getDb();
+
+    return new Promise(resolve => {
+      let trans = db.transaction(["dependencyGraphDisplay"], "readwrite");
+      trans.oncomplete = () => {
+        resolve();
+      };
+
+      let store = trans.objectStore("dependencyGraphDisplay");
+      console.log(saveFile);
+      store.put(saveFile);
     });
   }
 };

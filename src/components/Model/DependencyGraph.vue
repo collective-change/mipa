@@ -49,6 +49,7 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import * as d3 from "d3";
 import "d3-selection-multi";
 import * as sizeof from "object-sizeof";
+import idb from "src/api/idb";
 import { responsify } from "src/utils/util-responsify-svg";
 import { sleep } from "src/utils/util-sleep";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
@@ -297,7 +298,9 @@ export default {
         circlePositions.push({ id: thisCircle.data()[0].id, x: thisCircle.attr('x'), y: thisCircle.attr('y') })
       });
       this.simulation.on("end", null); //remove savePositions function from simulation on end
-      console.log(circlePositions);
+      let saveFile = { modelId: this.currentModel.id, circlePositions }
+      console.log('saveing positions');
+      idb.saveDependencyGraphDisplay(saveFile);
     },
 
     getVisibleData () {

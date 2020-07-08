@@ -1122,7 +1122,7 @@ function putActionResultsInIdb(actionResults, actionId) {
 }
 
 function putDataInIdb(payload) {
-  let request = indexedDB.open("mipa", 1);
+  let request = indexedDB.open("mipa", 2);
   request.onsuccess = function(event) {
     let idb = request.result;
     let requesttrans = idb
