@@ -163,9 +163,7 @@ export default {
       trans.oncomplete = () => {
         resolve();
       };
-
       let store = trans.objectStore("dependencyGraphDisplay");
-      console.log(saveFile);
       store.put(saveFile);
     });
   }
