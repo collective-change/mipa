@@ -6,7 +6,7 @@ const state = {
   selectedIssueId: null,
   selectedActionId: null,
   selectedSituationId: null,
-  visibilityOfNodeGroups: null
+  expandedNodeGroups: null
 };
 
 const mutations = {
@@ -18,8 +18,8 @@ const mutations = {
   setSelectedNodeGroup(state, nodeGroup) {
     state.selectedNodeGroup = nodeGroup;
   },
-  setVisibilityOfNodeGroups(state, visibilityOfNodeGroups) {
-    state.visibilityOfNodeGroups = visibilityOfNodeGroups;
+  setExpandedNodeGroups(state, expandedNodeGroups) {
+    state.expandedNodeGroups = expandedNodeGroups;
   },
   setUiNodeChanged(state, value) {
     state.uiNodeChanged = value;

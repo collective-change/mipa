@@ -37,7 +37,7 @@
             selected-color="primary"
             :selected.sync="selectedNodeGroupId"
             tick-strategy="strict"
-            :ticked.sync="visibilityOfNodeGroups"
+            :ticked.sync="expandedNodeGroups"
             :expanded.sync="expanded"
             no-nodes-label="None available"
           >
@@ -91,6 +91,7 @@
 <script>
 import { mapGetters, mapState } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
+import idb from "src/api/idb";
 
 export default {
   components: {
@@ -102,6 +103,7 @@ export default {
   },
   data () {
     return {
+      //dependencyGraphSavefile: null,
       showConfigOrgModel: false,
       models: null,
       modelOptions: ["Tzu Chi", "Human-Earth system model"],
@@ -117,12 +119,12 @@ export default {
       "uiNodeChangedFields",
       "selectedNodeGroup"
     ]),
-    visibilityOfNodeGroups: {
+    expandedNodeGroups: {
       get () {
-        return this.$store.state.ui.visibilityOfNodeGroups
+        return this.$store.state.ui.expandedNodeGroups
       },
       set (value) {
-        this.$store.commit('ui/setVisibilityOfNodeGroups', value)
+        this.$store.commit('ui/setExpandedNodeGroups', value)
       }
     },
 
@@ -209,6 +211,8 @@ export default {
       this.$store.dispatch("model/bindNodes", modelId);
       this.$store.dispatch("adHocDocs/bindExchangeRates");
       this.$store.dispatch("calcResults/loadBaseline", modelId);
+
+      //this.dependencyGraphSavefile = idb.getDependencyGraphDisplay(modelId);
 
       //bind to currentModel's nodes
       //this.$store.dispatch("orgs/bindCurrentOrg", this.$route.params.orgId);

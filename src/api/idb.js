@@ -166,5 +166,23 @@ export default {
       let store = trans.objectStore("dependencyGraphDisplay");
       store.put(saveFile);
     });
+  },
+
+  async getDependencyGraphDisplay(key) {
+    let db = await this.getDb();
+
+    return new Promise(resolve => {
+      let trans = db.transaction(["dependencyGraphDisplay"], "readonly");
+      trans.oncomplete = () => {
+        resolve(saveFile);
+      };
+
+      let store = trans.objectStore("dependencyGraphDisplay");
+      let saveFile = {};
+
+      store.get(key).onsuccess = e => {
+        saveFile = e.target.result;
+      };
+    });
   }
 };

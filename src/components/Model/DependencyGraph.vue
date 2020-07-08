@@ -40,7 +40,7 @@
         @close="showAddLink = false"
       />
     </q-dialog>
-    <pre>{{visibilityOfNodeGroups}}</pre>
+    <pre>{{expandedNodeGroups}}</pre>
   </div>
 </template>
 
@@ -140,12 +140,12 @@ export default {
     debugLinks () {
       return this.d3Data.links.map(link => { return { source: link.source.id, target: link.target.id } })
     },
-    visibilityOfNodeGroups: {
+    expandedNodeGroups: {
       get () {
-        return this.$store.state.ui.visibilityOfNodeGroups
+        return this.$store.state.ui.expandedNodeGroups
       },
       set (value) {
-        this.$store.commit('ui/setVisibilityOfNodeGroups', value)
+        this.$store.commit('ui/setExpandedNodeGroups', value)
       }
     },
     selectedNode () {
@@ -310,8 +310,8 @@ export default {
       let links = [...this.storeData.links];
 
       //compute collapsedNodeGroups
-      if (this.currentModel.nodeGroups && this.visibilityOfNodeGroups)
-        collapsedNodeGroups = this.currentModel.nodeGroups.filter(group => !that.visibilityOfNodeGroups.includes(group.id))
+      if (this.currentModel.nodeGroups && this.expandedNodeGroups)
+        collapsedNodeGroups = this.currentModel.nodeGroups.filter(group => !that.expandedNodeGroups.includes(group.id))
       else if (this.currentModel.nodeGroups)
         collapsedNodeGroups = [...this.currentModel.nodeGroups];
       else collapsedNodeGroups = [];
@@ -544,7 +544,7 @@ export default {
         .append("circle")
         .attr("r", nodeRadius)
         .attr("x", d => d.x ? d.x : this.svgWidth * 0.5)
-        .attr("y", d => d.y ? d.y : this.svgWidth * 0.5)
+        .attr("y", d => d.y ? d.y : this.svgHeight * 0.5)
         .call(
           d3
             .drag()
@@ -1152,13 +1152,13 @@ export default {
       }
     },
 
-    visibilityOfNodeGroups: {
+    expandedNodeGroups: {
       immediate: true,
       deep: true,
       handler (/*newNodes, oldNodes*/) {
-        //console.log('visibilityOfNodeGroups changed');
+        //console.log('expandedNodeGroups changed');
         if (this.nodes && this.currentModel) {
-          //console.log('visibilityOfNodeGroups watcher calling prepD3DataAndUpdate')
+          //console.log('expandedNodeGroups watcher calling prepD3DataAndUpdate')
           this.prepD3DataAndUpdate();
         }
 
