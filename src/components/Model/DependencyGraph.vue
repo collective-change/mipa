@@ -180,8 +180,12 @@ export default {
       .force("center", d3.forceCenter(this.svgWidth / 2, this.svgHeight / 2))
       .force("forceX", d3.forceX())
       .force("forceY", d3.forceY())
-      .velocityDecay(0.2)
-      .on("tick", this.tick);
+      .alphaMin(0.001)
+      .alphaDecay(0.0667457) //about 100 iterations
+      .alphaTarget(0)
+      .velocityDecay(0.1)
+      .on("tick", this.tick)
+      .on("end", this.onForceSimulationEnd);
     // Call first time to setup default values
     this.updateForces();
   },
@@ -285,6 +289,11 @@ export default {
       graph.selectAll("text").attr("transform", transform);
       //console.log("alpha: ", this.simulation.alpha());
     },
+
+    onForceSimulationEnd () {
+      console.log('onForceSimulationEnd');
+    },
+
     getVisibleData () {
       let that = this;
       let collapsedNodeGroups, nodesInCollapsedGroup;
@@ -798,7 +807,7 @@ export default {
     },
     nodeDragEnded (d) {
       if (!d3.event.active) {
-        this.simulation.alphaTarget(0.0001);
+        this.simulation.alphaTarget(0);
       }
       d.fx = null;
       d.fy = null;
@@ -835,7 +844,7 @@ export default {
       texts.classed("faded", true);
       texts.filter(df => related.indexOf(df) > -1).classed("highlight", true);
       // This ensures that tick is called so the node count is updated
-      this.simulation.alphaTarget(0.0001).restart();
+      this.simulation.alphaTarget(0/*0.0001*/).restart();
     },
     nodeMouseOut (d) {
       const graph = this.selections.graph;
