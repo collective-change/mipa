@@ -873,17 +873,9 @@ export default {
     nodeClick (d, i, clickType) {
       const circles = this.selections.graph.selectAll("circle");
 
-      let correspondingStoreNode = this.storeData.nodes.find(function (
-        sNode
-      ) {
-        return sNode.id == d.id;
-      });
+      circles.classed("selected", false);
+      circles.filter(td => td === d).classed("selected", true);
 
-      if (this.selectedNodeId == correspondingStoreNode.id) {
-        circles.classed("selected", false);
-        circles.filter(td => td === d).classed("selected", true);
-        //return;
-      }
       if (this.uiNodeChanged) {
         this.$q
           .dialog({
