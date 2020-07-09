@@ -1,7 +1,7 @@
 <template>
   <q-page padding>
     <div class="text-h5">
-      <span v-if="currentOrg">{{ currentOrg.name }}'s goal: </span>
+      <span v-if="currentOrg">{{ currentOrg.name }}'s goal:</span>
       <span v-if="currentOrg">{{ currentOrg.goal }}</span>
     </div>
 
@@ -10,7 +10,7 @@
         <div class="row">
           {{ currentModel ? currentModel.name : "" }}
           {{
-            currentModel ? (currentModel.isOrgMainModel ? " (main)" : "") : ""
+          currentModel ? (currentModel.isOrgMainModel ? " (main)" : "") : ""
           }}
         </div>
         <div class="row">
@@ -22,14 +22,9 @@
           />
         </div>
         <div class="row">
-          <calculator-ui
-            calculationType="baseline"
-            buttonLabel="Calculate baseline"
-          />
+          <calculator-ui calculationType="baseline" buttonLabel="Calculate baseline" />
         </div>
-        <div class="row">
-          Expand node groups
-        </div>
+        <div class="row">Expand node groups</div>
         <div>
           <q-tree
             :nodes="nodeGroupsForTree"
@@ -42,11 +37,8 @@
             no-nodes-label="None available"
           >
             <template v-slot:default-header="{ node }">
-              <div class="">{{ node.label }}</div>
-              <div
-                class="row items-center"
-                @click.stop
-              >
+              <div class>{{ node.label }}</div>
+              <div class="row items-center" @click.stop>
                 <q-icon
                   v-if="node.groupId == selectedNodeGroupId"
                   :name="node.icon || 'edit'"
@@ -72,11 +64,11 @@
           </q-tree>
         </div>
         <!-- <pre>selectedNodeGroupId {{ selectedNodeGroupId }}</pre>
-        <pre>selectedNodeGroup {{ selectedNodeGroup }}</pre> -->
+        <pre>selectedNodeGroup {{ selectedNodeGroup }}</pre>-->
       </div>
 
       <div class="col-12 col-md-7">
-        <dependency-graph></dependency-graph>
+        <dependency-graph :initialCirclePositions="initialCirclePositions"></dependency-graph>
       </div>
       <div class="col-12 col-md-3">
         <node-summary />
@@ -101,14 +93,15 @@ export default {
     "dependency-graph": require("components/Model/DependencyGraph.vue").default,
     "node-summary": require("components/Model/NodeSummary.vue").default
   },
-  data () {
+  data() {
     return {
       //dependencyGraphSavefile: null,
       showConfigOrgModel: false,
       models: null,
       modelOptions: ["Tzu Chi", "Human-Earth system model"],
       selectedNodeGroupId: null,
-      expanded: null
+      expanded: null,
+      initialCirclePositions: null
     };
   },
   computed: {
@@ -120,15 +113,17 @@ export default {
       "selectedNodeGroup"
     ]),
     expandedNodeGroups: {
-      get () {
-        return this.$store.state.ui.expandedNodeGroups ? this.$store.state.ui.expandedNodeGroups : [];
+      get() {
+        return this.$store.state.ui.expandedNodeGroups
+          ? this.$store.state.ui.expandedNodeGroups
+          : [];
       },
-      set (value) {
-        this.$store.commit('ui/setExpandedNodeGroups', value)
+      set(value) {
+        this.$store.commit("ui/setExpandedNodeGroups", value);
       }
     },
 
-    nodeGroupsForTree () {
+    nodeGroupsForTree() {
       if (!this.currentModel || !this.currentModel.nodeGroups) return [];
       let list = JSON.parse(JSON.stringify(this.currentModel.nodeGroups)),
         map = {},
@@ -159,7 +154,7 @@ export default {
   },
 
   methods: {
-    saveNodeGroupName (groupId, name) {
+    saveNodeGroupName(groupId, name) {
       let clonedNodeGroups = JSON.parse(
         JSON.stringify(this.currentModel.nodeGroups)
       );
@@ -178,7 +173,7 @@ export default {
 
   watch: {
     //sync selectedNodeGroupId to ui.selectedNodeGroup
-    selectedNodeGroupId () {
+    selectedNodeGroupId() {
       if (
         this.selectedNodeGroup == null ||
         this.selectedNodeGroup.id != this.selectedNodeGroupId
@@ -190,13 +185,13 @@ export default {
       }
     },
     //sync ui.selectedNodeGroup to selectedNodeGroupId
-    selectedNodeGroup () {
+    selectedNodeGroup() {
       if (this.selectedNodeGroup)
         this.selectedNodeGroupId = this.selectedNodeGroup.id;
       else this.selectedNodeGroupId = null;
     }
   },
-  created () {
+  created() {
     (async () => {
       //console.log("waiting for currentUser to be defined");
       while (
@@ -212,10 +207,16 @@ export default {
       this.$store.dispatch("adHocDocs/bindExchangeRates");
       this.$store.dispatch("calcResults/loadBaseline", modelId);
 
-      let dependencyGraphSavefile = await idb.getDependencyGraphDisplay(modelId);
+      let dependencyGraphSavefile = await idb.getDependencyGraphDisplay(
+        modelId
+      );
       //console.log('dependencyGraphSaveFile', dependencyGraphSavefile);
       //console.log('setting expandedNodeGroups:', dependencyGraphSavefile.expandedNodeGroups)
-      this.$store.commit('ui/setExpandedNodeGroups', dependencyGraphSavefile.expandedNodeGroups);
+      this.$store.commit(
+        "ui/setExpandedNodeGroups",
+        dependencyGraphSavefile.expandedNodeGroups
+      );
+      this.initialCirclePositions = dependencyGraphSavefile.circlePositions;
 
       //bind to currentModel's nodes
       //this.$store.dispatch("orgs/bindCurrentOrg", this.$route.params.orgId);
@@ -223,9 +224,9 @@ export default {
     })();
     //console.log("above code doesn't block main function stack");
   },
-  mounted () { },
+  mounted() {},
 
-  beforeRouteLeave (to, from, next) {
+  beforeRouteLeave(to, from, next) {
     if (this.uiNodeChanged) {
       this.$q
         .dialog({
@@ -245,7 +246,7 @@ export default {
     } else next();
   },
 
-  beforeDestroy () {
+  beforeDestroy() {
     // don't unbind firestore refs here; leave it until org change in Layout.vue
   }
 };

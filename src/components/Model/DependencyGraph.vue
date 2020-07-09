@@ -65,6 +65,7 @@ export default {
     "delete-node": require("components/Model/Modals/DeleteNode.vue").default,
     "add-link": require("components/Model/Modals/AddLink.vue").default
   },
+  props: ["initialCirclePositions"],
   data() {
     return {
       showAddNode: false,
@@ -257,6 +258,7 @@ export default {
       if (!this.d3Data) {
         return;
       }
+      //this.simulation.stop();
 
       this.simulation
         .force("collide")
@@ -293,14 +295,13 @@ export default {
       let logged = false;
       graph.selectAll("circle").each(function() {
         const thisCircle = d3.select(this);
-        if (!logged) {
-          console.log(thisCircle.attr("transform"));
-          logged = true;
-        }
+        let tempStr = thisCircle.attr("transform").replace("translate(", "");
+        tempStr = tempStr.replace(")", "");
+        let xy = tempStr.split(",");
         circlePositions.push({
           id: thisCircle.data()[0].id,
-          x: thisCircle.x,
-          y: thisCircle.attr("y")
+          x: xy[0],
+          y: xy[1]
         });
       });
       this.simulation.on("end", null); //remove savePositions function from simulation on end
@@ -309,12 +310,11 @@ export default {
         expandedNodeGroups: this.expandedNodeGroups,
         circlePositions
       };
-      console.log("saveing positions", circlePositions[0]);
+      //console.log("saving positions", circlePositions[0]);
       idb.saveDependencyGraphDisplay(saveFile);
     },
 
     getVisibleData(payload) {
-      //TODO: save initial position to node.x, node.y
       let that = this;
       let collapsedNodeGroups, nodesInCollapsedGroup;
 
@@ -331,6 +331,7 @@ export default {
       else collapsedNodeGroups = [];
 
       //TODO: topoSort collapsedNodeGroups
+      //for collapsed node groups, replace individual nodes with a group node
       collapsedNodeGroups.forEach(function(collapsedGroup) {
         let d3Node,
           xSum = 0,
@@ -363,7 +364,7 @@ export default {
             }
           }
         });
-
+        //remove nodes from collapsed node group
         nodes = nodes.filter(node => !collapsedGroup.nodeIds.includes(node.id));
 
         //add group node; first initialize with average position of child nodes if available
@@ -417,12 +418,32 @@ export default {
         let nodeInGroupCount = 0;
         newlyExpandedGroup.nodeIds.forEach(function(nodeId) {
           let nodeInGroup = nodes.find(n => n.id == nodeId);
-          nodeInGroup.x = exitingGroupNode.x + 50 * Math.sin(nodeInGroupCount);
-          nodeInGroup.y = exitingGroupNode.y + 50 * Math.cos(nodeInGroupCount);
+          //set position to be around the exiting group node
+          nodeInGroup.x =
+            exitingGroupNode.x +
+            that.forceProperties.link.distance *
+              Math.sin(nodeInGroupCount * 10);
+          nodeInGroup.y =
+            exitingGroupNode.y +
+            that.forceProperties.link.distance *
+              Math.cos(nodeInGroupCount * 10);
           nodeInGroupCount++;
           //console.log("in group:", nodeInGroup);
         });
       }
+
+      //if nothing in d3Data (meaning the simulation is new)
+      //then set initial positions node.x, node.y
+      if (that.d3Data.nodes.length == 0) {
+        let circlePositions = that.initialCirclePositions;
+        if (circlePositions.length)
+          nodes.forEach(function(node) {
+            let circlePosition = circlePositions.find(c => c.id == node.id);
+            if (!isNaN(circlePosition.x)) node.x = Number(circlePosition.x);
+            if (!isNaN(circlePosition.y)) node.y = Number(circlePosition.y);
+          });
+      }
+
       //TODO: remove duplicate group-to-group links and add count
 
       return { nodes, links };
