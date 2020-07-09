@@ -287,27 +287,6 @@ export default {
       //this.simulation.stop();
     },
 
-    /*savePositions () {
-      const nodes = d3.selectAll(".node");
-      console.log(nodes);
-      return;
-      let circlePositions = [];
-      let logged = false;
-      graph.selectAll('circle').each(function () {
-        const thisCircle = d3.select(this);
-        if (!logged) { console.log(thisCircle.attr('transform')); logged = true; }
-        circlePositions.push({
-          id: thisCircle.data()[0].id,
-          x: thisCircle.attr('x'),
-          y: thisCircle.attr('y')
-        })
-      });
-      this.simulation.on("end", null); //remove savePositions function from simulation on end
-      let saveFile = { modelId: this.currentModel.id, expandedNodeGroups: this.expandedNodeGroups, circlePositions }
-      console.log('saveing positions', circlePositions[0]);
-      idb.saveDependencyGraphDisplay(saveFile);
-    },*/
-
     savePositions() {
       const graph = this.selections.graph;
       let circlePositions = [];
@@ -334,7 +313,8 @@ export default {
       idb.saveDependencyGraphDisplay(saveFile);
     },
 
-    getVisibleData() {
+    getVisibleData(payload) {
+      //TODO: save initial position to node.x, node.y
       let that = this;
       let collapsedNodeGroups, nodesInCollapsedGroup;
 
@@ -352,6 +332,10 @@ export default {
 
       //TODO: topoSort collapsedNodeGroups
       collapsedNodeGroups.forEach(function(collapsedGroup) {
+        let d3Node,
+          xSum = 0,
+          ySum = 0,
+          collapsedD3NodesInGroupCount = 0;
         let nodeForCollapsedGroup = {
           id: collapsedGroup.id,
           name: collapsedGroup.name,
@@ -370,10 +354,23 @@ export default {
           if (node.isSelfBlocking) nodeForCollapsedGroup.isSelfBlocking = true;
           if (node.symbolFormula == "")
             nodeForCollapsedGroup.symbolFormula = "";
+          if (that.d3Data.nodes.length) {
+            d3Node = that.d3Data.nodes.find(n => n.id == node.id);
+            if (d3Node) {
+              xSum += d3Node.x;
+              ySum += d3Node.y;
+              collapsedD3NodesInGroupCount++;
+            }
+          }
         });
+
         nodes = nodes.filter(node => !collapsedGroup.nodeIds.includes(node.id));
 
-        //add group node
+        //add group node; first initialize with average position of child nodes if available
+        if (collapsedD3NodesInGroupCount) {
+          nodeForCollapsedGroup.x = xSum / collapsedD3NodesInGroupCount;
+          nodeForCollapsedGroup.y = ySum / collapsedD3NodesInGroupCount;
+        }
         nodes.push(nodeForCollapsedGroup);
 
         //remove links with both ends in group
@@ -406,16 +403,36 @@ export default {
         });
       });
 
+      //get nodes in newly expanded nodeGroup, use exiting group node position for new nodes
+      if (payload && payload.newlyExpandedGroupId) {
+        let newlyExpandedGroup = this.currentModel.nodeGroups.find(
+          g => g.id == payload.newlyExpandedGroupId //
+        );
+        //console.log("newly expanded group", newlyExpandedGroup);
+        //get exiting group node position
+        let exitingGroupNode = that.d3Data.nodes.find(
+          n => n.id == newlyExpandedGroup.id
+        );
+        //console.log("exiting groupNode", exitingGroupNode);
+        let nodeInGroupCount = 0;
+        newlyExpandedGroup.nodeIds.forEach(function(nodeId) {
+          let nodeInGroup = nodes.find(n => n.id == nodeId);
+          nodeInGroup.x = exitingGroupNode.x + 50 * Math.sin(nodeInGroupCount);
+          nodeInGroup.y = exitingGroupNode.y + 50 * Math.cos(nodeInGroupCount);
+          nodeInGroupCount++;
+          //console.log("in group:", nodeInGroup);
+        });
+      }
       //TODO: remove duplicate group-to-group links and add count
 
       return { nodes, links };
     },
-    prepD3DataAndUpdate() {
+    prepD3DataAndUpdate(payload) {
       if (this.nodes && this.currentModel) {
         /*continue*/
       } else return;
       var that = this;
-      let visibleData = this.getVisibleData();
+      let visibleData = this.getVisibleData(payload);
       let visibleNodes = visibleData.nodes;
       let visibleLinks = visibleData.links;
 
@@ -462,6 +479,7 @@ export default {
           }
         } else {
           // visibleNode does not exist in d3Data; clone it there
+          // set position
           //visibleNode.x = 400;
           //visibleNode.y = 400;
           that.d3Data.nodes.push(Object.assign({}, visibleNode));
@@ -593,21 +611,14 @@ export default {
       // Nodes should always be redrawn to avoid lines above them
       graph.selectAll("circle").remove();
 
-      const transform = d => {
-        return "translate(" + d.x + "," + d.y + ")";
-      };
-
       graph
         .selectAll("circle")
         .data(this.d3Data.nodes)
         .enter()
         .append("circle")
         .attr("r", nodeRadius)
-        //.attr("cx", 600)
-        //.attr("cy", 600)
-        /*.attr("transform", d => {
-          return "translate(" + 400 + "," + 400 + ")";
-        })*/
+        //.attr("cx", 100)
+        //.attr("cy", 100)
         //.attr("x", d => d.x ? 400 : this.svgWidth * 0.5)
         //.attr("y", d => d.y ? 400 : this.svgHeight * 0.5)
         .call(
@@ -1225,11 +1236,19 @@ export default {
     expandedNodeGroups: {
       immediate: true,
       deep: true,
-      handler(/*newNodes, oldNodes*/) {
+      handler(newExpandedGroups, oldExpandedGroups) {
         //console.log('expandedNodeGroups changed');
         if (this.nodes && this.currentModel) {
           //console.log('expandedNodeGroups watcher calling prepD3DataAndUpdate')
-          this.prepD3DataAndUpdate();
+          //console.log("new: ", newExpandedGroups);
+          //console.log("old: ", oldExpandedGroups);
+          let newlyExpandedGroups = newExpandedGroups.filter(
+            g => !oldExpandedGroups.includes(g)
+          );
+          let newlyExpandedGroupId = newlyExpandedGroups[0]; //only one match is expected
+          //console.log("newly expanded:", newlyExpandedGroups);
+          //send newly expanded node groups
+          this.prepD3DataAndUpdate({ newlyExpandedGroupId });
         }
       }
     }
