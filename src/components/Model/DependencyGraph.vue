@@ -1268,15 +1268,11 @@ export default {
           );
           let newlyCollapsedGroupId = newlyCollapsedGroups[0]; //at most one match expected
 
-          //set newly expanded group as selected group
-          if (newlyExpandedGroupId) {
-            console.log("newlyExpandedNodeGroupId", newlyExpandedGroupId);
+          //set newly expanded or collapsed group as selected group
+          if (newlyExpandedGroupId)
             idOfNodeGroupToSelect = newlyExpandedGroupId;
-          }
-          if (newlyCollapsedGroupId) {
-            console.log("newlyCollapsedGroupId", newlyCollapsedGroupId);
+          if (newlyCollapsedGroupId)
             idOfNodeGroupToSelect = newlyCollapsedGroupId;
-          }
           let nodeGroupToSelect = this.currentModel.nodeGroups.find(
             ng => ng.id == idOfNodeGroupToSelect
           );
