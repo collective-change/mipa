@@ -24,7 +24,7 @@
         <div class="row">
           <calculator-ui calculationType="baseline" buttonLabel="Calculate baseline" />
         </div>
-        <div class="row">Expand node groups</div>
+        <div class="row">Node groups</div>
         <div>
           <q-tree
             :nodes="nodeGroupsForTree"
@@ -34,7 +34,7 @@
             tick-strategy="strict"
             :ticked.sync="expandedNodeGroups"
             :expanded.sync="expanded"
-            no-nodes-label="None available"
+            no-nodes-label="To organize nodes into groups, right click on a node and select 'Start node group', then you can add more nodes to it."
           >
             <template v-slot:default-header="{ node }">
               <div class>{{ node.label }}</div>
