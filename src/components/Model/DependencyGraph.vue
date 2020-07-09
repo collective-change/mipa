@@ -311,8 +311,10 @@ export default {
         circlePositions
       };
       //if circlePositions are valid, then save
-      if (circlePositions.length && !isNaN(circlePositions[0].x))
+      if (circlePositions.length && !isNaN(circlePositions[0].x)) {
+        console.log("saving positions");
         idb.saveDependencyGraphDisplay(saveFile);
+      }
     },
 
     getVisibleData(payload) {
@@ -1232,7 +1234,7 @@ export default {
     selectedNodeGroup: {
       deep: true,
       handler() {
-        this.updateNodeClassAndText(true, 1);
+        this.updateNodeClassAndText(true, 0.001);
       }
     },
 
