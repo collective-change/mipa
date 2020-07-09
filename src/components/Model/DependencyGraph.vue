@@ -438,7 +438,7 @@ export default {
       //then set initial positions node.x, node.y
       if (that.d3Data.nodes.length == 0) {
         let circlePositions = that.initialCirclePositions;
-        if (circlePositions.length)
+        if (circlePositions && circlePositions.length)
           nodes.forEach(function(node) {
             let circlePosition = circlePositions.find(c => c.id == node.id);
             if (!isNaN(circlePosition.x)) node.x = Number(circlePosition.x);
