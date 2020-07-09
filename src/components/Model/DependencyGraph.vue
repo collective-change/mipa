@@ -310,8 +310,9 @@ export default {
         expandedNodeGroups: this.expandedNodeGroups,
         circlePositions
       };
-      //console.log("saving positions", circlePositions[0]);
-      idb.saveDependencyGraphDisplay(saveFile);
+      //if circlePositions are valid, then save
+      if (circlePositions.length && !isNaN(circlePositions[0].x))
+        idb.saveDependencyGraphDisplay(saveFile);
     },
 
     getVisibleData(payload) {
@@ -418,19 +419,20 @@ export default {
         let nodeInGroupCount = 0;
         newlyExpandedGroup.nodeIds.forEach(function(nodeId) {
           let nodeInGroup = nodes.find(n => n.id == nodeId);
-          //set position to be around the exiting group node
-          nodeInGroup.x =
-            exitingGroupNode.x +
-            that.forceProperties.link.distance *
-              0.5 *
-              Math.sin(nodeInGroupCount * 10);
-          nodeInGroup.y =
-            exitingGroupNode.y +
-            that.forceProperties.link.distance *
-              0.5 *
-              Math.cos(nodeInGroupCount * 10);
-          nodeInGroupCount++;
-          //console.log("in group:", nodeInGroup);
+          if (exitingGroupNode) {
+            //set position to be around the exiting group node
+            nodeInGroup.x =
+              exitingGroupNode.x +
+              that.forceProperties.link.distance *
+                0.5 *
+                Math.sin(nodeInGroupCount * 10);
+            nodeInGroup.y =
+              exitingGroupNode.y +
+              that.forceProperties.link.distance *
+                0.5 *
+                Math.cos(nodeInGroupCount * 10);
+            nodeInGroupCount++;
+          }
         });
       }
 
@@ -706,6 +708,7 @@ export default {
                     that.selectedNodeId
                   );
                   that.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
+                  //TODO: set nodeGroup as expanded
                 }
               }
             ];
