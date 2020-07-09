@@ -443,8 +443,10 @@ export default {
         if (circlePositions && circlePositions.length)
           nodes.forEach(function(node) {
             let circlePosition = circlePositions.find(c => c.id == node.id);
-            if (!isNaN(circlePosition.x)) node.x = Number(circlePosition.x);
-            if (!isNaN(circlePosition.y)) node.y = Number(circlePosition.y);
+            if (circlePosition) {
+              if (!isNaN(circlePosition.x)) node.x = Number(circlePosition.x);
+              if (!isNaN(circlePosition.y)) node.y = Number(circlePosition.y);
+            }
           });
       }
 
@@ -704,9 +706,13 @@ export default {
               {
                 label: "Start node group",
                 handler: async function() {
-                  let nodeGroup = await that.createNodeGroup(
-                    that.selectedNodeId
+                  let node = that.storeData.nodes.find(
+                    n => n.id == that.selectedNodeId
                   );
+                  let nodeGroup = await that.createNodeGroup({
+                    nodeId: that.selectedNodeId,
+                    groupName: node.name
+                  });
                   that.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
                   //TODO: set nodeGroup as expanded
                 }

@@ -405,12 +405,12 @@ const actions = {
     //console.log("end updateClassifiedInfluencersOf");
   },
 
-  async createNodeGroup({}, nodeId) {
+  async createNodeGroup({}, payload) {
     let success = false;
     let nodeGroup = {
       id: uid(),
-      name: "untitled node group",
-      nodeIds: [nodeId]
+      name: payload.groupName,
+      nodeIds: [payload.nodeId]
     };
     var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
     try {
