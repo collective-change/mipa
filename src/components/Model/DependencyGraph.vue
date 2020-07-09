@@ -40,7 +40,6 @@
         @close="showAddLink = false"
       />
     </q-dialog>
-    <pre>{{expandedNodeGroups}}</pre>
   </div>
 </template>
 

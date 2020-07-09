@@ -121,7 +121,7 @@ export default {
     ]),
     expandedNodeGroups: {
       get () {
-        return this.$store.state.ui.expandedNodeGroups
+        return this.$store.state.ui.expandedNodeGroups ? this.$store.state.ui.expandedNodeGroups : [];
       },
       set (value) {
         this.$store.commit('ui/setExpandedNodeGroups', value)
@@ -212,7 +212,10 @@ export default {
       this.$store.dispatch("adHocDocs/bindExchangeRates");
       this.$store.dispatch("calcResults/loadBaseline", modelId);
 
-      //this.dependencyGraphSavefile = idb.getDependencyGraphDisplay(modelId);
+      let dependencyGraphSavefile = await idb.getDependencyGraphDisplay(modelId);
+      //console.log('dependencyGraphSaveFile', dependencyGraphSavefile);
+      //console.log('setting expandedNodeGroups:', dependencyGraphSavefile.expandedNodeGroups)
+      this.$store.commit('ui/setExpandedNodeGroups', dependencyGraphSavefile.expandedNodeGroups);
 
       //bind to currentModel's nodes
       //this.$store.dispatch("orgs/bindCurrentOrg", this.$route.params.orgId);
