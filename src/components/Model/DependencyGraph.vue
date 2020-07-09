@@ -422,10 +422,12 @@ export default {
           nodeInGroup.x =
             exitingGroupNode.x +
             that.forceProperties.link.distance *
+              0.5 *
               Math.sin(nodeInGroupCount * 10);
           nodeInGroup.y =
             exitingGroupNode.y +
             that.forceProperties.link.distance *
+              0.5 *
               Math.cos(nodeInGroupCount * 10);
           nodeInGroupCount++;
           //console.log("in group:", nodeInGroup);
@@ -499,10 +501,6 @@ export default {
             graphTextChange = true;
           }
         } else {
-          // visibleNode does not exist in d3Data; clone it there
-          // set position
-          //visibleNode.x = 400;
-          //visibleNode.y = 400;
           that.d3Data.nodes.push(Object.assign({}, visibleNode));
           dataChanged = true;
         }
@@ -563,7 +561,7 @@ export default {
         this.updateData();
       }
       if (graphTextChange && !dataChanged) {
-        this.updateNodeClassAndText(true);
+        this.updateNodeClassAndText(true, 0.001);
       }
     },
     updateData(restartForceSimulation = true) {
@@ -794,7 +792,7 @@ export default {
           that.nodeClick(d, i, "regularClick");
         });
 
-      this.updateNodeClassAndText();
+      this.updateNodeClassAndText(false);
 
       // Add 'marker-end' attribute to each path
       svg
@@ -807,7 +805,7 @@ export default {
         this.simulation.alpha(1).restart();
       }
     },
-    updateNodeClassAndText(restartSimulation = false) {
+    updateNodeClassAndText(restartSimulation, alpha) {
       const graph = this.selections.graph;
       const selectedCircle = graph.selectAll("circle.selected");
       const nodeIdsInNodeGroup = this.selectedNodeGroup
@@ -851,7 +849,7 @@ export default {
         .call(this.wrap, nodeRadius * 2); // wrap the text in <= node diameter
       //update circle styles as well
       if (restartSimulation) {
-        this.simulation.alpha(0.001).restart();
+        this.simulation.alpha(alpha).restart();
       }
     },
     updateForces() {
@@ -1020,7 +1018,7 @@ export default {
         } else {
           that.$store.commit("ui/setSelectedNodeGroup", null);
         }
-        this.updateNodeClassAndText();
+        this.updateNodeClassAndText(false);
       }
     },
     contextMenu(hostD) {
@@ -1225,7 +1223,7 @@ export default {
     selectedNodeGroup: {
       deep: true,
       handler() {
-        this.updateNodeClassAndText(true);
+        this.updateNodeClassAndText(true, 1);
       }
     },
 
@@ -1258,17 +1256,33 @@ export default {
       immediate: true,
       deep: true,
       handler(newExpandedGroups, oldExpandedGroups) {
-        //console.log('expandedNodeGroups changed');
         if (this.nodes && this.currentModel) {
-          //console.log('expandedNodeGroups watcher calling prepD3DataAndUpdate')
-          //console.log("new: ", newExpandedGroups);
-          //console.log("old: ", oldExpandedGroups);
+          let idOfNodeGroupToSelect;
           let newlyExpandedGroups = newExpandedGroups.filter(
             g => !oldExpandedGroups.includes(g)
           );
-          let newlyExpandedGroupId = newlyExpandedGroups[0]; //only one match is expected
-          //console.log("newly expanded:", newlyExpandedGroups);
-          //send newly expanded node groups
+          let newlyExpandedGroupId = newlyExpandedGroups[0]; //at most one match expected
+
+          let newlyCollapsedGroups = oldExpandedGroups.filter(
+            g => !newExpandedGroups.includes(g)
+          );
+          let newlyCollapsedGroupId = newlyCollapsedGroups[0]; //at most one match expected
+
+          //set newly expanded group as selected group
+          if (newlyExpandedGroupId) {
+            console.log("newlyExpandedNodeGroupId", newlyExpandedGroupId);
+            idOfNodeGroupToSelect = newlyExpandedGroupId;
+          }
+          if (newlyCollapsedGroupId) {
+            console.log("newlyCollapsedGroupId", newlyCollapsedGroupId);
+            idOfNodeGroupToSelect = newlyCollapsedGroupId;
+          }
+          let nodeGroupToSelect = this.currentModel.nodeGroups.find(
+            ng => ng.id == idOfNodeGroupToSelect
+          );
+          this.$store.commit("ui/setSelectedNodeGroup", nodeGroupToSelect);
+
+          //notify prepD3DataAndUpdate with newly expanded node group
           this.prepD3DataAndUpdate({ newlyExpandedGroupId });
         }
       }
