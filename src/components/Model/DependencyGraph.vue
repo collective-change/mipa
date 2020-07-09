@@ -859,7 +859,7 @@ export default {
         )
         .call(this.wrap, nodeRadius * 2); // wrap the text in <= node diameter
       //update circle styles as well
-      if (restartSimulation) {
+      if (restartSimulation && alpha > this.simulation.alpha()) {
         this.simulation.alpha(alpha).restart();
       }
     },
