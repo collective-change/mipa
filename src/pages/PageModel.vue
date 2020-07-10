@@ -28,7 +28,8 @@
         <div>
           <q-tree
             :nodes="nodeGroupsForTree"
-            node-key="groupId"
+            node-key="id"
+            label-key="name"
             selected-color="primary"
             :selected.sync="selectedNodeGroupId"
             tick-strategy="strict"
@@ -37,23 +38,23 @@
             no-nodes-label="To organize nodes into groups, right click on a node and select 'Start node group', then you can add more nodes to it."
           >
             <template v-slot:default-header="{ node }">
-              <div class>{{ node.label }}</div>
+              <div class>{{ node.name }}</div>
               <div class="row items-center" @click.stop>
                 <q-icon
-                  v-if="node.groupId == selectedNodeGroupId"
+                  v-if="node.id == selectedNodeGroupId"
                   :name="node.icon || 'edit'"
                   class="q-mr-sm"
                   color="primary"
                   right
                 ></q-icon>
-                <q-popup-edit v-model="node.label">
+                <q-popup-edit v-model="node.name">
                   <q-input
-                    :value="node.label"
+                    :value="node.name"
                     dense
                     autofocus
                     @change="
                       v => {
-                        node.label = v.target.value;
+                        node.name = v.target.value;
                         saveNodeGroupName(node.groupId, v.target.value);
                       }
                     "
@@ -63,6 +64,8 @@
             </template>
           </q-tree>
         </div>
+        <pre>{{nodeGroupsForTree}}</pre>
+        <pre>{{currentModel ? currentModel.nodeGroups : 'no node groups'}}</pre>
         <!-- <pre>selectedNodeGroupId {{ selectedNodeGroupId }}</pre>
         <pre>selectedNodeGroup {{ selectedNodeGroup }}</pre>-->
       </div>
@@ -84,6 +87,16 @@
 import { mapGetters, mapState } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import idb from "src/api/idb";
+
+const nest = (items, id = null, link = "parentId") => {
+  console.log("items", items);
+  return items
+    .filter(item => item[link] == id)
+    .map(item => ({
+      ...item,
+      children: nest(items, item.id)
+    }));
+};
 
 export default {
   components: {
@@ -125,31 +138,40 @@ export default {
 
     nodeGroupsForTree() {
       if (!this.currentModel || !this.currentModel.nodeGroups) return [];
-      let list = JSON.parse(JSON.stringify(this.currentModel.nodeGroups)),
+      let nodeGroupsList = JSON.parse(
+        JSON.stringify(this.currentModel.nodeGroups)
+      );
+      let results = nest(nodeGroupsList);
+      console.log("nodeGroupsForTree: ", results);
+      return results;
+      /*
         map = {},
         group,
         groupToPush,
         roots = [],
         i;
-      for (i = 0; i < list.length; i += 1) {
-        map[list[i].id] = i; // initialize the map
-        list[i].children = []; // initialize the children
+      for (i = 0; i < nodeGroupsList.length; i += 1) {
+        map[nodeGroupsList[i].id] = i; // initialize the map
+        nodeGroupsList[i].children = []; // initialize the children
       }
-      for (i = 0; i < list.length; i += 1) {
-        group = list[i];
+      console.log("nodeGroupsList", nodeGroupsList);
+      console.log("initialized map", map);
+      for (i = 0; i < nodeGroupsList.length; i += 1) {
+        group = nodeGroupsList[i];
         groupToPush = {
           label: group.name,
           groupId: group.id
         };
         //if (group.nodeIds) groupToPush.children = group.nodeIds;
-        if (group.parentId && group.parentId !== "0") {
+        if (group.parentId) {
+          console.log("parent: ", group.parentId);
           // if you have dangling branches check that map[node.parentId] exists
-          list[map[group.parentId]].children.push(groupToPush);
+          nodeGroupsList[map[group.parentId]].children.push(groupToPush);
         } else {
           roots.push(groupToPush);
         }
       }
-      return roots;
+      return roots;*/
     }
   },
 

@@ -727,6 +727,7 @@ export default {
                 handler: async function() {
                   await that.addToNodeGroup({
                     nodeId: that.selectedNodeId,
+                    nodeIsGroupNode: conditions.nodeIsGroupNode,
                     nodeGroupId: that.selectedNodeGroup.id
                   });
                 }
@@ -773,11 +774,16 @@ export default {
           //loop through nodeGroups to find selectedNodeId
 
           let nodeIsInGroup = false;
+          let nodeIsGroupNode = false;
+          //console.log("selectedNodeId", that.selectedNodeId);
           if (that.currentModel.nodeGroups)
             that.currentModel.nodeGroups.forEach(function(nodeGroup) {
               if (nodeGroup.nodeIds.includes(that.selectedNodeId)) {
                 //console.log("nodeIsInGroup");
                 nodeIsInGroup = true;
+              }
+              if (nodeGroup.id == that.selectedNodeId) {
+                nodeIsGroupNode = true;
               }
             });
 
@@ -793,7 +799,8 @@ export default {
           let menuItems = composeNodeContextMenuItems({
             nodeIsInGroup,
             someNodeGroupIsSelected,
-            selectedNodeIsInSelectedGroup
+            selectedNodeIsInSelectedGroup,
+            nodeIsGroupNode
           });
           let nodeContextMenu = that.contextMenu().items(...menuItems);
           nodeContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
@@ -1267,7 +1274,7 @@ export default {
       immediate: true,
       deep: true,
       handler(newExpandedGroups, oldExpandedGroups) {
-        if (this.nodes && this.currentModel) {
+        if (this.nodes && this.currentModel && oldExpandedGroups) {
           let idOfNodeGroupToSelect;
           let newlyExpandedGroups = newExpandedGroups.filter(
             g => !oldExpandedGroups.includes(g)
