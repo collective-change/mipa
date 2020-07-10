@@ -659,7 +659,34 @@ export default {
           d3.event.preventDefault();
           that.nodeClick(d, null, "contextMenuClick");
 
-          function composeNodeContextMenuItems(conditions) {
+          function composeNodeContextMenuItems() {
+            //add additional items to menu if applicable
+            //if node is not in a group, then show corresponding options
+            //loop through nodeGroups to find selectedNodeId
+
+            let nodeIsInGroup = false;
+            let nodeIsGroupNode = false;
+            //console.log("selectedNodeId", that.selectedNodeId);
+            if (that.currentModel.nodeGroups)
+              that.currentModel.nodeGroups.forEach(function(nodeGroup) {
+                if (nodeGroup.nodeIds.includes(that.selectedNodeId)) {
+                  //console.log("nodeIsInGroup");
+                  nodeIsInGroup = true;
+                }
+                if (nodeGroup.id == that.selectedNodeId) {
+                  nodeIsGroupNode = true;
+                }
+              });
+
+            let someNodeGroupIsSelected = that.selectedNodeGroup ? true : false;
+            let selectedNodeIsInSelectedGroup = false;
+            if (
+              that.selectedNodeGroup &&
+              that.selectedNodeId &&
+              that.selectedNodeGroup.nodeIds.includes(that.selectedNodeId)
+            )
+              selectedNodeIsInSelectedGroup = true;
+
             const baseNodeContextMenuItems = [
               {
                 label: "Add new influencer",
@@ -727,9 +754,20 @@ export default {
                 handler: async function() {
                   await that.addToNodeGroup({
                     nodeId: that.selectedNodeId,
-                    nodeIsGroupNode: conditions.nodeIsGroupNode,
+                    nodeIsGroupNode: nodeIsGroupNode,
                     nodeGroupId: that.selectedNodeGroup.id
                   });
+                }
+              }
+            ];
+
+            const selectedNodeIsGroupNodeMenuItems = [
+              {
+                label: "Expand node group",
+                handler: async function() {
+                  let expandedNodeGroups = [...that.expandedNodeGroups];
+                  expandedNodeGroups.push(that.selectedNodeId);
+                  that.expandedNodeGroups = expandedNodeGroups;
                 }
               }
             ];
@@ -747,61 +785,43 @@ export default {
               {
                 label: "Collapse node group",
                 handler: async function() {
-                  await that.collapseNodeGroup(that.selectedNodeGroup.id);
+                  let expandedNodeGroups = [...that.expandedNodeGroups];
+                  const index = that.expandedNodeGroups.indexOf(
+                    that.selectedNodeGroup.id
+                  );
+                  if (index > -1) {
+                    expandedNodeGroups.splice(index, 1);
+                    that.expandedNodeGroups = expandedNodeGroups;
+                  }
                 }
               },
               {
                 label: "Disband node group",
                 handler: async function() {
+                  //TODO: ask for user to confirm
                   await that.disbandNodeGroup(that.selectedNodeGroup.id);
                 }
               }
             ];
 
             let items = [];
-            items.push(...baseNodeContextMenuItems);
-            if (!conditions.nodeIsInGroup)
-              items.push(...notInNodeGroupContextMenuItems);
-            if (!conditions.nodeIsInGroup && conditions.someNodeGroupIsSelected)
+            if (!nodeIsGroupNode) items.push(...baseNodeContextMenuItems);
+            if (!nodeIsInGroup) items.push(...notInNodeGroupContextMenuItems);
+            //TODO: modify condition below to exclude if selected group node is selected group
+            if (
+              !nodeIsInGroup &&
+              someNodeGroupIsSelected &&
+              that.selectedNodeGroup.id != that.selectedNodeId
+            )
               items.push(...addToSelectedNodeGroupMenuItems);
             if (selectedNodeIsInSelectedGroup)
               items.push(...selectedInNodeGroupMenuItems);
+            if (nodeIsGroupNode)
+              items.push(...selectedNodeIsGroupNodeMenuItems);
             return items;
           }
 
-          //add additional items to menu if applicable
-          //if node is not in a group, then show corresponding options
-          //loop through nodeGroups to find selectedNodeId
-
-          let nodeIsInGroup = false;
-          let nodeIsGroupNode = false;
-          //console.log("selectedNodeId", that.selectedNodeId);
-          if (that.currentModel.nodeGroups)
-            that.currentModel.nodeGroups.forEach(function(nodeGroup) {
-              if (nodeGroup.nodeIds.includes(that.selectedNodeId)) {
-                //console.log("nodeIsInGroup");
-                nodeIsInGroup = true;
-              }
-              if (nodeGroup.id == that.selectedNodeId) {
-                nodeIsGroupNode = true;
-              }
-            });
-
-          let someNodeGroupIsSelected = that.selectedNodeGroup ? true : false;
-          let selectedNodeIsInSelectedGroup = false;
-          if (
-            that.selectedNodeGroup &&
-            that.selectedNodeId &&
-            that.selectedNodeGroup.nodeIds.includes(that.selectedNodeId)
-          )
-            selectedNodeIsInSelectedGroup = true;
-
-          let menuItems = composeNodeContextMenuItems({
-            nodeIsInGroup,
-            someNodeGroupIsSelected,
-            selectedNodeIsInSelectedGroup,
-            nodeIsGroupNode
-          });
+          let menuItems = composeNodeContextMenuItems();
           let nodeContextMenu = that.contextMenu().items(...menuItems);
           nodeContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
         })

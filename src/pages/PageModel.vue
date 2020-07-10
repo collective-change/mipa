@@ -66,8 +66,8 @@
         </div>
         <!--<pre>{{nodeGroupsForTree}}</pre>
         <pre>{{currentModel ? currentModel.nodeGroups : 'no node groups'}}</pre>-->
-        <!-- <pre>selectedNodeGroupId {{ selectedNodeGroupId }}</pre>
-        <pre>selectedNodeGroup {{ selectedNodeGroup }}</pre>-->
+        <!-- <pre>selectedNodeGroupId {{ selectedNodeGroupId }}</pre>-->
+        <pre>selectedNodeGroup {{ selectedNodeGroup }}</pre>
       </div>
 
       <div class="col-12 col-md-7">
@@ -89,7 +89,6 @@ import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import idb from "src/api/idb";
 
 const nest = (items, id = null, link = "parentId") => {
-  console.log("items", items);
   return items
     .filter(item => item[link] == id)
     .map(item => ({
@@ -141,37 +140,7 @@ export default {
       let nodeGroupsList = JSON.parse(
         JSON.stringify(this.currentModel.nodeGroups)
       );
-      let results = nest(nodeGroupsList);
-      console.log("nodeGroupsForTree: ", results);
-      return results;
-      /*
-        map = {},
-        group,
-        groupToPush,
-        roots = [],
-        i;
-      for (i = 0; i < nodeGroupsList.length; i += 1) {
-        map[nodeGroupsList[i].id] = i; // initialize the map
-        nodeGroupsList[i].children = []; // initialize the children
-      }
-      console.log("nodeGroupsList", nodeGroupsList);
-      console.log("initialized map", map);
-      for (i = 0; i < nodeGroupsList.length; i += 1) {
-        group = nodeGroupsList[i];
-        groupToPush = {
-          label: group.name,
-          groupId: group.id
-        };
-        //if (group.nodeIds) groupToPush.children = group.nodeIds;
-        if (group.parentId) {
-          console.log("parent: ", group.parentId);
-          // if you have dangling branches check that map[node.parentId] exists
-          nodeGroupsList[map[group.parentId]].children.push(groupToPush);
-        } else {
-          roots.push(groupToPush);
-        }
-      }
-      return roots;*/
+      return nest(nodeGroupsList);
     }
   },
 

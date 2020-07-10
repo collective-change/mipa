@@ -431,7 +431,6 @@ const actions = {
     let nodeGroupId = payload.nodeGroupId;
     if (nodeIsGroupNode) {
       try {
-        console.log("nodeIsGroupNode");
         var modelRef = firebaseDb
           .collection("models")
           .doc(state.currentModel.id);
@@ -450,7 +449,6 @@ const actions = {
     } else {
       // node is a regular node
       try {
-        console.log("node is not GroupNode");
         var modelRef = firebaseDb
           .collection("models")
           .doc(state.currentModel.id);
