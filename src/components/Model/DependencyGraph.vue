@@ -57,6 +57,7 @@ import {
 var nodeRadius = 30;
 const svgWidth = 800;
 const svgHeight = 800;
+var dragStartTime, dragEndTime;
 
 export default {
   name: "dependency-graph",
@@ -830,7 +831,6 @@ export default {
         .on("click", function(d, i) {
           that.nodeClick(d, i, "regularClick");
         });
-
       this.updateNodeClassAndText(false);
 
       // Add 'marker-end' attribute to each path
@@ -887,6 +887,7 @@ export default {
         )
         .call(this.wrap, nodeRadius * 2); // wrap the text in <= node diameter
       //update circle styles as well
+
       if (restartSimulation && alpha > this.simulation.alpha()) {
         this.simulation.alpha(alpha).restart();
       }
@@ -945,7 +946,7 @@ export default {
     },
     nodeDragStarted(d) {
       if (!d3.event.active) {
-        this.simulation.on("end", this.savePositions);
+        dragStartTime = new Date();
         this.simulation.alphaTarget(0.3).restart();
       }
       d.fx = d.x;
@@ -958,6 +959,10 @@ export default {
     },
     nodeDragEnded(d) {
       if (!d3.event.active) {
+        //if dragged for more than 300ms, then save the final position
+        dragEndTime = new Date();
+        if (dragEndTime - dragStartTime > 300)
+          this.simulation.on("end", this.savePositions);
         this.simulation.alphaTarget(0);
       }
       d.fx = null;
@@ -1057,6 +1062,7 @@ export default {
         } else {
           that.$store.commit("ui/setSelectedNodeGroup", null);
         }
+        console.log("test");
         this.updateNodeClassAndText(false);
       }
     },
@@ -1262,6 +1268,7 @@ export default {
     selectedNodeGroup: {
       deep: true,
       handler() {
+        console.log("selectedNodeGroup watcher");
         this.updateNodeClassAndText(true, 0.001);
       }
     },
