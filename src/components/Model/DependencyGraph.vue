@@ -1016,9 +1016,9 @@ export default {
           let selectedNodeGroupFound = false;
           this.currentModel.nodeGroups.forEach(function(nodeGroup) {
             if (
-              nodeGroup.hasOwnProperty("nodeIds") &&
-              //nodeGroup.nodeIds.includes(selectedNode.id)
-              nodeGroup.nodeIds.includes(d.id)
+              (nodeGroup.hasOwnProperty("nodeIds") &&
+                nodeGroup.nodeIds.includes(d.id)) ||
+              nodeGroup.id == d.id
             ) {
               that.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
               selectedNodeGroupFound = true;
