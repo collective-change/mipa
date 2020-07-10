@@ -67,7 +67,7 @@
         <!--<pre>{{nodeGroupsForTree}}</pre>
         <pre>{{currentModel ? currentModel.nodeGroups : 'no node groups'}}</pre>-->
         <!-- <pre>selectedNodeGroupId {{ selectedNodeGroupId }}</pre>-->
-        <pre>selectedNodeGroup {{ selectedNodeGroup }}</pre>
+        <!--<pre>selectedNodeGroup {{ selectedNodeGroup }}</pre>-->
       </div>
 
       <div class="col-12 col-md-7">

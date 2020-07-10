@@ -421,7 +421,7 @@ export default {
         let nodeInGroupCount = 0;
         newlyExpandedGroup.nodeIds.forEach(function(nodeId) {
           let nodeInGroup = nodes.find(n => n.id == nodeId);
-          if (exitingGroupNode) {
+          if (exitingGroupNode && nodeInGroup) {
             //set position to be around the exiting group node
             nodeInGroup.x =
               exitingGroupNode.x +
