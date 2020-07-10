@@ -64,8 +64,8 @@
             </template>
           </q-tree>
         </div>
-        <pre>{{nodeGroupsForTree}}</pre>
-        <pre>{{currentModel ? currentModel.nodeGroups : 'no node groups'}}</pre>
+        <!--<pre>{{nodeGroupsForTree}}</pre>
+        <pre>{{currentModel ? currentModel.nodeGroups : 'no node groups'}}</pre>-->
         <!-- <pre>selectedNodeGroupId {{ selectedNodeGroupId }}</pre>
         <pre>selectedNodeGroup {{ selectedNodeGroup }}</pre>-->
       </div>
