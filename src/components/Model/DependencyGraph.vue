@@ -745,6 +745,9 @@ export default {
                   });
                   that.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
                   //TODO: set nodeGroup as expanded
+                  let expandedNodeGroups = [...that.expandedNodeGroups];
+                  expandedNodeGroups.push(nodeGroup.id);
+                  that.expandedNodeGroups = expandedNodeGroups;
                 }
               }
             ];

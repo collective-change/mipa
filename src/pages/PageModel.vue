@@ -55,7 +55,7 @@
                     @change="
                       v => {
                         node.name = v.target.value;
-                        saveNodeGroupName(node.groupId, v.target.value);
+                        saveNodeGroupName(node.id, v.target.value);
                       }
                     "
                   ></q-input>
