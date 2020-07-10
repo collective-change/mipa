@@ -778,6 +778,7 @@ export default {
                 handler: async function() {
                   await that.removeNodeFromGroup({
                     nodeId: that.selectedNodeId,
+                    nodeIsGroupNode: nodeIsGroupNode,
                     nodeGroupId: that.selectedNodeGroup.id
                   });
                 }

@@ -429,46 +429,30 @@ const actions = {
     let nodeId = payload.nodeId;
     let nodeIsGroupNode = payload.nodeIsGroupNode;
     let nodeGroupId = payload.nodeGroupId;
-    if (nodeIsGroupNode) {
-      try {
-        var modelRef = firebaseDb
-          .collection("models")
-          .doc(state.currentModel.id);
-        await firebaseDb.runTransaction(async t => {
-          const doc = await t.get(modelRef);
-          let nodeGroups = doc.data().nodeGroups;
-          let nodeGroup = nodeGroups.find(ng => ng.id == nodeId);
-          nodeGroup.parentId = nodeGroupId;
-          t.update(modelRef, { nodeGroups: nodeGroups });
-        });
-        Notify.create("Group added to parent group");
-      } catch (e) {
-        Notify.create("Failed to add group to parent group");
-        console.log("Add group to group transaction failure:", e);
-      }
-    } else {
-      // node is a regular node
-      try {
-        var modelRef = firebaseDb
-          .collection("models")
-          .doc(state.currentModel.id);
-        await firebaseDb.runTransaction(async t => {
-          const doc = await t.get(modelRef);
-          let nodeGroups = doc.data().nodeGroups;
-          let nodeGroup = nodeGroups.find(ng => ng.id == nodeGroupId);
-          nodeGroup.nodeIds.push(nodeId);
-          t.update(modelRef, { nodeGroups: nodeGroups });
-        });
-        Notify.create("Node added to group");
-      } catch (e) {
-        Notify.create("Failed to add node to group");
-        console.log("Add node to group transaction failure:", e);
-      }
+
+    try {
+      var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
+      await firebaseDb.runTransaction(async t => {
+        const doc = await t.get(modelRef);
+        let nodeGroups = doc.data().nodeGroups;
+        let nodeGroup = nodeGroups.find(ng => ng.id == nodeGroupId);
+        nodeGroup.nodeIds.push(nodeId);
+        if (nodeIsGroupNode) {
+          let childNodeGroup = nodeGroups.find(ng => ng.id == nodeId);
+          childNodeGroup.parentId = nodeGroupId;
+        }
+        t.update(modelRef, { nodeGroups: nodeGroups });
+      });
+      Notify.create("Node added to group");
+    } catch (e) {
+      Notify.create("Failed to add node to group");
+      console.log("Add node to group transaction failure:", e);
     }
   },
 
   async removeNodeFromGroup({}, payload) {
     let nodeId = payload.nodeId;
+    let nodeIsGroupNode = payload.nodeIsGroupNode;
     let nodeGroupId = payload.nodeGroupId;
     try {
       var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
@@ -478,6 +462,11 @@ const actions = {
         let nodeGroup = nodeGroups.find(ng => ng.id == nodeGroupId);
         let index = nodeGroup.nodeIds.indexOf(nodeId);
         if (index !== -1) nodeGroup.nodeIds.splice(index, 1);
+        if (nodeIsGroupNode) {
+          let childNodeGroup = nodeGroups.find(ng => ng.id == nodeId);
+          if (childNodeGroup.parentId && childNodeGroup.parentId == nodeGroupId)
+            delete childNodeGroup.parentId;
+        }
         t.update(modelRef, { nodeGroups: nodeGroups });
       });
       Notify.create("Node removed from group");
