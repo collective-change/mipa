@@ -763,7 +763,7 @@ export default {
 
             const selectedNodeIsGroupNodeMenuItems = [
               {
-                label: "Expand node group",
+                label: "Expand group",
                 handler: async function() {
                   let expandedNodeGroups = [...that.expandedNodeGroups];
                   expandedNodeGroups.push(that.selectedNodeId);
@@ -774,7 +774,7 @@ export default {
 
             const selectedInNodeGroupMenuItems = [
               {
-                label: "Remove node from group",
+                label: "Remove from group",
                 handler: async function() {
                   await that.removeNodeFromGroup({
                     nodeId: that.selectedNodeId,
@@ -784,7 +784,7 @@ export default {
                 }
               },
               {
-                label: "Collapse node group",
+                label: "Collapse group",
                 handler: async function() {
                   let expandedNodeGroups = [...that.expandedNodeGroups];
                   const index = that.expandedNodeGroups.indexOf(
@@ -797,7 +797,7 @@ export default {
                 }
               },
               {
-                label: "Disband node group",
+                label: "Disband group",
                 handler: async function() {
                   //TODO: ask for user to confirm
                   await that.disbandNodeGroup(that.selectedNodeGroup.id);
