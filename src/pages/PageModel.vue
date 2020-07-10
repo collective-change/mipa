@@ -137,9 +137,14 @@ export default {
 
     nodeGroupsForTree() {
       if (!this.currentModel || !this.currentModel.nodeGroups) return [];
-      let nodeGroupsList = JSON.parse(
-        JSON.stringify(this.currentModel.nodeGroups)
-      );
+      function compare(a, b) {
+        if (a.name > b.name) return 1;
+        if (b.name > a.name) return -1;
+
+        return 0;
+      }
+      let nodeGroups = [...this.currentModel.nodeGroups];
+      let nodeGroupsList = JSON.parse(JSON.stringify(nodeGroups.sort(compare)));
       return nest(nodeGroupsList);
     }
   },
