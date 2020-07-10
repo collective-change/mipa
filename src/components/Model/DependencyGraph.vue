@@ -1062,7 +1062,6 @@ export default {
         } else {
           that.$store.commit("ui/setSelectedNodeGroup", null);
         }
-        console.log("test");
         this.updateNodeClassAndText(false);
       }
     },
@@ -1268,7 +1267,6 @@ export default {
     selectedNodeGroup: {
       deep: true,
       handler() {
-        console.log("selectedNodeGroup watcher");
         this.updateNodeClassAndText(true, 0.001);
       }
     },
