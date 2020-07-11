@@ -1372,8 +1372,8 @@ circle.unlinked {
   stroke: darkorange;
 }
 circle.state {
-  fill: #a9cce3;
-  stroke: #003366;
+  fill: #d4fafd;
+  stroke: #02727a;
 }
 circle.output {
   fill: thistle;
@@ -1400,12 +1400,12 @@ circle.selected {
 
 circle.nodeGroupSelected {
   stroke: #666;
-  stroke-width: 3px;
+  stroke-width: 1.5px;
 }
 
 @keyframes selected {
   from {
-    stroke-width: 6px;
+    stroke-width: 5px;
   }
   to {
     stroke-width: 2px;
