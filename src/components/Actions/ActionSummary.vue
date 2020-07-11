@@ -44,8 +44,7 @@
               </q-chip>
               <q-chip outline color="primary">
                 Cost
-                {{ formatNumber(uiAction.marginalTotalCostNpv, 3) }}
-                XDR
+                {{ formatNumber(uiAction.marginalTotalCostNpv, 3) }} XDR
               </q-chip>
               <q-chip
                 color="primary"
@@ -54,8 +53,7 @@
               <q-chip outline color="primary">
                 Direct cost
                 {{ formatNumber(uiAction.sunkenDirectCost, 3) }} /
-                {{ formatNumber(uiAction.totalDirectCost, 3) }}
-                XDR
+                {{ formatNumber(uiAction.totalDirectCost, 3) }} XDR
               </q-chip>
             </div>
           </div>
