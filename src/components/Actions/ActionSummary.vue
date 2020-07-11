@@ -46,13 +46,17 @@
               <q-chip
                 color="primary"
                 text-color="white"
-              >actionRoi {{ formatNumber(uiAction.actionRoi, 3) }}</q-chip>
+              >Total ROI {{ formatNumber(uiAction.totalRoi, 3) }}</q-chip>
               <q-chip outline color="primary">
                 Direct cost
                 {{ formatNumber(uiAction.sunkenDirectCost, 4) }} /
                 {{ formatNumber(uiAction.totalDirectCost, 4) }}
                 XDR
               </q-chip>
+              <q-chip
+                color="primary"
+                text-color="white"
+              >Action ROI {{ formatNumber(uiAction.actionRoi, 3) }}</q-chip>
 
               <calculator-ui
                 calculationType="uiAction"

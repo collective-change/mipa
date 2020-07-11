@@ -8,6 +8,7 @@
       :filter="filter"
       :loading="loading"
       :pagination.sync="pagination"
+      :rows-per-page-options="[10,20,50,0]"
       binary-state-sort
       @row-click="onRowClick"
     >
@@ -52,7 +53,7 @@ export default {
         sortBy: "actionRoi",
         descending: true,
         page: 1,
-        rowsPerPage: 20
+        rowsPerPage: 10
         // rowsNumber: xx if getting data from a server
       },
       columns: [
@@ -105,6 +106,16 @@ export default {
           field: "marginalTotalCostNpv",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
+        },
+        {
+          name: "totalRoi",
+          required: true,
+          align: "right",
+          label: "Total ROI",
+          field: "totalRoi",
+          format: val => `${formatNumber(val, 2)}`,
+          sortable: true,
+          sortBy: "desc"
         },
         {
           name: "direct cost",

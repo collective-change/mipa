@@ -290,8 +290,8 @@ function prepRoiResults(
   let roiResults = {
     marginalTotalBenefitNpv,
     marginalTotalCostNpv,
-    actionRoi,
-    totalRoi
+    totalRoi,
+    actionRoi
   };
   //console.log({ roiResults });
   return roiResults;
