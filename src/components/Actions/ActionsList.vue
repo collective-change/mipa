@@ -50,7 +50,7 @@ export default {
       filter: "",
       //rowCount: 10, //only used in sample code; delete when not needed anymore
       pagination: {
-        sortBy: "actionRoi",
+        sortBy: "actionLeverage",
         descending: true,
         page: 1,
         rowsPerPage: 10
@@ -58,11 +58,11 @@ export default {
       },
       columns: [
         {
-          name: "actionRoi",
+          name: "actionLeverage",
           required: true,
           align: "right",
-          label: "Action ROI",
-          field: "actionRoi",
+          label: "效應比",
+          field: "actionLeverage",
           format: val => `${formatNumber(val, 2)}`,
           sortable: true,
           sortBy: "desc"
@@ -111,7 +111,7 @@ export default {
           name: "totalRoi",
           required: true,
           align: "right",
-          label: "Total ROI",
+          label: "ROI",
           field: "totalRoi",
           format: val => `${formatNumber(val, 2)}`,
           sortable: true,

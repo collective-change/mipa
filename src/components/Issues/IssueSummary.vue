@@ -41,7 +41,7 @@
                 XDR
               </q-chip>
               <q-chip color="primary" text-color="white">
-                actionRoi
+                actionLeverage
                 {{
                 parseFloat(uiIssue.estRoi.toPrecision(2)).toLocaleString()
                 }}

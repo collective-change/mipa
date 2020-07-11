@@ -65,7 +65,7 @@ const actions = {
       );
       if (roiResultsChangedSignificantly(newRoiResults, matchedStoreAction)) {
         //add action to update list
-        console.log("actionRoi changed significantly");
+        console.log("actionLeverage changed significantly");
         delete newRoiResults.actionId;
         batch.update(actionsRef.doc(actionRoiResults.actionId), newRoiResults);
         batchedWrites++;
@@ -225,11 +225,17 @@ export default {
 function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
   //console.log(newRoiResults);
   //console.log(matchedStoreAction);
-  if (typeof matchedStoreAction.actionRoi == "undefined") return true;
+  if (typeof matchedStoreAction.actionLeverage == "undefined") return true;
 
-  if (isNaN(matchedStoreAction.actionRoi) && !isNaN(newRoiResults.actionRoi))
+  if (
+    isNaN(matchedStoreAction.actionLeverage) &&
+    !isNaN(newRoiResults.actionLeverage)
+  )
     return true;
-  if (!isNaN(matchedStoreAction.actionRoi) && isNaN(newRoiResults.actionRoi))
+  if (
+    !isNaN(matchedStoreAction.actionLeverage) &&
+    isNaN(newRoiResults.actionLeverage)
+  )
     return true;
 
   if (
@@ -254,9 +260,15 @@ function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
   )
     return true;
 
-  if (Math.abs(newRoiResults.actionRoi / matchedStoreAction.actionRoi) > 1.001)
+  if (
+    Math.abs(newRoiResults.actionLeverage / matchedStoreAction.actionLeverage) >
+    1.001
+  )
     return true;
-  if (Math.abs(matchedStoreAction.actionRoi / newRoiResults.actionRoi) > 1.001)
+  if (
+    Math.abs(matchedStoreAction.actionLeverage / newRoiResults.actionLeverage) >
+    1.001
+  )
     return true;
 
   if (

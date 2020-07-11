@@ -33,7 +33,7 @@ export default {
         totalDirectCost: 0,
         marginalTotalBenefitNpv: 0,
         marginalTotalCostNpv: 0,
-        actionRoi: null
+        actionLeverage: null
       }
     };
   },

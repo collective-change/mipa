@@ -37,7 +37,7 @@
               <q-chip
                 color="primary"
                 text-color="white"
-              >Action ROI {{ formatNumber(uiAction.actionRoi, 3) }}</q-chip>
+              >Leverage {{ formatNumber(uiAction.actionLeverage, 3) }}</q-chip>
               <q-chip outline color="primary">
                 Benefit
                 {{ formatNumber(uiAction.marginalTotalBenefitNpv, 4) }} XDR
@@ -50,7 +50,7 @@
               <q-chip
                 color="primary"
                 text-color="white"
-              >Total ROI {{ formatNumber(uiAction.totalRoi, 3) }}</q-chip>
+              >ROI {{ formatNumber(uiAction.totalRoi, 3) }}</q-chip>
               <q-chip outline color="primary">
                 Direct cost
                 {{ formatNumber(uiAction.sunkenDirectCost, 4) }} /
@@ -121,7 +121,7 @@
               />-->
 
               <!-- <q-input
-                v-bind:value="formatNumber(uiAction.actionRoi, 2)"
+                v-bind:value="formatNumber(uiAction.actionLeverage, 2)"
                 label="估計 SROI"
                 style="max-width: 150px;"
                 readonly

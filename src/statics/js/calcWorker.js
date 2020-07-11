@@ -36,7 +36,7 @@ function coordinateScenarioSimulations({calculationType, requestedActions, reque
     assign work packages to workers
     onmessage, accumulate results
   post available results to vuex store every 0.5 seconds
-  when all finished, save results to IndexedDb; briefResults [{i:id, b:benefit, c:cost, r:actionRoi, t:calcStartTime}]
+  when all finished, save results to IndexedDb; briefResults [{i:id, b:benefit, c:cost, r:actionLeverage, t:calcStartTime}]
   and post back to caller for saving to cloud
 
 function getDisjointSets(sortedIssues)
@@ -77,7 +77,7 @@ function coordinateScenarioSimulations(data) {
   );
 
   //and post available results to vuex store every 0.5 seconds
-  //when all finished, save results to IndexedDb; briefResults[{ i: id, b: benefit, c: cost, r: actionRoi, t: calcStartTime }]
+  //when all finished, save results to IndexedDb; briefResults[{ i: id, b: benefit, c: cost, r: actionLeverage, t: calcStartTime }]
   //and post back to caller for saving to cloud
 }
 
@@ -274,22 +274,22 @@ function prepRoiResults(
     yearlyDiscountRate
   );
 
-  //calculate actionRoi and prepare results
+  //calculate actionLeverage and prepare results
   let totalRoi = marginalTotalBenefitNpv / marginalTotalCostNpv;
-  let actionRoi =
+  let actionLeverage =
     ((marginalTotalBenefitNpv * marginalTotalBenefitNpv) /
       (marginalTotalCostNpv * outstandingDirectCost)) *
     Math.sign(marginalTotalBenefitNpv) *
     Math.sign(outstandingDirectCost);
 
   if (isNaN(totalRoi)) totalRoi = null;
-  if (isNaN(actionRoi)) actionRoi = null;
+  if (isNaN(actionLeverage)) actionLeverage = null;
 
   let roiResults = {
     marginalTotalBenefitNpv,
     marginalTotalCostNpv,
     totalRoi,
-    actionRoi
+    actionLeverage
   };
   //console.log({ roiResults });
   return roiResults;
