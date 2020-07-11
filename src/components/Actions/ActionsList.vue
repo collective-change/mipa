@@ -8,6 +8,7 @@
       :filter="filter"
       :loading="loading"
       :pagination.sync="pagination"
+      binary-state-sort
       @row-click="onRowClick"
     >
       <template v-slot:top>
@@ -70,8 +71,9 @@ export default {
           align: "center",
           label: "狀態",
           field: "actionMchState",
-          format: val => `${val.value}`,
-          sortable: true
+          format: ams => `${ams.value}`,
+          sortable: true,
+          sort: (a, b) => ("" + a.value).localeCompare(b.value)
         },
         {
           name: "title",
