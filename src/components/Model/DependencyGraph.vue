@@ -1368,20 +1368,20 @@ circle {
   stroke-width: 0px;
 }
 circle.unlinked {
-  fill: #f8c471;
-  stroke: darkorange;
+  fill: #ebc890;
+  stroke: rgb(224, 163, 89);
 }
 circle.state {
-  fill: #d4fafd;
-  stroke: #02727a;
+  fill: #aac5d6;
+  stroke: #4a84a5;
 }
 circle.output {
-  fill: thistle;
-  stroke: #60006d;
+  fill: #f0add2;
+  stroke: #bd719b;
 }
 circle.input {
-  fill: #b2e48a;
-  stroke: #005000;
+  fill: #b9df99;
+  stroke: #91b177;
 }
 circle.group {
   fill: #e0e0e0;
