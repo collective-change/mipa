@@ -129,11 +129,11 @@ export default {
       filteredNodeOptions: [],
       typeOptions: [
         {
-          label: "If we do this",
+          label: "If done",
           value: "if_done"
         },
         {
-          label: "If we don't do this",
+          label: "If not done",
           value: "if_not_done"
         }
       ],
