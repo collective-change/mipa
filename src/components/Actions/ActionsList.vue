@@ -94,7 +94,7 @@ export default {
         {
           name: "value",
           align: "right",
-          label: "總效益 (XDR)",
+          label: "總效益",
           field: "marginalTotalBenefitNpv",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
@@ -102,7 +102,7 @@ export default {
         {
           name: "cost",
           align: "right",
-          label: "總成本 (XDR)",
+          label: "總成本",
           field: "marginalTotalCostNpv",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
@@ -120,7 +120,7 @@ export default {
         {
           name: "direct cost",
           align: "right",
-          label: "直接成本 (XDR)",
+          label: "直接成本",
           field: "totalDirectCost",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
