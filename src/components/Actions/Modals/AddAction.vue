@@ -31,9 +31,9 @@ export default {
         estSpending: null,
         spentAmount: null,
         totalDirectCost: 0,
-        marginalBenefitNpv: 0,
-        marginalCostNpv: 0,
-        roi: null
+        marginalTotalBenefitNpv: 0,
+        marginalTotalCostNpv: 0,
+        actionRoi: null
       }
     };
   },

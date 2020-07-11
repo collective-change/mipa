@@ -3,9 +3,7 @@
     <div v-if="selectedIssue">
       <q-form @submit.prevent="submitForm">
         <div class="row">
-          <div
-            v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
-          >
+          <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
             <q-input
               class="text-h6"
               v-model="title"
@@ -27,35 +25,31 @@
             </q-input>
           </div>
 
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }"
-          >
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }">
             <div class="q-pa-xs q-gutter-xs">
-              <q-chip outline color="primary"
-                >Total benefit
-                {{ uiIssue.estTotalBenefitXdr.toLocaleString() }} XDR</q-chip
-              >
-              <q-chip outline color="primary"
-                >Outstanding cost
+              <q-chip outline color="primary">
+                Total benefit
+                {{ uiIssue.estTotalBenefitXdr.toLocaleString() }} XDR
+              </q-chip>
+              <q-chip outline color="primary">
+                Outstanding cost
                 {{
-                  parseFloat(
-                    uiIssue.outstandingCostXdr.toPrecision(3)
-                  ).toLocaleString()
+                parseFloat(
+                uiIssue.outstandingCostXdr.toPrecision(3)
+                ).toLocaleString()
                 }}
-                XDR</q-chip
-              >
-              <q-chip color="primary" text-color="white"
-                >ROI
+                XDR
+              </q-chip>
+              <q-chip color="primary" text-color="white">
+                actionRoi
                 {{
-                  parseFloat(uiIssue.estRoi.toPrecision(2)).toLocaleString()
-                }}</q-chip
-              >
+                parseFloat(uiIssue.estRoi.toPrecision(2)).toLocaleString()
+                }}
+              </q-chip>
             </div>
           </div>
 
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }"
-          >
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }">
             <div class="q-pa-sm q-gutter-sm">
               <q-btn color="primary" label="Meet about this" />
               <q-btn color="primary" label="Mark as resolved" />
@@ -63,10 +57,8 @@
           </div>
         </div>
 
-        <div class="row ">
-          <div
-            v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
-          >
+        <div class="row">
+          <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
             <q-input v-model="notes" label="筆記" filled autogrow />
 
             <div class="text-h6">Impacts</div>
@@ -197,16 +189,8 @@
 
             <modal-buttons />
           </div>
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
-          >
-            middle column
-          </div>
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
-          >
-            right column
-          </div>
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">middle column</div>
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">right column</div>
         </div>
       </q-form>
     </div>

@@ -65,7 +65,7 @@ const actions = {
       );
       if (roiResultsChangedSignificantly(newRoiResults, matchedStoreAction)) {
         //add action to update list
-        console.log("roi changed significantly");
+        console.log("actionRoi changed significantly");
         delete newRoiResults.actionId;
         batch.update(actionsRef.doc(actionRoiResults.actionId), newRoiResults);
         batchedWrites++;
@@ -225,58 +225,66 @@ export default {
 function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
   //console.log(newRoiResults);
   //console.log(matchedStoreAction);
-  if (typeof matchedStoreAction.roi == "undefined") return true;
+  if (typeof matchedStoreAction.actionRoi == "undefined") return true;
 
-  if (isNaN(matchedStoreAction.roi) && !isNaN(newRoiResults.roi)) return true;
-  if (!isNaN(matchedStoreAction.roi) && isNaN(newRoiResults.roi)) return true;
-
-  if (
-    isNaN(matchedStoreAction.marginalBenefitNpv) &&
-    !isNaN(newRoiResults.marginalBenefitNpv)
-  )
+  if (isNaN(matchedStoreAction.actionRoi) && !isNaN(newRoiResults.actionRoi))
     return true;
-  if (
-    !isNaN(matchedStoreAction.marginalBenefitNpv) &&
-    isNaN(newRoiResults.marginalBenefitNpv)
-  )
+  if (!isNaN(matchedStoreAction.actionRoi) && isNaN(newRoiResults.actionRoi))
     return true;
 
   if (
-    isNaN(matchedStoreAction.marginalCostNpv) &&
-    !isNaN(newRoiResults.marginalCostNpv)
+    isNaN(matchedStoreAction.marginalTotalBenefitNpv) &&
+    !isNaN(newRoiResults.marginalTotalBenefitNpv)
   )
     return true;
   if (
-    !isNaN(matchedStoreAction.marginalCostNpv) &&
-    isNaN(newRoiResults.marginalCostNpv)
+    !isNaN(matchedStoreAction.marginalTotalBenefitNpv) &&
+    isNaN(newRoiResults.marginalTotalBenefitNpv)
   )
     return true;
 
-  if (Math.abs(newRoiResults.roi / matchedStoreAction.roi) > 1.001) return true;
-  if (Math.abs(matchedStoreAction.roi / newRoiResults.roi) > 1.001) return true;
+  if (
+    isNaN(matchedStoreAction.marginalTotalCostNpv) &&
+    !isNaN(newRoiResults.marginalTotalCostNpv)
+  )
+    return true;
+  if (
+    !isNaN(matchedStoreAction.marginalTotalCostNpv) &&
+    isNaN(newRoiResults.marginalTotalCostNpv)
+  )
+    return true;
+
+  if (Math.abs(newRoiResults.actionRoi / matchedStoreAction.actionRoi) > 1.001)
+    return true;
+  if (Math.abs(matchedStoreAction.actionRoi / newRoiResults.actionRoi) > 1.001)
+    return true;
 
   if (
     Math.abs(
-      newRoiResults.marginalBenefitNpv / matchedStoreAction.marginalBenefitNpv
+      newRoiResults.marginalTotalBenefitNpv /
+        matchedStoreAction.marginalTotalBenefitNpv
     ) > 1.001
   )
     return true;
   if (
     Math.abs(
-      matchedStoreAction.marginalBenefitNpv / newRoiResults.marginalBenefitNpv
+      matchedStoreAction.marginalTotalBenefitNpv /
+        newRoiResults.marginalTotalBenefitNpv
     ) > 1.001
   )
     return true;
 
   if (
     Math.abs(
-      newRoiResults.marginalCostNpv / matchedStoreAction.marginalCostNpv
+      newRoiResults.marginalTotalCostNpv /
+        matchedStoreAction.marginalTotalCostNpv
     ) > 1.001
   )
     return true;
   if (
     Math.abs(
-      matchedStoreAction.marginalCostNpv / newRoiResults.marginalCostNpv
+      matchedStoreAction.marginalTotalCostNpv /
+        newRoiResults.marginalTotalCostNpv
     ) > 1.001
   )
     return true;

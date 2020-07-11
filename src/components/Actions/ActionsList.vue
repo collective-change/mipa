@@ -49,7 +49,7 @@ export default {
       filter: "",
       //rowCount: 10, //only used in sample code; delete when not needed anymore
       pagination: {
-        sortBy: "roi",
+        sortBy: "actionRoi",
         descending: true,
         page: 1,
         rowsPerPage: 20
@@ -57,11 +57,11 @@ export default {
       },
       columns: [
         {
-          name: "roi",
+          name: "actionRoi",
           required: true,
           align: "right",
-          label: "SROI",
-          field: "roi",
+          label: "Action ROI",
+          field: "actionRoi",
           format: val => `${formatNumber(val, 2)}`,
           sortable: true,
           sortBy: "desc"
@@ -94,7 +94,7 @@ export default {
           name: "value",
           align: "right",
           label: "總效益 (XDR)",
-          field: "marginalBenefitNpv",
+          field: "marginalTotalBenefitNpv",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
         },
@@ -102,7 +102,7 @@ export default {
           name: "cost",
           align: "right",
           label: "總成本 (XDR)",
-          field: "marginalCostNpv",
+          field: "marginalTotalCostNpv",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
         },

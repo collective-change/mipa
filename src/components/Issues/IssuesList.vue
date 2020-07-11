@@ -66,7 +66,7 @@ export default {
       filter: "",
       //rowCount: 10, //only used in sample code; delete when not needed anymore
       pagination: {
-        sortBy: "roi",
+        sortBy: "actionRoi",
         descending: true,
         page: 1,
         rowsPerPage: 20
@@ -74,7 +74,7 @@ export default {
       },
       columns: [
         {
-          name: "roi",
+          name: "actionRoi",
           required: true,
           align: "right",
           label: "SROI",

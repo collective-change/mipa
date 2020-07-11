@@ -36,7 +36,7 @@ function coordinateScenarioSimulations({calculationType, requestedActions, reque
     assign work packages to workers
     onmessage, accumulate results
   post available results to vuex store every 0.5 seconds
-  when all finished, save results to IndexedDb; briefResults [{i:id, b:benefit, c:cost, r:roi, t:calcStartTime}]
+  when all finished, save results to IndexedDb; briefResults [{i:id, b:benefit, c:cost, r:actionRoi, t:calcStartTime}]
   and post back to caller for saving to cloud
 
 function getDisjointSets(sortedIssues)
@@ -77,7 +77,7 @@ function coordinateScenarioSimulations(data) {
   );
 
   //and post available results to vuex store every 0.5 seconds
-  //when all finished, save results to IndexedDb; briefResults[{ i: id, b: benefit, c: cost, r: roi, t: calcStartTime }]
+  //when all finished, save results to IndexedDb; briefResults[{ i: id, b: benefit, c: cost, r: actionRoi, t: calcStartTime }]
   //and post back to caller for saving to cloud
 }
 
@@ -89,15 +89,17 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
 
   let calcTimeMs = 0;
 
+  let averageEffortCostPerHourNode = modelNodes.find(
+    node => node.id == sim.roleNodes.averageEffortCostPerHour
+  );
+
   //simulate each action
   actions.forEach(function(action) {
     let startTimeMs = new Date();
 
-    /*let averageEffortCostPerHourNode = modelNodes.find(
-      node => node.id == sim.roleNodes.averageEffortCostPerHour
-    );*/
-    /*let effortCostPerHour = averageEffortCostPerHourNode.symbolFormula;*/
+    let effortCostPerHour = averageEffortCostPerHourNode.symbolFormula;
     /*let directEffortCost = action.estEffortHrs * effortCostPerHour;*/
+
     let outstandingDirectEffortHrs =
       (isNaN(action.estEffortHrs) ? 0 : action.estEffortHrs) *
       (100 -
@@ -105,12 +107,15 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
           ? 0
           : action.effortCompletionPercentage)) *
       0.01;
-    /*let outstandingDirectEffortCost =
-      outstandingDirectEffortHrs * effortCostPerHour;*/
+    let outstandingDirectEffortCost =
+      outstandingDirectEffortHrs * effortCostPerHour;
+
     let outstandingSpending =
       (isNaN(action.estSpending) ? 0 : action.estSpending) -
       (isNaN(action.spentAmount) ? 0 : action.spentAmount);
 
+    let outstandingDirectCost =
+      outstandingDirectEffortCost + outstandingSpending;
     /*let directCosts = {
       directEffortCost,
       outstandingDirectEffortCost,
@@ -184,6 +189,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
 
     timeSPoints = defaultBaseline.timeSPoints;
     let roiCalcResults = prepRoiResults(
+      outstandingDirectCost,
       ifDoneTimeSeriesNodesValues,
       ifNotDoneTimeSeriesNodesValues,
       timeSPoints,
@@ -237,6 +243,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
 }
 
 function prepRoiResults(
+  outstandingDirectCost,
   ifDoneTimeSeriesNodesValues,
   ifNotDoneTimeSeriesNodesValues,
   timeSPoints,
@@ -253,27 +260,38 @@ function prepRoiResults(
     ifNotDoneTimeSeriesNodesValues[roleNodes.totalCost];
 
   //calculate NPVs
-  let marginalBenefitNpv = getMarginalNpv(
+  let marginalTotalBenefitNpv = getMarginalNpv(
     ifDoneTotalBenefitSeries,
     ifNotDoneTotalBenefitSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  let marginalCostNpv = getMarginalNpv(
+  let marginalTotalCostNpv = getMarginalNpv(
     ifDoneTotalCostSeries,
     ifNotDoneTotalCostSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  //calculate ROI and prepare results
-  let roi = marginalBenefitNpv / marginalCostNpv;
-  if (isNaN(roi)) roi = null;
+  //calculate actionRoi and prepare results
+  let totalRoi = marginalTotalBenefitNpv / marginalTotalCostNpv;
+  let actionRoi =
+    Math.sqrt(
+      (marginalTotalBenefitNpv * marginalTotalBenefitNpv) /
+        (marginalTotalCostNpv * outstandingDirectCost)
+    ) *
+    Math.sign(marginalTotalBenefitNpv) *
+    Math.sign(outstandingDirectCost);
+
+  if (isNaN(totalRoi)) totalRoi = null;
+  if (isNaN(actionRoi)) actionRoi = null;
+
   let roiResults = {
-    marginalBenefitNpv: marginalBenefitNpv,
-    marginalCostNpv: marginalCostNpv,
-    roi: roi
+    marginalTotalBenefitNpv,
+    marginalTotalCostNpv,
+    actionRoi,
+    totalRoi
   };
   //console.log({ roiResults });
   return roiResults;
@@ -1090,7 +1108,7 @@ function interpolateFromLookup(timeSPoints, values, targetTimeS) {
 
 function testInitializeIdb() {
   let idb; //placeholder for IndexedDB
-  let request = indexedDB.open("mipa", 1);
+  let request = indexedDB.open("mipa", 2);
   request.onupgradeneeded = function(e) {
     idb = request.result;
     idb.createObjectStore("baselines");

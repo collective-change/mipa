@@ -36,14 +36,17 @@
             <div class="q-pa-xs q-gutter-xs">
               <q-chip outline color="primary">
                 Benefit
-                {{ formatNumber(uiAction.marginalBenefitNpv, 4) }} XDR
+                {{ formatNumber(uiAction.marginalTotalBenefitNpv, 4) }} XDR
               </q-chip>
               <q-chip outline color="primary">
                 Cost
-                {{ formatNumber(uiAction.marginalCostNpv, 4) }}
+                {{ formatNumber(uiAction.marginalTotalCostNpv, 4) }}
                 XDR
               </q-chip>
-              <q-chip color="primary" text-color="white">ROI {{ formatNumber(uiAction.roi, 3) }}</q-chip>
+              <q-chip
+                color="primary"
+                text-color="white"
+              >actionRoi {{ formatNumber(uiAction.actionRoi, 3) }}</q-chip>
               <q-chip outline color="primary">
                 Direct cost
                 {{ formatNumber(uiAction.sunkenDirectCost, 4) }} /
@@ -114,7 +117,7 @@
               />-->
 
               <!-- <q-input
-                v-bind:value="formatNumber(uiAction.roi, 2)"
+                v-bind:value="formatNumber(uiAction.actionRoi, 2)"
                 label="估計 SROI"
                 style="max-width: 150px;"
                 readonly
