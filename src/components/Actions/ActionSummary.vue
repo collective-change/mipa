@@ -3,7 +3,7 @@
     <div v-if="selectedAction">
       <q-form @submit.prevent="submitForm">
         <div class="row">
-          <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
+          <div v-bind:class="{ 'col-12 col-md-4': !embedded, 'col-12': embedded }">
             <q-input
               class="text-h6"
               v-model="title"
@@ -32,8 +32,12 @@
             </q-input>
           </div>
 
-          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }">
-            <div class="q-pa-xs q-gutter-xs">
+          <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
+            <div class="q-px-xs q-gutter-xs">
+              <q-chip
+                color="primary"
+                text-color="white"
+              >Action ROI {{ formatNumber(uiAction.actionRoi, 3) }}</q-chip>
               <q-chip outline color="primary">
                 Benefit
                 {{ formatNumber(uiAction.marginalTotalBenefitNpv, 4) }} XDR
@@ -53,21 +57,17 @@
                 {{ formatNumber(uiAction.totalDirectCost, 4) }}
                 XDR
               </q-chip>
-              <q-chip
-                color="primary"
-                text-color="white"
-              >Action ROI {{ formatNumber(uiAction.actionRoi, 3) }}</q-chip>
+            </div>
+          </div>
 
+          <div v-bind:class="{ 'col-12 col-md-2': !embedded, 'col-12': embedded }">
+            <div class="row q-pa-sm q-gutter-sm">
               <calculator-ui
+                v-if="embedded"
                 calculationType="uiAction"
                 buttonLabel="Recalculate"
                 :uiAction="uiAction"
               />
-            </div>
-          </div>
-
-          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }">
-            <div class="q-pa-sm q-gutter-sm">
               <q-btn
                 v-if="['eligible'].includes(uiAction.actionMchState.value)"
                 label="Mark as done"
@@ -220,7 +220,15 @@
             <modal-save-button />
           </div>
           <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
-            middle column
+            <!-- middle column -->
+            <div v-if="!embedded" class="row justify-center">
+              <calculator-ui
+                calculationType="uiAction"
+                buttonLabel="Recalculate"
+                :uiAction="uiAction"
+              />
+            </div>
+
             <div v-for="chart in chartsArr" :key="chart.nodeId" class="q-pb-md">
               <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
               <div class="row justify-center q-gutter-x-md">
