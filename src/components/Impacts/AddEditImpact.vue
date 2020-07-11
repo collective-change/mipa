@@ -30,7 +30,7 @@
           <q-input
             prefix="then"
             v-model="impact.thenText"
-            placeholder="what's impacted and how?"
+            placeholder="what's impacted and how? (optional)"
             filled
             autogrow
             style="width: 30em;"
@@ -95,9 +95,7 @@
         </div>
       </q-card-section>
       <q-card-section class="q-gutter-sm q-pt-none">
-        <div v-if="validationError" class="text-negative">
-          Please fill in all visible fields.
-        </div>
+        <div v-if="validationError" class="text-negative">Missing input</div>
       </q-card-section>
       <modal-save-button />
     </q-form>
@@ -280,7 +278,7 @@ export default {
     submitImpact() {
       //validate inputs
       if (
-        !this.impact.thenText ||
+        /*!this.impact.thenText ||*/
         !this.impact.nodeId ||
         (this.impact.hasDeadline && !this.impact.deadline) ||
         typeof this.impact.operand == "undefined" ||
