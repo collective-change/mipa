@@ -283,7 +283,7 @@ export default {
         (this.impact.hasDeadline && !this.impact.deadline) ||
         typeof this.impact.operand == "undefined" ||
         this.impact.operand == "" ||
-        (this.impact.durationType == "for" &&
+        (this.impact.durationType == "for_period" &&
           (typeof this.impact.durationNumber == "undefined" ||
             this.impact.durationNumber == ""))
       ) {
