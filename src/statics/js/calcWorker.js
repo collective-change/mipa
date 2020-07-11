@@ -161,7 +161,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
     iterateThroughTime(sim, scenario);
     if (sim.errorOccurred) return;
     //TODO: only extract and save all node values if requested by
-    //user for this device
+    //user for this device; else only save the basic few nodes for display
     let ifDoneTimeSeriesNodesValues, ifNotDoneTimeSeriesNodesValues;
     ifDoneTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
 
@@ -176,7 +176,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       iterateThroughTime(sim, scenario);
       if (sim.errorOccurred) return;
       //TODO: only extract and save all node values if requested by
-      //user for this device
+      //user for this device; else only save the basic few nodes for display
       ifNotDoneTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
     } else {
       ifNotDoneTimeSeriesNodesValues = defaultBaseline.nodesValues;
