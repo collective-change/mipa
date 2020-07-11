@@ -129,11 +129,11 @@ export default {
       filteredNodeOptions: [],
       typeOptions: [
         {
-          label: "If we act on the opportunity",
+          label: "If we do this",
           value: "if_done"
         },
         {
-          label: "If we don't act on the threat",
+          label: "If we don't do this",
           value: "if_not_done"
         }
       ],
