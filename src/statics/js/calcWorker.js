@@ -269,6 +269,7 @@ function prepRoiResults(
 
   //calculate ROI and prepare results
   let roi = marginalBenefitNpv / marginalCostNpv;
+  if (isNaN(roi)) roi = null;
   let roiResults = {
     marginalBenefitNpv: marginalBenefitNpv,
     marginalCostNpv: marginalCostNpv,

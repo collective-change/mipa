@@ -4,10 +4,7 @@
 
     <q-form @submit.prevent="submitForm">
       <q-card-section>
-        <modal-action-title
-          :title.sync="actionToSubmit.title"
-          ref="modalActionTitle"
-        />
+        <modal-action-title :title.sync="actionToSubmit.title" ref="modalActionTitle" />
       </q-card-section>
       <modal-buttons />
     </q-form>
@@ -25,14 +22,18 @@ export default {
         title: "",
         isProject: false,
         notes: "",
-        actionMchState: {},
+        actionMchState: { value: "eligible" },
         impacts: [],
         estEffortHrs: null,
         effortCompletionPercentage: null,
         effortCostPerHrType: "use_average",
         customEffortCostPerHr: null,
         estSpending: null,
-        spentAmount: null
+        spentAmount: null,
+        totalDirectCost: 0,
+        marginalBenefitNpv: 0,
+        marginalCostNpv: 0,
+        roi: null
       }
     };
   },
