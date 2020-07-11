@@ -3,9 +3,7 @@
     <div v-if="selectedAction">
       <q-form @submit.prevent="submitForm">
         <div class="row">
-          <div
-            v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
-          >
+          <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
             <q-input
               class="text-h6"
               v-model="title"
@@ -13,9 +11,11 @@
               ref="actionTitle"
             >
               <template v-slot:prepend>
-                <q-chip square color="primary" text-color="white">
-                  {{ uiAction.actionMchState.value }}
-                </q-chip>
+                <q-chip
+                  square
+                  color="primary"
+                  text-color="white"
+                >{{ uiAction.actionMchState.value }}</q-chip>
               </template>
               <template v-slot:after v-if="embedded">
                 <q-btn
@@ -32,9 +32,7 @@
             </q-input>
           </div>
 
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }"
-          >
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }">
             <div class="q-pa-xs q-gutter-xs">
               <q-chip outline color="primary">
                 Benefit
@@ -45,9 +43,7 @@
                 {{ formatNumber(uiAction.marginalCostNpv, 4) }}
                 XDR
               </q-chip>
-              <q-chip color="primary" text-color="white"
-                >ROI {{ formatNumber(uiAction.roi, 3) }}</q-chip
-              >
+              <q-chip color="primary" text-color="white">ROI {{ formatNumber(uiAction.roi, 3) }}</q-chip>
               <q-chip outline color="primary">
                 Direct cost
                 {{ formatNumber(uiAction.sunkenDirectCost, 4) }} /
@@ -63,9 +59,7 @@
             </div>
           </div>
 
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }"
-          >
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-6': embedded }">
             <div class="q-pa-sm q-gutter-sm">
               <q-btn
                 v-if="['eligible'].includes(uiAction.actionMchState.value)"
@@ -86,9 +80,7 @@
         </div>
 
         <div class="row">
-          <div
-            v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
-          >
+          <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
             <q-input v-model="notes" label="筆記" filled autogrow />
 
             <impacts />
@@ -110,7 +102,7 @@
                 suffix="XDR"
                 style="max-width: 150px;"
                 readonly
-              /> -->
+              />-->
 
               <!-- <q-input
                 v-bind:value="formatNumber(uiAction.outstandingCostXdr, 3)"
@@ -119,14 +111,14 @@
                 suffix="XDR"
                 style="max-width: 150px;"
                 readonly
-              /> -->
+              />-->
 
               <!-- <q-input
                 v-bind:value="formatNumber(uiAction.roi, 2)"
                 label="估計 SROI"
                 style="max-width: 150px;"
                 readonly
-              /> -->
+              />-->
             </div>
 
             <div class="row q-gutter-md q-mt-md items-start">
@@ -220,16 +212,10 @@
 
             <modal-save-button />
           </div>
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
-          >
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
             middle column
             <div v-for="chart in chartsArr" :key="chart.nodeId" class="q-pb-md">
-              <gchart
-                type="LineChart"
-                :data="chart.chartData"
-                :options="chart.chartOptions"
-              />
+              <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
               <div class="row justify-center q-gutter-x-md">
                 <q-btn-toggle
                   v-model="chart.chartOptions.series"
@@ -259,11 +245,7 @@
               </div>
             </div>
           </div>
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
-          >
-            right column
-          </div>
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">right column</div>
         </div>
       </q-form>
     </div>
@@ -430,6 +412,7 @@ export default {
         updates: this.uiAction
       };
       this.$store.dispatch("actions/updateAction", payload);
+      this.$store.commit("uiAction/setUiActionChanged", false);
     },
 
     updateChartDataForNode(nodeId) {

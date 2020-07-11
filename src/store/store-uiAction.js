@@ -34,6 +34,9 @@ const mutations = {
       console.log("uiActionChanged due to ", fieldName);
     }
   },
+  setUiActionChanged(state, value) {
+    state.uiActionChanged = value;
+  },
   setActionMchState(state, actionMchState) {
     state.uiAction.actionMchState = Object.assign({}, actionMchState);
     //console.log(state.uiAction.actionMchState);
