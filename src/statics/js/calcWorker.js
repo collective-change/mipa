@@ -277,10 +277,8 @@ function prepRoiResults(
   //calculate actionRoi and prepare results
   let totalRoi = marginalTotalBenefitNpv / marginalTotalCostNpv;
   let actionRoi =
-    Math.sqrt(
-      (marginalTotalBenefitNpv * marginalTotalBenefitNpv) /
-        (marginalTotalCostNpv * outstandingDirectCost)
-    ) *
+    ((marginalTotalBenefitNpv * marginalTotalBenefitNpv) /
+      (marginalTotalCostNpv * outstandingDirectCost)) *
     Math.sign(marginalTotalBenefitNpv) *
     Math.sign(outstandingDirectCost);
 
