@@ -92,42 +92,6 @@
             <impacts />
 
             <div class="row q-gutter-md q-mt-md items-start">
-              <!-- <q-input
-                v-model.number="estTotalBenefitXdr"
-                label="預估總效益"
-                type="number"
-                suffix="XDR"
-                filled
-                style="max-width: 150px;"
-                debounce="500"
-              />-->
-              <!-- <q-input
-                v-bind:value="uiAction.estTotalCostXdr"
-                label="預估總成本"
-                type="number"
-                suffix="XDR"
-                style="max-width: 150px;"
-                readonly
-              />-->
-
-              <!-- <q-input
-                v-bind:value="formatNumber(uiAction.outstandingCostXdr, 3)"
-                label="需再付出成本"
-                type="number"
-                suffix="XDR"
-                style="max-width: 150px;"
-                readonly
-              />-->
-
-              <!-- <q-input
-                v-bind:value="formatNumber(uiAction.actionLeverage, 2)"
-                label="估計 SROI"
-                style="max-width: 150px;"
-                readonly
-              />-->
-            </div>
-
-            <div class="row q-gutter-md q-mt-md items-start">
               <q-input
                 v-model.number="estEffortHrs"
                 label="預估人員時間"
