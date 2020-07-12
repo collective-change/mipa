@@ -130,7 +130,8 @@ export default {
           align: "right",
           label: "完成度",
           field: "effortCompletionPercentage",
-          format: val => `${formatNumber(val, 3)}%`,
+          format: val =>
+            `${formatNumber(val, 3)}${typeof val == "number" ? "%" : ""}`,
           sortable: true
         }
         /*{
