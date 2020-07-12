@@ -39,21 +39,22 @@
                 text-color="white"
               >Leverage {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip>
               <q-chip outline color="primary">
+                Direct cost
+                {{ formatNumber(uiAction.sunkenDirectCost, 3) }} /
+                {{ formatNumber(uiAction.totalDirectCost, 3) }} XDR
+              </q-chip>
+              <br v-if="embedded" />
+              <q-chip
+                color="primary"
+                text-color="white"
+              >ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip>
+              <q-chip outline color="primary">
                 Benefit
                 {{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }} XDR
               </q-chip>
               <q-chip outline color="primary">
                 Cost
                 {{ formatNumber(uiAction.marginalTotalCostNpv, 3) }} XDR
-              </q-chip>
-              <q-chip
-                color="primary"
-                text-color="white"
-              >ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip>
-              <q-chip outline color="primary">
-                Direct cost
-                {{ formatNumber(uiAction.sunkenDirectCost, 3) }} /
-                {{ formatNumber(uiAction.totalDirectCost, 3) }} XDR
               </q-chip>
             </div>
           </div>
