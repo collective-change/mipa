@@ -19,19 +19,17 @@ function withAbbreviation(num, digits) {
     { value: 1e6, symbol: "M" },
     { value: 1e9, symbol: "B" },
     { value: 1e12, symbol: "T" },
-    { value: 1e15, symbol: "P" }
-    /*{ value: 1e18, symbol: "E" }*/
+    { value: 1e15, symbol: "cutoff" } //cutoff point; will not show in result
   ];
   var rx = /\.0+$|(\.[0-9]*[1-9])0+$/;
   var i;
-  //var sign = Math.sign(num);
   var absNum = Math.abs(num);
   for (i = abbr.length - 1; i > 0; i--) {
     if (absNum >= abbr[i].value) {
       break;
     }
   }
-  if (abbr[i].symbol == "P") {
+  if (abbr[i].symbol == "cutoff") {
     return num.toExponential(digits - 1);
   } else
     return (

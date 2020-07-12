@@ -207,3 +207,9 @@ export default {
   }
 };
 </script>
+
+<style>
+.q-table tbody td {
+  white-space: normal;
+}
+</style>
