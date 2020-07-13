@@ -32,7 +32,7 @@
             </q-input>
           </div>
 
-          <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
+          <div v-bind:class="{ 'col-12 col-md-5': !embedded, 'col-12': embedded }">
             <div class="q-px-xs q-gutter-xs">
               <q-chip
                 color="primary"
@@ -59,7 +59,7 @@
             </div>
           </div>
 
-          <div v-bind:class="{ 'col-12 col-md-2': !embedded, 'col-12': embedded }">
+          <div v-bind:class="{ 'col-12 col-md-3': !embedded, 'col-12': embedded }">
             <div class="row q-pa-sm q-gutter-sm">
               <calculator-ui
                 v-if="embedded"
