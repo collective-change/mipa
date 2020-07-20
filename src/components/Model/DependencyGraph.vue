@@ -81,6 +81,7 @@ export default {
         links: []
       },
       simulation: null,
+      iterationCount: 0,
       forceProperties: {
         gravity: {
           strength: 80,
@@ -94,8 +95,8 @@ export default {
         },
         collide: {
           strength: 0.7,
-          iterations: 1,
-          radius: nodeRadius
+          iterations: 1
+          //radius: nodeRadius
         },
         forceX: {
           strength: 0.03,
@@ -107,7 +108,7 @@ export default {
         },
         link: {
           distance: 90,
-          strength: 1.5,
+          //strength: 1.5,
           iterations: 1
         }
       },
@@ -255,6 +256,7 @@ export default {
     ...mapActions("ui", ["setSelectedNodeId"]),
 
     tick() {
+      let that = this;
       // If no data is ready, do nothing
       if (!this.d3Data) {
         return;
@@ -263,7 +265,25 @@ export default {
 
       this.simulation
         .force("collide")
-        .radius(nodeRadius * (1 - this.simulation.alpha()));
+        .strength(that.forceProperties.collide.strength)
+        .radius(function(node) {
+          if (node.toRemove) return 0;
+          else return nodeRadius * 1 - that.simulation.alpha();
+        })
+        .iterations(that.forceProperties.collide.iterations);
+
+      this.simulation
+        .force("link")
+        .distance(function(link) {
+          if (link.newlyEntered)
+            return (
+              that.forceProperties.link.distance *
+              Math.min(1, that.iterationCount / 50)
+            );
+          else return that.forceProperties.link.distance;
+        })
+        //.strength(that.forceProperties.link.strength)
+        .iterations(that.forceProperties.link.iterations);
 
       const transform = d => {
         return "translate(" + d.x + "," + d.y + ")";
@@ -287,6 +307,7 @@ export default {
       graph.selectAll("path").attr("d", link);
       graph.selectAll("circle").attr("transform", transform);
       graph.selectAll("text").attr("transform", transform);
+      this.iterationCount++;
       //this.simulation.stop();
     },
 
@@ -314,6 +335,7 @@ export default {
       //if circlePositions are valid, then save
       if (circlePositions.length && !isNaN(circlePositions[0].x)) {
         console.log("saving positions");
+        console.log("iterationCount", this.iterationCount);
         idb.saveDependencyGraphDisplay(saveFile);
       }
     },
@@ -325,6 +347,10 @@ export default {
       let nodes = [...this.storeData.nodes];
       let links = [...this.storeData.links];
 
+      //remove newlyEntered from d3Data nodes and inks
+      this.d3Data.nodes.forEach(n => (n.newlyEntered = false));
+      this.d3Data.links.forEach(l => (l.newlyEntered = false));
+
       //compute collapsedNodeGroups
       if (this.currentModel.nodeGroups && this.expandedNodeGroups)
         collapsedNodeGroups = this.currentModel.nodeGroups.filter(
@@ -334,7 +360,7 @@ export default {
         collapsedNodeGroups = [...this.currentModel.nodeGroups];
       else collapsedNodeGroups = [];
 
-      //TODO: topoSort collapsedNodeGroups
+      //TODO: topoSort collapsedNodeGroups?
       //for collapsed node groups, replace individual nodes with a group node
       collapsedNodeGroups.forEach(function(collapsedGroup) {
         let d3Node,
@@ -359,6 +385,9 @@ export default {
           if (node.isSelfBlocking) nodeForCollapsedGroup.isSelfBlocking = true;
           if (node.symbolFormula == "")
             nodeForCollapsedGroup.symbolFormula = "";
+
+          // add node's x y positions to accumulator in preparation for
+          // calculating average position
           if (that.d3Data.nodes.length) {
             d3Node = that.d3Data.nodes.find(n => n.id == node.id);
             if (d3Node) {
@@ -379,7 +408,6 @@ export default {
         nodes.push(nodeForCollapsedGroup);
 
         //remove links with both ends in group
-        //console.log('link 0:', links[0])
         links = links.filter(function(link) {
           return !(
             collapsedGroup.nodeIds.includes(link.source) &&
@@ -387,7 +415,8 @@ export default {
           );
         });
 
-        //redirect links w/ one end in group to group node; do not allow delete
+        //redirect links w/ one end in group to group node
+        //TODO: do not allow delete on these links
         links.forEach(function(link, index, linksArray) {
           if (
             collapsedGroup.nodeIds.includes(link.source) &&
@@ -427,13 +456,14 @@ export default {
             nodeInGroup.x =
               exitingGroupNode.x +
               that.forceProperties.link.distance *
-                0.5 *
+                0.05 *
                 Math.sin(nodeInGroupCount * 10);
             nodeInGroup.y =
               exitingGroupNode.y +
               that.forceProperties.link.distance *
-                0.5 *
+                0.05 *
                 Math.cos(nodeInGroupCount * 10);
+            nodeInGroup.newlyEntered = true;
             nodeInGroupCount++;
           }
         });
@@ -465,6 +495,7 @@ export default {
       let visibleData = this.getVisibleData(payload);
       let visibleNodes = visibleData.nodes;
       let visibleLinks = visibleData.links;
+      let modifyingExistingGraph = false;
 
       var dataChanged = false;
       var graphTextChange = false;
@@ -473,6 +504,7 @@ export default {
         this.d3Data.nodes.forEach(function(d3Node) {
           d3Node.unconfirmed = "true";
         });
+        modifyingExistingGraph = true;
       }
       let matchedD3Node = null;
       //for each in visibleNodes, update in d3Data.nodes, add it, or remove it
@@ -549,6 +581,7 @@ export default {
           delete matchedD3Link.unconfirmed;
         } //else visibleLink does not exist in data; clone it there
         else {
+          if (modifyingExistingGraph) visibleLink.newlyEntered = true;
           that.d3Data.links.push(Object.assign({}, visibleLink));
           dataChanged = true;
         }
@@ -565,13 +598,21 @@ export default {
         }
       }
       if (dataChanged) {
-        this.updateData();
+        this.updateData({ modifyingExistingGraph });
       }
       if (graphTextChange && !dataChanged) {
         this.updateNodeClassAndText(true, 0.001);
       }
     },
-    updateData(restartForceSimulation = true) {
+    updateData(options) {
+      let restartForceSimulation =
+        options && options.hasOwnProperty("restartForceSimulation")
+          ? options.restartForceSimulation
+          : true;
+      let modifyingExistingGraph =
+        options && options.hasOwnProperty("modifyingExistingGraph")
+          ? options.modifyingExistingGraph
+          : false;
       var that = this;
 
       // stop the previous simulation
@@ -635,6 +676,7 @@ export default {
         });
 
       // Nodes should always be redrawn to avoid lines above them
+      let nodes = graph.selectAll("circle");
       graph.selectAll("circle").remove();
 
       graph
@@ -642,11 +684,15 @@ export default {
         .data(this.d3Data.nodes)
         .enter()
         .append("circle")
-        .attr("r", nodeRadius)
-        //.attr("cx", 100)
-        //.attr("cy", 100)
-        //.attr("x", d => d.x ? 400 : this.svgWidth * 0.5)
-        //.attr("y", d => d.y ? 400 : this.svgHeight * 0.5)
+        .each(function(node, i) {
+          if (node.newlyEntered) {
+            d3.select(this)
+              .transition()
+              .attr("r", nodeRadius);
+          } else {
+            d3.select(this).attr("r", nodeRadius);
+          }
+        })
         .call(
           d3
             .drag()
@@ -844,6 +890,7 @@ export default {
 
       if (restartForceSimulation) {
         this.simulation.on("end", this.savePositions);
+        this.iterationCount = 0;
         this.simulation.alpha(1).restart();
       }
     },
@@ -896,7 +943,7 @@ export default {
       }
     },
     updateForces() {
-      const { simulation, forceProperties, svgWidth, svgHeight, d3Data } = this;
+      const { simulation, forceProperties, iterationCount } = this;
       simulation
         .force("gravity")
         .strength(forceProperties.gravity.strength)
@@ -907,11 +954,11 @@ export default {
         .strength(forceProperties.charge.strength)
         .distanceMin(forceProperties.charge.distanceMin)
         .distanceMax(forceProperties.charge.distanceMax);
-      simulation
+      /*simulation
         .force("collide")
         .strength(forceProperties.collide.strength)
         //.radius(forceProperties.collide.radius)
-        .iterations(forceProperties.collide.iterations);
+        .iterations(forceProperties.collide.iterations);*/
       simulation
         .force("forceX")
         .x(forceProperties.forceX.x)
@@ -933,11 +980,11 @@ export default {
             return 0;
           }
         });
-      simulation
+      /*simulation
         .force("link")
         .distance(forceProperties.link.distance)
         .strength(forceProperties.link.strength)
-        .iterations(forceProperties.link.iterations);
+        .iterations(forceProperties.link.iterations);*/
 
       // updates ignored until this is run
       // restarts the simulation (important if simulation has already slowed down)
@@ -1376,8 +1423,8 @@ circle.state {
   stroke: #4a84a5;
 }
 circle.output {
-  fill: #f0add2;
-  stroke: #bd719b;
+  fill: #d1c4e9;
+  stroke: #9575cd;
 }
 circle.input {
   fill: #b9df99;
