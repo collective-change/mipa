@@ -448,14 +448,14 @@ export default {
       if (!this.currentModel || typeof this.uiAction.impacts == "undefined")
         return;
       let defaultNodesToChart = [];
-      //get impacted nodes
+      //add totalBenefit and totalCost nodes
+      defaultNodesToChart.push(this.currentModel.roleNodes.totalBenefit);
+      defaultNodesToChart.push(this.currentModel.roleNodes.totalCost);
+      //add impacted nodes
       this.uiAction.impacts.forEach(function(impact) {
         defaultNodesToChart.push(impact.nodeId);
       });
 
-      //get totalBenefit and totalCost nodes
-      defaultNodesToChart.push(this.currentModel.roleNodes.totalBenefit);
-      defaultNodesToChart.push(this.currentModel.roleNodes.totalCost);
       //load data into each node
       defaultNodesToChart.forEach(nodeId =>
         this.updateChartDataForNode(nodeId)
