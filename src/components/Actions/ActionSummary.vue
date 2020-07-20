@@ -448,9 +448,9 @@ export default {
       if (!this.currentModel || typeof this.uiAction.impacts == "undefined")
         return;
       let defaultNodesToChart = [];
-      //add totalBenefit and totalCost nodes
-      defaultNodesToChart.push(this.currentModel.roleNodes.totalBenefit);
-      defaultNodesToChart.push(this.currentModel.roleNodes.totalCost);
+      //add combinedBenefit and combinedCost nodes
+      defaultNodesToChart.push(this.currentModel.roleNodes.combinedBenefit);
+      defaultNodesToChart.push(this.currentModel.roleNodes.combinedCost);
       //add impacted nodes
       this.uiAction.impacts.forEach(function(impact) {
         defaultNodesToChart.push(impact.nodeId);

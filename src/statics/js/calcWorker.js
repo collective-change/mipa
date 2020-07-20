@@ -252,12 +252,13 @@ function prepRoiResults(
 ) {
   //prepare inputs for calculating NPVs
   let ifDoneTotalBenefitSeries =
-    ifDoneTimeSeriesNodesValues[roleNodes.totalBenefit];
+    ifDoneTimeSeriesNodesValues[roleNodes.combinedBenefit];
   let ifNotDoneTotalBenefitSeries =
-    ifNotDoneTimeSeriesNodesValues[roleNodes.totalBenefit];
-  let ifDoneTotalCostSeries = ifDoneTimeSeriesNodesValues[roleNodes.totalCost];
+    ifNotDoneTimeSeriesNodesValues[roleNodes.combinedBenefit];
+  let ifDoneTotalCostSeries =
+    ifDoneTimeSeriesNodesValues[roleNodes.combinedCost];
   let ifNotDoneTotalCostSeries =
-    ifNotDoneTimeSeriesNodesValues[roleNodes.totalCost];
+    ifNotDoneTimeSeriesNodesValues[roleNodes.combinedCost];
 
   //calculate NPVs
   let marginalTotalBenefitNpv = getMarginalNpv(

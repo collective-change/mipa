@@ -1,8 +1,6 @@
 <template>
   <q-card>
-    <modal-header v-if="modelToSubmit.isOrgMainModel" v-slot:header
-      >Configure main model</modal-header
-    >
+    <modal-header v-if="modelToSubmit.isOrgMainModel" v-slot:header>Configure main model</modal-header>
     <modal-header v-else v-slot:header>Configure model</modal-header>
 
     <q-form @submit.prevent="submitModel">
@@ -26,7 +24,7 @@
           map-options
           :rules="[val => !!val || 'Field is required']"
           filled
-        />-->
+            />-->
 
             <div class="row">
               <q-input
@@ -125,8 +123,8 @@
               fill-input
             />
             <q-select
-              label="Total benefit"
-              v-model="modelToSubmit.roleNodes.totalBenefit"
+              label="Combined benefit"
+              v-model="modelToSubmit.roleNodes.combinedBenefit"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
@@ -139,8 +137,8 @@
               fill-input
             />
             <q-select
-              label="Total cost"
-              v-model="modelToSubmit.roleNodes.totalCost"
+              label="Combined cost"
+              v-model="modelToSubmit.roleNodes.combinedCost"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
