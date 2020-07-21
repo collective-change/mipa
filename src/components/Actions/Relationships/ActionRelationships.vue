@@ -1,6 +1,9 @@
 <template>
   <q-list padding>
-    <q-item-label header>Blocked by</q-item-label>
+    <q-item-label header>
+      Blocked by
+      <q-btn color="primary" size="xs" class="q-ml-lg">add</q-btn>
+    </q-item-label>
     <q-separator spaced />
     <q-item-label header>Blocks</q-item-label>
     <q-separator spaced />
