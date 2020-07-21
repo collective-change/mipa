@@ -183,8 +183,11 @@
           </div>
           <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
             <!-- middle column -->
+            <div class="q-pa-sm q-gutter-sm">
+              <action-relationships v-bind:action="uiAction"></action-relationships>
+            </div>
 
-            <div v-for="chart in chartsArr" :key="chart.nodeId" class="q-pb-md">
+            <div v-for="chart in chartsArr" :key="chart.nodeId" class="q-pa-md">
               <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
               <div class="row justify-center q-gutter-x-md">
                 <q-btn-toggle
@@ -242,6 +245,8 @@ export default {
       .default,
     impacts: require("components/Impacts/Impacts.vue").default,
     "calculator-ui": require("components/Calc/CalculatorUi.vue").default,
+    "action-relationships": require("components/Actions/Relationships/ActionRelationships.vue")
+      .default,
     gchart: GChart
   },
 
