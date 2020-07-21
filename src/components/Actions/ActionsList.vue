@@ -92,7 +92,7 @@ export default {
           sortable: true
         },*/
         {
-          name: "value",
+          name: "benefit",
           align: "right",
           label: "總效益",
           field: "marginalTotalBenefitNpv",
