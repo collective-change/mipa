@@ -49,11 +49,11 @@
                 text-color="white"
               >ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip>
               <q-chip outline color="primary">
-                Benefit
+                NPV Benefit
                 {{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }} XDR
               </q-chip>
               <q-chip outline color="primary">
-                Cost
+                NPV Cost
                 {{ formatNumber(uiAction.marginalTotalCostNpv, 3) }} XDR
               </q-chip>
             </div>
