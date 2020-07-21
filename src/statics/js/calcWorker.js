@@ -94,6 +94,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
   );
 
   //simulate each action
+  let completedLoops = 0;
   actions.forEach(function(action) {
     let startTimeMs = new Date();
 
@@ -220,6 +221,16 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
     putActionResultsInIdb(actionResults, action.id);
 
     if (sim.errorOccurred) return;
+
+    completedLoops++;
+    //report progress every 500 ms
+    if (
+      new Date() - sim.lastProgressReportTime >= 100 ||
+      completedLoops == sim.maxLoops
+    ) {
+      self.postMessage({ progressValue: completedLoops / actions.length });
+      sim.lastProgressReportTime = new Date();
+    }
   });
 
   const log = sim.calcTimeLog;
@@ -376,16 +387,6 @@ function iterateThroughTime(sim, scenario) {
     });
     if (!sim.errorOccurred) composeTimeSeries(sim);
     if (sim.errorOccurred) return;
-
-    completedLoops++;
-    //report progress every 500 ms
-    if (
-      new Date() - sim.lastProgressReportTime >= 500 ||
-      completedLoops == sim.maxLoops
-    ) {
-      self.postMessage({ progressValue: completedLoops / sim.maxLoops });
-      sim.lastProgressReportTime = new Date();
-    }
   });
   let stage =
     "iterate for " +
