@@ -4,28 +4,15 @@
       @click="calculate()"
       class="all-pointer-events print-hide"
       color="primary"
-      :loading="calculationProgress>0 && calculationProgress<1"
-      :percentage="calculationProgress*100"
+      :percentage="calculationProgress * 100"
+      :loading="calculatorIsRunning"
     >
-      {{buttonLabel}}
+      {{ buttonLabel }}
       <template v-slot:loading>
         <q-spinner-gears class="on-left" />
-        {{Math.round(calculationProgress*100)}}%
+        {{ Math.round(calculationProgress * 100) }}%
       </template>
     </q-btn>
-    <!--<q-linear-progress
-      v-if="calculatorIsRunning"
-      stripe
-      rounded
-      size="20px"
-      :value="calculationProgress"
-      color="secondary"
-      class="q-mt-sm"
-    >
-      <div class="absolute-full flex flex-center">
-        <q-badge color="white" text-color="secondary" :label="calculationProgressLabel" />
-      </div>
-    </q-linear-progress>-->
   </div>
 </template>
 
@@ -46,11 +33,12 @@ export default {
     ...mapState("model", ["currentModel"]),
     ...mapState("calculator", [
       "calculatorIsRunning",
-      "calculationProgress",
-      "calculationProgressLabel"
+      "calculationProgress"
+      //"calculationProgressLabel"
     ]),
     ...mapState("adHocDocs", ["exchangeRates"]),
-    ...mapGetters("actions", ["actions"])
+    ...mapGetters("actions", ["actions"]),
+    loading() {}
   },
   methods: {
     calculate() {

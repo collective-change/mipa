@@ -5,8 +5,7 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 
 const state = {
   calculatorIsRunning: false,
-  calculationProgress: 0,
-  calculationProgressLabel: ""
+  calculationProgress: 0
 };
 
 const mutations = {
@@ -15,9 +14,6 @@ const mutations = {
   },
   setCalculationProgress(state, value) {
     state.calculationProgress = value;
-  },
-  setCalculationProgressLabel(state, value) {
-    state.calculationProgressLabel = value;
   }
 };
 
@@ -40,7 +36,6 @@ const actions = {
     }
     commit("setCalculatorIsRunning", true);
     commit("setCalculationProgress", 0);
-    commit("setCalculationProgressLabel", "0%");
 
     return new Worker("js/calcWorker.js");
   },
@@ -96,6 +91,7 @@ const actions = {
                   e.data.actionsRoiResults[0].actionId,
                   { root: true }
                 );
+
               done = true;
             }
             break;
@@ -104,6 +100,7 @@ const actions = {
         if (done) {
           //calcWorker.terminate();
           commit("setCalculatorIsRunning", false);
+          commit("setCalculationProgress", 0);
           Notify.create(
             "Calculation time " + e.data.calcTimeMs / 1000 + " seconds."
           );
@@ -111,10 +108,6 @@ const actions = {
         }
       } else if ("progressValue" in e.data) {
         commit("setCalculationProgress", e.data.progressValue);
-        commit(
-          "setCalculationProgressLabel",
-          Math.round(e.data.progressValue * 100) + "%"
-        );
       } else {
         console.log("Error message received from worker: ", e.data);
         showErrorMessage(
