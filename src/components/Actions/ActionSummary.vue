@@ -62,7 +62,6 @@
           <div v-bind:class="{ 'col-12 col-md-3': !embedded, 'col-12': embedded }">
             <div class="row q-pa-sm q-gutter-sm">
               <calculator-ui
-                v-if="embedded"
                 calculationType="uiAction"
                 buttonLabel="Recalculate"
                 :uiAction="uiAction"
@@ -184,13 +183,6 @@
           </div>
           <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
             <!-- middle column -->
-            <div v-if="!embedded" class="row justify-center">
-              <calculator-ui
-                calculationType="uiAction"
-                buttonLabel="Recalculate"
-                :uiAction="uiAction"
-              />
-            </div>
 
             <div v-for="chart in chartsArr" :key="chart.nodeId" class="q-pb-md">
               <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
