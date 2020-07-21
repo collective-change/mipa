@@ -42,7 +42,7 @@ const actions = {
     commit("setCalculationProgress", 0);
     commit("setCalculationProgressLabel", "0%");
 
-    return new Worker("statics/js/calcWorker.js");
+    return new Worker("js/calcWorker.js");
   },
 
   async calculate({ commit, dispatch }, payload) {
