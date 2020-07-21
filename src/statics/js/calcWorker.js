@@ -226,7 +226,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
     //report progress every 500 ms
     if (
       new Date() - sim.lastProgressReportTime >= 100 ||
-      completedLoops == sim.maxLoops
+      completedLoops == actions.length
     ) {
       self.postMessage({ progressValue: completedLoops / actions.length });
       sim.lastProgressReportTime = new Date();

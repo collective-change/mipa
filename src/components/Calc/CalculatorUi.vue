@@ -4,9 +4,16 @@
       @click="calculate()"
       class="all-pointer-events print-hide"
       color="primary"
-      :label="buttonLabel"
-    />
-    <q-linear-progress
+      :loading="calculationProgress>0 && calculationProgress<1"
+      :percentage="calculationProgress*100"
+    >
+      {{buttonLabel}}
+      <template v-slot:loading>
+        <q-spinner-gears class="on-left" />
+        {{Math.round(calculationProgress*100)}}%
+      </template>
+    </q-btn>
+    <!--<q-linear-progress
       v-if="calculatorIsRunning"
       stripe
       rounded
@@ -16,13 +23,9 @@
       class="q-mt-sm"
     >
       <div class="absolute-full flex flex-center">
-        <q-badge
-          color="white"
-          text-color="secondary"
-          :label="calculationProgressLabel"
-        />
+        <q-badge color="white" text-color="secondary" :label="calculationProgressLabel" />
       </div>
-    </q-linear-progress>
+    </q-linear-progress>-->
   </div>
 </template>
 
