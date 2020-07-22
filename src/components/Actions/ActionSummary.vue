@@ -3,7 +3,9 @@
     <div v-if="selectedAction">
       <q-form @submit.prevent="submitForm">
         <div class="row">
-          <div v-bind:class="{ 'col-12 col-md-4': !embedded, 'col-12': embedded }">
+          <div
+            v-bind:class="{ 'col-12 col-md-4': !embedded, 'col-12': embedded }"
+          >
             <q-input
               class="text-h6"
               v-model="title"
@@ -11,11 +13,9 @@
               ref="actionTitle"
             >
               <template v-slot:prepend>
-                <q-chip
-                  square
-                  color="primary"
-                  text-color="white"
-                >{{ uiAction.actionMchState.value }}</q-chip>
+                <q-chip square color="primary" text-color="white">{{
+                  uiAction.actionMchState.value
+                }}</q-chip>
               </template>
               <template v-slot:after v-if="embedded">
                 <q-btn
@@ -32,22 +32,22 @@
             </q-input>
           </div>
 
-          <div v-bind:class="{ 'col-12 col-md-5': !embedded, 'col-12': embedded }">
+          <div
+            v-bind:class="{ 'col-12 col-md-5': !embedded, 'col-12': embedded }"
+          >
             <div class="q-px-xs q-gutter-xs">
-              <q-chip
-                color="primary"
-                text-color="white"
-              >Leverage {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip>
+              <q-chip color="primary" text-color="white"
+                >Leverage {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip
+              >
               <q-chip outline color="primary">
                 Direct cost
                 {{ formatNumber(uiAction.sunkenDirectCost, 3) }} /
                 {{ formatNumber(uiAction.totalDirectCost, 3) }} XDR
               </q-chip>
               <br v-if="embedded" />
-              <q-chip
-                color="primary"
-                text-color="white"
-              >ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip>
+              <q-chip color="primary" text-color="white"
+                >ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip
+              >
               <q-chip outline color="primary">
                 NPV Benefit
                 {{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }} XDR
@@ -59,7 +59,9 @@
             </div>
           </div>
 
-          <div v-bind:class="{ 'col-12 col-md-3': !embedded, 'col-12': embedded }">
+          <div
+            v-bind:class="{ 'col-12 col-md-3': !embedded, 'col-12': embedded }"
+          >
             <div class="row q-pa-sm q-gutter-sm">
               <calculator-ui
                 calculationType="uiAction"
@@ -85,7 +87,9 @@
         </div>
 
         <div class="row">
-          <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
+          <div
+            v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
+          >
             <q-input v-model="notes" label="筆記" filled autogrow />
 
             <impacts />
@@ -181,14 +185,20 @@
 
             <modal-save-button />
           </div>
-          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
+          <div
+            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
+          >
             <!-- middle column -->
             <div class="q-pa-sm q-gutter-sm">
-              <action-relationships v-bind:action="uiAction"></action-relationships>
+              <action-relationships></action-relationships>
             </div>
 
             <div v-for="chart in chartsArr" :key="chart.nodeId" class="q-pa-md">
-              <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
+              <gchart
+                type="LineChart"
+                :data="chart.chartData"
+                :options="chart.chartOptions"
+              />
               <div class="row justify-center q-gutter-x-md">
                 <q-btn-toggle
                   v-model="chart.chartOptions.series"
@@ -218,7 +228,11 @@
               </div>
             </div>
           </div>
-          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">right column</div>
+          <div
+            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
+          >
+            right column
+          </div>
         </div>
       </q-form>
     </div>

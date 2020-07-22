@@ -145,6 +145,14 @@ const actions = {
   },
   setSort({ commit }, value) {
     commit("setSort", value);
+  },
+  addBlocker({ rootState }, blockerId) {
+    let blockeeId = rootState.uiAction.uiAction.id;
+    addBlockingRelationship(blockerId, blockeeId);
+  },
+  addBlockee({ rootState }, blockeeId) {
+    let blockerId = rootState.uiAction.uiAction.id;
+    addBlockingRelationship(blockerId, blockeeId);
   }
 };
 
@@ -302,4 +310,42 @@ function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
     return true;
 
   return false;
+}
+
+function relationshipExists(action, targetActionId) {
+  if (action.blockerActions && action.blockerActions.includes(targetActionId))
+    return true;
+  if (action.blockeeActions && action.blockeeActions.includes(targetActionId))
+    return true;
+  if (action.childrenActions && action.childrenActions.includes(targetActionId))
+    return true;
+  if (action.parentAction && action.parentAction == targetActionId) return true;
+  return false;
+}
+
+async function addBlockingRelationship(blockerId, blockeeId) {
+  const blockerActionRef = firebaseDb.collection("actions").doc(blockerId);
+  const blockeeActionRef = firebaseDb.collection("actions").doc(blockeeId);
+  try {
+    await firebaseDb.runTransaction(async t => {
+      const blockerAction = await t.get(blockerActionRef);
+      const blockeeAction = await t.get(blockeeActionRef);
+      //check if the current action already has a relationship with the target
+      if (
+        relationshipExists(blockerAction, blockeeId) ||
+        relationshipExists(blockeeAction, blockerId)
+      )
+        throw "A relationship already exists with the target action.";
+      t.update(blockerActionRef, {
+        blockeeActions: firebase.firestore.FieldValue.arrayUnion(blockeeId)
+      });
+      t.update(blockeeActionRef, {
+        blockerActions: firebase.firestore.FieldValue.arrayUnion(blockerId)
+      });
+      Notify.create("Relationship added!");
+    });
+  } catch (error) {
+    console.log("Transaction failure:", error);
+    showErrorMessage("Error adding relationship", error.message);
+  }
 }
