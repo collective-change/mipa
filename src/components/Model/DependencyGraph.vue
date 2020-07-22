@@ -17,7 +17,9 @@
       style="border: black; border-style: solid; border-width: 0px"
     />
 
-    <p class="print-hide">Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.</p>
+    <p class="print-hide">
+      Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.
+    </p>
     <q-dialog v-model="showAddNode">
       <add-node
         :sourceNodeId="addNodeProps.sourceNodeId"
@@ -41,7 +43,7 @@
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 import * as d3 from "d3";
-import "d3-selection-multi";
+import "d3-selection-multi"; //TODO: check if this import is needed
 import * as sizeof from "object-sizeof";
 import idb from "src/api/idb";
 import { responsify } from "src/utils/util-responsify-svg";

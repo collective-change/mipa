@@ -15,6 +15,7 @@
         <div class="col-12 col-md-7">
           <q-toggle v-model="useRoi" label="分析優先順序" />
           <div v-if="useRoi">
+            <actions-chart></actions-chart>
             <actions-list></actions-list>
           </div>
           <div v-else>
@@ -42,6 +43,7 @@ export default {
     //"actions-todo": require("components/Actions/ActionsTodo.vue").default,
     //"actions-completed": require("components/Actions/ActionsCompleted.vue").default,
     "actions-list": require("components/Actions/ActionsList.vue").default,
+    "actions-chart": require("components/Actions/ActionsChart.vue").default,
     "unprioritized-actions-list": require("components/Actions/UnprioritizedActionsList.vue")
       .default,
     //"add-action": require("components/Actions/Modals/AddAction.vue").default,
