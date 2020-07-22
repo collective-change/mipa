@@ -146,6 +146,14 @@ const actions = {
   setSort({ commit }, value) {
     commit("setSort", value);
   },
+  addParent({ rootState }, parentId) {
+    let childId = rootState.uiAction.uiAction.id;
+    addNestingRelationship(parentId, childId);
+  },
+  addChild({ rootState }, childId) {
+    let parentId = rootState.uiAction.uiAction.id;
+    addNestingRelationship(parentId, childId);
+  },
   addBlocker({ rootState }, blockerId) {
     let blockeeId = rootState.uiAction.uiAction.id;
     addBlockingRelationship(blockerId, blockeeId);
@@ -153,6 +161,21 @@ const actions = {
   addBlockee({ rootState }, blockeeId) {
     let blockerId = rootState.uiAction.uiAction.id;
     addBlockingRelationship(blockerId, blockeeId);
+  },
+  deleteRelationship({}, payload) {
+    switch (payload.type) {
+      case "nesting":
+        deleteNestingRelationship(payload.parent, payload.child);
+        break;
+      case "blocking":
+        deleteBlockingRelationship(payload.blocker, payload.blockee);
+        break;
+      default:
+        showErrorMessage(
+          "Error deleting relationship",
+          `"${payload.type}" not recognized`
+        );
+    }
   }
 };
 
@@ -313,14 +336,59 @@ function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
 }
 
 function relationshipExists(action, targetActionId) {
-  if (action.blockerActions && action.blockerActions.includes(targetActionId))
+  if (
+    action.blockerActionIds &&
+    action.blockerActionIds.includes(targetActionId)
+  )
     return true;
-  if (action.blockeeActions && action.blockeeActions.includes(targetActionId))
+  if (
+    action.blockeeActionIds &&
+    action.blockeeActionIds.includes(targetActionId)
+  )
     return true;
-  if (action.childrenActions && action.childrenActions.includes(targetActionId))
+  if (
+    action.childrenActionIds &&
+    action.childrenActionIds.includes(targetActionId)
+  )
     return true;
-  if (action.parentAction && action.parentAction == targetActionId) return true;
+  if (action.parentActionId && action.parentActionId == targetActionId)
+    return true;
   return false;
+}
+
+async function addNestingRelationship(parentId, childId) {
+  const parentActionRef = firebaseDb.collection("actions").doc(parentId);
+  const childActionRef = firebaseDb.collection("actions").doc(childId);
+  try {
+    await firebaseDb.runTransaction(async t => {
+      const parentActionDoc = await t.get(parentActionRef);
+      const childActionDoc = await t.get(childActionRef);
+      const parentAction = parentActionDoc.data();
+      const childAction = childActionDoc.data();
+      //check if the current action already has a relationship with the target
+      if (
+        relationshipExists(parentAction, childId) ||
+        relationshipExists(childAction, parentId)
+      )
+        throw new Error(
+          "A relationship already exists with the target action."
+        );
+      if (childAction.parentActionId) {
+        console.log("parent exists");
+        throw new Error("Parent action already exists.");
+      }
+      t.update(parentActionRef, {
+        childrenActionIds: firebase.firestore.FieldValue.arrayUnion(childId)
+      });
+      t.update(childActionRef, {
+        parentActionId: parentId
+      });
+      Notify.create("Relationship added!");
+    });
+  } catch (error) {
+    console.log("Transaction failure:", error);
+    showErrorMessage("Error adding relationship", error.message);
+  }
 }
 
 async function addBlockingRelationship(blockerId, blockeeId) {
@@ -328,8 +396,10 @@ async function addBlockingRelationship(blockerId, blockeeId) {
   const blockeeActionRef = firebaseDb.collection("actions").doc(blockeeId);
   try {
     await firebaseDb.runTransaction(async t => {
-      const blockerAction = await t.get(blockerActionRef);
-      const blockeeAction = await t.get(blockeeActionRef);
+      const blockerActionDoc = await t.get(blockerActionRef);
+      const blockeeActionDoc = await t.get(blockeeActionRef);
+      const blockerAction = blockerActionDoc.data();
+      const blockeeAction = blockeeActionDoc.data();
       //check if the current action already has a relationship with the target
       if (
         relationshipExists(blockerAction, blockeeId) ||
@@ -337,15 +407,53 @@ async function addBlockingRelationship(blockerId, blockeeId) {
       )
         throw "A relationship already exists with the target action.";
       t.update(blockerActionRef, {
-        blockeeActions: firebase.firestore.FieldValue.arrayUnion(blockeeId)
+        blockeeActionIds: firebase.firestore.FieldValue.arrayUnion(blockeeId)
       });
       t.update(blockeeActionRef, {
-        blockerActions: firebase.firestore.FieldValue.arrayUnion(blockerId)
+        blockerActionIds: firebase.firestore.FieldValue.arrayUnion(blockerId)
       });
       Notify.create("Relationship added!");
     });
   } catch (error) {
     console.log("Transaction failure:", error);
     showErrorMessage("Error adding relationship", error.message);
+  }
+}
+
+async function deleteNestingRelationship(parentId, childId) {
+  const parentActionRef = firebaseDb.collection("actions").doc(parentId);
+  const childActionRef = firebaseDb.collection("actions").doc(childId);
+  try {
+    await firebaseDb.runTransaction(async t => {
+      t.update(parentActionRef, {
+        childrenActionIds: firebase.firestore.FieldValue.arrayRemove(childId)
+      });
+      t.update(childActionRef, {
+        parentActionId: firebase.firestore.FieldValue.delete()
+      });
+      Notify.create("Relationship removed!");
+    });
+  } catch (error) {
+    console.log("Transaction failure:", error);
+    showErrorMessage("Error removing nesting relationship", error.message);
+  }
+}
+
+async function deleteBlockingRelationship(blockerId, blockeeId) {
+  const blockerActionRef = firebaseDb.collection("actions").doc(blockerId);
+  const blockeeActionRef = firebaseDb.collection("actions").doc(blockeeId);
+  try {
+    await firebaseDb.runTransaction(async t => {
+      t.update(blockerActionRef, {
+        blockeeActionIds: firebase.firestore.FieldValue.arrayRemove(blockeeId)
+      });
+      t.update(blockeeActionRef, {
+        blockerActionIds: firebase.firestore.FieldValue.arrayRemove(blockerId)
+      });
+      Notify.create("Relationship removed!");
+    });
+  } catch (error) {
+    console.log("Transaction failure:", error);
+    showErrorMessage("Error removing blocking relationship", error.message);
   }
 }
