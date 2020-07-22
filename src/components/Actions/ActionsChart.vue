@@ -106,7 +106,7 @@ export default {
       // Add X axis
       var x = d3
         .scaleLog()
-        .domain([1, maxActionLeverage])
+        .domain([1, maxEstEffortHrs])
         .range([0, width]);
       this.svg
         .append("g")
@@ -120,12 +120,12 @@ export default {
         .attr("text-anchor", "end")
         .attr("x", width)
         .attr("y", height + 50)
-        .text("Leverage");
+        .text("Effort");
 
       // Add Y axis
       var y = d3
         .scaleLog()
-        .domain([1, maxEstEffortHrs])
+        .domain([1, maxActionLeverage])
         .range([height, 0]);
       this.svg.append("g").call(d3.axisLeft(y));
 
@@ -135,7 +135,7 @@ export default {
         .attr("text-anchor", "end")
         .attr("x", 0)
         .attr("y", -20)
-        .text("Effort")
+        .text("Leverage")
         .attr("text-anchor", "start");
 
       // Add a scale for bubble size
@@ -153,10 +153,10 @@ export default {
         .enter()
         .append("circle")
         .attr("cx", function(d) {
-          return x(d.actionLeverage);
+          return x(d.estEffortHrs);
         })
         .attr("cy", function(d) {
-          return y(d.estEffortHrs);
+          return y(d.actionLeverage);
         })
         .attr("r", function(d) {
           return z(d.totalDirectCost);
