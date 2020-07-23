@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div id="actionsChart"></div>
+    <div id="actionsChart" style="position: relative"></div>
     <!--<svg
       id="actionsChart"
       :width="svgWidth"
@@ -96,6 +96,12 @@ export default {
           return a.actionLeverage;
         })
       );
+      let minActionLeverage = Math.min.apply(
+        Math,
+        newActions.map(function(a) {
+          return a.actionLeverage;
+        })
+      );
       let maxTotalDirectCost = Math.max.apply(
         Math,
         newActions.map(function(a) {
@@ -125,7 +131,7 @@ export default {
       // Add Y axis
       var y = d3
         .scaleLog()
-        .domain([1, maxActionLeverage])
+        .domain([minActionLeverage / 2, maxActionLeverage])
         .range([height, 0]);
       this.svg.append("g").call(d3.axisLeft(y));
 
@@ -144,8 +150,49 @@ export default {
         .domain([1, maxTotalDirectCost])
         .range([2, 50]);
 
-      // Add dots
+      // -1- Create a tooltip div that is hidden by default:
+      var tooltip = d3
+        .select("#actionsChart")
+        .append("div")
+        .style("opacity", 0)
+        .attr("class", "tooltip")
+        .style("position", "absolute")
+        .style("background-color", "LightGray")
+        .style("border-radius", "5px")
+        .style("padding", "5px")
+        .style("color", "black");
 
+      // -2- Create 3 functions to show / update (when mouse move but stay on same circle) / hide the tooltip
+      var showTooltip = function(d) {
+        console.log("showTooltip");
+        tooltip.transition().duration(200);
+        tooltip
+          .style("opacity", 1)
+          .html(d.title)
+          .style("left", d3.mouse(this)[0] + margin.left - 0 + "px")
+          .style("top", d3.mouse(this)[1] + margin.top + 20 + "px");
+      };
+      var moveTooltip = function(d) {
+        tooltip
+          .style("left", d3.mouse(this)[0] + margin.left - 0 + "px")
+          .style("top", d3.mouse(this)[1] + margin.top + 20 + "px");
+      };
+      var hideTooltip = function(d) {
+        tooltip
+          .transition()
+          .duration(200)
+          .style("opacity", 0);
+      };
+
+      /* var tooltip = d3
+        .select("body")
+        .append("div")
+        .style("position", "absolute")
+        .style("z-index", "10")
+        .style("visibility", "hidden")
+        .text("a simple tooltip");*/
+
+      // Add dots
       this.svg
         .append("g")
         .selectAll("dot")
@@ -163,7 +210,21 @@ export default {
         })
         .style("fill", "#69b3a2")
         .style("opacity", "0.7")
-        .attr("stroke", "black");
+        .attr("stroke", "black")
+        .on("mouseover", showTooltip)
+        .on("mousemove", moveTooltip)
+        .on("mouseleave", hideTooltip);
+      /*.on("mouseover", function() {
+          return tooltip.style("visibility", "visible");
+        })
+        .on("mousemove", function() {
+          return tooltip
+            .style("top", event.pageY - 10 + "px")
+            .style("left", event.pageX + 10 + "px");
+        })
+        .on("mouseout", function() {
+          return tooltip.style("visibility", "hidden");
+        });*/
     }
   }
 };
