@@ -62,6 +62,29 @@ export default {
       .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
     //.call(responsify);
+
+    var defs = this.svg.append("defs");
+
+    var gradient = defs
+      .append("radialGradient")
+      .attr("id", "sphereGradient")
+      .attr("cx", "40%")
+      .attr("cy", "40%")
+      .attr("r", "50%")
+      .attr("fx", "50%")
+      .attr("fy", "50%");
+
+    gradient
+      .append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", "rgb(255,255,255)")
+      .attr("stop-opacity", 0);
+
+    gradient
+      .append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", "#69b3a2")
+      .attr("stop-opacity", 1);
   },
 
   computed: {
@@ -90,6 +113,12 @@ export default {
           return a.estEffortHrs;
         })
       );
+      let minEstEffortHrs = Math.min.apply(
+        Math,
+        newActions.map(function(a) {
+          return a.estEffortHrs;
+        })
+      );
       let maxActionLeverage = Math.max.apply(
         Math,
         newActions.map(function(a) {
@@ -108,16 +137,21 @@ export default {
           return a.totalDirectCost;
         })
       );
+      /*let minTotalDirectCost = Math.min.apply(
+        Math,
+        newActions.map(function(a) {
+          return a.totalDirectCost;
+        })
+      );*/
 
       // Add X axis
       var x = d3
         .scaleLog()
-        .domain([1, maxEstEffortHrs])
+        .domain([minEstEffortHrs * 0.9, maxEstEffortHrs * 1.1])
         .range([0, width]);
       this.svg
         .append("g")
         .attr("transform", "translate(0," + height + ")")
-        //.attr("transform", "translate(0,700)")
         .call(d3.axisBottom(x).ticks(3));
 
       // Add X axis label:
@@ -131,7 +165,7 @@ export default {
       // Add Y axis
       var y = d3
         .scaleLog()
-        .domain([minActionLeverage / 2, maxActionLeverage])
+        .domain([minActionLeverage * 0.9, maxActionLeverage * 1.1])
         .range([height, 0]);
       this.svg.append("g").call(d3.axisLeft(y));
 
@@ -146,11 +180,16 @@ export default {
 
       // Add a scale for bubble size
       var z = d3
-        .scaleSqrt()
-        .domain([1, maxTotalDirectCost])
-        .range([2, 50]);
+        //.scaleSqrt()
+        .scalePow()
+        .exponent(1 / 3)
+        .domain([0, maxTotalDirectCost])
+        .range([
+          0 /*Math.max(1.5, (50 * minTotalDirectCost) / maxTotalDirectCost)*/,
+          50
+        ]);
 
-      // -1- Create a tooltip div that is hidden by default:
+      // Create a tooltip div that is hidden by default:
       var tooltip = d3
         .select("#actionsChart")
         .append("div")
@@ -162,7 +201,7 @@ export default {
         .style("padding", "5px")
         .style("color", "black");
 
-      // -2- Create 3 functions to show / update (when mouse move but stay on same circle) / hide the tooltip
+      // Create 3 functions to show / update (when mouse move but stay on same circle) / hide the tooltip
       var showTooltip = function(d) {
         console.log("showTooltip");
         tooltip.transition().duration(200);
@@ -179,18 +218,10 @@ export default {
       };
       var hideTooltip = function(d) {
         tooltip
-          .transition()
-          .duration(200)
+          //.transition()
+          //.duration(200)
           .style("opacity", 0);
       };
-
-      /* var tooltip = d3
-        .select("body")
-        .append("div")
-        .style("position", "absolute")
-        .style("z-index", "10")
-        .style("visibility", "hidden")
-        .text("a simple tooltip");*/
 
       // Add dots
       this.svg
@@ -199,6 +230,9 @@ export default {
         .data(newActions)
         .enter()
         .append("circle")
+        .attr("class", function(d) {
+          return "bubbles "; /*+ d.continent*/
+        })
         .attr("cx", function(d) {
           return x(d.estEffortHrs);
         })
@@ -208,23 +242,9 @@ export default {
         .attr("r", function(d) {
           return z(d.totalDirectCost);
         })
-        .style("fill", "#69b3a2")
-        .style("opacity", "0.7")
-        .attr("stroke", "black")
         .on("mouseover", showTooltip)
         .on("mousemove", moveTooltip)
         .on("mouseleave", hideTooltip);
-      /*.on("mouseover", function() {
-          return tooltip.style("visibility", "visible");
-        })
-        .on("mousemove", function() {
-          return tooltip
-            .style("top", event.pageY - 10 + "px")
-            .style("left", event.pageX + 10 + "px");
-        })
-        .on("mouseout", function() {
-          return tooltip.style("visibility", "hidden");
-        });*/
     }
   }
 };
@@ -232,11 +252,14 @@ export default {
 
 <style>
 .bubbles {
-  stroke-width: 1px;
-  stroke: black;
-  opacity: 0.8;
+  /*fill: #69b3a2;*/
+  fill: url(#sphereGradient);
+  /*fill: radial-gradient(at 30% 30%, red, yellow, green);*/
+  stroke-width: 1.5px;
+  /*stroke: black;*/
+  opacity: 0.7;
 }
 .bubbles:hover {
-  stroke: black;
+  stroke: #025e48;
 }
 </style>
