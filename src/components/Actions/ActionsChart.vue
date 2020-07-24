@@ -356,12 +356,11 @@ export default {
         .data(blockingLinkData)
         .join("path")
         .attr("d", blockingLinkGen)
-        .attr("fill", "none")
-        .attr("stroke", "black")
         .attr(
           "class",
           d => "blockingLink " + (d.isBlocking ? "isblocking " : "notBlocking ")
-        );
+        )
+        .attr("marker-end", "url(#end)");
     },
 
     selectedActionId: function() {
@@ -388,6 +387,11 @@ export default {
 }
 .bubble.selected {
   animation: selected 1s infinite alternate ease-in-out;
+}
+.blockingLink {
+  stroke: #666;
+  stroke-width: 5px;
+  fill: none;
 }
 @keyframes selected {
   from {
