@@ -269,6 +269,14 @@ export default {
         .on("click", function(d, i) {
           that.bubbleClick(d, i, "regularClick");
         });
+    },
+
+    selectedActionId: function() {
+      const bubbles = this.svg.selectAll(".bubble");
+      bubbles.classed("selected", false);
+      bubbles
+        .filter(td => td.id == this.selectedActionId)
+        .classed("selected", true);
     }
   }
 };
