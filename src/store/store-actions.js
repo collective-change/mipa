@@ -242,6 +242,26 @@ const getters = {
       }
     });
     return actions;
+  },
+  blockingRelationships: state => {
+    let relationships = [];
+    state.actions.forEach(function(action) {
+      //console.log(node.id);
+      if ("blockerActionIds" in action) {
+        action.blockerActionIds.forEach(function(blockerId) {
+          relationships.push({
+            blockerId: blockerId,
+            blockeeId: action.id
+            /*isBlocking:
+              "blockingInfluencers" in node
+                ? node.blockingInfluencers.includes(influencerId)
+                : false,*/
+          });
+        });
+      }
+    });
+    //console.log("relationshipLinks updated");
+    return relationships;
   }
 };
 

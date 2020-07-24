@@ -136,11 +136,11 @@ export default {
     ]),
     ...mapGetters("model", ["nodes", "links"]),
     ...mapState("model", ["currentModel"]),
-    debugLinks() {
+    /*debugLinks() {
       return this.d3Data.links.map(link => {
         return { source: link.source.id, target: link.target.id };
       });
-    },
+    },*/
     expandedNodeGroups: {
       get() {
         return this.$store.state.ui.expandedNodeGroups;

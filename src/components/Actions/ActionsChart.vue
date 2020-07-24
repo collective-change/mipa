@@ -58,6 +58,23 @@ export default {
 
     var defs = this.svg.append("defs");
 
+    var arrowMarker = defs
+      .selectAll("marker")
+      .data(["end"]) // Different link/path types can be defined here
+      .enter()
+      .append("svg:marker") // This section adds in the arrows
+      .attr("id", String)
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 5) //Prevents arrowhead from being covered by circle
+      .attr("refY", 0)
+      .attr("markerUnits", "userSpaceOnUse")
+      .attr("markerWidth", 15)
+      .attr("markerHeight", 15)
+      .attr("fill", "#666")
+      .attr("orient", "auto")
+      .append("svg:path")
+      .attr("d", "M0,-5L10,0L0,5");
+
     var gradient = defs
       .append("radialGradient")
       .attr("id", "sphereGradient")
@@ -85,13 +102,18 @@ export default {
     ...mapState("actions", ["actions"]),
     ...mapState("uiAction", ["uiActionChanged"]),
     ...mapState("ui", ["selectedActionId"]),
+    ...mapGetters("actions", ["blockingRelationships"]),
 
     chartableActions() {
-      return this.actions
-        .filter(action => action.actionLeverage > 0 && action.estEffortHrs > 0)
-        .sort(function(a, b) {
-          return b.totalDirectCost - a.totalDirectCost;
-        });
+      if (this.blockingRelationships)
+        return this.actions
+          .filter(
+            action => action.actionLeverage > 0 && action.estEffortHrs > 0
+          )
+          .sort(function(a, b) {
+            return b.totalDirectCost - a.totalDirectCost;
+          });
+      else return [];
     }
   },
 
@@ -121,12 +143,54 @@ export default {
         bubbles.classed("selected", false);
         bubbles.filter(td => td === d).classed("selected", true);
       }
+    },
+
+    getBlockingLinks(blockingRelationships) {
+      let links = [];
+      blockingRelationships.forEach(relationship => {
+        let blockerSouth = this.getPole(relationship.blockerId, "south");
+        let blockeeNorth = this.getPole(relationship.blockeeId, "north");
+        let source = blockerSouth
+          ? blockerSouth
+          : [blockeeNorth[0], blockeeNorth[1] - 30];
+        let target = blockeeNorth
+          ? blockeeNorth
+          : [blockerSouth[0], blockerSouth[1] + 30];
+
+        links.push({ source, target });
+      });
+      console.log("links", links);
+      return links;
+    },
+
+    getPole(actionId, direction) {
+      let sign = 1;
+      switch (direction) {
+        case "north":
+          sign = -1;
+          break;
+        case "south":
+          sign = 1;
+          break;
+        default:
+          throw new error(`Direction "${direction}" not supported.`);
+      }
+      let circle = this.svg
+        .selectAll(".bubble")
+        .filter(circle => circle.id == actionId);
+      if (circle.size()) {
+        //circle with id found
+        return [
+          Number(circle.attr("cx")),
+          Number(circle.attr("cy")) + sign * Number(circle.attr("r"))
+        ];
+      } else return null;
     }
   },
 
   watch: {
     chartableActions: function(newActions, oldActions) {
-      if (newActions.length == 0) return;
+      if (this.chartableActions.length == 0) return;
 
       let that = this;
 
@@ -202,7 +266,7 @@ export default {
         .attr("text-anchor", "start");
 
       // Add a scale for bubble size
-      var z = d3
+      var r = d3
         //.scaleSqrt()
         .scalePow()
         .exponent(1 / 3)
@@ -245,10 +309,13 @@ export default {
       // Add bubbles
       this.svg
         .append("g")
-        .selectAll("dot")
-        .data(newActions)
+        .selectAll(".bubble")
+        .data(this.chartableActions)
         .enter()
         .append("circle")
+        .attr("id", function(d) {
+          return d.id;
+        })
         .attr("class", function(d) {
           return "bubble "; /*+ d.continent*/
         })
@@ -259,7 +326,7 @@ export default {
           return y(d.actionLeverage);
         })
         .attr("r", function(d) {
-          return z(d.totalDirectCost);
+          return r(d.totalDirectCost);
         })
         .on("mouseover", showTooltip)
         .on("mousemove", moveTooltip)
@@ -267,6 +334,34 @@ export default {
         .on("click", function(d, i) {
           that.bubbleClick(d, i, "regularClick");
         });
+
+      //add links
+      var blockingLinkGen = function(d) {
+        let x0 = d.source[0],
+          y0 = d.source[1],
+          x1 = d.source[0],
+          y1 = d.source[1] + 100,
+          x2 = d.target[0],
+          y2 = d.target[1] - 100,
+          x = d.target[0],
+          y = d.target[1];
+        return `M${x0},${y0} C${x1},${y1} ${x2},${y2} ${x},${y}`;
+      };
+
+      let blockingLinkData = this.getBlockingLinks(this.blockingRelationships);
+      console.log("blockingLinkData", blockingLinkData);
+
+      this.svg
+        .selectAll(".blockingLink")
+        .data(blockingLinkData)
+        .join("path")
+        .attr("d", blockingLinkGen)
+        .attr("fill", "none")
+        .attr("stroke", "black")
+        .attr(
+          "class",
+          d => "blockingLink " + (d.isBlocking ? "isblocking " : "notBlocking ")
+        );
     },
 
     selectedActionId: function() {
