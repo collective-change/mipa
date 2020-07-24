@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { mapGetters, mapState, mapActions } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { formatNumber } from "src/utils/util-formatNumber";
 import * as d3 from "d3";
@@ -96,12 +96,41 @@ export default {
   },
 
   methods: {
-    formatNumber
+    formatNumber,
+
+    bubbleClick(d, i, clickType) {
+      const bubbles = this.svg.selectAll(".bubble");
+      console.log("bubbles", bubbles);
+
+      if (this.uiActionChanged) {
+        this.$q
+          .dialog({
+            title: "Unsaved changes",
+            message:
+              "Any changes you made will be lost. Really switch to another action?",
+            cancel: true,
+            persistent: true
+          })
+
+          .onOk(() => {
+            this.$store.dispatch("ui/setSelectedActionId", d.id);
+            bubbles.classed("selected", false);
+            bubbles.filter(td => td === d).classed("selected", true);
+          });
+      } else {
+        this.$store.dispatch("ui/setSelectedActionId", d.id);
+        bubbles.classed("selected", false);
+        bubbles.filter(td => td === d).classed("selected", true);
+      }
+    }
   },
 
   watch: {
     chartableActions: function(newActions, oldActions) {
       if (newActions.length == 0) return;
+
+      let that = this;
+
       let maxEstEffortHrs = Math.max.apply(
         Math,
         newActions.map(function(a) {
@@ -223,7 +252,7 @@ export default {
         .enter()
         .append("circle")
         .attr("class", function(d) {
-          return "bubbles "; /*+ d.continent*/
+          return "bubble "; /*+ d.continent*/
         })
         .attr("cx", function(d) {
           return x(d.estEffortHrs);
@@ -236,19 +265,35 @@ export default {
         })
         .on("mouseover", showTooltip)
         .on("mousemove", moveTooltip)
-        .on("mouseleave", hideTooltip);
+        .on("mouseleave", hideTooltip)
+        .on("click", function(d, i) {
+          that.bubbleClick(d, i, "regularClick");
+        });
     }
   }
 };
 </script>
 
 <style>
-.bubbles {
+.bubble {
   fill: url(#sphereGradient);
-  stroke-width: 1.5px;
+  stroke: #025e48;
+  stroke-width: 0px;
   opacity: 0.7;
 }
-.bubbles:hover {
+.bubble:hover {
   stroke: #025e48;
+  stroke-width: 1.5px;
+}
+.bubble.selected {
+  animation: selected 1s infinite alternate ease-in-out;
+}
+@keyframes selected {
+  from {
+    stroke-width: 5px;
+  }
+  to {
+    stroke-width: 2px;
+  }
 }
 </style>
