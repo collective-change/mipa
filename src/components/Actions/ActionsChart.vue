@@ -23,7 +23,7 @@ import { responsify } from "src/utils/util-responsify-svg";
 
 var svgWidth = 800,
   svgHeight = 800,
-  margin = { top: 40, right: 150, bottom: 60, left: 30 },
+  margin = { top: 40, right: 150, bottom: 60, left: 35 },
   width = svgWidth - margin.left - margin.right,
   height = svgHeight - margin.top - margin.bottom;
 
@@ -47,13 +47,6 @@ export default {
 
   mounted() {
     //set up svg
-    //this.selections.svg = d3.select(this.$el.querySelector("svg#actionsChart"));
-    //var svg = this.selections.svg;
-
-    /*var margin = { top: 40, right: 150, bottom: 60, left: 30 },
-      width = this.svgWidth - margin.left - margin.right,
-      height = this.svgHeight - margin.top - margin.bottom;*/
-
     this.svg = d3
       .select("#actionsChart")
       .append("svg")
@@ -71,14 +64,14 @@ export default {
       .attr("cx", "40%")
       .attr("cy", "40%")
       .attr("r", "50%")
-      .attr("fx", "50%")
-      .attr("fy", "50%");
+      .attr("fx", "40%")
+      .attr("fy", "40%");
 
     gradient
       .append("stop")
       .attr("offset", "0%")
       .attr("stop-color", "rgb(255,255,255)")
-      .attr("stop-opacity", 0);
+      .attr("stop-opacity", 1);
 
     gradient
       .append("stop")
@@ -94,9 +87,11 @@ export default {
     ...mapState("ui", ["selectedActionId"]),
 
     chartableActions() {
-      return this.actions.filter(
-        action => action.actionLeverage > 0 && action.estEffortHrs > 0
-      );
+      return this.actions
+        .filter(action => action.actionLeverage > 0 && action.estEffortHrs > 0)
+        .sort(function(a, b) {
+          return b.totalDirectCost - a.totalDirectCost;
+        });
     }
   },
 
@@ -184,10 +179,7 @@ export default {
         .scalePow()
         .exponent(1 / 3)
         .domain([0, maxTotalDirectCost])
-        .range([
-          0 /*Math.max(1.5, (50 * minTotalDirectCost) / maxTotalDirectCost)*/,
-          50
-        ]);
+        .range([0, 100]);
 
       // Create a tooltip div that is hidden by default:
       var tooltip = d3
@@ -223,7 +215,7 @@ export default {
           .style("opacity", 0);
       };
 
-      // Add dots
+      // Add bubbles
       this.svg
         .append("g")
         .selectAll("dot")
@@ -252,11 +244,8 @@ export default {
 
 <style>
 .bubbles {
-  /*fill: #69b3a2;*/
   fill: url(#sphereGradient);
-  /*fill: radial-gradient(at 30% 30%, red, yellow, green);*/
   stroke-width: 1.5px;
-  /*stroke: black;*/
   opacity: 0.7;
 }
 .bubbles:hover {
