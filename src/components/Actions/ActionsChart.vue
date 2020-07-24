@@ -100,7 +100,6 @@ export default {
 
     bubbleClick(d, i, clickType) {
       const bubbles = this.svg.selectAll(".bubble");
-      console.log("bubbles", bubbles);
 
       if (this.uiActionChanged) {
         this.$q
@@ -184,7 +183,7 @@ export default {
         .attr("text-anchor", "end")
         .attr("x", width)
         .attr("y", height + 50)
-        .text("Effort");
+        .text("Effort hrs");
 
       // Add Y axis
       var y = d3
@@ -224,7 +223,6 @@ export default {
 
       // Create 3 functions to show / update (when mouse move but stay on same circle) / hide the tooltip
       var showTooltip = function(d) {
-        console.log("showTooltip");
         tooltip.transition().duration(200);
         tooltip
           .style("opacity", 1)
