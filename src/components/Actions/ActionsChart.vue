@@ -202,9 +202,10 @@ export default {
         return [xVal, yVal + sign * rVal];
       } else return null;
     },
-    wrap(texts, width) {
+    wrap(texts, xwidth) {
       texts.each(function() {
         var text = d3.select(this),
+          action = text.data(),
           words = text
             .text()
             .split(/\s+/)
@@ -218,12 +219,21 @@ export default {
           x = text.attr("x"),
           y = text.attr("y"),
           dy = 0, //parseFloat(text.attr("dy")),
+          width =
+            2 *
+            d3
+              .scalePow()
+              .exponent(1 / 3)
+              .domain([0, maxTotalDirectCost])
+              .range([0, 100])
+              .call(this, action[0].totalDirectCost),
           tspan = text
             .text(null)
             .append("tspan")
             .attr("x", x)
             .attr("y", y)
             .attr("dy", dy + "em");
+        //console.log("totalDirectCost", action[0].totalDirectCost);
         while ((word = words.pop())) {
           line.push(word);
           lineWordCount++;
@@ -428,12 +438,13 @@ export default {
           that.bubbleClick(d, i, "regularClick");
         });
 
-      this.svg.selectAll("text").remove();
+      this.svg.selectAll("text .actionTitle").remove();
       this.svg
-        .selectAll("text")
+        .selectAll("text .actionTitle")
         .data(this.chartableActions)
         .enter()
         .append("text")
+        .classed("actionTitle", true)
         .attr("x", 0)
         .attr("y", ".31em")
         .attr("text-anchor", "middle")
@@ -492,4 +503,8 @@ export default {
     stroke-width: 2px;
   }
 }
+/*actionTitle {
+  font: 10px sans-serif;
+  pointer-events: none;
+}I*/
 </style>
