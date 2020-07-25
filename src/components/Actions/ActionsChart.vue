@@ -1,13 +1,6 @@
 <template>
   <div>
     <div id="actionsChart" style="position: relative"></div>
-    <!--<svg
-      id="actionsChart"
-      :width="svgWidth"
-      :height="svgHeight"
-      style="border: black; border-style: solid; border-width: 0px"
-    /> -->
-
     <q-dialog v-model="showAddAction">
       <add-action @close="showAddAction = false" />
     </q-dialog>
@@ -25,7 +18,13 @@ var svgWidth = 800,
   svgHeight = 800,
   margin = { top: 40, right: 150, bottom: 60, left: 35 },
   width = svgWidth - margin.left - margin.right,
-  height = svgHeight - margin.top - margin.bottom;
+  height = svgHeight - margin.top - margin.bottom,
+  axisBuffer = 0.1;
+var maxEstEffortHrs = null,
+  minEstEffortHrs = null,
+  maxActionLeverage = null,
+  minActionLeverage = null,
+  maxTotalDirectCost = null;
 
 export default {
   components: {
@@ -70,7 +69,7 @@ export default {
       .attr("markerUnits", "userSpaceOnUse")
       .attr("markerWidth", 15)
       .attr("markerHeight", 15)
-      .attr("fill", "#666")
+      .attr("fill", "#ff9b9b")
       .attr("orient", "auto")
       .append("svg:path")
       .attr("d", "M0,-5L10,0L0,5");
@@ -159,7 +158,6 @@ export default {
 
         links.push({ source, target });
       });
-      console.log("links", links);
       return links;
     },
 
@@ -175,15 +173,32 @@ export default {
         default:
           throw new error(`Direction "${direction}" not supported.`);
       }
-      let circle = this.svg
-        .selectAll(".bubble")
-        .filter(circle => circle.id == actionId);
-      if (circle.size()) {
-        //circle with id found
-        return [
-          Number(circle.attr("cx")),
-          Number(circle.attr("cy")) + sign * Number(circle.attr("r"))
-        ];
+      let action = this.chartableActions.find(a => a.id == actionId);
+      if (action) {
+        let xVal = d3
+          .scaleLog()
+          .domain([
+            minEstEffortHrs / (1 + axisBuffer),
+            maxEstEffortHrs * (1 + axisBuffer)
+          ])
+          .range([0, width])
+          .call(this, action.estEffortHrs);
+
+        let yVal = d3
+          .scaleLog()
+          .domain([
+            minActionLeverage / (1 + axisBuffer),
+            maxActionLeverage * (1 + axisBuffer)
+          ])
+          .range([height, 0])
+          .call(this, action.actionLeverage);
+        let rVal = d3
+          .scalePow()
+          .exponent(1 / 3)
+          .domain([0, maxTotalDirectCost])
+          .range([0, 100])
+          .call(this, action.totalDirectCost);
+        return [xVal, yVal + sign * rVal];
       } else return null;
     }
   },
@@ -194,47 +209,44 @@ export default {
 
       let that = this;
 
-      let maxEstEffortHrs = Math.max.apply(
+      maxEstEffortHrs = Math.max.apply(
         Math,
         newActions.map(function(a) {
           return a.estEffortHrs;
         })
       );
-      let minEstEffortHrs = Math.min.apply(
+      minEstEffortHrs = Math.min.apply(
         Math,
         newActions.map(function(a) {
           return a.estEffortHrs;
         })
       );
-      let maxActionLeverage = Math.max.apply(
+      maxActionLeverage = Math.max.apply(
         Math,
         newActions.map(function(a) {
           return a.actionLeverage;
         })
       );
-      let minActionLeverage = Math.min.apply(
+      minActionLeverage = Math.min.apply(
         Math,
         newActions.map(function(a) {
           return a.actionLeverage;
         })
       );
-      let maxTotalDirectCost = Math.max.apply(
+      maxTotalDirectCost = Math.max.apply(
         Math,
         newActions.map(function(a) {
           return a.totalDirectCost;
         })
       );
-      /*let minTotalDirectCost = Math.min.apply(
-        Math,
-        newActions.map(function(a) {
-          return a.totalDirectCost;
-        })
-      );*/
 
       // Add X axis
       var x = d3
         .scaleLog()
-        .domain([minEstEffortHrs * 0.9, maxEstEffortHrs * 1.1])
+        .domain([
+          minEstEffortHrs / (1 + axisBuffer),
+          maxEstEffortHrs * (1 + axisBuffer)
+        ])
         .range([0, width]);
       this.svg
         .append("g")
@@ -252,7 +264,10 @@ export default {
       // Add Y axis
       var y = d3
         .scaleLog()
-        .domain([minActionLeverage * 0.9, maxActionLeverage * 1.1])
+        .domain([
+          minActionLeverage / (1 + axisBuffer),
+          maxActionLeverage * (1 + axisBuffer)
+        ])
         .range([height, 0]);
       this.svg.append("g").call(d3.axisLeft(y));
 
@@ -272,6 +287,33 @@ export default {
         .exponent(1 / 3)
         .domain([0, maxTotalDirectCost])
         .range([0, 100]);
+
+      //add links
+      var blockingLinkGen = function(d) {
+        let x0 = d.source[0],
+          y0 = d.source[1],
+          x1 = d.source[0],
+          y1 = d.source[1] + 100,
+          x2 = d.target[0],
+          y2 = d.target[1] - 100,
+          x = d.target[0],
+          y = d.target[1];
+        return `M${x0},${y0} C${x1},${y1} ${x2},${y2} ${x},${y}`;
+      };
+
+      let blockingLinkData = this.getBlockingLinks(this.blockingRelationships);
+      console.log("blockingLinkData", blockingLinkData);
+
+      this.svg
+        .selectAll(".blockingLink")
+        .data(blockingLinkData)
+        .join("path")
+        .attr("d", blockingLinkGen)
+        .attr(
+          "class",
+          d => "blockingLink " + (d.isBlocking ? "isblocking " : "notBlocking ")
+        )
+        .attr("marker-end", "url(#end)");
 
       // Create a tooltip div that is hidden by default:
       var tooltip = d3
@@ -334,33 +376,6 @@ export default {
         .on("click", function(d, i) {
           that.bubbleClick(d, i, "regularClick");
         });
-
-      //add links
-      var blockingLinkGen = function(d) {
-        let x0 = d.source[0],
-          y0 = d.source[1],
-          x1 = d.source[0],
-          y1 = d.source[1] + 100,
-          x2 = d.target[0],
-          y2 = d.target[1] - 100,
-          x = d.target[0],
-          y = d.target[1];
-        return `M${x0},${y0} C${x1},${y1} ${x2},${y2} ${x},${y}`;
-      };
-
-      let blockingLinkData = this.getBlockingLinks(this.blockingRelationships);
-      console.log("blockingLinkData", blockingLinkData);
-
-      this.svg
-        .selectAll(".blockingLink")
-        .data(blockingLinkData)
-        .join("path")
-        .attr("d", blockingLinkGen)
-        .attr(
-          "class",
-          d => "blockingLink " + (d.isBlocking ? "isblocking " : "notBlocking ")
-        )
-        .attr("marker-end", "url(#end)");
     },
 
     selectedActionId: function() {
@@ -389,7 +404,7 @@ export default {
   animation: selected 1s infinite alternate ease-in-out;
 }
 .blockingLink {
-  stroke: #666;
+  stroke: #ff9b9b;
   stroke-width: 5px;
   fill: none;
 }
