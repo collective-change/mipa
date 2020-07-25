@@ -1464,6 +1464,7 @@ circle.nodeGroupSelected {
 text {
   font: 10px sans-serif;
   pointer-events: none;
+  fill: #333;
 }
 
 rect.caption {

@@ -508,5 +508,6 @@ export default {
 }
 .actionTitle {
   pointer-events: none;
+  fill: #333;
 }
 </style>
