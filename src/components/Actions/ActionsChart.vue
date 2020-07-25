@@ -218,7 +218,7 @@ export default {
           lineHeight = 1.1, // ems
           x = text.attr("x"),
           y = text.attr("y"),
-          dy, //parseFloat(text.attr("dy")),
+          dy = 0, //parseFloat(text.attr("dy")),
           width =
             2 *
             d3
