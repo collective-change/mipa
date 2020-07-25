@@ -380,7 +380,7 @@ export default {
         .attr("marker-end", "url(#end)");
 
       // Create a tooltip div that is hidden by default:
-      /*var tooltip = d3
+      var tooltip = d3
         .select("#actionsChart")
         .append("div")
         .style("opacity", 0)
@@ -410,7 +410,7 @@ export default {
           //.transition()
           //.duration(200)
           .style("opacity", 0);
-      };*/
+      };
 
       // Add bubbles
       this.svg
@@ -434,9 +434,9 @@ export default {
         .attr("r", function(d) {
           return r(d.totalDirectCost);
         })
-        //.on("mouseover", showTooltip)
-        //.on("mousemove", moveTooltip)
-        //.on("mouseleave", hideTooltip)
+        .on("mouseover", showTooltip)
+        .on("mousemove", moveTooltip)
+        .on("mouseleave", hideTooltip)
         .on("click", function(d, i) {
           that.bubbleClick(d, i, "regularClick");
         });
