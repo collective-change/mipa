@@ -202,7 +202,7 @@ export default {
         return [xVal, yVal + sign * rVal];
       } else return null;
     },
-    wrap(texts, xwidth) {
+    wrap(texts /*, xwidth*/) {
       texts.each(function() {
         var text = d3.select(this),
           action = text.data(),
@@ -227,10 +227,12 @@ export default {
               .domain([0, maxTotalDirectCost])
               .range([0, 100])
               .call(this, action[0].totalDirectCost),
+          textSize = width / 8,
           tspan = text
             .text(null)
             .append("tspan")
             .attr("x", x)
+            .attr("font-size", `${textSize}px`)
             .attr("y", y)
             .attr("dy", dy + "em");
         //console.log("totalDirectCost", action[0].totalDirectCost);
@@ -255,6 +257,7 @@ export default {
         while ((line = lines.pop())) {
           tspan = text
             .append("tspan")
+            .attr("font-size", `${textSize}px`)
             .attr("x", x)
             .attr("y", y)
             .attr("dy", ++lineNumber * lineHeight + dy + "em")
@@ -459,7 +462,7 @@ export default {
         .attr("x", (d, i) => x(d.estEffortHrs))
         .attr("y", (d, i) => y(d.actionLeverage))
         .attr("cursor", "default")
-        .call(this.wrap, this.maxRadius)
+        .call(this.wrap /*this.maxRadius*/)
         .on("click", function(d, i) {
           that.bubbleClick(d, i, "regularClick");
         });
