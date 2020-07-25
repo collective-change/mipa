@@ -506,8 +506,7 @@ export default {
     stroke-width: 2px;
   }
 }
-/*actionTitle {
-  font: 10px sans-serif;
+.actionTitle {
   pointer-events: none;
-}I*/
+}
 </style>
