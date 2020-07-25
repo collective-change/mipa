@@ -218,7 +218,7 @@ export default {
           lineHeight = 1.1, // ems
           x = text.attr("x"),
           y = text.attr("y"),
-          dy = 0, //parseFloat(text.attr("dy")),
+          dy, //parseFloat(text.attr("dy")),
           width =
             2 *
             d3
@@ -253,14 +253,14 @@ export default {
         lines.push(line.join(" "));
         tspan.text(null);
         lines = lines.reverse();
-        dy = -0.5 - lines.length / 2 - 0.1;
+        dy = -0.5 - lines.length / 2;
         while ((line = lines.pop())) {
           tspan = text
             .append("tspan")
             .attr("font-size", `${textSize}px`)
             .attr("x", x)
             .attr("y", y)
-            .attr("dy", ++lineNumber * lineHeight + dy + "em")
+            .attr("dy", Number(++lineNumber * lineHeight + dy) + "em")
             .text(line);
         }
       });
@@ -448,8 +448,8 @@ export default {
         .enter()
         .append("text")
         .classed("actionTitle", true)
-        .attr("x", 0)
-        .attr("y", ".31em")
+        //.attr("x", 0)
+        //.attr("y", "0.31em")
         .attr("text-anchor", "middle")
         .text(
           d =>

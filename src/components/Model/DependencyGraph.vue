@@ -1288,7 +1288,7 @@ export default {
         lines.push(line.join(" "));
         tspan.text(null);
         lines = lines.reverse();
-        dy = -0.5 - lines.length / 2 - 0.1;
+        dy = -0.5 - lines.length / 2 - 0.2;
         while ((line = lines.pop())) {
           tspan = text
             .append("tspan")
