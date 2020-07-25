@@ -39,6 +39,7 @@ export default {
       svg: null,
       svgWidth: svgWidth,
       svgHeight: svgHeight,
+      maxRadius: 100,
       selections: {},
       d3Data: {}
     };
@@ -200,6 +201,56 @@ export default {
           .call(this, action.totalDirectCost);
         return [xVal, yVal + sign * rVal];
       } else return null;
+    },
+    wrap(texts, width) {
+      texts.each(function() {
+        var text = d3.select(this),
+          words = text
+            .text()
+            .split(/\s+/)
+            .reverse(),
+          word,
+          line = [],
+          lineWordCount = 0,
+          lines = [],
+          lineNumber = 0,
+          lineHeight = 1.1, // ems
+          x = text.attr("x"),
+          y = text.attr("y"),
+          dy = 0, //parseFloat(text.attr("dy")),
+          tspan = text
+            .text(null)
+            .append("tspan")
+            .attr("x", x)
+            .attr("y", y)
+            .attr("dy", dy + "em");
+        while ((word = words.pop())) {
+          line.push(word);
+          lineWordCount++;
+          tspan.text(line.join(" "));
+          if (
+            tspan.node().getComputedTextLength() > width &&
+            lineWordCount > 1
+          ) {
+            line.pop();
+            lines.push(line.join(" "));
+            line = [word];
+            lineWordCount = 1;
+          }
+        }
+        lines.push(line.join(" "));
+        tspan.text(null);
+        lines = lines.reverse();
+        dy = -0.5 - lines.length / 2 - 0.1;
+        while ((line = lines.pop())) {
+          tspan = text
+            .append("tspan")
+            .attr("x", x)
+            .attr("y", y)
+            .attr("dy", ++lineNumber * lineHeight + dy + "em")
+            .text(line);
+        }
+      });
     }
   },
 
@@ -286,7 +337,7 @@ export default {
         .scalePow()
         .exponent(1 / 3)
         .domain([0, maxTotalDirectCost])
-        .range([0, 100]);
+        .range([0, this.maxRadius]);
 
       //add links
       var blockingLinkGen = function(d) {
@@ -302,7 +353,7 @@ export default {
       };
 
       let blockingLinkData = this.getBlockingLinks(this.blockingRelationships);
-      console.log("blockingLinkData", blockingLinkData);
+      //console.log("blockingLinkData", blockingLinkData);
 
       this.svg
         .selectAll(".blockingLink")
@@ -316,7 +367,7 @@ export default {
         .attr("marker-end", "url(#end)");
 
       // Create a tooltip div that is hidden by default:
-      var tooltip = d3
+      /*var tooltip = d3
         .select("#actionsChart")
         .append("div")
         .style("opacity", 0)
@@ -346,7 +397,7 @@ export default {
           //.transition()
           //.duration(200)
           .style("opacity", 0);
-      };
+      };*/
 
       // Add bubbles
       this.svg
@@ -370,9 +421,34 @@ export default {
         .attr("r", function(d) {
           return r(d.totalDirectCost);
         })
-        .on("mouseover", showTooltip)
-        .on("mousemove", moveTooltip)
-        .on("mouseleave", hideTooltip)
+        //.on("mouseover", showTooltip)
+        //.on("mousemove", moveTooltip)
+        //.on("mouseleave", hideTooltip)
+        .on("click", function(d, i) {
+          that.bubbleClick(d, i, "regularClick");
+        });
+
+      this.svg.selectAll("text").remove();
+      this.svg
+        .selectAll("text")
+        .data(this.chartableActions)
+        .enter()
+        .append("text")
+        .attr("x", 0)
+        .attr("y", ".31em")
+        .attr("text-anchor", "middle")
+        .text(
+          d =>
+            d.title /*.concat(
+            d.isSelfBlocking ? " (self-blocking)" : "",
+            d.isNew ? " (new)" : "",
+            d.symbolFormula ? "" : " (no formula)"
+          )*/
+        )
+        .attr("x", (d, i) => x(d.estEffortHrs))
+        .attr("y", (d, i) => y(d.actionLeverage))
+        .attr("cursor", "default")
+        .call(this.wrap, this.maxRadius)
         .on("click", function(d, i) {
           that.bubbleClick(d, i, "regularClick");
         });
