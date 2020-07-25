@@ -404,7 +404,7 @@ export default {
   animation: selected 1s infinite alternate ease-in-out;
 }
 .blockingLink {
-  stroke: #ff9b9b;
+  stroke: #faa8a8;
   stroke-width: 5px;
   fill: none;
 }
