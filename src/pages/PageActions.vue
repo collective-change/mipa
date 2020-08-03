@@ -12,7 +12,7 @@
           <q-tree :nodes="exampleTree" node-key="label" />
         </div>
         -->
-        <div class="col-12 col-md-7">
+        <div class="col-12 col-md-8">
           <q-toggle v-model="useRoi" label="分析優先順序" />
           <div v-if="useRoi">
             <actions-chart></actions-chart>
@@ -24,7 +24,7 @@
 
           <!-- <pre>{{ actions}}</pre> -->
         </div>
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-4">
           <action-summary />
         </div>
       </div>

@@ -8,19 +8,30 @@
       :filter="filter"
       :loading="loading"
       :pagination.sync="pagination"
-      :rows-per-page-options="[10,20,50,0]"
+      :rows-per-page-options="[10, 20, 50, 0]"
       binary-state-sort
       @row-click="onRowClick"
     >
       <template v-slot:top>
         <div class="col-2 q-table__title">行動</div>
         <div class="row q-gutter-sm">
-          <q-btn color="primary" :disable="loading" label="新增" @click="showAddAction = true" />
+          <q-btn
+            color="primary"
+            :disable="loading"
+            label="新增"
+            @click="showAddAction = true"
+          />
           <calculator-ui calculationType="actions" buttonLabel="Recalculate" />
         </div>
 
         <q-space />
-        <q-input dense debounce="300" color="primary" v-model="filter" clearable>
+        <q-input
+          dense
+          debounce="300"
+          color="primary"
+          v-model="filter"
+          clearable
+        >
           <template v-slot:append>
             <q-icon name="search" />
           </template>
@@ -133,6 +144,14 @@ export default {
           format: val =>
             `${formatNumber(val, 3)}${typeof val == "number" ? "%" : ""}`,
           sortable: true
+        },
+        {
+          name: "relationships",
+          align: "left",
+          label: "關係",
+          field: "childrenIds",
+          //format: val => `${formatNumber(val, 3)}`,
+          sortable: false
         }
         /*{
           name: "dueDate",

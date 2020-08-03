@@ -1,9 +1,9 @@
 <template>
-  <div>
-    <div id="actionsChart" style="position: relative"></div>
-    <q-dialog v-model="showAddAction">
+  <div style="position: relative;">
+    <div id="actionsChart" style="position: relative;"></div>
+    <!--<q-dialog v-model="showAddAction">
       <add-action @close="showAddAction = false" />
-    </q-dialog>
+    </q-dialog>-->
   </div>
 </template>
 
@@ -14,9 +14,9 @@ import { formatNumber } from "src/utils/util-formatNumber";
 import * as d3 from "d3";
 import { responsify } from "src/utils/util-responsify-svg";
 
-var svgWidth = 800,
-  svgHeight = 800,
-  margin = { top: 40, right: 150, bottom: 60, left: 35 },
+var svgWidth = 1000,
+  svgHeight = 600,
+  margin = { top: 40, right: 90 /*150*/, bottom: 60, left: 35 },
   width = svgWidth - margin.left - margin.right,
   height = svgHeight - margin.top - margin.bottom,
   axisBuffer = 0.1;
@@ -36,7 +36,7 @@ export default {
       showAddAction: false,
       loading: false,
       filter: "",
-      svg: null,
+      svgInner: null,
       svgWidth: svgWidth,
       svgHeight: svgHeight,
       maxRadius: 100,
@@ -47,16 +47,19 @@ export default {
 
   mounted() {
     //set up svg
-    this.svg = d3
+    this.svgInner = d3
       .select("#actionsChart")
       .append("svg")
+      .attr("id", "actionsChartSvg")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
+      //.call(responsify)
       .append("g")
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    //.call(responsify);
 
-    var defs = this.svg.append("defs");
+    //d3.select("#actionsChartSvg").call(responsify);
+
+    var defs = this.svgInner.append("defs");
 
     var arrowMarker = defs
       .selectAll("marker")
@@ -121,7 +124,7 @@ export default {
     formatNumber,
 
     bubbleClick(d, i, clickType) {
-      const bubbles = this.svg.selectAll(".bubble");
+      const bubbles = this.svgInner.selectAll(".bubble");
 
       if (this.uiActionChanged) {
         this.$q
@@ -312,13 +315,13 @@ export default {
           maxEstEffortHrs * (1 + axisBuffer)
         ])
         .range([0, width]);
-      this.svg
+      this.svgInner
         .append("g")
         .attr("transform", "translate(0," + height + ")")
         .call(d3.axisBottom(x).ticks(3));
 
       // Add X axis label:
-      this.svg
+      this.svgInner
         .append("text")
         .attr("text-anchor", "end")
         .attr("x", width)
@@ -333,10 +336,10 @@ export default {
           maxActionLeverage * (1 + axisBuffer)
         ])
         .range([height, 0]);
-      this.svg.append("g").call(d3.axisLeft(y));
+      this.svgInner.append("g").call(d3.axisLeft(y));
 
       // Add Y axis label:
-      this.svg
+      this.svgInner
         .append("text")
         .attr("text-anchor", "end")
         .attr("x", 0)
@@ -368,7 +371,7 @@ export default {
       let blockingLinkData = this.getBlockingLinks(this.blockingRelationships);
       //console.log("blockingLinkData", blockingLinkData);
 
-      this.svg
+      this.svgInner
         .selectAll(".blockingLink")
         .data(blockingLinkData)
         .join("path")
@@ -413,7 +416,7 @@ export default {
       };
 
       // Add bubbles
-      this.svg
+      this.svgInner
         .append("g")
         .selectAll(".bubble")
         .data(this.chartableActions)
@@ -441,8 +444,8 @@ export default {
           that.bubbleClick(d, i, "regularClick");
         });
 
-      this.svg.selectAll("text .actionTitle").remove();
-      this.svg
+      this.svgInner.selectAll("text .actionTitle").remove();
+      this.svgInner
         .selectAll("text .actionTitle")
         .data(this.chartableActions)
         .enter()
@@ -469,7 +472,7 @@ export default {
     },
 
     selectedActionId: function() {
-      const bubbles = this.svg.selectAll(".bubble");
+      const bubbles = this.svgInner.selectAll(".bubble");
       bubbles.classed("selected", false);
       bubbles
         .filter(td => td.id == this.selectedActionId)
