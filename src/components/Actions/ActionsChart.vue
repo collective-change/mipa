@@ -416,6 +416,7 @@ export default {
       };
 
       // Add bubbles
+      this.svgInner.selectAll(".bubble").remove();
       this.svgInner
         .append("g")
         .selectAll(".bubble")
