@@ -151,6 +151,17 @@ export default {
           label: "關係",
           field: "childrenIds",
           //format: val => `${formatNumber(val, 3)}`,
+          format: (val, row) =>
+            (row.parentActionId ? "has parent" : " ") +
+            (row.childrenActionIds && row.childrenActionIds.length
+              ? row.childrenActionIds.length + " children"
+              : " ") +
+            (row.blockerActionIds && row.blockerActionIds.length
+              ? "blocked by " + row.blockerActionIds.length
+              : " ") +
+            (row.blockeeActionIds && row.blockeeActionIds.length
+              ? "blocks " + row.blockeeActionIds.length
+              : " "),
           sortable: false
         }
         /*{

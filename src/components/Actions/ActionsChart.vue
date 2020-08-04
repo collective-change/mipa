@@ -445,7 +445,7 @@ export default {
           that.bubbleClick(d, i, "regularClick");
         });
 
-      this.svgInner.selectAll("text .actionTitle").remove();
+      this.svgInner.selectAll(".actionTitle").remove();
       this.svgInner
         .selectAll("text .actionTitle")
         .data(this.chartableActions)
