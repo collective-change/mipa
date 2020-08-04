@@ -68,17 +68,55 @@ function coordinateScenarioSimulations(data) {
 
   let actions = data.actions;
 
-  //topoSortActions
-  let sortedActions = topoSortActions(actions); //TODO: actually write topoSortActions
+  //actions = prepActionsForSort(sim, actions);
+
+  let sortedActions = topoSortActions(sim, actions);
+  //console.log(sortedActions);
   let resultsOfActions = calculateResultsOfActions(
     sim,
     sortedActions,
     defaultBaseline
   );
+}
 
-  //and post available results to vuex store every 0.5 seconds
-  //when all finished, save results to IndexedDb; briefResults[{ i: id, b: benefit, c: cost, r: actionLeverage, t: calcStartTime }]
-  //and post back to caller for saving to cloud
+function prepActionsForSort(sim, actions) {
+  let preppedActions = [];
+  actions.forEach(function(outerAction) {
+    /* // gather thenCalcActions from blockerActions and parentAction
+    let thenCalcActions = [];
+    //examine each candidate action to check for current action being in blockeeActions
+    actions.forEach(function(innerAction) {
+      if (innerAction.id != outerAction.id) {
+        //skip self
+        if (
+          "blockeeActionIds" in innerAction &&
+          innerAction.blockeeActionIds.includes(outerAction.id)
+        ) {
+          thenCalcActions.push(innerAction.id);
+        }
+        if (
+          "parentActionId" in innerAction &&
+          innerAction.parentActionId == outerAction.id
+        )
+          thenCalcActions.push(innerAction.id);
+      }
+    });*/
+    let calcBlockingInDegree =
+      typeof outerAction.blockeeActionIds !== "undefined"
+        ? outerAction.blockeeActionIds.length
+        : 0;
+    calcBlockingInDegree +=
+      typeof outerAction.childrenActionIds !== "undefined"
+        ? outerAction.childrenActionIds.length
+        : 0;
+    preppedActions.push({
+      id: outerAction.id,
+      calcBlockingInDegree: calcBlockingInDegree,
+      ...outerAction
+    });
+  });
+  sim.calcTimeLog.push({ stage: "prepActionsForSort", endTime: new Date() });
+  return preppedActions;
 }
 
 function calculateResultsOfActions(sim, actions, defaultBaseline) {
@@ -542,7 +580,7 @@ function prepSim(data) {
   let sim = prepEnvironment(data);
   if (sim.errorOccurred) return sim;
 
-  sim.nodes = prepForSort(sim);
+  sim.nodes = prepNodesForSort(sim);
   if (sim.errorOccurred) return sim;
 
   sim.sortedNodes = topoSortNodes(sim);
@@ -886,7 +924,7 @@ function topoSortNodes(sim) {
     //if there are unvisited nodes, then graph has at least one cycle
     if (unvisitedNodes.length) {
       console.log("unvisitedNodes: ", unvisitedNodes);
-      throw "Circular dependency detected.";
+      throw "Circular dependency detected in nodes.";
     }
   } catch (err) {
     console.log(err);
@@ -896,13 +934,90 @@ function topoSortNodes(sim) {
   return L;
 }
 
-function topoSortActions(actions) {
-  //TODO: actually do the topological sort
-  let sortedActions = actions;
-  return sortedActions;
+function topoSortActions(sim, actions) {
+  //topological sort with children and blockees ordered first
+
+  //prep each action for sorting
+  actions.forEach(function(action) {
+    //determine calcBlockingInDegree
+    action.calcBlockingInDegree =
+      typeof action.blockeeActionIds !== "undefined"
+        ? action.blockeeActionIds.length
+        : 0;
+    action.calcBlockingInDegree +=
+      typeof action.childrenActionIds !== "undefined"
+        ? action.childrenActionIds.length
+        : 0;
+    action.blockedDownstreamActions = [
+      ...(action.parentActionId ? [action.parentActionId] : []),
+      ...(action.blockerActionIds ? action.blockerActionIds : [])
+    ];
+  });
+  //let sortedActions = actions;
+  //return sortedActions;
+  let L = []; //for storing sorted elements
+  let S = actions.filter(action => action.calcBlockingInDegree == 0); //actions with no calc dependencies
+  let unvisitedActions = actions.filter(
+    action => action.calcBlockingInDegree != 0
+  );
+  let a = null; //action to process
+  let downstreamAction = null; //a working variable
+
+  while (S.length) {
+    // remove an action n from S and append to tail of L
+    a = S.shift();
+    L.push(a);
+    //console.log("a: ", a);
+    if (a.blockedDownstreamActions && a.blockedDownstreamActions.length) {
+      /*console.log(
+        a.title,
+        "blockedDownstreamActions",
+        a.blockedDownstreamActions
+      );*/
+      a.blockedDownstreamActions.forEach(function(downstreamActionId, index) {
+        //console.log("downstreamActionId", downstreamActionId);
+        downstreamAction = unvisitedActions.find(
+          action => action.id == downstreamActionId
+        );
+        /*if (downstreamAction.id == "VA1YmbzpkYtafnTYi7Jy")
+          console.log(
+            a.title,
+            "going to decrease core's calcBlockingInDegree:",
+            downstreamAction.calcBlockingInDegree
+          );*/
+        downstreamAction.calcBlockingInDegree--;
+        if (downstreamAction.calcBlockingInDegree == 0) {
+          S.push(downstreamAction);
+          //remove downstreamAction from unvisited actions
+          for (var i = 0; i < unvisitedActions.length; i++) {
+            if (unvisitedActions[i] === downstreamAction) {
+              unvisitedActions.splice(i, 1);
+            }
+          }
+        }
+      });
+    }
+  }
+  //now try to sort out unvisited actions (ones in or blocked by a cycle)
+
+  try {
+    //if there are unvisited actions, then graph has at least one cycle
+    if (unvisitedActions.length) {
+      console.log("unvisitedActions: ", unvisitedActions);
+      throw "Circular dependency detected in actions.";
+    }
+  } catch (err) {
+    console.log(err);
+    self.postMessage(err);
+  }
+  sim.calcTimeLog.push({
+    stage: "topoSortActions",
+    endTime: new Date()
+  });
+  return L;
 }
 
-function prepForSort(sim) {
+function prepNodesForSort(sim) {
   nodes = sim.data.modelNodes;
   let preppedNodes = [];
   nodes.forEach(function(outerNode) {
@@ -937,7 +1052,7 @@ function prepForSort(sim) {
           : ""
     });
   });
-  sim.calcTimeLog.push({ stage: "prepForSort", endTime: new Date() });
+  sim.calcTimeLog.push({ stage: "prepNodesForSort", endTime: new Date() });
   return preppedNodes;
 }
 

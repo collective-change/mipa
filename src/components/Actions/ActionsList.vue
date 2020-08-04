@@ -104,7 +104,7 @@ export default {
           required: true,
           label: "標題",
           align: "left",
-          field: row => row.title,
+          field: row => row.id.substring(0, 2) + " " + row.title,
           sortable: true
         },
         /*{
