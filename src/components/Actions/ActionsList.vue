@@ -49,6 +49,18 @@ import { mapGetters, mapState } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { formatNumber } from "src/utils/util-formatNumber";
 
+function getRelationshipsDisplay(row) {
+  let relationships = [];
+  if (row.parentActionId) relationships.push("has parent");
+  if (row.childrenActionIds && row.childrenActionIds.length)
+    relationships.push(row.childrenActionIds.length + " children");
+  if (row.blockerActionIds && row.blockerActionIds.length)
+    relationships.push("blocked by " + row.blockerActionIds.length);
+  if (row.blockeeActionIds && row.blockeeActionIds.length)
+    relationships.push("blocks" + row.blockeeActionIds.length);
+  return relationships.join("; ");
+}
+
 export default {
   components: {
     "add-action": require("components/Actions/Modals/AddAction.vue").default,
@@ -151,17 +163,7 @@ export default {
           label: "關係",
           field: "childrenIds",
           //format: val => `${formatNumber(val, 3)}`,
-          format: (val, row) =>
-            (row.parentActionId ? "has parent" : " ") +
-            (row.childrenActionIds && row.childrenActionIds.length
-              ? row.childrenActionIds.length + " children"
-              : " ") +
-            (row.blockerActionIds && row.blockerActionIds.length
-              ? "blocked by " + row.blockerActionIds.length
-              : " ") +
-            (row.blockeeActionIds && row.blockeeActionIds.length
-              ? "blocks " + row.blockeeActionIds.length
-              : " "),
+          format: (val, row) => getRelationshipsDisplay(row),
           sortable: false
         }
         /*{
