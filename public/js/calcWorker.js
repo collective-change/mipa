@@ -260,6 +260,13 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
 
     if (sim.errorOccurred) return;
 
+    let stage =
+      "process " +
+      scenario.type +
+      " " +
+      (scenario.type == "action" ? scenario.action.title : "");
+    sim.calcTimeLog.push({ stage: stage, endTime: new Date() });
+
     completedLoops++;
     //report progress every 500 ms
     if (
@@ -428,11 +435,12 @@ function iterateThroughTime(sim, scenario) {
     if (!sim.errorOccurred) composeTimeSeries(sim);
     if (sim.errorOccurred) return;
   });
-  let stage =
-    "iterate for " +
-    scenario.type +
-    (scenario.type == "action" ? scenario.action.title : "");
-  sim.calcTimeLog.push({ stage: stage, endTime: new Date() });
+
+  if (scenario.type == "baseline")
+    sim.calcTimeLog.push({
+      stage: "iterate for baseline",
+      endTime: new Date()
+    });
 }
 
 function doImpactIfItAffectsCurrentTime(sim, timeS, nodeIndex, impact) {
@@ -875,7 +883,7 @@ function extractTimeSeriesNodesValues(sim, onlyNodeIds = null) {
       }
   });
 
-  sim.calcTimeLog.push({ stage: "prepare results", endTime: new Date() });
+  //sim.calcTimeLog.push({ stage: "prepare results", endTime: new Date() });
   return resultTimeSeriesNodesValues;
 }
 
