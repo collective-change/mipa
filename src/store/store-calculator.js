@@ -82,7 +82,7 @@ const actions = {
             }
             break;
           case "actions":
-            dispatch("actions/updateactionsResultsNumbers", e.data, {
+            dispatch("actions/updateActionsResultsNumbers", e.data, {
               root: true
             });
             //console.log(e.data);
