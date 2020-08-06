@@ -68,7 +68,10 @@ const actions = {
         action => action.id == actionResultsNumbers.actionId
       );
       if (
-        roiResultsChangedSignificantly(newResultsNumbers, matchedStoreAction)
+        resultsNumbersChangedSignificantly(
+          newResultsNumbers,
+          matchedStoreAction
+        )
       ) {
         //add action to update list
         console.log("actionLeverage changed significantly");
@@ -282,87 +285,23 @@ export default {
   getters
 };
 
-function roiResultsChangedSignificantly(newResultsNumbers, matchedStoreAction) {
-  //console.log(newResultsNumbers);
-  //console.log(matchedStoreAction);
-  if (typeof matchedStoreAction.actionLeverage == "undefined") return true;
+function changedSignificantly(newObj, oldObj, propertyName) {
+  if (isNaN(newObj[propertyName]) && !isNaN(oldObj[propertyName])) return true;
+  if (!isNaN(newObj[propertyName]) && isNaN(oldObj[propertyName])) return true;
+  if (Math.abs(newObj[propertyName] / oldObj[propertyName]) > 1.001)
+    return true;
+  if (Math.abs(oldObj[propertyName] / newObj[propertyName]) > 1.001)
+    return true;
+  return false;
+}
 
-  if (
-    isNaN(matchedStoreAction.actionLeverage) &&
-    !isNaN(newResultsNumbers.actionLeverage)
-  )
-    return true;
-  if (
-    !isNaN(matchedStoreAction.actionLeverage) &&
-    isNaN(newResultsNumbers.actionLeverage)
-  )
-    return true;
+function resultsNumbersChangedSignificantly(newObj, oldObj) {
+  if (typeof oldObj.actionLeverage == "undefined") return true;
 
-  if (
-    isNaN(matchedStoreAction.marginalTotalBenefitNpv) &&
-    !isNaN(newResultsNumbers.marginalTotalBenefitNpv)
-  )
+  if (changedSignificantly(newObj, oldObj, "actionLeverage")) return true;
+  if (changedSignificantly(newObj, oldObj, "marginalTotalBenefitNpv"))
     return true;
-  if (
-    !isNaN(matchedStoreAction.marginalTotalBenefitNpv) &&
-    isNaN(newResultsNumbers.marginalTotalBenefitNpv)
-  )
-    return true;
-
-  if (
-    isNaN(matchedStoreAction.marginalTotalCostNpv) &&
-    !isNaN(newResultsNumbers.marginalTotalCostNpv)
-  )
-    return true;
-  if (
-    !isNaN(matchedStoreAction.marginalTotalCostNpv) &&
-    isNaN(newResultsNumbers.marginalTotalCostNpv)
-  )
-    return true;
-
-  if (
-    Math.abs(
-      newResultsNumbers.actionLeverage / matchedStoreAction.actionLeverage
-    ) > 1.001
-  )
-    return true;
-  if (
-    Math.abs(
-      matchedStoreAction.actionLeverage / newResultsNumbers.actionLeverage
-    ) > 1.001
-  )
-    return true;
-
-  if (
-    Math.abs(
-      newResultsNumbers.marginalTotalBenefitNpv /
-        matchedStoreAction.marginalTotalBenefitNpv
-    ) > 1.001
-  )
-    return true;
-  if (
-    Math.abs(
-      matchedStoreAction.marginalTotalBenefitNpv /
-        newResultsNumbers.marginalTotalBenefitNpv
-    ) > 1.001
-  )
-    return true;
-
-  if (
-    Math.abs(
-      newResultsNumbers.marginalTotalCostNpv /
-        matchedStoreAction.marginalTotalCostNpv
-    ) > 1.001
-  )
-    return true;
-  if (
-    Math.abs(
-      matchedStoreAction.marginalTotalCostNpv /
-        newResultsNumbers.marginalTotalCostNpv
-    ) > 1.001
-  )
-    return true;
-
+  if (changedSignificantly(newObj, oldObj, "marginalTotalCostNpv")) return true;
   return false;
 }
 
