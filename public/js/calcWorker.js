@@ -227,7 +227,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
     }
 
     timeSPoints = defaultBaseline.timeSPoints;
-    let roiCalcResults = prepRoiResults(
+    let actionResultsNumbers = calcActionResults(
       outstandingDirectCost,
       ifDoneTimeSeriesNodesValues,
       ifNotDoneTimeSeriesNodesValues,
@@ -239,7 +239,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
     //TODO: add ownResults, branchResults, branchAndBlockeesResults
     actionsResultsNumbers.push({
       actionId: action.id,
-      ...roiCalcResults
+      ...actionResultsNumbers
     });
 
     calcTimeMs = new Date() - startTimeMs;
@@ -253,7 +253,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       baselineNodesValues: defaultBaseline.nodesValues,
       ifDoneNodesValues: ifDoneTimeSeriesNodesValues,
       ifNotDoneNodesValues: ifNotDoneTimeSeriesNodesValues,
-      roiCalcResults
+      actionResultsNumbers
     };
 
     putActionResultsInIdb(actionResults, action.id);
@@ -300,7 +300,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
   return results;
 }
 
-function prepRoiResults(
+function calcActionResults(
   outstandingDirectCost,
   ifDoneTimeSeriesNodesValues,
   ifNotDoneTimeSeriesNodesValues,
