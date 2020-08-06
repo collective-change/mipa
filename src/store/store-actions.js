@@ -53,7 +53,7 @@ const actions = {
     //get actions from store
     //for each action in actionsResultsNumbers, compare with action in store
     let actionsResultsNumbers = data.actionsResultsNumbers;
-    let newRoiResults, matchedStoreAction;
+    let newResultsNumbers, matchedStoreAction;
     //console.log(state.actions);
     let batch = firebaseDb.batch();
     let actionsRef = firebaseDb.collection("actions");
@@ -63,17 +63,19 @@ const actions = {
       index,
       fullArray
     ) {
-      newRoiResults = Object.assign({}, actionResultsNumbers);
+      newResultsNumbers = Object.assign({}, actionResultsNumbers);
       matchedStoreAction = state.actions.find(
         action => action.id == actionResultsNumbers.actionId
       );
-      if (roiResultsChangedSignificantly(newRoiResults, matchedStoreAction)) {
+      if (
+        roiResultsChangedSignificantly(newResultsNumbers, matchedStoreAction)
+      ) {
         //add action to update list
         console.log("actionLeverage changed significantly");
-        delete newRoiResults.actionId;
+        delete newResultsNumbers.actionId;
         batch.update(
           actionsRef.doc(actionResultsNumbers.actionId),
-          newRoiResults
+          newResultsNumbers
         );
         batchedWrites++;
       }
@@ -280,58 +282,60 @@ export default {
   getters
 };
 
-function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
-  //console.log(newRoiResults);
+function roiResultsChangedSignificantly(newResultsNumbers, matchedStoreAction) {
+  //console.log(newResultsNumbers);
   //console.log(matchedStoreAction);
   if (typeof matchedStoreAction.actionLeverage == "undefined") return true;
 
   if (
     isNaN(matchedStoreAction.actionLeverage) &&
-    !isNaN(newRoiResults.actionLeverage)
+    !isNaN(newResultsNumbers.actionLeverage)
   )
     return true;
   if (
     !isNaN(matchedStoreAction.actionLeverage) &&
-    isNaN(newRoiResults.actionLeverage)
+    isNaN(newResultsNumbers.actionLeverage)
   )
     return true;
 
   if (
     isNaN(matchedStoreAction.marginalTotalBenefitNpv) &&
-    !isNaN(newRoiResults.marginalTotalBenefitNpv)
+    !isNaN(newResultsNumbers.marginalTotalBenefitNpv)
   )
     return true;
   if (
     !isNaN(matchedStoreAction.marginalTotalBenefitNpv) &&
-    isNaN(newRoiResults.marginalTotalBenefitNpv)
+    isNaN(newResultsNumbers.marginalTotalBenefitNpv)
   )
     return true;
 
   if (
     isNaN(matchedStoreAction.marginalTotalCostNpv) &&
-    !isNaN(newRoiResults.marginalTotalCostNpv)
+    !isNaN(newResultsNumbers.marginalTotalCostNpv)
   )
     return true;
   if (
     !isNaN(matchedStoreAction.marginalTotalCostNpv) &&
-    isNaN(newRoiResults.marginalTotalCostNpv)
-  )
-    return true;
-
-  if (
-    Math.abs(newRoiResults.actionLeverage / matchedStoreAction.actionLeverage) >
-    1.001
-  )
-    return true;
-  if (
-    Math.abs(matchedStoreAction.actionLeverage / newRoiResults.actionLeverage) >
-    1.001
+    isNaN(newResultsNumbers.marginalTotalCostNpv)
   )
     return true;
 
   if (
     Math.abs(
-      newRoiResults.marginalTotalBenefitNpv /
+      newResultsNumbers.actionLeverage / matchedStoreAction.actionLeverage
+    ) > 1.001
+  )
+    return true;
+  if (
+    Math.abs(
+      matchedStoreAction.actionLeverage / newResultsNumbers.actionLeverage
+    ) > 1.001
+  )
+    return true;
+
+  if (
+    Math.abs(
+      newResultsNumbers.marginalTotalBenefitNpv /
         matchedStoreAction.marginalTotalBenefitNpv
     ) > 1.001
   )
@@ -339,14 +343,14 @@ function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
   if (
     Math.abs(
       matchedStoreAction.marginalTotalBenefitNpv /
-        newRoiResults.marginalTotalBenefitNpv
+        newResultsNumbers.marginalTotalBenefitNpv
     ) > 1.001
   )
     return true;
 
   if (
     Math.abs(
-      newRoiResults.marginalTotalCostNpv /
+      newResultsNumbers.marginalTotalCostNpv /
         matchedStoreAction.marginalTotalCostNpv
     ) > 1.001
   )
@@ -354,7 +358,7 @@ function roiResultsChangedSignificantly(newRoiResults, matchedStoreAction) {
   if (
     Math.abs(
       matchedStoreAction.marginalTotalCostNpv /
-        newRoiResults.marginalTotalCostNpv
+        newResultsNumbers.marginalTotalCostNpv
     ) > 1.001
   )
     return true;
