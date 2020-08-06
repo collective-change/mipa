@@ -102,7 +102,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
   let yearlyDiscountRate = 0.05;
 
   let actionResults = {}; // for one action
-  let actionsRoiResults = []; // for multiple actions
+  let actionsResultsNumbers = []; // for multiple actions
 
   let calcTimeMs = 0;
 
@@ -236,13 +236,13 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       yearlyDiscountRate
     );
 
-    actionsRoiResults.push({
+    //TODO: add ownResults, branchResults, branchAndBlockeesResults
+    actionsResultsNumbers.push({
       actionId: action.id,
       ...roiCalcResults
     });
 
     calcTimeMs = new Date() - startTimeMs;
-    //console.log(calcTimeMs, "ms", action.title);
 
     actionResults = {
       id: action.id,
@@ -286,7 +286,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
 
   const results = {
     resultsType: "actions",
-    actionsRoiResults,
+    actionsResultsNumbers,
     calcTimeLog: sim.calcTimeLog,
     calcTimeStages,
     calcTimeMs

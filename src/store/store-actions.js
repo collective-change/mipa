@@ -49,16 +49,16 @@ const actions = {
       });
   },
 
-  updateActionsRoiResults({ dispatch }, data) {
+  updateactionsResultsNumbers({ dispatch }, data) {
     //get actions from store
-    //for each action in actionsRoiResults, compare with action in store
-    let actionsRoiResults = data.actionsRoiResults;
+    //for each action in actionsResultsNumbers, compare with action in store
+    let actionsResultsNumbers = data.actionsResultsNumbers;
     let newRoiResults, matchedStoreAction;
     //console.log(state.actions);
     let batch = firebaseDb.batch();
     let actionsRef = firebaseDb.collection("actions");
     let batchedWrites = 0;
-    actionsRoiResults.forEach(function(actionRoiResults, index, fullArray) {
+    actionsResultsNumbers.forEach(function(actionRoiResults, index, fullArray) {
       newRoiResults = Object.assign({}, actionRoiResults);
       matchedStoreAction = state.actions.find(
         action => action.id == actionRoiResults.actionId

@@ -82,13 +82,15 @@ const actions = {
             }
             break;
           case "actions":
-            dispatch("actions/updateActionsRoiResults", e.data, { root: true });
+            dispatch("actions/updateactionsResultsNumbers", e.data, {
+              root: true
+            });
             //console.log(e.data);
             if (payload.calculationType == "actions") {
-              if (e.data.actionsRoiResults.length == 1)
+              if (e.data.actionsResultsNumbers.length == 1)
                 dispatch(
                   "calcResults/loadResultsOfAction",
-                  e.data.actionsRoiResults[0].actionId,
+                  e.data.actionsResultsNumbers[0].actionId,
                   { root: true }
                 );
 
