@@ -174,6 +174,12 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       onlyNodeIds.push(impact.nodeId);
     });
 
+    //extract relevant baselineNodeValues
+    let baselineNodesValues = {};
+    onlyNodeIds.forEach(function(nodeId) {
+      baselineNodesValues[nodeId] = defaultBaseline.nodesValues[nodeId];
+    });
+
     //TODO: if extra timepoints are required then build customTimeSPoints
     //TODO: simulate using either default or customTimeSPoints
     //TODO: also simulate baseline using customTimeSPoints, if any
@@ -219,14 +225,12 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       );
     } else {
       //use baseline values as ifNotDone values
-      ifNotDoneTimeSeriesNodesValues = {};
-      onlyNodeIds.forEach(function(nodeId) {
-        ifNotDoneTimeSeriesNodesValues[nodeId] =
-          defaultBaseline.nodesValues[nodeId];
-      });
+      ifNotDoneTimeSeriesNodesValues = baselineNodesValues;
     }
 
     timeSPoints = defaultBaseline.timeSPoints;
+
+    //TODO: separate into ownResults, branchResults, branchAndBlockeesResults
     let actionResultsNumbers = calcActionResults(
       outstandingDirectCost,
       ifDoneTimeSeriesNodesValues,
@@ -236,7 +240,6 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       yearlyDiscountRate
     );
 
-    //TODO: add ownResults, branchResults, branchAndBlockeesResults
     actionsResultsNumbers.push({
       actionId: action.id,
       ...actionResultsNumbers
@@ -250,7 +253,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       startTimeS: sim.scope.initialTimeS,
       calcTimeMs: calcTimeMs,
       timeSPoints: sim.scope.timeSeries.timeSPoints,
-      baselineNodesValues: defaultBaseline.nodesValues,
+      baselineNodesValues,
       ifDoneNodesValues: ifDoneTimeSeriesNodesValues,
       ifNotDoneNodesValues: ifNotDoneTimeSeriesNodesValues,
       actionResultsNumbers
@@ -265,7 +268,10 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       scenario.type +
       " " +
       (scenario.type == "action" ? scenario.action.title : "");
-    sim.calcTimeLog.push({ stage: stage, endTime: new Date() });
+    sim.calcTimeLog.push({
+      stage: stage,
+      endTime: new Date()
+    });
 
     completedLoops++;
     //report progress every 500 ms
