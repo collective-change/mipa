@@ -58,16 +58,23 @@ const actions = {
     let batch = firebaseDb.batch();
     let actionsRef = firebaseDb.collection("actions");
     let batchedWrites = 0;
-    actionsResultsNumbers.forEach(function(actionRoiResults, index, fullArray) {
-      newRoiResults = Object.assign({}, actionRoiResults);
+    actionsResultsNumbers.forEach(function(
+      actionResultsNumbers,
+      index,
+      fullArray
+    ) {
+      newRoiResults = Object.assign({}, actionResultsNumbers);
       matchedStoreAction = state.actions.find(
-        action => action.id == actionRoiResults.actionId
+        action => action.id == actionResultsNumbers.actionId
       );
       if (roiResultsChangedSignificantly(newRoiResults, matchedStoreAction)) {
         //add action to update list
         console.log("actionLeverage changed significantly");
         delete newRoiResults.actionId;
-        batch.update(actionsRef.doc(actionRoiResults.actionId), newRoiResults);
+        batch.update(
+          actionsRef.doc(actionResultsNumbers.actionId),
+          newRoiResults
+        );
         batchedWrites++;
       }
       if (
