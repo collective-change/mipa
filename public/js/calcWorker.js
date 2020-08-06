@@ -68,8 +68,6 @@ function coordinateScenarioSimulations(data) {
 
   let actions = data.actions;
 
-  //actions = prepActionsForSort(sim, actions);
-
   let sortedActions = topoSortActions(sim, actions);
   //console.log(sortedActions);
   let resultsOfActions = calculateResultsOfActions(
@@ -79,28 +77,9 @@ function coordinateScenarioSimulations(data) {
   );
 }
 
-function prepActionsForSort(sim, actions) {
+/*function prepActionsForSort(sim, actions) {
   let preppedActions = [];
   actions.forEach(function(outerAction) {
-    /* // gather thenCalcActions from blockerActions and parentAction
-    let thenCalcActions = [];
-    //examine each candidate action to check for current action being in blockeeActions
-    actions.forEach(function(innerAction) {
-      if (innerAction.id != outerAction.id) {
-        //skip self
-        if (
-          "blockeeActionIds" in innerAction &&
-          innerAction.blockeeActionIds.includes(outerAction.id)
-        ) {
-          thenCalcActions.push(innerAction.id);
-        }
-        if (
-          "parentActionId" in innerAction &&
-          innerAction.parentActionId == outerAction.id
-        )
-          thenCalcActions.push(innerAction.id);
-      }
-    });*/
     let calcBlockingInDegree =
       typeof outerAction.blockeeActionIds !== "undefined"
         ? outerAction.blockeeActionIds.length
@@ -117,7 +96,7 @@ function prepActionsForSort(sim, actions) {
   });
   sim.calcTimeLog.push({ stage: "prepActionsForSort", endTime: new Date() });
   return preppedActions;
-}
+} */
 
 function calculateResultsOfActions(sim, actions, defaultBaseline) {
   let yearlyDiscountRate = 0.05;
@@ -186,10 +165,18 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
           .toNumber("seconds");
       }
     });
+
+    //gather nodes for which to extract and save timeSeries
+    let onlyNodeIds = [];
+    onlyNodeIds.push(sim.roleNodes.combinedBenefit);
+    onlyNodeIds.push(sim.roleNodes.combinedCost);
+    action.impacts.forEach(function(impact) {
+      onlyNodeIds.push(impact.nodeId);
+    });
+
     //TODO: if extra timepoints are required then build customTimeSPoints
     //TODO: simulate using either default or customTimeSPoints
     //TODO: also simulate baseline using customTimeSPoints, if any
-    //TODO: split action into if_done and if_not_done impacts and iterate for each
     let hasIfNotDoneImpacts = false;
     action.impacts.forEach(function(impact) {
       if (impact.impactType == "if_not_done") hasIfNotDoneImpacts = true;
@@ -205,9 +192,13 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
     iterateThroughTime(sim, scenario);
     if (sim.errorOccurred) return;
     //TODO: only extract and save all node values if requested by
-    //user for this device; else only save the basic few nodes for display
+    //user for this device
+    //only extract the basic few nodes for calculation and display
     let ifDoneTimeSeriesNodesValues, ifNotDoneTimeSeriesNodesValues;
-    ifDoneTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
+    ifDoneTimeSeriesNodesValues = extractTimeSeriesNodesValues(
+      sim,
+      onlyNodeIds
+    );
 
     if (hasIfNotDoneImpacts) {
       scenario = {
@@ -220,10 +211,19 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       iterateThroughTime(sim, scenario);
       if (sim.errorOccurred) return;
       //TODO: only extract and save all node values if requested by
-      //user for this device; else only save the basic few nodes for display
-      ifNotDoneTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim);
+      //user for this device
+      //only extract the basic few nodes for calculation and display
+      ifNotDoneTimeSeriesNodesValues = extractTimeSeriesNodesValues(
+        sim,
+        onlyNodeIds
+      );
     } else {
-      ifNotDoneTimeSeriesNodesValues = defaultBaseline.nodesValues;
+      //use baseline values as ifNotDone values
+      ifNotDoneTimeSeriesNodesValues = {};
+      onlyNodeIds.forEach(function(nodeId) {
+        ifNotDoneTimeSeriesNodesValues[nodeId] =
+          defaultBaseline.nodesValues[nodeId];
+      });
     }
 
     timeSPoints = defaultBaseline.timeSPoints;
@@ -266,7 +266,9 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       new Date() - sim.lastProgressReportTime >= 100 ||
       completedLoops == actions.length
     ) {
-      self.postMessage({ progressValue: completedLoops / actions.length });
+      self.postMessage({
+        progressValue: completedLoops / actions.length
+      });
       sim.lastProgressReportTime = new Date();
     }
   });
@@ -845,31 +847,32 @@ function prepExpectedUnits(sim) {
   return expectedUnits;
 }
 
-function extractTimeSeriesNodesValues(sim) {
+function extractTimeSeriesNodesValues(sim, onlyNodeIds = null) {
   //clean up scope.timeSeries for posting back to main script
   //console.log(scope);
   let resultTimeSeriesNodesValues = {};
   sim.sortedNodes.forEach(function(node, index) {
-    try {
-      let nodeValues = sim.scope.timeSeries.nodes[node.id].map(function(val) {
-        //get only the numeric value of each value entry in the array
-        if (typeof val == "number") {
-          return val;
-        } else {
-          return val.toNumber(node.unit);
-        }
-      });
-      resultTimeSeriesNodesValues[node.id] = nodeValues;
-    } catch (err) {
-      //console.log(err);
-      self.postMessage({
-        errorType: "results number extraction error",
-        errorMessage: `For node "${node.name}", timeSeries [${
-          sim.scope.timeSeries.nodes[node.id]
-        }] <br/> ${err}`
-      });
-      sim.errorOccurred = true;
-    }
+    if (onlyNodeIds == null || onlyNodeIds.includes(node.id))
+      try {
+        let nodeValues = sim.scope.timeSeries.nodes[node.id].map(function(val) {
+          //get only the numeric value of each value entry in the array
+          if (typeof val == "number") {
+            return val;
+          } else {
+            return val.toNumber(node.unit);
+          }
+        });
+        resultTimeSeriesNodesValues[node.id] = nodeValues;
+      } catch (err) {
+        //console.log(err);
+        self.postMessage({
+          errorType: "results number extraction error",
+          errorMessage: `For node "${node.name}", timeSeries [${
+            sim.scope.timeSeries.nodes[node.id]
+          }] <br/> ${err}`
+        });
+        sim.errorOccurred = true;
+      }
   });
 
   sim.calcTimeLog.push({ stage: "prepare results", endTime: new Date() });
