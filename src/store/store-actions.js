@@ -74,7 +74,7 @@ const actions = {
         )
       ) {
         //add action to update list
-        console.log("actionLeverage changed significantly");
+        console.log("action results changed significantly");
         delete newResultsNumbers.actionId;
         batch.update(
           actionsRef.doc(actionResultsNumbers.actionId),
