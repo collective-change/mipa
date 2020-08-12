@@ -23,9 +23,9 @@ let firebaseAuth = firebaseApp.auth();
 let firebaseDb = firebaseApp.firestore();
 
 // set unlimited cache size
-firebase.firestore().settings({
+/* firebase.firestore().settings({
   cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
-});
+}); */
 
 // enable offline persistence
 firebase
