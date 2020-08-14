@@ -222,7 +222,7 @@ function simulateActionWithDependencies(
   resetScope(sim);
   iterateThroughTime(sim, scenario);
   if (sim.errorOccurred) return;
-  //TODO: only extract and save all node values if requested by
+  //TODO: extract and save all node values if requested by
   //user for this device
   //only extract the basic few nodes for calculation and display
   let ifDoneTimeSeriesNodesValues, ifNotDoneTimeSeriesNodesValues;
@@ -238,7 +238,7 @@ function simulateActionWithDependencies(
     resetScope(sim);
     iterateThroughTime(sim, scenario);
     if (sim.errorOccurred) return;
-    //TODO: only extract and save all node values if requested by
+    //TODO: extract and save all node values if requested by
     //user for this device
     //only extract the basic few nodes for calculation and display
     ifNotDoneTimeSeriesNodesValues = extractTimeSeriesNodesValues(
@@ -251,10 +251,6 @@ function simulateActionWithDependencies(
   }
 
   timeSPoints = defaultBaseline.timeSPoints;
-
-  //console.log(actionSimResults.baselineNodesValues);
-  //console.log({ onlyNodeIds });
-  //console.log({ ifNotDoneTimeSeriesNodesValues });
 
   actionSimResults.actionResultsNumbers = calcActionResultsFromTimeSeries(
     outstandingDirectCost,
