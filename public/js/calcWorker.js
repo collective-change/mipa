@@ -68,11 +68,9 @@ function coordinateScenarioSimulations(data) {
 
   let actions = data.actions;
 
-  let sortedActions = topoSortActions(sim, actions);
-  //console.log(sortedActions);
   let resultsOfActions = calculateResultsOfActions(
     sim,
-    sortedActions,
+    actions,
     defaultBaseline
   );
 }
@@ -951,7 +949,7 @@ function topoSortNodes(sim) {
   return L;
 }
 
-function topoSortActions(sim, actions) {
+/*function topoSortActions(sim, actions) {
   //topological sort with children and blockees ordered first
 
   //prep each action for sorting
@@ -970,8 +968,7 @@ function topoSortActions(sim, actions) {
       ...(action.blockerActionIds ? action.blockerActionIds : [])
     ];
   });
-  //let sortedActions = actions;
-  //return sortedActions;
+
   let L = []; //for storing sorted elements
   let S = actions.filter(action => action.calcBlockingInDegree == 0); //actions with no calc dependencies
   let unvisitedActions = actions.filter(
@@ -984,24 +981,11 @@ function topoSortActions(sim, actions) {
     // remove an action n from S and append to tail of L
     a = S.shift();
     L.push(a);
-    //console.log("a: ", a);
     if (a.blockedDownstreamActions && a.blockedDownstreamActions.length) {
-      /*console.log(
-        a.title,
-        "blockedDownstreamActions",
-        a.blockedDownstreamActions
-      );*/
       a.blockedDownstreamActions.forEach(function(downstreamActionId, index) {
-        //console.log("downstreamActionId", downstreamActionId);
         downstreamAction = unvisitedActions.find(
           action => action.id == downstreamActionId
         );
-        /*if (downstreamAction.id == "VA1YmbzpkYtafnTYi7Jy")
-          console.log(
-            a.title,
-            "going to decrease core's calcBlockingInDegree:",
-            downstreamAction.calcBlockingInDegree
-          );*/
         downstreamAction.calcBlockingInDegree--;
         if (downstreamAction.calcBlockingInDegree == 0) {
           S.push(downstreamAction);
@@ -1032,7 +1016,7 @@ function topoSortActions(sim, actions) {
     endTime: new Date()
   });
   return L;
-}
+} */
 
 function prepNodesForSort(sim) {
   nodes = sim.data.modelNodes;
