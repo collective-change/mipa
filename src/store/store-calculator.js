@@ -37,7 +37,7 @@ const actions = {
     commit("setCalculatorIsRunning", true);
     commit("setCalculationProgress", 0);
 
-    return new Worker("js/calcWorker.js");
+    return new Worker("js/calcWorker2.js");
   },
 
   async calculate({ commit, dispatch }, payload) {
