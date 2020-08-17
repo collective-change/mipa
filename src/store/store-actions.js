@@ -114,6 +114,7 @@ const actions = {
         showErrorMessage("Error removing action", error.message);
       });
   },
+
   addAction({ dispatch }, action) {
     //let userId = firebaseAuth.currentUser.uid;
 
@@ -133,6 +134,18 @@ const actions = {
         showErrorMessage("Error adding action", error.message);
       });
   },
+
+  async getAction({ dispatch }, actionId) {
+    const actionRef = firebaseDb.collection("actions").doc(actionId);
+    const doc = await actionRef.get();
+    if (!doc.exists) {
+      console.log("No such action with ID ", actionId);
+    } else {
+      //console.log('Document data:', doc.data());
+      return doc.data();
+    }
+  },
+
   bindActions: firestoreAction(({ bindFirestoreRef }, orgId) => {
     let userId = firebaseAuth.currentUser.uid;
     // return the promise returned by `bindFirestoreRef`
@@ -149,9 +162,11 @@ const actions = {
       }
     );
   }),
+
   unbindActions: firestoreAction(({ unbindFirestoreRef }) => {
     unbindFirestoreRef("actions", true); //reset data when unbinding
   }),
+
   setSearch({ commit }, value) {
     commit("setSearch", value);
   },

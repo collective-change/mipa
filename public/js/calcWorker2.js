@@ -1,10 +1,34 @@
+importScripts("https://www.gstatic.com/firebasejs/7.18.0/firebase-app.js");
+importScripts("https://www.gstatic.com/firebasejs/7.18.0/firebase-auth.js");
+importScripts(
+  "https://www.gstatic.com/firebasejs/7.18.0/firebase-firestore.js"
+);
+
+//importScripts("https://cdn.jsdelivr.net/npm/comlinkjs/comlink.global.min.js");
+
 //import { parse, format, toTex } from "mathjs";
 importScripts("https://unpkg.com/mathjs@6.6.4/dist/math.min.js");
 
 //var idb = {}; //placeholder for IndexedDB
 
+// Your web app's Firebase configuration
+var firebaseConfig = {
+  apiKey: "AIzaSyAdeJJGRZwCSeE-hc0uALhMrrrInUWHqyY",
+  authDomain: "mipa-1.firebaseapp.com",
+  databaseURL: "https://mipa-1.firebaseio.com",
+  projectId: "mipa-1",
+  storageBucket: "",
+  messagingSenderId: "960836598374",
+  appId: "1:960836598374:web:063890d614348251"
+};
+// Initialize Firebase
+let firebaseApp = firebase.initializeApp(firebaseConfig);
+let firebaseAuth = firebaseApp.auth();
+let firebaseDb = firebaseApp.firestore();
+
 const parser = self.math.parser();
 var modelNodes = [];
+var workerGlobalActions = [];
 
 onmessage = function(e) {
   switch (e.data.calculationType) {
@@ -140,6 +164,11 @@ function simulateActionWithDependencies(
   defaultBaseline,
   yearlyDiscountRate
 ) {
+  //get effectiveChainedCostsAndImpacts from children
+  let effectiveChainedCostsAndImpactsFromChildren = getEffectiveChainedCostsAndImpactsFromChildren(
+    action
+  );
+
   let actionSimResults = { baselineNodesValues: {} };
   let effortCostPerHour = averageEffortCostPerHour;
   /*let directEffortCost = action.estEffortHrs * effortCostPerHour;*/
@@ -264,6 +293,44 @@ function simulateActionWithDependencies(
   actionSimResults.ifDoneNodesValues = ifDoneTimeSeriesNodesValues;
   actionSimResults.ifNotDoneNodesValues = ifNotDoneTimeSeriesNodesValues;
   return actionSimResults;
+}
+
+function getEffectiveChainedCostsAndImpactsFromChildren(action) {
+  if (action.childrenActionIds && action.childrenActionIds.length) {
+    console.log("getting children for", action.title);
+    action.childrenActionIds.forEach(function(childActionId) {
+      //get child's values from proxy (memory, idb, then firestore)
+      let childAction = getActionFromProxy(childActionId);
+    });
+  }
+}
+
+function getActionFromProxy(actionId) {
+  let action;
+  //try to get action from memory
+  if ((action = workerGlobalActions.find(action => action.id == actionId))) {
+    console.log("found in workerGlobalActions", actionId);
+    return action;
+  }
+  //TODO: else try to get from indexedDb
+  //else get from firestore
+  else {
+    let fsAction = getActionFromFirestore(actionId);
+    console.log("found in firestore", actionId);
+    return fsAction;
+  }
+}
+
+async function getActionFromFirestore(actionId) {
+  const actionRef = firebaseDb.collection("actions").doc(actionId);
+  const doc = await actionRef.get();
+  if (!doc.exists) {
+    //console.log("No such action with ID ", actionId);
+    return null;
+  } else {
+    //console.log("Document data:", doc.data());
+    return doc.data();
+  }
 }
 
 function calcActionResultsFromTimeSeries(
