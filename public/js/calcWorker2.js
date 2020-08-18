@@ -118,7 +118,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       "process " +
       scenario.type +
       " " +
-      (scenario.type == "action" ? scenario.action.title : "");
+      (scenario.type == "action" ? action.title : "");
     sim.calcTimeLog.push({
       stage: stage,
       endTime: new Date()
@@ -166,15 +166,19 @@ function simulateActionWithDependencies(
 ) {
   //get effectiveChainedCostsAndImpacts from children
   let effectiveChainedCostsAndImpactsFromChildren = getEffectiveChainedCostsAndImpactsFromChildren(
-    action
+    action,
+    averageEffortCostPerHour
   );
 
   let actionSimResults = { baselineNodesValues: {} };
-  let effortCostPerHour = averageEffortCostPerHour;
-  /*let directEffortCost = action.estEffortHrs * effortCostPerHour;*/
-
+  let effortCostPerHour =
+    action.effortCostPerHrType == "use_custom"
+      ? action.customEffortCostPerHr
+      : averageEffortCostPerHour;
+  let estEffortHrs = isNaN(action.estEffortHrs) ? 0 : action.estEffortHrs;
+  let estEffortCosts = estEffortHrs * effortCostPerHour;
   let outstandingDirectEffortHrs =
-    (isNaN(action.estEffortHrs) ? 0 : action.estEffortHrs) *
+    estEffortHrs *
     (100 -
       (isNaN(action.effortCompletionPercentage)
         ? 0
@@ -188,31 +192,71 @@ function simulateActionWithDependencies(
     (isNaN(action.spentAmount) ? 0 : action.spentAmount);
 
   let outstandingDirectCost = outstandingDirectEffortCost + outstandingSpending;
-  /*let directCosts = {
-    directEffortCost,
-    outstandingDirectEffortCost,
-    directSpending: action.estSpending,
-    outstandingSpending
-  };*/
+  /*
+      accumulator.estEffortHrs += estEffortHrs;
+      accumulator.estEffortCosts += estEffortHrs * effortCostPerHour;
+      accumulator.outstandingDirectEffortHrs += outstandingDirectEffortHrs;
+      accumulator.outstandingDirectEffortCosts += outstandingDirectEffortCost;
+      accumulator.estSpending += estSpending;
+      accumulator.spentAmount += spentAmount;
+      accumulator.impacts.push(impacts);
+*/
+
+  let effectiveChainedCostsAndImpactsFromBranch = {
+    estEffortHrs:
+      effectiveChainedCostsAndImpactsFromChildren.estEffortHrs +
+      isNaN(action.estEffortHrs)
+        ? 0
+        : action.estEffortHrs,
+    estEffortCosts:
+      effectiveChainedCostsAndImpactsFromChildren.estEffortCosts +
+      estEffortCosts,
+    outstandingDirectEffortHrs:
+      effectiveChainedCostsAndImpactsFromChildren.outstandingDirectEffortHrs +
+      outstandingDirectEffortHrs,
+    outstandingDirectEffortCosts:
+      effectiveChainedCostsAndImpactsFromChildren.outstandingDirectEffortCosts +
+      outstandingDirectEffortCost,
+    estSpending:
+      effectiveChainedCostsAndImpactsFromChildren.estSpending +
+      (isNaN(action.estSpending) ? 0 : action.estSpending),
+    spentAmount:
+      effectiveChainedCostsAndImpactsFromChildren.spentAmount +
+      (isNaN(action.spentAmount) ? 0 : action.spentAmount),
+
+    impacts: effectiveChainedCostsAndImpactsFromChildren.impacts.push(
+      ...action.impacts
+    )
+  };
+
+  let impactsToSimulate = [
+    effectiveChainedCostsAndImpactsFromChildren.impacts,
+    ...action.impacts
+  ];
 
   let effortImpact = {
     nodeId: sim.roleNodes.effort,
     durationType: "just_once",
     impactType: "if_done",
     operation: "+",
-    operand: outstandingDirectEffortHrs
+    operand:
+      effectiveChainedCostsAndImpactsFromBranch.outstandingDirectEffortHrs
   };
-  action.impacts.push(effortImpact);
-  let purchaseImpact = {
+  //action.impacts.push(effortImpact);
+  impactsToSimulate.push(effortImpact);
+
+  let spendingImpact = {
     nodeId: sim.roleNodes.spending,
     durationType: "just_once",
     impactType: "if_done",
     operation: "+",
     operand: outstandingSpending
   };
-  action.impacts.push(purchaseImpact);
+  //action.impacts.push(spendingImpact);
+  impactsToSimulate.push(spendingImpact);
+
   //TODO: gather begin and end times
-  action.impacts.forEach(function(impact) {
+  impactsToSimulate.forEach(function(impact) {
     if (impact.durationType == "with_half_life") {
       impact.halfLifeS = math
         .unit(impact.durationNumber, impact.durationUnit)
@@ -224,7 +268,7 @@ function simulateActionWithDependencies(
   let onlyNodeIds = [];
   onlyNodeIds.push(sim.roleNodes.combinedBenefit);
   onlyNodeIds.push(sim.roleNodes.combinedCost);
-  action.impacts.forEach(function(impact) {
+  impactsToSimulate.forEach(function(impact) {
     onlyNodeIds.push(impact.nodeId);
   });
 
@@ -238,15 +282,14 @@ function simulateActionWithDependencies(
   //TODO: simulate using either default or customTimeSPoints
   //TODO: also simulate baseline using customTimeSPoints, if any
   let hasIfNotDoneImpacts = false;
-  action.impacts.forEach(function(impact) {
+  impactsToSimulate.forEach(function(impact) {
     if (impact.impactType == "if_not_done") hasIfNotDoneImpacts = true;
   });
 
   scenario = {
     type: "action",
     impactType: "if_done",
-    action: action
-    //actions: actions
+    impactsToSimulate
   };
   resetScope(sim);
   iterateThroughTime(sim, scenario);
@@ -261,8 +304,7 @@ function simulateActionWithDependencies(
     scenario = {
       type: "action",
       impactType: "if_not_done",
-      action: action
-      //actions: actions
+      impactsToSimulate
     };
     resetScope(sim);
     iterateThroughTime(sim, scenario);
@@ -292,17 +334,62 @@ function simulateActionWithDependencies(
   actionSimResults.baselineNodesValues = baselineNodesValues;
   actionSimResults.ifDoneNodesValues = ifDoneTimeSeriesNodesValues;
   actionSimResults.ifNotDoneNodesValues = ifNotDoneTimeSeriesNodesValues;
+  console.log("actionResultsNumbers", actionSimResults.actionResultsNumbers);
   return actionSimResults;
 }
 
-function getEffectiveChainedCostsAndImpactsFromChildren(action) {
+function getEffectiveChainedCostsAndImpactsFromChildren(
+  action,
+  averageEffortCostPerHour
+) {
+  let accumulator = {
+    estEffortHrs: 0,
+    estEffortCosts: 0,
+    outstandingDirectEffortHrs: 0,
+    outstandingDirectEffortCosts: 0,
+    estSpending: 0,
+    spentAmount: 0,
+    impacts: []
+  };
   if (action.childrenActionIds && action.childrenActionIds.length) {
     console.log("getting children for", action.title);
+
     action.childrenActionIds.forEach(function(childActionId) {
-      //get child's values from proxy (memory, idb, then firestore)
-      let childAction = getActionFromProxy(childActionId);
+      let child = getActionFromProxy(childActionId);
+      let effortCostPerHour =
+        child.effortCostPerHrType == "use_custom"
+          ? customEffortCostPerHr
+          : averageEffortCostPerHour;
+      let estEffortHrs = child.effectiveChainedCostsAndImpacts
+        ? child.effectiveChainedCostsAndImpacts.estEffortHrs
+        : 0;
+      let outstandingDirectEffortHrs = child.effectiveChainedCostsAndImpacts
+        ? child.effectiveChainedCostsAndImpacts.outstandingDirectEffortHrs
+        : 0;
+      let outstandingDirectEffortCost = child.effectiveChainedCostsAndImpacts
+        ? child.effectiveChainedCostsAndImpacts.outstandingDirectEffortCost
+        : 0;
+      let estSpending = child.effectiveChainedCostsAndImpacts
+        ? child.effectiveChainedCostsAndImpacts.estSpending
+        : 0;
+      let spentAmount = child.effectiveChainedCostsAndImpacts
+        ? child.effectiveChainedCostsAndImpacts.spentAmount
+        : 0;
+      let impacts = child.effectiveChainedCostsAndImpacts
+        ? child.effectiveChainedCostsAndImpacts.impacts
+        : [];
+
+      accumulator.estEffortHrs += estEffortHrs;
+      accumulator.estEffortCosts += estEffortHrs * effortCostPerHour;
+      accumulator.outstandingDirectEffortHrs += outstandingDirectEffortHrs;
+      accumulator.outstandingDirectEffortCosts += outstandingDirectEffortCost;
+      accumulator.estSpending += estSpending;
+      accumulator.spentAmount += spentAmount;
+      accumulator.impacts.push(impacts);
     });
   }
+  console.log("accumulator", accumulator);
+  return accumulator;
 }
 
 function getActionFromProxy(actionId) {
@@ -419,6 +506,8 @@ function getMarginalNpv(
 }
 
 function iterateThroughTime(sim, scenario) {
+  console.log("impacts to simulate", scenario.impactsToSimulate);
+
   let timeSPoints = sim.defaultTimeSPoints;
 
   let completedLoops = 0;
@@ -447,7 +536,7 @@ function iterateThroughTime(sim, scenario) {
           //adjust the node value by action's impacts
           //loop through each of action's impacts to see if it impacts the node just calculated
           if (scenario.type == "action") {
-            scenario.action.impacts.forEach(function(impact) {
+            scenario.impactsToSimulate.forEach(function(impact) {
               if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
                 if (impact.impactType == scenario.impactType)
                   doImpactIfItAffectsCurrentTime(sim, timeS, nodeIndex, impact);

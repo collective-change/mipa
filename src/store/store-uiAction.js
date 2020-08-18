@@ -11,7 +11,10 @@ const fieldsToIgnoreForUiActionChanged = [
   "actionMchState",
   "totalDirectCost", //a computed field
   "outstandingDirectCost", //a computed field
-  "sunkenDirectCost" //a computed field
+  "sunkenDirectCost", //a computed field
+  "outstandingDirectEffortHrs", //a computed field
+  "outstandingDirectEffortCost", //a computed field
+  "outstandingSpending" //a computed field
 ];
 
 const state = {
