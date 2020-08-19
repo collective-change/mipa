@@ -65,7 +65,7 @@ function coordinateScenarioSimulations(data) {
 }
 
 function calculateResultsOfActions(sim, actions, defaultBaseline) {
-  let yearlyDiscountRate = 0.05;
+  //let yearlyDiscountRate = 0.05;
 
   let actionResults = {}; // for one action
   let actionsResultsNumbers = []; // for multiple actions
@@ -87,8 +87,8 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       sim,
       action,
       averageEffortCostPerHour,
-      defaultBaseline,
-      yearlyDiscountRate
+      defaultBaseline
+      //yearlyDiscountRate
     );
 
     actionsResultsNumbers.push({
@@ -107,7 +107,9 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       baselineNodesValues: actionSimResults.baselineNodesValues,
       ifDoneNodesValues: actionSimResults.ifDoneNodesValues,
       ifNotDoneNodesValues: actionSimResults.ifNotDoneNodesValues,
-      actionResultsNumbers: actionSimResults.actionResultsNumbers
+      actionResultsNumbers: actionSimResults.actionResultsNumbers,
+      effectiveChainedCostsAndImpacts:
+        actionSimResults.effectiveChainedCostsAndImpacts
     };
 
     putActionResultsInIdb(actionResults, action.id);
@@ -161,8 +163,8 @@ function simulateActionWithDependencies(
   sim,
   action,
   averageEffortCostPerHour,
-  defaultBaseline,
-  yearlyDiscountRate
+  defaultBaseline
+  //yearlyDiscountRate
 ) {
   //get effectiveChainedCostsAndImpacts from children
   let effectiveChainedCostsAndImpactsFromChildren = getEffectiveChainedCostsAndImpactsFromChildren(
@@ -170,7 +172,7 @@ function simulateActionWithDependencies(
     averageEffortCostPerHour
   );
 
-  let actionSimResults = { baselineNodesValues: {} };
+  //let actionSimResults = { baselineNodesValues: {} };
   let effortCostPerHour =
     action.effortCostPerHrType == "use_custom"
       ? action.customEffortCostPerHr
@@ -187,11 +189,11 @@ function simulateActionWithDependencies(
   let outstandingDirectEffortCost =
     outstandingDirectEffortHrs * effortCostPerHour;
 
-  let outstandingSpending =
+  /*let outstandingSpending =
     (isNaN(action.estSpending) ? 0 : action.estSpending) -
-    (isNaN(action.spentAmount) ? 0 : action.spentAmount);
+    (isNaN(action.spentAmount) ? 0 : action.spentAmount);*/
 
-  let outstandingDirectCost = outstandingDirectEffortCost + outstandingSpending;
+  //let outstandingDirectCost = outstandingDirectEffortCost + outstandingSpending;
   /*
       accumulator.estEffortHrs += estEffortHrs;
       accumulator.estEffortCosts += estEffortHrs * effortCostPerHour;
@@ -199,6 +201,7 @@ function simulateActionWithDependencies(
       accumulator.outstandingDirectEffortCosts += outstandingDirectEffortCost;
       accumulator.estSpending += estSpending;
       accumulator.spentAmount += spentAmount;
+      accumulator.outstandingSpending += outstandingSpending;
       accumulator.impacts.push(impacts);
 */
 
@@ -223,37 +226,67 @@ function simulateActionWithDependencies(
     spentAmount:
       effectiveChainedCostsAndImpactsFromChildren.spentAmount +
       (isNaN(action.spentAmount) ? 0 : action.spentAmount),
+    outstandingSpending:
+      effectiveChainedCostsAndImpactsFromChildren.outstandingSpending +
+      (isNaN(action.outstandingSpending) ? 0 : action.outstandingSpending),
 
-    impacts: effectiveChainedCostsAndImpactsFromChildren.impacts.push(
+    impacts: [
+      ...effectiveChainedCostsAndImpactsFromChildren.impacts,
       ...action.impacts
-    )
+    ]
   };
 
-  let impactsToSimulate = [
-    effectiveChainedCostsAndImpactsFromChildren.impacts,
-    ...action.impacts
-  ];
+  /* simulate impact sets until leverage drops */
+  //testCostsAndImpacts = effectiveChainedCostsAndImpactsFromBranch
+  //effectiveChainedCostsAndImpacts = effectiveChainedCostsAndImpactsFromBranch
+  //actionResultsNumbers = simulateCostsAndImpacts(testCostsAndImpacts)
+  //let highestLeverageFound = actionResultsNumbers.leverage
+  //while the highestLeverageBlockee is higher than highestLeverageFound
+  //  include blockee in testCostsAndImpacts
+  //  actionResultsNumbers = simulateCostsAndImpacts(testCostsAndImpacts)
+  //  if (actionResultsNumbers.leverage > highestLeverageFound)
+  //    highestLeverageFound = actionResultsNumbers.leverage
+  //    update effectiveChainedCostsAndImpacts
 
+  let testCostsAndImpacts = effectiveChainedCostsAndImpactsFromBranch;
+  let effectiveChainedCostsAndImpacts = effectiveChainedCostsAndImpactsFromBranch;
+
+  let testActionResults = simulateCostsAndImpacts(
+    testCostsAndImpacts,
+    sim,
+    defaultBaseline
+  );
+
+  //TODO: try blockees' costs impacts
+
+  let actionResults = testActionResults;
+  actionResults.effectiveChainedCostsAndImpacts = effectiveChainedCostsAndImpacts;
+
+  return actionResults;
+}
+
+function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
   let effortImpact = {
     nodeId: sim.roleNodes.effort,
     durationType: "just_once",
     impactType: "if_done",
     operation: "+",
-    operand:
-      effectiveChainedCostsAndImpactsFromBranch.outstandingDirectEffortHrs
+    operand: testCostsAndImpacts.outstandingDirectEffortHrs
   };
-  //action.impacts.push(effortImpact);
-  impactsToSimulate.push(effortImpact);
 
   let spendingImpact = {
     nodeId: sim.roleNodes.spending,
     durationType: "just_once",
     impactType: "if_done",
     operation: "+",
-    operand: outstandingSpending
+    operand: testCostsAndImpacts.outstandingSpending
   };
-  //action.impacts.push(spendingImpact);
-  impactsToSimulate.push(spendingImpact);
+
+  let impactsToSimulate = [
+    effortImpact,
+    spendingImpact,
+    ...testCostsAndImpacts.impacts
+  ];
 
   //TODO: gather begin and end times
   impactsToSimulate.forEach(function(impact) {
@@ -297,8 +330,8 @@ function simulateActionWithDependencies(
   //TODO: extract and save all node values if requested by
   //user for this device
   //only extract the basic few nodes for calculation and display
-  let ifDoneTimeSeriesNodesValues, ifNotDoneTimeSeriesNodesValues;
-  ifDoneTimeSeriesNodesValues = extractTimeSeriesNodesValues(sim, onlyNodeIds);
+  let ifDoneNodesValues, ifNotDoneNodesValues;
+  ifDoneNodesValues = extractTimeSeriesNodesValues(sim, onlyNodeIds);
 
   if (hasIfNotDoneImpacts) {
     scenario = {
@@ -312,30 +345,34 @@ function simulateActionWithDependencies(
     //TODO: extract and save all node values if requested by
     //user for this device
     //only extract the basic few nodes for calculation and display
-    ifNotDoneTimeSeriesNodesValues = extractTimeSeriesNodesValues(
-      sim,
-      onlyNodeIds
-    );
+    ifNotDoneNodesValues = extractTimeSeriesNodesValues(sim, onlyNodeIds);
   } else {
     //use baseline values as ifNotDone values
-    ifNotDoneTimeSeriesNodesValues = baselineNodesValues;
+    ifNotDoneNodesValues = baselineNodesValues;
   }
 
+  outstandingDirectCost =
+    testCostsAndImpacts.outstandingDirectEffortCosts +
+    testCostsAndImpacts.estSpending;
   timeSPoints = defaultBaseline.timeSPoints;
 
-  actionSimResults.actionResultsNumbers = calcActionResultsFromTimeSeries(
+  let actionResultsNumbers = calcActionResultsFromTimeSeries(
     outstandingDirectCost,
-    ifDoneTimeSeriesNodesValues,
-    ifNotDoneTimeSeriesNodesValues,
+    ifDoneNodesValues,
+    ifNotDoneNodesValues,
     timeSPoints,
     sim.roleNodes,
-    yearlyDiscountRate
+    sim.yearlyDiscountRate
   );
-  actionSimResults.baselineNodesValues = baselineNodesValues;
-  actionSimResults.ifDoneNodesValues = ifDoneTimeSeriesNodesValues;
-  actionSimResults.ifNotDoneNodesValues = ifNotDoneTimeSeriesNodesValues;
-  console.log("actionResultsNumbers", actionSimResults.actionResultsNumbers);
-  return actionSimResults;
+
+  let simulateCostsAndImpactsResults = {
+    baselineNodesValues,
+    ifDoneNodesValues,
+    ifNotDoneNodesValues,
+    actionResultsNumbers
+  };
+
+  return simulateCostsAndImpactsResults;
 }
 
 function getEffectiveChainedCostsAndImpactsFromChildren(
@@ -349,6 +386,7 @@ function getEffectiveChainedCostsAndImpactsFromChildren(
     outstandingDirectEffortCosts: 0,
     estSpending: 0,
     spentAmount: 0,
+    outstandingSpending: 0,
     impacts: []
   };
   if (action.childrenActionIds && action.childrenActionIds.length) {
@@ -375,6 +413,9 @@ function getEffectiveChainedCostsAndImpactsFromChildren(
       let spentAmount = child.effectiveChainedCostsAndImpacts
         ? child.effectiveChainedCostsAndImpacts.spentAmount
         : 0;
+      let outstandingSpending = child.effectiveChainedCostsAndImpacts
+        ? child.effectiveChainedCostsAndImpacts.outstandingSpending
+        : 0;
       let impacts = child.effectiveChainedCostsAndImpacts
         ? child.effectiveChainedCostsAndImpacts.impacts
         : [];
@@ -385,10 +426,11 @@ function getEffectiveChainedCostsAndImpactsFromChildren(
       accumulator.outstandingDirectEffortCosts += outstandingDirectEffortCost;
       accumulator.estSpending += estSpending;
       accumulator.spentAmount += spentAmount;
+      accumulator.outstandingSpending += outstandingSpending;
       accumulator.impacts.push(impacts);
     });
   }
-  console.log("accumulator", accumulator);
+  //console.log("accumulator", accumulator);
   return accumulator;
 }
 
@@ -749,6 +791,7 @@ function prepEnvironment(data) {
     errorOccurred: false,
     params: data.simulationParams,
     roleNodes: data.roleNodes,
+    yearlyDiscountRate: 0.05,
     maxLoops: data.simulationParams.numTimeSteps + 1,
     initialDt: math.unit(
       data.simulationParams.timeStepNumber,
