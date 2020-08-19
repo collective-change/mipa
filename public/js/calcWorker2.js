@@ -57,14 +57,10 @@ function coordinateScenarioSimulations(data) {
 
   let actions = data.actions;
 
-  let resultsOfActions = calculateResultsOfActions(
-    sim,
-    actions,
-    defaultBaseline
-  );
+  calculateResultsOfActions(sim, actions, defaultBaseline);
 }
 
-function calculateResultsOfActions(sim, actions, defaultBaseline) {
+async function calculateResultsOfActions(sim, actions, defaultBaseline) {
   //let yearlyDiscountRate = 0.05;
 
   let actionResults = {}; // for one action
@@ -79,11 +75,12 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
 
   //simulate each action
   let completedLoops = 0;
-  actions.forEach(function(action) {
+  //actions.forEach(async function(action) {
+  await asyncForEach(actions, async action => {
     let startTimeMs = new Date();
 
     //calculate branchAndBlockeesResults, save effectiveChainedCostsAndImpacts of self
-    let actionSimResults = simulateActionWithDependencies(
+    let actionSimResults = await simulateActionWithDependencies(
       sim,
       action,
       averageEffortCostPerHour,
@@ -137,7 +134,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       });
       sim.lastProgressReportTime = new Date();
     }
-  });
+  }); //end of actions.forEach
 
   const log = sim.calcTimeLog;
   calcTimeMs = log[log.length - 1].endTime - log[0].endTime;
@@ -150,16 +147,22 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
     calcTimeStages,
     calcTimeMs
   };
-  //console.log(resultsMessage);
+  console.log(results);
 
   console.log("calcTime:", calcTimeMs, "ms");
 
   self.postMessage(results);
 
-  return results;
+  //return results;
 }
 
-function simulateActionWithDependencies(
+async function asyncForEach(array, callback) {
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array);
+  }
+}
+
+async function simulateActionWithDependencies(
   sim,
   action,
   averageEffortCostPerHour,
@@ -167,7 +170,7 @@ function simulateActionWithDependencies(
   //yearlyDiscountRate
 ) {
   //get effectiveChainedCostsAndImpacts from children
-  let effectiveChainedCostsAndImpactsFromChildren = getEffectiveChainedCostsAndImpactsFromChildren(
+  let effectiveChainedCostsAndImpactsFromChildren = await getEffectiveChainedCostsAndImpactsFromChildren(
     action,
     averageEffortCostPerHour
   );
@@ -239,8 +242,8 @@ function simulateActionWithDependencies(
   /* simulate impact sets until leverage drops */
   //testCostsAndImpacts = effectiveChainedCostsAndImpactsFromBranch
   //effectiveChainedCostsAndImpacts = effectiveChainedCostsAndImpactsFromBranch
-  //actionResultsNumbers = simulateCostsAndImpacts(testCostsAndImpacts)
-  //let highestLeverageFound = actionResultsNumbers.leverage
+  //testActionResults = simulateCostsAndImpacts(testCostsAndImpacts)
+  //let highestLeverageFound = testActionResults.leverage
   //while the highestLeverageBlockee is higher than highestLeverageFound
   //  include blockee in testCostsAndImpacts
   //  actionResultsNumbers = simulateCostsAndImpacts(testCostsAndImpacts)
@@ -256,8 +259,19 @@ function simulateActionWithDependencies(
     sim,
     defaultBaseline
   );
+  let highestLeverageFound =
+    testActionResults.actionResultsNumbers.actionLeverage;
 
-  //TODO: try blockees' costs impacts
+  //get blockees
+  if (action.blockeeActionIds && action.blockeeActionIds.length) {
+    console.log("blockeeActionIds", action.blockeeActionIds);
+    let blockees = await getActionsFromFirestore(action.blockeeActionIds);
+    console.log("blockees", blockees);
+  }
+
+  /*while (){
+    //TODO: try blockees' costs impacts
+  }*/
 
   let actionResults = testActionResults;
   actionResults.effectiveChainedCostsAndImpacts = effectiveChainedCostsAndImpacts;
@@ -375,7 +389,7 @@ function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
   return simulateCostsAndImpactsResults;
 }
 
-function getEffectiveChainedCostsAndImpactsFromChildren(
+async function getEffectiveChainedCostsAndImpactsFromChildren(
   action,
   averageEffortCostPerHour
 ) {
@@ -391,9 +405,12 @@ function getEffectiveChainedCostsAndImpactsFromChildren(
   };
   if (action.childrenActionIds && action.childrenActionIds.length) {
     console.log("getting children for", action.title);
+    let childrenActions = await getActionsFromFirestore(
+      action.childrenActionIds
+    );
 
-    action.childrenActionIds.forEach(function(childActionId) {
-      let child = getActionFromProxy(childActionId);
+    childrenActions.forEach(function(child) {
+      console.log("child", child);
       let effortCostPerHour =
         child.effortCostPerHrType == "use_custom"
           ? customEffortCostPerHr
@@ -434,7 +451,7 @@ function getEffectiveChainedCostsAndImpactsFromChildren(
   return accumulator;
 }
 
-function getActionFromProxy(actionId) {
+/*async function getActionFromProxy(actionId) {
   let action;
   //try to get action from memory
   if ((action = workerGlobalActions.find(action => action.id == actionId))) {
@@ -444,22 +461,41 @@ function getActionFromProxy(actionId) {
   //TODO: else try to get from indexedDb
   //else get from firestore
   else {
-    let fsAction = getActionFromFirestore(actionId);
-    console.log("found in firestore", actionId);
+    let fsAction = await getActionFromFirestore(actionId);
+    console.log("found in firestore", fsAction);
     return fsAction;
   }
 }
 
 async function getActionFromFirestore(actionId) {
   const actionRef = firebaseDb.collection("actions").doc(actionId);
-  const doc = await actionRef.get();
-  if (!doc.exists) {
-    //console.log("No such action with ID ", actionId);
-    return null;
-  } else {
-    //console.log("Document data:", doc.data());
-    return doc.data();
+  try {
+    const doc = await actionRef.get();
+    if (doc.exists) {
+      console.log("Document data:", doc.data());
+      return doc.data();
+    } else {
+      //console.log("No such action with ID ", actionId);
+      return null;
+    }
+  } catch (err) {
+    console.log("Error getting action", err);
   }
+}*/
+
+async function getActionsFromFirestore(actionIds) {
+  const actionsRef = firebaseDb.collection("actions");
+  const snapshot = await actionsRef.where("id", "in", actionIds).get();
+  if (snapshot.empty) {
+    console.log("No matching actions.");
+    return;
+  }
+  let actions = [];
+  snapshot.forEach(doc => {
+    //console.log(doc.id, '=>', doc.data());
+    actions.push(doc.data());
+  });
+  return actions;
 }
 
 function calcActionResultsFromTimeSeries(
@@ -548,7 +584,7 @@ function getMarginalNpv(
 }
 
 function iterateThroughTime(sim, scenario) {
-  console.log("impacts to simulate", scenario.impactsToSimulate);
+  //console.log("impacts to simulate", scenario.impactsToSimulate);
 
   let timeSPoints = sim.defaultTimeSPoints;
 

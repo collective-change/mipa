@@ -135,7 +135,7 @@ const actions = {
       });
   },
 
-  async getAction({ dispatch }, actionId) {
+  /*async getAction({ dispatch }, actionId) {
     const actionRef = firebaseDb.collection("actions").doc(actionId);
     const doc = await actionRef.get();
     if (!doc.exists) {
@@ -144,7 +144,7 @@ const actions = {
       //console.log('Document data:', doc.data());
       return doc.data();
     }
-  },
+  },*/
 
   bindActions: firestoreAction(({ bindFirestoreRef }, orgId) => {
     let userId = firebaseAuth.currentUser.uid;
