@@ -39,9 +39,13 @@
                 text-color="white"
               >Leverage {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip>
               <q-chip outline color="primary">
-                Direct cost
+                Own direct cost
                 {{ formatNumber(uiAction.sunkenDirectCost, 3) }} /
                 {{ formatNumber(uiAction.totalDirectCost, 3) }} XDR
+              </q-chip>
+              <q-chip outline color="primary">
+                Effective chained outstanding direct costs
+                {{ formatNumber(uiAction.effectiveChainedCostsAndImpacts.outstandingDirectCosts, 3) }} XDR
               </q-chip>
               <br v-if="embedded" />
               <q-chip
