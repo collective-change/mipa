@@ -186,7 +186,9 @@
             <div class="q-pa-sm q-gutter-sm">
               <action-relationships></action-relationships>
             </div>
-
+            <div>
+              <pre>{{uiAction.effectiveChainedCostsAndImpacts}}</pre>
+            </div>
             <div v-for="chart in chartsArr" :key="chart.nodeId" class="q-pa-md">
               <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
               <div class="row justify-center q-gutter-x-md">
