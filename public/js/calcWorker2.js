@@ -176,9 +176,8 @@ async function simulateActionWithDependencies(
   defaultBaseline
   //yearlyDiscountRate
 ) {
-  let costsAndImpactsOfSelf = includeActionInCostsAndImpacts(
+  let costsAndImpactsOfSelf = composeCostsAndImpactsOfSelf(
     action,
-    getEmptyCostsAndImpacts(),
     averageEffortCostPerHour
   );
   //add costs and impacts from children
@@ -218,8 +217,7 @@ async function simulateActionWithDependencies(
     console.log("blockee leverage", blockees[0].actionLeverage);
     testCostsAndImpacts = includeActionInCostsAndImpacts(
       blockees[0],
-      testCostsAndImpacts,
-      averageEffortCostPerHour
+      testCostsAndImpacts
     );
     testActionResults = simulateCostsAndImpacts(
       testCostsAndImpacts,
@@ -240,17 +238,12 @@ async function simulateActionWithDependencies(
   return actionResults;
 }
 
-function includeActionInCostsAndImpacts(
-  action,
-  costsAndImpacts,
-  averageEffortCostPerHour
-) {
-  //TODO: use action's effectiveChainedCostsAndImpacts
+function composeCostsAndImpactsOfSelf(action, averageEffortCostPerHour) {
   let effortCostPerHour =
     action.effortCostPerHrType == "use_custom"
       ? action.customEffortCostPerHr
       : averageEffortCostPerHour;
-  let estEffortHrs = isNaN(action.estEffortHrs) ? 0 : action.estEffortHrs;
+  let estEffortHrs = isNaN(action.estEffortHrs) ? 0 : 0 + action.estEffortHrs;
   let estEffortCosts = estEffortHrs * effortCostPerHour;
   let outstandingDirectEffortHrs =
     estEffortHrs *
@@ -259,32 +252,51 @@ function includeActionInCostsAndImpacts(
         ? 0
         : action.effortCompletionPercentage)) *
     0.01;
-  let outstandingDirectEffortCost =
+  let outstandingDirectEffortCosts =
     outstandingDirectEffortHrs * effortCostPerHour;
+  let outstandingSpending = isNaN(action.outstandingSpending)
+    ? 0
+    : 0 + action.outstandingSpending;
+  let outstandingDirectCosts =
+    outstandingDirectEffortCosts + outstandingSpending;
   //let actionEffectiveChainedCostsAndImpactsIncludedActionIds = action.
 
   let newCostsAndImpacts = {
-    estEffortHrs:
-      costsAndImpacts.estEffortHrs + isNaN(action.estEffortHrs)
-        ? 0
-        : action.estEffortHrs,
-    estEffortCosts: costsAndImpacts.estEffortCosts + estEffortCosts,
+    estEffortHrs,
+    estEffortCosts,
+    outstandingDirectEffortHrs,
+    outstandingDirectEffortCosts,
+    estSpending: isNaN(action.estSpending) ? 0 : 0 + action.estSpending,
+    spentAmount: isNaN(action.spentAmount) ? 0 : 0 + action.spentAmount,
+    outstandingSpending,
+    outstandingDirectCosts,
+
+    impacts: [...action.impacts]
+    //includedActionIds: [...costsAndImpacts.includedActionIds, action.id]
+  };
+  return newCostsAndImpacts;
+}
+
+function includeActionInCostsAndImpacts(action, costsAndImpacts) {
+  let ae = action.effectiveChainedCostsAndImpacts;
+
+  let newCostsAndImpacts = {
+    estEffortHrs: costsAndImpacts.estEffortHrs + ae.estEffortHrs,
+    estEffortCosts: costsAndImpacts.estEffortCosts + ae.estEffortCosts,
     outstandingDirectEffortHrs:
-      costsAndImpacts.outstandingDirectEffortHrs + outstandingDirectEffortHrs,
+      costsAndImpacts.outstandingDirectEffortHrs +
+      ae.outstandingDirectEffortHrs,
     outstandingDirectEffortCosts:
       costsAndImpacts.outstandingDirectEffortCosts +
-      outstandingDirectEffortCost,
-    estSpending:
-      costsAndImpacts.estSpending +
-      (isNaN(action.estSpending) ? 0 : action.estSpending),
-    spentAmount:
-      costsAndImpacts.spentAmount +
-      (isNaN(action.spentAmount) ? 0 : action.spentAmount),
+      ae.outstandingDirectEffortCosts,
+    estSpending: costsAndImpacts.estSpending + ae.estSpending,
+    spentAmount: costsAndImpacts.spentAmount + ae.spentAmount,
     outstandingSpending:
-      costsAndImpacts.outstandingSpending +
-      (isNaN(action.outstandingSpending) ? 0 : action.outstandingSpending),
+      costsAndImpacts.outstandingSpending + ae.outstandingSpending,
+    outstandingDirectCosts:
+      costsAndImpacts.outstandingDirectCosts + ae.outstandingDirectCosts,
 
-    impacts: [...costsAndImpacts.impacts, ...action.impacts]
+    impacts: [...costsAndImpacts.impacts, ...ae.impacts]
     //includedActionIds: [...costsAndImpacts.includedActionIds, action.id]
   };
   return newCostsAndImpacts;
@@ -376,13 +388,13 @@ function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
     ifNotDoneNodesValues = baselineNodesValues;
   }
 
-  outstandingDirectCost =
+  /*outstandingDirectCosts =
     testCostsAndImpacts.outstandingDirectEffortCosts +
-    testCostsAndImpacts.estSpending;
+    testCostsAndImpacts.estSpending;*/
   timeSPoints = defaultBaseline.timeSPoints;
 
   let actionResultsNumbers = calcActionResultsFromTimeSeries(
-    outstandingDirectCost,
+    testCostsAndImpacts.outstandingDirectCosts,
     ifDoneNodesValues,
     ifNotDoneNodesValues,
     timeSPoints,
@@ -427,11 +439,7 @@ async function includeCostsAndImpactsFromChildren(
 
     childrenActions.forEach(function(child) {
       console.log("child", child);
-      costsAndImpacts = includeActionInCostsAndImpacts(
-        child,
-        costsAndImpacts,
-        averageEffortCostPerHour
-      );
+      costsAndImpacts = includeActionInCostsAndImpacts(child, costsAndImpacts);
     });
   }
   return costsAndImpacts;
@@ -453,7 +461,7 @@ async function getActionsFromFirestore(actionIds) {
 }
 
 function calcActionResultsFromTimeSeries(
-  outstandingDirectCost,
+  outstandingDirectCosts,
   ifDoneTimeSeriesNodesValues,
   ifNotDoneTimeSeriesNodesValues,
   timeSPoints,
@@ -489,9 +497,9 @@ function calcActionResultsFromTimeSeries(
   let totalRoi = marginalTotalBenefitNpv / marginalTotalCostNpv;
   let actionLeverage =
     ((marginalTotalBenefitNpv * marginalTotalBenefitNpv) /
-      (marginalTotalCostNpv * outstandingDirectCost)) *
+      (marginalTotalCostNpv * outstandingDirectCosts)) *
     Math.sign(marginalTotalBenefitNpv) *
-    Math.sign(outstandingDirectCost);
+    Math.sign(outstandingDirectCosts);
 
   if (isNaN(totalRoi)) totalRoi = null;
   if (isNaN(actionLeverage)) actionLeverage = null;
