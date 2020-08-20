@@ -81,13 +81,16 @@ async function calculateResultsOfActions(sim, actions, defaultBaseline) {
     let startTimeMs = new Date();
 
     //calculate branchAndBlockeesResults, save effectiveChainedCostsAndImpacts of self
-    let actionSimResults = await simulateActionWithDependencies(
+
+    let branchAndBlockeesResults = await simulateActionWithDependencies(
       sim,
       action,
       averageEffortCostPerHour,
       defaultBaseline
       //yearlyDiscountRate
     );
+
+    let actionSimResults = branchAndBlockeesResults; //TODO: use max of branchAndBlockees' and inherited
 
     actionsResultsNumbers.push({
       actionId: action.id,
