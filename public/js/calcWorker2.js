@@ -65,6 +65,7 @@ async function calculateResultsOfActions(sim, actions, defaultBaseline) {
 
   let actionResults = {}; // for one action
   let actionsResultsNumbers = []; // for multiple actions
+  let actionsResultsEffectiveChainedCostsAndImpacts = []; //for multiple actions
 
   let calcTimeMs = 0;
 
@@ -91,6 +92,11 @@ async function calculateResultsOfActions(sim, actions, defaultBaseline) {
     actionsResultsNumbers.push({
       actionId: action.id,
       ...actionSimResults.actionResultsNumbers
+    });
+
+    actionsResultsEffectiveChainedCostsAndImpacts.push({
+      actionId: action.id,
+      ...actionSimResults.effectiveChainedCostsAndImpacts
     });
 
     calcTimeMs = new Date() - startTimeMs;
@@ -143,6 +149,7 @@ async function calculateResultsOfActions(sim, actions, defaultBaseline) {
   const results = {
     resultsType: "actions",
     actionsResultsNumbers,
+    actionsResultsEffectiveChainedCostsAndImpacts,
     calcTimeLog: sim.calcTimeLog,
     calcTimeStages,
     calcTimeMs
@@ -254,6 +261,7 @@ function includeActionInCostsAndImpacts(
     0.01;
   let outstandingDirectEffortCost =
     outstandingDirectEffortHrs * effortCostPerHour;
+  //let actionEffectiveChainedCostsAndImpactsIncludedActionIds = action.
 
   let newCostsAndImpacts = {
     estEffortHrs:
@@ -277,6 +285,7 @@ function includeActionInCostsAndImpacts(
       (isNaN(action.outstandingSpending) ? 0 : action.outstandingSpending),
 
     impacts: [...costsAndImpacts.impacts, ...action.impacts]
+    //includedActionIds: [...costsAndImpacts.includedActionIds, action.id]
   };
   return newCostsAndImpacts;
 }
@@ -399,7 +408,8 @@ function getEmptyCostsAndImpacts() {
     estSpending: 0,
     spentAmount: 0,
     outstandingSpending: 0,
-    impacts: []
+    impacts: [],
+    includedActionIds: []
   };
   return costsAndImpacts;
 }

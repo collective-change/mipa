@@ -53,6 +53,9 @@ const actions = {
     //get actions from store
     //for each action in actionsResultsNumbers, compare with action in store
     let actionsResultsNumbers = data.actionsResultsNumbers;
+    let actionsResultsEffectiveChainedCostsAndImpacts =
+      data.actionsResultsEffectiveChainedCostsAndImpacts;
+
     let newResultsNumbers, matchedStoreAction;
     //console.log(state.actions);
     let batch = firebaseDb.batch();
@@ -68,17 +71,32 @@ const actions = {
         action => action.id == actionResultsNumbers.actionId
       );
       if (
+        true ||
         resultsNumbersChangedSignificantly(
           newResultsNumbers,
           matchedStoreAction
         )
       ) {
         //add action to update list
-        console.log("action results changed significantly");
+        console.log(
+          "action results changed significantly: ",
+          matchedStoreAction.id
+        );
+        /*console.log(
+          "actionsResultsEffectiveChainedCostsAndImpacts",
+          actionsResultsEffectiveChainedCostsAndImpacts
+        );*/
         delete newResultsNumbers.actionId;
+        let actionEffectiveChainedCostsAndImpacts = actionsResultsEffectiveChainedCostsAndImpacts.find(
+          element => element.actionId == actionResultsNumbers.actionId
+        );
+        delete actionEffectiveChainedCostsAndImpacts.actionId;
+        let actionUpdates = newResultsNumbers;
+        actionUpdates.effectiveChainedCostsAndImpacts = actionEffectiveChainedCostsAndImpacts;
+        //console.log("action updates:", actionUpdates);
         batch.update(
           actionsRef.doc(actionResultsNumbers.actionId),
-          newResultsNumbers
+          actionUpdates
         );
         batchedWrites++;
       }
