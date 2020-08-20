@@ -49,7 +49,7 @@ const actions = {
       });
   },
 
-  updateActionsResultsNumbers({ dispatch }, data) {
+  updateActionsResults({ dispatch }, data) {
     //get actions from store
     //for each action in actionsResultsNumbers, compare with action in store
     let actionsResultsNumbers = data.actionsResultsNumbers;

@@ -169,13 +169,76 @@ async function simulateActionWithDependencies(
   defaultBaseline
   //yearlyDiscountRate
 ) {
-  //get effectiveChainedCostsAndImpacts from children
-  let effectiveChainedCostsAndImpactsFromChildren = await getEffectiveChainedCostsAndImpactsFromChildren(
+  let costsAndImpactsOfSelf = includeActionInCostsAndImpacts(
     action,
+    getEmptyCostsAndImpacts(),
+    averageEffortCostPerHour
+  );
+  //add costs and impacts from children
+  let effectiveChainedCostsAndImpactsFromBranch = await includeCostsAndImpactsFromChildren(
+    action,
+    costsAndImpactsOfSelf,
     averageEffortCostPerHour
   );
 
-  //let actionSimResults = { baselineNodesValues: {} };
+  // simulate impact sets by including more blockees one by one until leverage drops
+
+  let testCostsAndImpacts = effectiveChainedCostsAndImpactsFromBranch;
+  let testActionResults = simulateCostsAndImpacts(
+    testCostsAndImpacts,
+    sim,
+    defaultBaseline
+  );
+  let actionResults = testActionResults;
+  actionResults.effectiveChainedCostsAndImpacts = testCostsAndImpacts;
+  let highestLeverageFound =
+    testActionResults.actionResultsNumbers.actionLeverage;
+
+  let blockees = [];
+  //get blockees
+  if (action.blockeeActionIds && action.blockeeActionIds.length) {
+    console.log("blockeeActionIds", action.blockeeActionIds);
+    blockees = await getActionsFromFirestore(action.blockeeActionIds);
+    console.log("blockees", blockees);
+  }
+  //sort blockees by descending leverage
+  blockees.sort(function(a, b) {
+    return b.actionLeverage - a.actionLeverage;
+  });
+  if (blockees.length) console.log("blockees for", action.title, blockees);
+  //include each blockee until resulting leverage drops
+  while (blockees.length && blockees[0].actionLeverage > highestLeverageFound) {
+    console.log("blockee leverage", blockees[0].actionLeverage);
+    testCostsAndImpacts = includeActionInCostsAndImpacts(
+      blockees[0],
+      testCostsAndImpacts,
+      averageEffortCostPerHour
+    );
+    testActionResults = simulateCostsAndImpacts(
+      testCostsAndImpacts,
+      sim,
+      defaultBaseline
+    );
+    if (
+      testActionResults.actionResultsNumbers.actionLeverage >
+      highestLeverageFound
+    ) {
+      highestLeverageFound =
+        testActionResults.actionResultsNumbers.actionLeverage;
+      actionResults = testActionResults;
+      actionResults.effectiveChainedCostsAndImpacts = testCostsAndImpacts;
+    }
+    blockees.shift();
+  }
+  return actionResults;
+}
+
+function includeActionInCostsAndImpacts(
+  action,
+  costsAndImpacts,
+  averageEffortCostPerHour
+) {
+  //TODO: use action's effectiveChainedCostsAndImpacts
   let effortCostPerHour =
     action.effortCostPerHrType == "use_custom"
       ? action.customEffortCostPerHr
@@ -192,91 +255,30 @@ async function simulateActionWithDependencies(
   let outstandingDirectEffortCost =
     outstandingDirectEffortHrs * effortCostPerHour;
 
-  /*let outstandingSpending =
-    (isNaN(action.estSpending) ? 0 : action.estSpending) -
-    (isNaN(action.spentAmount) ? 0 : action.spentAmount);*/
-
-  //let outstandingDirectCost = outstandingDirectEffortCost + outstandingSpending;
-  /*
-      accumulator.estEffortHrs += estEffortHrs;
-      accumulator.estEffortCosts += estEffortHrs * effortCostPerHour;
-      accumulator.outstandingDirectEffortHrs += outstandingDirectEffortHrs;
-      accumulator.outstandingDirectEffortCosts += outstandingDirectEffortCost;
-      accumulator.estSpending += estSpending;
-      accumulator.spentAmount += spentAmount;
-      accumulator.outstandingSpending += outstandingSpending;
-      accumulator.impacts.push(impacts);
-*/
-
-  let effectiveChainedCostsAndImpactsFromBranch = {
+  let newCostsAndImpacts = {
     estEffortHrs:
-      effectiveChainedCostsAndImpactsFromChildren.estEffortHrs +
-      isNaN(action.estEffortHrs)
+      costsAndImpacts.estEffortHrs + isNaN(action.estEffortHrs)
         ? 0
         : action.estEffortHrs,
-    estEffortCosts:
-      effectiveChainedCostsAndImpactsFromChildren.estEffortCosts +
-      estEffortCosts,
+    estEffortCosts: costsAndImpacts.estEffortCosts + estEffortCosts,
     outstandingDirectEffortHrs:
-      effectiveChainedCostsAndImpactsFromChildren.outstandingDirectEffortHrs +
-      outstandingDirectEffortHrs,
+      costsAndImpacts.outstandingDirectEffortHrs + outstandingDirectEffortHrs,
     outstandingDirectEffortCosts:
-      effectiveChainedCostsAndImpactsFromChildren.outstandingDirectEffortCosts +
+      costsAndImpacts.outstandingDirectEffortCosts +
       outstandingDirectEffortCost,
     estSpending:
-      effectiveChainedCostsAndImpactsFromChildren.estSpending +
+      costsAndImpacts.estSpending +
       (isNaN(action.estSpending) ? 0 : action.estSpending),
     spentAmount:
-      effectiveChainedCostsAndImpactsFromChildren.spentAmount +
+      costsAndImpacts.spentAmount +
       (isNaN(action.spentAmount) ? 0 : action.spentAmount),
     outstandingSpending:
-      effectiveChainedCostsAndImpactsFromChildren.outstandingSpending +
+      costsAndImpacts.outstandingSpending +
       (isNaN(action.outstandingSpending) ? 0 : action.outstandingSpending),
 
-    impacts: [
-      ...effectiveChainedCostsAndImpactsFromChildren.impacts,
-      ...action.impacts
-    ]
+    impacts: [...costsAndImpacts.impacts, ...action.impacts]
   };
-
-  /* simulate impact sets until leverage drops */
-  //testCostsAndImpacts = effectiveChainedCostsAndImpactsFromBranch
-  //effectiveChainedCostsAndImpacts = effectiveChainedCostsAndImpactsFromBranch
-  //testActionResults = simulateCostsAndImpacts(testCostsAndImpacts)
-  //let highestLeverageFound = testActionResults.leverage
-  //while the highestLeverageBlockee is higher than highestLeverageFound
-  //  include blockee in testCostsAndImpacts
-  //  actionResultsNumbers = simulateCostsAndImpacts(testCostsAndImpacts)
-  //  if (actionResultsNumbers.leverage > highestLeverageFound)
-  //    highestLeverageFound = actionResultsNumbers.leverage
-  //    update effectiveChainedCostsAndImpacts
-
-  let testCostsAndImpacts = effectiveChainedCostsAndImpactsFromBranch;
-  let effectiveChainedCostsAndImpacts = effectiveChainedCostsAndImpactsFromBranch;
-
-  let testActionResults = simulateCostsAndImpacts(
-    testCostsAndImpacts,
-    sim,
-    defaultBaseline
-  );
-  let highestLeverageFound =
-    testActionResults.actionResultsNumbers.actionLeverage;
-
-  //get blockees
-  if (action.blockeeActionIds && action.blockeeActionIds.length) {
-    console.log("blockeeActionIds", action.blockeeActionIds);
-    let blockees = await getActionsFromFirestore(action.blockeeActionIds);
-    console.log("blockees", blockees);
-  }
-
-  /*while (){
-    //TODO: try blockees' costs impacts
-  }*/
-
-  let actionResults = testActionResults;
-  actionResults.effectiveChainedCostsAndImpacts = effectiveChainedCostsAndImpacts;
-
-  return actionResults;
+  return newCostsAndImpacts;
 }
 
 function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
@@ -388,12 +390,8 @@ function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
 
   return simulateCostsAndImpactsResults;
 }
-
-async function getEffectiveChainedCostsAndImpactsFromChildren(
-  action,
-  averageEffortCostPerHour
-) {
-  let accumulator = {
+function getEmptyCostsAndImpacts() {
+  let costsAndImpacts = {
     estEffortHrs: 0,
     estEffortCosts: 0,
     outstandingDirectEffortHrs: 0,
@@ -403,6 +401,14 @@ async function getEffectiveChainedCostsAndImpactsFromChildren(
     outstandingSpending: 0,
     impacts: []
   };
+  return costsAndImpacts;
+}
+
+async function includeCostsAndImpactsFromChildren(
+  action,
+  costsAndImpacts,
+  averageEffortCostPerHour
+) {
   if (action.childrenActionIds && action.childrenActionIds.length) {
     console.log("getting children for", action.title);
     let childrenActions = await getActionsFromFirestore(
@@ -411,77 +417,15 @@ async function getEffectiveChainedCostsAndImpactsFromChildren(
 
     childrenActions.forEach(function(child) {
       console.log("child", child);
-      let effortCostPerHour =
-        child.effortCostPerHrType == "use_custom"
-          ? customEffortCostPerHr
-          : averageEffortCostPerHour;
-      let estEffortHrs = child.effectiveChainedCostsAndImpacts
-        ? child.effectiveChainedCostsAndImpacts.estEffortHrs
-        : 0;
-      let outstandingDirectEffortHrs = child.effectiveChainedCostsAndImpacts
-        ? child.effectiveChainedCostsAndImpacts.outstandingDirectEffortHrs
-        : 0;
-      let outstandingDirectEffortCost = child.effectiveChainedCostsAndImpacts
-        ? child.effectiveChainedCostsAndImpacts.outstandingDirectEffortCost
-        : 0;
-      let estSpending = child.effectiveChainedCostsAndImpacts
-        ? child.effectiveChainedCostsAndImpacts.estSpending
-        : 0;
-      let spentAmount = child.effectiveChainedCostsAndImpacts
-        ? child.effectiveChainedCostsAndImpacts.spentAmount
-        : 0;
-      let outstandingSpending = child.effectiveChainedCostsAndImpacts
-        ? child.effectiveChainedCostsAndImpacts.outstandingSpending
-        : 0;
-      let impacts = child.effectiveChainedCostsAndImpacts
-        ? child.effectiveChainedCostsAndImpacts.impacts
-        : [];
-
-      accumulator.estEffortHrs += estEffortHrs;
-      accumulator.estEffortCosts += estEffortHrs * effortCostPerHour;
-      accumulator.outstandingDirectEffortHrs += outstandingDirectEffortHrs;
-      accumulator.outstandingDirectEffortCosts += outstandingDirectEffortCost;
-      accumulator.estSpending += estSpending;
-      accumulator.spentAmount += spentAmount;
-      accumulator.outstandingSpending += outstandingSpending;
-      accumulator.impacts.push(impacts);
+      costsAndImpacts = includeActionInCostsAndImpacts(
+        child,
+        costsAndImpacts,
+        averageEffortCostPerHour
+      );
     });
   }
-  //console.log("accumulator", accumulator);
-  return accumulator;
+  return costsAndImpacts;
 }
-
-/*async function getActionFromProxy(actionId) {
-  let action;
-  //try to get action from memory
-  if ((action = workerGlobalActions.find(action => action.id == actionId))) {
-    console.log("found in workerGlobalActions", actionId);
-    return action;
-  }
-  //TODO: else try to get from indexedDb
-  //else get from firestore
-  else {
-    let fsAction = await getActionFromFirestore(actionId);
-    console.log("found in firestore", fsAction);
-    return fsAction;
-  }
-}
-
-async function getActionFromFirestore(actionId) {
-  const actionRef = firebaseDb.collection("actions").doc(actionId);
-  try {
-    const doc = await actionRef.get();
-    if (doc.exists) {
-      console.log("Document data:", doc.data());
-      return doc.data();
-    } else {
-      //console.log("No such action with ID ", actionId);
-      return null;
-    }
-  } catch (err) {
-    console.log("Error getting action", err);
-  }
-}*/
 
 async function getActionsFromFirestore(actionIds) {
   const actionsRef = firebaseDb.collection("actions");
@@ -614,6 +558,7 @@ function iterateThroughTime(sim, scenario) {
           //adjust the node value by action's impacts
           //loop through each of action's impacts to see if it impacts the node just calculated
           if (scenario.type == "action") {
+            //TODO: sort impacts by order of impact.operation (=, *, / , +, -)
             scenario.impactsToSimulate.forEach(function(impact) {
               if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
                 if (impact.impactType == scenario.impactType)
