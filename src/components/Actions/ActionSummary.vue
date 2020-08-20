@@ -178,14 +178,16 @@
                 debounce="500"
               />
             </div>
-
             <modal-save-button />
           </div>
+
           <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
             <!-- middle column -->
             <div class="q-pa-sm q-gutter-sm">
               <action-relationships></action-relationships>
             </div>
+            <div>TODO: Other effective costs and impacts from children and blocked actions</div>
+
             <div>
               <pre>{{uiAction.effectiveChainedCostsAndImpacts}}</pre>
             </div>
