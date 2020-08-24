@@ -9,7 +9,7 @@ const fieldsToTriggerRecalculation = [
 
 const fieldsToIgnoreForUiActionChanged = [
   "actionMchState",
-  "totalDirectCost", //a computed field
+  "ownDirectCost", //a computed field
   "outstandingDirectCost", //a computed field
   "sunkenDirectCost", //a computed field
   "outstandingDirectEffortHrs", //a computed field

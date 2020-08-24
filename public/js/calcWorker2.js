@@ -275,14 +275,20 @@ function composeCostsAndImpactsOfSelf(action, averageEffortCostPerHour) {
     : 0 + action.outstandingSpending;
   let outstandingDirectCosts =
     outstandingDirectEffortCosts + outstandingSpending;
+  let estSpending = isNaN(action.estSpending) ? 0 : 0 + action.estSpending;
+  let spentAmount = isNaN(action.spentAmount) ? 0 : 0 + action.spentAmount;
+  let estDirectCosts = estEffortCosts + estSpending;
 
   let newCostsAndImpacts = {
     estEffortHrs,
     estEffortCosts,
+    estSpending,
+    estDirectCosts,
+
+    spentAmount,
+
     outstandingDirectEffortHrs,
     outstandingDirectEffortCosts,
-    estSpending: isNaN(action.estSpending) ? 0 : 0 + action.estSpending,
-    spentAmount: isNaN(action.spentAmount) ? 0 : 0 + action.spentAmount,
     outstandingSpending,
     outstandingDirectCosts,
 
@@ -305,6 +311,7 @@ function includeActionInCostsAndImpacts(action, costsAndImpacts) {
       costsAndImpacts.outstandingDirectEffortCosts +
       ae.outstandingDirectEffortCosts,
     estSpending: costsAndImpacts.estSpending + ae.estSpending,
+    estDirectCosts: costsAndImpacts.estDirectCosts + ae.estDirectCosts,
     spentAmount: costsAndImpacts.spentAmount + ae.spentAmount,
     outstandingSpending:
       costsAndImpacts.outstandingSpending + ae.outstandingSpending,
@@ -403,9 +410,6 @@ function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
     ifNotDoneNodesValues = baselineNodesValues;
   }
 
-  /*outstandingDirectCosts =
-    testCostsAndImpacts.outstandingDirectEffortCosts +
-    testCostsAndImpacts.estSpending;*/
   timeSPoints = defaultBaseline.timeSPoints;
 
   let actionResultsNumbers = calcActionResultsFromTimeSeries(
@@ -430,12 +434,16 @@ function getEmptyCostsAndImpacts() {
   let costsAndImpacts = {
     estEffortHrs: 0,
     estEffortCosts: 0,
+    estSpending: 0,
+    estDirectCosts: 0,
+
+    spentAmount: 0,
+
     outstandingDirectEffortHrs: 0,
+    outstandingSpending: 0,
     outstandingDirectEffortCosts: 0,
     outstandingDirectCosts: 0,
-    estSpending: 0,
-    spentAmount: 0,
-    outstandingSpending: 0,
+
     impacts: [],
     includedActionIds: []
   };

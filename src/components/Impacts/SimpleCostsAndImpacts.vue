@@ -44,6 +44,7 @@
       <q-item>Outstanding effort: {{ formatNumber(costsAndImpacts.outstandingDirectEffortHrs, 3) }} / {{ formatNumber(costsAndImpacts.estEffortHrs, 3) }} hrs</q-item>
       <q-item>Outstanding effort cost: {{ formatNumber(costsAndImpacts.outstandingDirectEffortCosts, 3) }} / {{ formatNumber(costsAndImpacts.estEffortCosts, 3) }}</q-item>
       <q-item>Outstanding spending: {{ formatNumber(costsAndImpacts.outstandingSpending, 3) }} / {{ formatNumber(costsAndImpacts.estSpending, 3) }}</q-item>
+      <q-item>Outstanding direct costs: {{ formatNumber(costsAndImpacts.outstandingDirectCosts, 3) }} / {{ formatNumber(costsAndImpacts.estDirectCosts, 3) }}</q-item>
     </q-list>
   </div>
 </template>

@@ -101,7 +101,8 @@ const actions = {
         delete actionEffectiveChainedCostsAndImpactsExcludingSelf.actionId;
 
         let actionUpdates = {
-          newResultsNumbers,
+          ...newResultsNumbers,
+          resultsNumbers: newResultsNumbers,
           effectiveChainedCostsAndImpacts: actionEffectiveChainedCostsAndImpacts,
           effectiveChainedCostsAndImpactsExcludingSelf: actionEffectiveChainedCostsAndImpactsExcludingSelf
         };

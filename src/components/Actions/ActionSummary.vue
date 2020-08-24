@@ -41,10 +41,10 @@
               <q-chip outline color="primary">
                 Own direct cost
                 {{ formatNumber(uiAction.sunkenDirectCost, 3) }} /
-                {{ formatNumber(uiAction.totalDirectCost, 3) }} XDR
+                {{ formatNumber(uiAction.ownDirectCost, 3) }} XDR
               </q-chip>
               <q-chip outline color="primary">
-                Effective chained outstanding direct costs
+                Effective outstanding direct costs
                 {{ formatNumber(uiAction.effectiveChainedCostsAndImpacts.outstandingDirectCosts, 3) }} XDR
               </q-chip>
               <br v-if="embedded" />
@@ -312,7 +312,7 @@ export default {
       "uiAction.customEffortCostPerHr",
       "uiAction.estSpending",
       "uiAction.spentAmount",
-      "uiAction.totalDirectCost",
+      "uiAction.ownDirectCost",
       "uiAction.outstandingDirectCost",
       "uiAction.sunkenDirectCost",
       "uiAction.outstandingDirectEffortHrs",
@@ -370,14 +370,14 @@ export default {
       let outstandingSpending =
         (isNaN(this.estSpending) ? 0 : this.estSpending) -
         (isNaN(this.spentAmount) ? 0 : this.spentAmount);
-      let totalDirectCost =
+      let ownDirectCost =
         directEffortCost + (isNaN(this.estSpending) ? 0 : this.estSpending);
       let outstandingDirectCost =
         outstandingDirectEffortCost + outstandingSpending;
       let directCost = {
-        total: totalDirectCost,
+        own: ownDirectCost,
         outstanding: outstandingDirectCost,
-        sunken: totalDirectCost - outstandingDirectCost,
+        sunken: ownDirectCost - outstandingDirectCost,
         outstandingDirectEffortHrs,
         outstandingDirectEffortCost,
         outstandingSpending
@@ -397,9 +397,18 @@ export default {
       }
     },
     submitAction() {
+      //TODO: remove fields calculated elsewhere from updates
+      let updates = JSON.parse(JSON.stringify(this.uiAction));
+      let propertiesToDelete = ['actionLeverage', 'blockeeActionIds', 'blockerActionIds',
+       'childrenActionIds', 'parentActionId',
+      'effectiveChainedCostsAndImpacts', 'effectiveChainedCostsAndImpactsExcludingSelf',
+      'impacts', 'newResultsNumbers'];
+      propertiesToDelete.forEach(propertyName => delete updates[propertyName]);
+
+      console.log(updates);
       let payload = {
         id: this.actionId,
-        updates: this.uiAction
+        updates
       };
       this.$store.dispatch("actions/updateAction", payload);
       this.$store.commit("uiAction/setUiActionChanged", false);
@@ -549,7 +558,7 @@ export default {
 
     directCost: function() {
       if (typeof this.directCost == "undefined") return;
-      this.totalDirectCost = this.directCost.total;
+      this.ownDirectCost = this.directCost.own;
       this.outstandingDirectCost = this.directCost.outstanding;
       this.sunkenDirectCost = this.directCost.sunken;
       this.outstandingDirectEffortHrs = this.directCost.outstandingDirectEffortHrs;
