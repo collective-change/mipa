@@ -66,6 +66,7 @@ async function calculateResultsOfActions(sim, actions, defaultBaseline) {
   let actionResults = {}; // for one action
   let actionsResultsNumbers = []; // for multiple actions
   let actionsResultsEffectiveChainedCostsAndImpacts = []; //for multiple actions
+  let actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf = []; //for multiple actions
 
   let calcTimeMs = 0;
 
@@ -102,6 +103,11 @@ async function calculateResultsOfActions(sim, actions, defaultBaseline) {
       ...actionSimResults.effectiveChainedCostsAndImpacts
     });
 
+    actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf.push({
+      actionId: action.id,
+      ...actionSimResults.effectiveChainedCostsAndImpactsExcludingSelf
+    });
+
     calcTimeMs = new Date() - startTimeMs;
 
     actionResults = {
@@ -115,7 +121,9 @@ async function calculateResultsOfActions(sim, actions, defaultBaseline) {
       ifNotDoneNodesValues: actionSimResults.ifNotDoneNodesValues,
       actionResultsNumbers: actionSimResults.actionResultsNumbers,
       effectiveChainedCostsAndImpacts:
-        actionSimResults.effectiveChainedCostsAndImpacts
+        actionSimResults.effectiveChainedCostsAndImpacts,
+      effectiveChainedCostsAndImpactsExcludingSelf:
+        actionSimResults.effectiveChainedCostsAndImpactsExcludingSelf
     };
 
     putActionResultsInIdb(actionResults, action.id);
@@ -153,6 +161,7 @@ async function calculateResultsOfActions(sim, actions, defaultBaseline) {
     resultsType: "actions",
     actionsResultsNumbers,
     actionsResultsEffectiveChainedCostsAndImpacts,
+    actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf,
     calcTimeLog: sim.calcTimeLog,
     calcTimeStages,
     calcTimeMs
@@ -184,11 +193,10 @@ async function simulateActionWithDependencies(
     averageEffortCostPerHour
   );
   //add costs and impacts from children
-  let effectiveChainedCostsAndImpactsFromBranch = await includeCostsAndImpactsFromChildren(
-    action,
-    costsAndImpactsOfSelf,
-    averageEffortCostPerHour
-  );
+  let {
+    costsAndImpacts: effectiveChainedCostsAndImpactsFromBranch,
+    childrensCostsAndImpacts
+  } = await includeCostsAndImpactsFromChildren(action, costsAndImpactsOfSelf);
 
   // simulate impact sets by including more blockees one by one until leverage drops
 
@@ -200,6 +208,7 @@ async function simulateActionWithDependencies(
   );
   let actionResults = testActionResults;
   actionResults.effectiveChainedCostsAndImpacts = testCostsAndImpacts;
+  actionResults.effectiveChainedCostsAndImpactsExcludingSelf = childrensCostsAndImpacts;
   let highestLeverageFound =
     testActionResults.actionResultsNumbers.actionLeverage;
 
@@ -235,6 +244,10 @@ async function simulateActionWithDependencies(
         testActionResults.actionResultsNumbers.actionLeverage;
       actionResults = testActionResults;
       actionResults.effectiveChainedCostsAndImpacts = testCostsAndImpacts;
+      actionResults.effectiveChainedCostsAndImpactsExcludingSelf = includeActionInCostsAndImpacts(
+        blockees[0],
+        testCostsAndImpacts
+      );
     }
     blockees.shift();
   }
@@ -429,11 +442,8 @@ function getEmptyCostsAndImpacts() {
   return costsAndImpacts;
 }
 
-async function includeCostsAndImpactsFromChildren(
-  action,
-  costsAndImpacts,
-  averageEffortCostPerHour
-) {
+async function includeCostsAndImpactsFromChildren(action, costsAndImpacts) {
+  let childrensCostsAndImpacts = getEmptyCostsAndImpacts();
   if (action.childrenActionIds && action.childrenActionIds.length) {
     console.log("getting children for", action.title);
     let childrenActions = await getActionsFromFirestore(
@@ -443,9 +453,13 @@ async function includeCostsAndImpactsFromChildren(
     childrenActions.forEach(function(child) {
       console.log("child", child);
       costsAndImpacts = includeActionInCostsAndImpacts(child, costsAndImpacts);
+      childrensCostsAndImpacts = includeActionInCostsAndImpacts(
+        child,
+        childrensCostsAndImpacts
+      );
     });
   }
-  return costsAndImpacts;
+  return { costsAndImpacts, childrensCostsAndImpacts };
 }
 
 async function getActionsFromFirestore(actionIds) {

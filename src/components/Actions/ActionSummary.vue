@@ -193,7 +193,7 @@
             <div>TODO: Other effective costs and impacts from children and blocked actions</div>
 
             <div>
-              <pre>{{uiAction.effectiveChainedCostsAndImpacts}}</pre>
+              <pre>{{uiAction.effectiveChainedCostsAndImpactsExcludingSelf}}</pre>
             </div>
             <div v-for="chart in chartsArr" :key="chart.nodeId" class="q-pa-md">
               <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />

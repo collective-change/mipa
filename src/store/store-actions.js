@@ -55,6 +55,8 @@ const actions = {
     let actionsResultsNumbers = data.actionsResultsNumbers;
     let actionsResultsEffectiveChainedCostsAndImpacts =
       data.actionsResultsEffectiveChainedCostsAndImpacts;
+    let actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf =
+      data.actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf;
 
     let newResultsNumbers, matchedStoreAction;
     //console.log(state.actions);
@@ -87,12 +89,23 @@ const actions = {
           actionsResultsEffectiveChainedCostsAndImpacts
         );*/
         delete newResultsNumbers.actionId;
+
         let actionEffectiveChainedCostsAndImpacts = actionsResultsEffectiveChainedCostsAndImpacts.find(
           element => element.actionId == actionResultsNumbers.actionId
         );
         delete actionEffectiveChainedCostsAndImpacts.actionId;
-        let actionUpdates = newResultsNumbers;
-        actionUpdates.effectiveChainedCostsAndImpacts = actionEffectiveChainedCostsAndImpacts;
+
+        let actionEffectiveChainedCostsAndImpactsExcludingSelf = actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf.find(
+          element => element.actionId == actionResultsNumbers.actionId
+        );
+        delete actionEffectiveChainedCostsAndImpactsExcludingSelf.actionId;
+
+        let actionUpdates = {
+          newResultsNumbers,
+          effectiveChainedCostsAndImpacts: actionEffectiveChainedCostsAndImpacts,
+          effectiveChainedCostsAndImpactsExcludingSelf: actionEffectiveChainedCostsAndImpactsExcludingSelf
+        };
+
         //console.log("action updates:", actionUpdates);
         batch.update(
           actionsRef.doc(actionResultsNumbers.actionId),
