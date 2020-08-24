@@ -275,7 +275,6 @@ function composeCostsAndImpactsOfSelf(action, averageEffortCostPerHour) {
     : 0 + action.outstandingSpending;
   let outstandingDirectCosts =
     outstandingDirectEffortCosts + outstandingSpending;
-  //let actionEffectiveChainedCostsAndImpactsIncludedActionIds = action.
 
   let newCostsAndImpacts = {
     estEffortHrs,
@@ -287,8 +286,8 @@ function composeCostsAndImpactsOfSelf(action, averageEffortCostPerHour) {
     outstandingSpending,
     outstandingDirectCosts,
 
-    impacts: [...action.impacts]
-    //includedActionIds: [...costsAndImpacts.includedActionIds, action.id]
+    impacts: [...action.impacts],
+    includedActionIds: [action.id]
   };
   return newCostsAndImpacts;
 }
@@ -312,8 +311,8 @@ function includeActionInCostsAndImpacts(action, costsAndImpacts) {
     outstandingDirectCosts:
       costsAndImpacts.outstandingDirectCosts + ae.outstandingDirectCosts,
 
-    impacts: [...costsAndImpacts.impacts, ...ae.impacts]
-    //includedActionIds: [...costsAndImpacts.includedActionIds, action.id]
+    impacts: [...costsAndImpacts.impacts, ...ae.impacts],
+    includedActionIds: [...costsAndImpacts.includedActionIds, action.id]
   };
   return newCostsAndImpacts;
 }

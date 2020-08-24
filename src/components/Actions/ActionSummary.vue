@@ -194,6 +194,7 @@
 
             <div>
               <pre>{{uiAction.effectiveChainedCostsAndImpactsExcludingSelf}}</pre>
+              <pre>{{uiAction.effectiveChainedCostsAndImpacts}}</pre>
             </div>
             <div v-for="chart in chartsArr" :key="chart.nodeId" class="q-pa-md">
               <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
