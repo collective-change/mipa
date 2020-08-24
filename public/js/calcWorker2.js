@@ -432,6 +432,7 @@ function getEmptyCostsAndImpacts() {
     estEffortCosts: 0,
     outstandingDirectEffortHrs: 0,
     outstandingDirectEffortCosts: 0,
+    outstandingDirectCosts: 0,
     estSpending: 0,
     spentAmount: 0,
     outstandingSpending: 0,

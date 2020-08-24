@@ -190,12 +190,11 @@
             <div class="q-pa-sm q-gutter-sm">
               <action-relationships></action-relationships>
             </div>
-            <div>TODO: Other effective costs and impacts from children and blocked actions</div>
-
-            <div>
-              <pre>{{uiAction.effectiveChainedCostsAndImpactsExcludingSelf}}</pre>
-              <pre>{{uiAction.effectiveChainedCostsAndImpacts}}</pre>
-            </div>
+            <simpleCostsAndImpacts
+              :costsAndImpacts="uiAction.effectiveChainedCostsAndImpactsExcludingSelf"
+            >
+              <template v-slot:header>Other effective impacts</template>
+            </simpleCostsAndImpacts>
             <div v-for="chart in chartsArr" :key="chart.nodeId" class="q-pa-md">
               <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
               <div class="row justify-center q-gutter-x-md">
@@ -253,6 +252,7 @@ export default {
     "modal-save-button": require("components/Shared/ModalComponents/ModalSaveButton.vue")
       .default,
     impacts: require("components/Impacts/Impacts.vue").default,
+    simpleCostsAndImpacts: require("components/Impacts/SimpleCostsAndImpacts.vue").default,
     "calculator-ui": require("components/Calc/CalculatorUi.vue").default,
     "action-relationships": require("components/Actions/Relationships/ActionRelationships.vue")
       .default,
