@@ -60,7 +60,11 @@ function coordinateScenarioSimulations(data) {
   calculateResultsOfActions(sim, actions, defaultBaseline);
 }
 
-async function calculateResultsOfActions(sim, actions, defaultBaseline) {
+async function calculateResultsOfActions(
+  sim,
+  actionsToCalculate,
+  defaultBaseline
+) {
   //let yearlyDiscountRate = 0.05;
 
   let actionResults = {}; // for one action
@@ -78,7 +82,7 @@ async function calculateResultsOfActions(sim, actions, defaultBaseline) {
   //simulate each action
   let completedLoops = 0;
   //actions.forEach(async function(action) {
-  await asyncForEach(actions, async action => {
+  await asyncForEach(actionsToCalculate, async action => {
     let startTimeMs = new Date();
 
     //calculate branchAndBlockeesResults, save effectiveChainedCostsAndImpacts of self
@@ -144,10 +148,10 @@ async function calculateResultsOfActions(sim, actions, defaultBaseline) {
     //report progress every 500 ms
     if (
       new Date() - sim.lastProgressReportTime >= 100 ||
-      completedLoops == actions.length
+      completedLoops == actionsToCalculate.length
     ) {
       self.postMessage({
-        progressValue: completedLoops / actions.length
+        progressValue: completedLoops / actionsToCalculate.length
       });
       sim.lastProgressReportTime = new Date();
     }
