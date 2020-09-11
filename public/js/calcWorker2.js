@@ -95,22 +95,42 @@ async function calculateResultsOfActions(
       //yearlyDiscountRate
     );
 
-    let actionSimResults = branchAndBlockeesResults; //TODO: use max of branchAndBlockees' and inherited
-
-    actionsResultsNumbers.push({
-      actionId: action.id,
-      ...actionSimResults.actionResultsNumbers
-    });
-
+    //ready effectiveChainedCostsAndImpacts for save
     actionsResultsEffectiveChainedCostsAndImpacts.push({
       actionId: action.id,
-      ...actionSimResults.effectiveChainedCostsAndImpacts
+      ...branchAndBlockeesResults.effectiveChainedCostsAndImpacts
     });
 
     actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf.push({
       actionId: action.id,
-      ...actionSimResults.effectiveChainedCostsAndImpactsExcludingSelf
+      ...branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf
     });
+
+    //calculate action's effective results (max of branchAndBlockees', and inherited; based on leverage)
+    let actionEffectiveResults = branchAndBlockeesResults;
+    if (
+      action.inheritedResults &&
+      action.inheritedResults.actionLeverage >
+        branchAndBlockeesResults.actionLeverage
+    ) {
+      actionEffectiveResults = action.inheritedResults;
+    }
+
+    actionsResultsNumbers.push({
+      actionId: action.id,
+      ...actionEffectiveResults.actionResultsNumbers
+    });
+
+    //if branchAndBlockeesResults changed significantly:
+    if (
+      action.branchAndBlockeesResultsNumbers &&
+      resultsNumbersChangedSignificantly(
+        branchAndBlockeesResults.actionResultsNumbers,
+        action.branchAndBlockeesResultsNumbers
+      )
+    ) {
+      console.log("branchAndBlockeesResults changed significantly");
+    }
 
     calcTimeMs = new Date() - startTimeMs;
 
@@ -120,14 +140,16 @@ async function calculateResultsOfActions(
       startTimeS: sim.scope.initialTimeS,
       calcTimeMs: calcTimeMs,
       timeSPoints: sim.scope.timeSeries.timeSPoints,
-      baselineNodesValues: actionSimResults.baselineNodesValues,
-      ifDoneNodesValues: actionSimResults.ifDoneNodesValues,
-      ifNotDoneNodesValues: actionSimResults.ifNotDoneNodesValues,
-      actionResultsNumbers: actionSimResults.actionResultsNumbers,
+      baselineNodesValues: branchAndBlockeesResults.baselineNodesValues,
+      ifDoneNodesValues: branchAndBlockeesResults.ifDoneNodesValues,
+      ifNotDoneNodesValues: branchAndBlockeesResults.ifNotDoneNodesValues,
+      branchAndBlockeesResultsNumbers:
+        branchAndBlockeesResults.actionResultsNumbers,
+      actionResultsNumbers: actionEffectiveResults.actionResultsNumbers,
       effectiveChainedCostsAndImpacts:
-        actionSimResults.effectiveChainedCostsAndImpacts,
+        branchAndBlockeesResults.effectiveChainedCostsAndImpacts,
       effectiveChainedCostsAndImpactsExcludingSelf:
-        actionSimResults.effectiveChainedCostsAndImpactsExcludingSelf
+        branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf
     };
 
     putActionResultsInIdb(actionResults, action.id);
@@ -1418,4 +1440,24 @@ function replace$NodeIdsWithSymbol(workingString) {
     node => (workingString = workingString.replace("$" + node.id, node.symbol))
   );
   return workingString;
+}
+
+function changedSignificantly(newObj, oldObj, propertyName) {
+  if (isNaN(newObj[propertyName]) && !isNaN(oldObj[propertyName])) return true;
+  if (!isNaN(newObj[propertyName]) && isNaN(oldObj[propertyName])) return true;
+  if (Math.abs(newObj[propertyName] / oldObj[propertyName]) > 1.001)
+    return true;
+  if (Math.abs(oldObj[propertyName] / newObj[propertyName]) > 1.001)
+    return true;
+  return false;
+}
+
+function resultsNumbersChangedSignificantly(newObj, oldObj) {
+  if (typeof oldObj.actionLeverage == "undefined") return true;
+
+  if (changedSignificantly(newObj, oldObj, "actionLeverage")) return true;
+  if (changedSignificantly(newObj, oldObj, "marginalTotalBenefitNpv"))
+    return true;
+  if (changedSignificantly(newObj, oldObj, "marginalTotalCostNpv")) return true;
+  return false;
 }
