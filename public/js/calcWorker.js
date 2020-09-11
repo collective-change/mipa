@@ -69,6 +69,7 @@ async function calculateResultsOfActions(
 
   let actionResults = {}; // for one action
   let actionsResultsNumbers = []; // for multiple actions
+  let actionsResultsBranchAndBlockeesResultsNumbers = []; // for multiple actions
   let actionsResultsEffectiveChainedCostsAndImpacts = []; //for multiple actions
   let actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf = []; //for multiple actions
 
@@ -106,6 +107,11 @@ async function calculateResultsOfActions(
       ...branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf
     });
 
+    actionsResultsBranchAndBlockeesResultsNumbers.push({
+      actionId: action.id,
+      ...branchAndBlockeesResults.actionResultsNumbers
+    });
+
     //calculate action's effective results (max of branchAndBlockees', and inherited; based on leverage)
     let actionEffectiveResults = branchAndBlockeesResults;
     if (
@@ -130,6 +136,7 @@ async function calculateResultsOfActions(
       )
     ) {
       console.log("branchAndBlockeesResults changed significantly");
+      //if action has parent or blocker, then write results to firestore immediately, else add results to toUpdate array
     }
 
     calcTimeMs = new Date() - startTimeMs;
@@ -186,6 +193,7 @@ async function calculateResultsOfActions(
   const results = {
     resultsType: "actions",
     actionsResultsNumbers,
+    actionsResultsBranchAndBlockeesResultsNumbers,
     actionsResultsEffectiveChainedCostsAndImpacts,
     actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf,
     calcTimeLog: sim.calcTimeLog,

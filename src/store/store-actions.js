@@ -53,6 +53,8 @@ const actions = {
     //get actions from store
     //for each action in actionsResultsNumbers, compare with action in store
     let actionsResultsNumbers = data.actionsResultsNumbers;
+    let actionsResultsBranchAndBlockeesResultsNumbers =
+      data.actionsResultsBranchAndBlockeesResultsNumbers;
     let actionsResultsEffectiveChainedCostsAndImpacts =
       data.actionsResultsEffectiveChainedCostsAndImpacts;
     let actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf =
@@ -90,6 +92,11 @@ const actions = {
         );*/
         delete newResultsNumbers.actionId;
 
+        let actionBranchAndBlockeesResultsNumbers = actionsResultsBranchAndBlockeesResultsNumbers.find(
+          element => element.actionId == actionResultsNumbers.actionId
+        );
+        delete actionBranchAndBlockeesResultsNumbers.actionId;
+
         let actionEffectiveChainedCostsAndImpacts = actionsResultsEffectiveChainedCostsAndImpacts.find(
           element => element.actionId == actionResultsNumbers.actionId
         );
@@ -104,6 +111,7 @@ const actions = {
           //newResultsNumbers: firebase.firestore.FieldValue.delete(), //delete this field
           ...newResultsNumbers,
           resultsNumbers: newResultsNumbers,
+          branchAndBlockeesResultsNumbers: actionBranchAndBlockeesResultsNumbers,
           effectiveChainedCostsAndImpacts: actionEffectiveChainedCostsAndImpacts,
           effectiveChainedCostsAndImpactsExcludingSelf: actionEffectiveChainedCostsAndImpactsExcludingSelf
         };
