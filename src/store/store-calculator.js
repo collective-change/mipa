@@ -1,6 +1,6 @@
 import { uid, Notify } from "quasar";
 import { showErrorMessage } from "src/utils/util-show-error-message";
-//import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
+import { /*firebase, firebaseDb,*/ firebaseAuth } from "boot/firebase";
 //import { firestoreAction } from "vuexfire";
 
 const state = {
@@ -52,7 +52,8 @@ const actions = {
       exchangeRates: payload.exchangeRates,
       simulationParams: payload.simulationParams,
       roleNodes: payload.roleNodes,
-      actions: payload.actions ? payload.actions : null
+      actions: payload.actions ? payload.actions : null,
+      currentUserId: firebaseAuth.currentUser.uid
     });
     //console.log("Message posted to worker");
 

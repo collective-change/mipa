@@ -29,6 +29,7 @@ let firebaseDb = firebaseApp.firestore();
 const parser = self.math.parser();
 var modelNodes = [];
 var workerGlobalActions = [];
+var currentUserId;
 
 onmessage = function(e) {
   switch (e.data.calculationType) {
@@ -49,6 +50,8 @@ function coordinateScenarioSimulations(data) {
   //prep environment, scope, etc
   let sim = prepSim(data);
   if (sim.errorOccurred) return;
+  currentUserId = data.currentUserId;
+
   testInitializeIdb();
 
   let defaultBaseline = calculateBaseline(sim);
@@ -83,108 +86,134 @@ async function calculateResultsOfActions(
   //simulate each action
   let completedLoops = 0;
   //actions.forEach(async function(action) {
-  await asyncForEach(actionsToCalculate, async action => {
-    let startTimeMs = new Date();
+  await asyncForEach(
+    actionsToCalculate,
+    async (action, index, actionsToCalculate) => {
+      let startTimeMs = new Date();
 
-    //calculate branchAndBlockeesResults, save effectiveChainedCostsAndImpacts of self
+      //TODO: get newest data for action from: toUpdate > idb > firestore
+      // include fields:
+      // results numbers,
+      // actionsResultsBranchAndBlockeesResultsNumbers,
+      // actionsResultsEffectiveChainedCostsAndImpacts,
+      // actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf
 
-    let branchAndBlockeesResults = await simulateActionWithDependencies(
-      sim,
-      action,
-      averageEffortCostPerHour,
-      defaultBaseline
-      //yearlyDiscountRate
-    );
+      //calculate branchAndBlockeesResults, save effectiveChainedCostsAndImpacts of self
+      let branchAndBlockeesResults = await simulateActionWithDependencies(
+        sim,
+        action,
+        averageEffortCostPerHour,
+        defaultBaseline
+        //yearlyDiscountRate
+      );
 
-    //ready effectiveChainedCostsAndImpacts for save
-    actionsResultsEffectiveChainedCostsAndImpacts.push({
-      actionId: action.id,
-      ...branchAndBlockeesResults.effectiveChainedCostsAndImpacts
-    });
+      //calculate action's effective results (max of branchAndBlockees', and inherited; based on leverage)
+      let actionEffectiveResults = branchAndBlockeesResults;
+      if (
+        action.inheritedResults &&
+        action.inheritedResults.actionLeverage >
+          branchAndBlockeesResults.actionLeverage
+      ) {
+        actionEffectiveResults = action.inheritedResults;
+      }
 
-    actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf.push({
-      actionId: action.id,
-      ...branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf
-    });
-
-    actionsResultsBranchAndBlockeesResultsNumbers.push({
-      actionId: action.id,
-      ...branchAndBlockeesResults.actionResultsNumbers
-    });
-
-    //calculate action's effective results (max of branchAndBlockees', and inherited; based on leverage)
-    let actionEffectiveResults = branchAndBlockeesResults;
-    if (
-      action.inheritedResults &&
-      action.inheritedResults.actionLeverage >
-        branchAndBlockeesResults.actionLeverage
-    ) {
-      actionEffectiveResults = action.inheritedResults;
-    }
-
-    actionsResultsNumbers.push({
-      actionId: action.id,
-      ...actionEffectiveResults.actionResultsNumbers
-    });
-
-    //if branchAndBlockeesResults changed significantly:
-    if (
-      action.branchAndBlockeesResultsNumbers &&
-      resultsNumbersChangedSignificantly(
-        branchAndBlockeesResults.actionResultsNumbers,
-        action.branchAndBlockeesResultsNumbers
-      )
-    ) {
-      console.log("branchAndBlockeesResults changed significantly");
-      //if action has parent or blocker, then write results to firestore immediately, else add results to toUpdate array
-    }
-
-    calcTimeMs = new Date() - startTimeMs;
-
-    actionResults = {
-      id: action.id,
-      calcDate: sim.scope.calcDate,
-      startTimeS: sim.scope.initialTimeS,
-      calcTimeMs: calcTimeMs,
-      timeSPoints: sim.scope.timeSeries.timeSPoints,
-      baselineNodesValues: branchAndBlockeesResults.baselineNodesValues,
-      ifDoneNodesValues: branchAndBlockeesResults.ifDoneNodesValues,
-      ifNotDoneNodesValues: branchAndBlockeesResults.ifNotDoneNodesValues,
-      branchAndBlockeesResultsNumbers:
-        branchAndBlockeesResults.actionResultsNumbers,
-      actionResultsNumbers: actionEffectiveResults.actionResultsNumbers,
-      effectiveChainedCostsAndImpacts:
-        branchAndBlockeesResults.effectiveChainedCostsAndImpacts,
-      effectiveChainedCostsAndImpactsExcludingSelf:
-        branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf
-    };
-
-    putActionResultsInIdb(actionResults, action.id);
-
-    if (sim.errorOccurred) return;
-
-    let stage =
-      "process " +
-      scenario.type +
-      " " +
-      (scenario.type == "action" ? action.title : "");
-    sim.calcTimeLog.push({
-      stage: stage,
-      endTime: new Date()
-    });
-
-    completedLoops++;
-    //report progress every 500 ms
-    if (
-      new Date() - sim.lastProgressReportTime >= 100 ||
-      completedLoops == actionsToCalculate.length
-    ) {
-      self.postMessage({
-        progressValue: completedLoops / actionsToCalculate.length
+      //add results to toUpdate array
+      //TODO: replace value if exists, or save in object instead of array
+      actionsResultsNumbers.push({
+        actionId: action.id,
+        ...actionEffectiveResults.actionResultsNumbers
       });
-      sim.lastProgressReportTime = new Date();
+
+      actionsResultsBranchAndBlockeesResultsNumbers.push({
+        actionId: action.id,
+        ...branchAndBlockeesResults.actionResultsNumbers
+      });
+
+      actionsResultsEffectiveChainedCostsAndImpacts.push({
+        actionId: action.id,
+        ...branchAndBlockeesResults.effectiveChainedCostsAndImpacts
+      });
+
+      actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf.push({
+        actionId: action.id,
+        ...branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf
+      });
+
+      //if branchAndBlockeesResults changed significantly:
+      if (
+        true || //TODO: get rid of this line when done with development
+        (action.branchAndBlockeesResultsNumbers &&
+          resultsNumbersChangedSignificantly(
+            branchAndBlockeesResults.actionResultsNumbers,
+            action.branchAndBlockeesResultsNumbers
+          ))
+      ) {
+        console.log("branchAndBlockeesResults changed significantly");
+        //if action has a parent: add/move parent to end of actionsToCalculate array
+        if (action.parentActionId) {
+          await addOrMoveActionToEndOfArray(
+            [action.parentActionId],
+            actionsToCalculate,
+            index
+          );
+        }
+        //if action has a blocker: add / move blocker to end of actionsToCalculate array
+        if (action.blockerActionIds && action.blockerActionIds.length) {
+          await addOrMoveActionToEndOfArray(
+            action.blockerActionIds,
+            actionsToCalculate,
+            index
+          );
+        }
+      }
+
+      calcTimeMs = new Date() - startTimeMs;
+
+      actionResults = {
+        id: action.id,
+        calcDate: sim.scope.calcDate,
+        startTimeS: sim.scope.initialTimeS,
+        calcTimeMs: calcTimeMs,
+        timeSPoints: sim.scope.timeSeries.timeSPoints,
+        baselineNodesValues: branchAndBlockeesResults.baselineNodesValues,
+        ifDoneNodesValues: branchAndBlockeesResults.ifDoneNodesValues,
+        ifNotDoneNodesValues: branchAndBlockeesResults.ifNotDoneNodesValues,
+        branchAndBlockeesResultsNumbers:
+          branchAndBlockeesResults.actionResultsNumbers,
+        actionResultsNumbers: actionEffectiveResults.actionResultsNumbers,
+        effectiveChainedCostsAndImpacts:
+          branchAndBlockeesResults.effectiveChainedCostsAndImpacts,
+        effectiveChainedCostsAndImpactsExcludingSelf:
+          branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf
+      };
+
+      putActionResultsInIdb(actionResults, action.id);
+
+      if (sim.errorOccurred) return;
+
+      let stage =
+        "process " +
+        scenario.type +
+        " " +
+        (scenario.type == "action" ? action.title : "");
+      sim.calcTimeLog.push({
+        stage: stage,
+        endTime: new Date()
+      });
+
+      completedLoops++;
+      //report progress every 500 ms
+      if (
+        new Date() - sim.lastProgressReportTime >= 100 ||
+        completedLoops == actionsToCalculate.length
+      ) {
+        self.postMessage({
+          progressValue: completedLoops / actionsToCalculate.length
+        });
+        sim.lastProgressReportTime = new Date();
+      }
     }
-  }); //end of actions.forEach
+  ); //end of actions.forEach
 
   const log = sim.calcTimeLog;
   calcTimeMs = log[log.length - 1].endTime - log[0].endTime;
@@ -251,6 +280,8 @@ async function simulateActionWithDependencies(
   if (action.blockeeActionIds && action.blockeeActionIds.length) {
     console.log("blockeeActionIds", action.blockeeActionIds);
     blockees = await getActionsFromFirestore(action.blockeeActionIds);
+    //TODO: update blockees w/ newest effective numbers from toUpdate array
+
     console.log("blockees", blockees);
   }
   //sort blockees by descending leverage
@@ -491,6 +522,7 @@ async function includeCostsAndImpactsFromChildren(action, costsAndImpacts) {
     let childrenActions = await getActionsFromFirestore(
       action.childrenActionIds
     );
+    //TODO: update childrenActions w/ newest effective numbers from toUpdate array
 
     childrenActions.forEach(function(child) {
       console.log("child", child);
@@ -518,6 +550,27 @@ async function getActionsFromFirestore(actionIds) {
   });
   return actions;
 }
+
+/*
+async function updateActionInFirestore(originalPayload) {
+  //Clone the original payload so we don't modify it (it's
+  //passed by reference) when setting the serverTimestamp.
+  console.log("in updateActionInFirestore");
+  let payload = JSON.parse(JSON.stringify(originalPayload));
+  payload.updates.calculationTime = firebase.firestore.FieldValue.serverTimestamp();
+  payload.updates.calculatedBy = currentUserId; // firebaseAuth.currentUser.uid;
+
+  firebaseDb
+    .collection("actions")
+    .doc(payload.id)
+    .set(payload.updates, { merge: true })
+    .then(function() {
+      console.log("updated action ", payload.id);
+    })
+    .catch(function(error) {
+      console.error("Error updating action", error.message);
+    });
+} */
 
 function calcActionResultsFromTimeSeries(
   outstandingDirectCosts,
@@ -1468,4 +1521,34 @@ function resultsNumbersChangedSignificantly(newObj, oldObj) {
     return true;
   if (changedSignificantly(newObj, oldObj, "marginalTotalCostNpv")) return true;
   return false;
+}
+
+async function addOrMoveActionToEndOfArray(
+  actionIds,
+  actionsToCalculate,
+  currentIndex
+) {
+  await asyncForEach(actionIds, async function(actionId) {
+    //get index of actionId in actionsToCalculate
+    let foundIndex = actionsToCalculate.findIndex(
+      action => action.id == actionId
+    );
+    console.log("found index", foundIndex, "currentIndex", currentIndex);
+    //if not found (foundIndex == -1) then add action to end of actionsToCalculate
+    if (foundIndex == -1) {
+      let singleActionArray = await getActionsFromFirestore([actionId]);
+      actionsToCalculate.push(singleActionArray[0]);
+      console.log("got action and added to end of array");
+    }
+    //else if foundIndex <= currentIndex then add to end of actionsToCalculate
+    else if (foundIndex <= currentIndex) {
+      actionsToCalculate.push(actionsToCalculate[foundIndex]);
+      console.log("added processed action to end of array");
+    }
+    //else move to end of array
+    else {
+      actionsToCalculate.push(actionsToCalculate.splice(foundIndex, 1)[0]);
+      console.log("moved action to end of array");
+    }
+  });
 }
