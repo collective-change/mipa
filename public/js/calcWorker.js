@@ -1,10 +1,34 @@
+importScripts("https://www.gstatic.com/firebasejs/7.18.0/firebase-app.js");
+importScripts("https://www.gstatic.com/firebasejs/7.18.0/firebase-auth.js");
+importScripts(
+  "https://www.gstatic.com/firebasejs/7.18.0/firebase-firestore.js"
+);
+
+//importScripts("https://cdn.jsdelivr.net/npm/comlinkjs/comlink.global.min.js");
+
 //import { parse, format, toTex } from "mathjs";
 importScripts("https://unpkg.com/mathjs@6.6.4/dist/math.min.js");
 
 //var idb = {}; //placeholder for IndexedDB
 
+// Your web app's Firebase configuration
+var firebaseConfig = {
+  apiKey: "AIzaSyAdeJJGRZwCSeE-hc0uALhMrrrInUWHqyY",
+  authDomain: "mipa-1.firebaseapp.com",
+  databaseURL: "https://mipa-1.firebaseio.com",
+  projectId: "mipa-1",
+  storageBucket: "",
+  messagingSenderId: "960836598374",
+  appId: "1:960836598374:web:063890d614348251"
+};
+// Initialize Firebase
+let firebaseApp = firebase.initializeApp(firebaseConfig);
+let firebaseAuth = firebaseApp.auth();
+let firebaseDb = firebaseApp.firestore();
+
 const parser = self.math.parser();
 var modelNodes = [];
+var workerGlobalActions = [];
 
 onmessage = function(e) {
   switch (e.data.calculationType) {
@@ -21,41 +45,6 @@ onmessage = function(e) {
   }
 };
 
-/*
-function coordinateScenarioSimulations({calculationType, requestedActions, requestedSituations})
-  prep environment, scope, etc
-  baseline = simulateScenario({scenario: null})
-  save baseline to IndexedDb
-  return if calculatonType is baseline
-  if requestedIssues < all issues, add in blocked and children issues
-  topoSort issues
-  after initial release:
-    getDisjointSets(sortedIssues)
-    numLogicalProcessors = window.navigator.hardwareConcurrency
-    put disjoint sets into work packages
-    assign work packages to workers
-    onmessage, accumulate results
-  post available results to vuex store every 0.5 seconds
-  when all finished, save results to IndexedDb; briefResults [{i:id, b:benefit, c:cost, r:actionLeverage, t:calcStartTime}]
-  and post back to caller for saving to cloud
-
-function getDisjointSets(sortedIssues)
-  for each issue in reverse topoSort order
-  getRootIssue of the issue
-  put issue into same set as root
-
-function getRootIssue()
-  if issue has no parent, then return issue
-  else return getRootIssue(parent)
-
-function doWork(sim, issuesPackage)
-  for each issue
-    gather status and impacts of blocked and children issues
-    simulateScenario including impacts from self, blocked and children issues
-    calculate aggregate deviations from baseline
-    post results to coordinator every 0.5 seconds and when finished
-*/
-
 function coordinateScenarioSimulations(data) {
   //prep environment, scope, etc
   let sim = prepSim(data);
@@ -68,180 +57,80 @@ function coordinateScenarioSimulations(data) {
 
   let actions = data.actions;
 
-  let resultsOfActions = calculateResultsOfActions(
-    sim,
-    actions,
-    defaultBaseline
-  );
+  calculateResultsOfActions(sim, actions, defaultBaseline);
 }
 
-/*function prepActionsForSort(sim, actions) {
-  let preppedActions = [];
-  actions.forEach(function(outerAction) {
-    let calcBlockingInDegree =
-      typeof outerAction.blockeeActionIds !== "undefined"
-        ? outerAction.blockeeActionIds.length
-        : 0;
-    calcBlockingInDegree +=
-      typeof outerAction.childrenActionIds !== "undefined"
-        ? outerAction.childrenActionIds.length
-        : 0;
-    preppedActions.push({
-      id: outerAction.id,
-      calcBlockingInDegree: calcBlockingInDegree,
-      ...outerAction
-    });
-  });
-  sim.calcTimeLog.push({ stage: "prepActionsForSort", endTime: new Date() });
-  return preppedActions;
-} */
-
-function calculateResultsOfActions(sim, actions, defaultBaseline) {
-  let yearlyDiscountRate = 0.05;
+async function calculateResultsOfActions(
+  sim,
+  actionsToCalculate,
+  defaultBaseline
+) {
+  //let yearlyDiscountRate = 0.05;
 
   let actionResults = {}; // for one action
   let actionsResultsNumbers = []; // for multiple actions
+  let actionsResultsEffectiveChainedCostsAndImpacts = []; //for multiple actions
+  let actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf = []; //for multiple actions
 
   let calcTimeMs = 0;
 
   let averageEffortCostPerHourNode = modelNodes.find(
     node => node.id == sim.roleNodes.averageEffortCostPerHour
   );
+  let averageEffortCostPerHour = averageEffortCostPerHourNode.symbolFormula;
 
   //simulate each action
   let completedLoops = 0;
-  actions.forEach(function(action) {
+  //actions.forEach(async function(action) {
+  await asyncForEach(actionsToCalculate, async action => {
     let startTimeMs = new Date();
 
-    let effortCostPerHour = averageEffortCostPerHourNode.symbolFormula;
-    /*let directEffortCost = action.estEffortHrs * effortCostPerHour;*/
+    //calculate branchAndBlockeesResults, save effectiveChainedCostsAndImpacts of self
 
-    let outstandingDirectEffortHrs =
-      (isNaN(action.estEffortHrs) ? 0 : action.estEffortHrs) *
-      (100 -
-        (isNaN(action.effortCompletionPercentage)
-          ? 0
-          : action.effortCompletionPercentage)) *
-      0.01;
-    let outstandingDirectEffortCost =
-      outstandingDirectEffortHrs * effortCostPerHour;
-
-    let outstandingSpending =
-      (isNaN(action.estSpending) ? 0 : action.estSpending) -
-      (isNaN(action.spentAmount) ? 0 : action.spentAmount);
-
-    let outstandingDirectCost =
-      outstandingDirectEffortCost + outstandingSpending;
-    /*let directCosts = {
-      directEffortCost,
-      outstandingDirectEffortCost,
-      directSpending: action.estSpending,
-      outstandingSpending
-    };*/
-
-    let effortImpact = {
-      nodeId: sim.roleNodes.effort,
-      durationType: "just_once",
-      impactType: "if_done",
-      operation: "+",
-      operand: outstandingDirectEffortHrs
-    };
-    action.impacts.push(effortImpact);
-    let purchaseImpact = {
-      nodeId: sim.roleNodes.spending,
-      durationType: "just_once",
-      impactType: "if_done",
-      operation: "+",
-      operand: outstandingSpending
-    };
-    action.impacts.push(purchaseImpact);
-    //TODO: gather begin and end times
-    action.impacts.forEach(function(impact) {
-      if (impact.durationType == "with_half_life") {
-        impact.halfLifeS = math
-          .unit(impact.durationNumber, impact.durationUnit)
-          .toNumber("seconds");
-      }
-    });
-
-    //gather nodes for which to extract and save timeSeries
-    let onlyNodeIds = [];
-    onlyNodeIds.push(sim.roleNodes.combinedBenefit);
-    onlyNodeIds.push(sim.roleNodes.combinedCost);
-    action.impacts.forEach(function(impact) {
-      onlyNodeIds.push(impact.nodeId);
-    });
-
-    //extract relevant baselineNodeValues
-    let baselineNodesValues = {};
-    onlyNodeIds.forEach(function(nodeId) {
-      baselineNodesValues[nodeId] = defaultBaseline.nodesValues[nodeId];
-    });
-
-    //TODO: if extra timepoints are required then build customTimeSPoints
-    //TODO: simulate using either default or customTimeSPoints
-    //TODO: also simulate baseline using customTimeSPoints, if any
-    let hasIfNotDoneImpacts = false;
-    action.impacts.forEach(function(impact) {
-      if (impact.impactType == "if_not_done") hasIfNotDoneImpacts = true;
-    });
-
-    scenario = {
-      type: "action",
-      impactType: "if_done",
-      action: action,
-      actions: actions
-    };
-    resetScope(sim);
-    iterateThroughTime(sim, scenario);
-    if (sim.errorOccurred) return;
-    //TODO: only extract and save all node values if requested by
-    //user for this device
-    //only extract the basic few nodes for calculation and display
-    let ifDoneTimeSeriesNodesValues, ifNotDoneTimeSeriesNodesValues;
-    ifDoneTimeSeriesNodesValues = extractTimeSeriesNodesValues(
+    let branchAndBlockeesResults = await simulateActionWithDependencies(
       sim,
-      onlyNodeIds
+      action,
+      averageEffortCostPerHour,
+      defaultBaseline
+      //yearlyDiscountRate
     );
 
-    if (hasIfNotDoneImpacts) {
-      scenario = {
-        type: "action",
-        impactType: "if_not_done",
-        action: action,
-        actions: actions
-      };
-      resetScope(sim);
-      iterateThroughTime(sim, scenario);
-      if (sim.errorOccurred) return;
-      //TODO: only extract and save all node values if requested by
-      //user for this device
-      //only extract the basic few nodes for calculation and display
-      ifNotDoneTimeSeriesNodesValues = extractTimeSeriesNodesValues(
-        sim,
-        onlyNodeIds
-      );
-    } else {
-      //use baseline values as ifNotDone values
-      ifNotDoneTimeSeriesNodesValues = baselineNodesValues;
+    //ready effectiveChainedCostsAndImpacts for save
+    actionsResultsEffectiveChainedCostsAndImpacts.push({
+      actionId: action.id,
+      ...branchAndBlockeesResults.effectiveChainedCostsAndImpacts
+    });
+
+    actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf.push({
+      actionId: action.id,
+      ...branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf
+    });
+
+    //calculate action's effective results (max of branchAndBlockees', and inherited; based on leverage)
+    let actionEffectiveResults = branchAndBlockeesResults;
+    if (
+      action.inheritedResults &&
+      action.inheritedResults.actionLeverage >
+        branchAndBlockeesResults.actionLeverage
+    ) {
+      actionEffectiveResults = action.inheritedResults;
     }
-
-    timeSPoints = defaultBaseline.timeSPoints;
-
-    //TODO: separate into ownResults, branchResults, branchAndBlockeesResults
-    let actionResultsNumbers = calcActionResults(
-      outstandingDirectCost,
-      ifDoneTimeSeriesNodesValues,
-      ifNotDoneTimeSeriesNodesValues,
-      timeSPoints,
-      sim.roleNodes,
-      yearlyDiscountRate
-    );
 
     actionsResultsNumbers.push({
       actionId: action.id,
-      ...actionResultsNumbers
+      ...actionEffectiveResults.actionResultsNumbers
     });
+
+    //if branchAndBlockeesResults changed significantly:
+    if (
+      action.branchAndBlockeesResultsNumbers &&
+      resultsNumbersChangedSignificantly(
+        branchAndBlockeesResults.actionResultsNumbers,
+        action.branchAndBlockeesResultsNumbers
+      )
+    ) {
+      console.log("branchAndBlockeesResults changed significantly");
+    }
 
     calcTimeMs = new Date() - startTimeMs;
 
@@ -251,10 +140,16 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       startTimeS: sim.scope.initialTimeS,
       calcTimeMs: calcTimeMs,
       timeSPoints: sim.scope.timeSeries.timeSPoints,
-      baselineNodesValues,
-      ifDoneNodesValues: ifDoneTimeSeriesNodesValues,
-      ifNotDoneNodesValues: ifNotDoneTimeSeriesNodesValues,
-      actionResultsNumbers
+      baselineNodesValues: branchAndBlockeesResults.baselineNodesValues,
+      ifDoneNodesValues: branchAndBlockeesResults.ifDoneNodesValues,
+      ifNotDoneNodesValues: branchAndBlockeesResults.ifNotDoneNodesValues,
+      branchAndBlockeesResultsNumbers:
+        branchAndBlockeesResults.actionResultsNumbers,
+      actionResultsNumbers: actionEffectiveResults.actionResultsNumbers,
+      effectiveChainedCostsAndImpacts:
+        branchAndBlockeesResults.effectiveChainedCostsAndImpacts,
+      effectiveChainedCostsAndImpactsExcludingSelf:
+        branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf
     };
 
     putActionResultsInIdb(actionResults, action.id);
@@ -265,7 +160,7 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
       "process " +
       scenario.type +
       " " +
-      (scenario.type == "action" ? scenario.action.title : "");
+      (scenario.type == "action" ? action.title : "");
     sim.calcTimeLog.push({
       stage: stage,
       endTime: new Date()
@@ -275,14 +170,14 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
     //report progress every 500 ms
     if (
       new Date() - sim.lastProgressReportTime >= 100 ||
-      completedLoops == actions.length
+      completedLoops == actionsToCalculate.length
     ) {
       self.postMessage({
-        progressValue: completedLoops / actions.length
+        progressValue: completedLoops / actionsToCalculate.length
       });
       sim.lastProgressReportTime = new Date();
     }
-  });
+  }); //end of actions.forEach
 
   const log = sim.calcTimeLog;
   calcTimeMs = log[log.length - 1].endTime - log[0].endTime;
@@ -291,21 +186,333 @@ function calculateResultsOfActions(sim, actions, defaultBaseline) {
   const results = {
     resultsType: "actions",
     actionsResultsNumbers,
+    actionsResultsEffectiveChainedCostsAndImpacts,
+    actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf,
     calcTimeLog: sim.calcTimeLog,
     calcTimeStages,
     calcTimeMs
   };
-  //console.log(resultsMessage);
+  console.log(results);
 
   console.log("calcTime:", calcTimeMs, "ms");
 
   self.postMessage(results);
 
-  return results;
+  //return results;
 }
 
-function calcActionResults(
-  outstandingDirectCost,
+async function asyncForEach(array, callback) {
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array);
+  }
+}
+
+async function simulateActionWithDependencies(
+  sim,
+  action,
+  averageEffortCostPerHour,
+  defaultBaseline
+  //yearlyDiscountRate
+) {
+  let costsAndImpactsOfSelf = composeCostsAndImpactsOfSelf(
+    action,
+    averageEffortCostPerHour
+  );
+  //add costs and impacts from children
+  let {
+    costsAndImpacts: effectiveChainedCostsAndImpactsFromBranch,
+    childrensCostsAndImpacts
+  } = await includeCostsAndImpactsFromChildren(action, costsAndImpactsOfSelf);
+
+  // simulate impact sets by including more blockees one by one until leverage drops
+
+  let testCostsAndImpacts = effectiveChainedCostsAndImpactsFromBranch;
+  let testActionResults = simulateCostsAndImpacts(
+    testCostsAndImpacts,
+    sim,
+    defaultBaseline
+  );
+  let actionResults = testActionResults;
+  actionResults.effectiveChainedCostsAndImpacts = testCostsAndImpacts;
+  actionResults.effectiveChainedCostsAndImpactsExcludingSelf = childrensCostsAndImpacts;
+  let highestLeverageFound =
+    testActionResults.actionResultsNumbers.actionLeverage;
+
+  let blockees = [];
+  //get blockees
+  if (action.blockeeActionIds && action.blockeeActionIds.length) {
+    console.log("blockeeActionIds", action.blockeeActionIds);
+    blockees = await getActionsFromFirestore(action.blockeeActionIds);
+    console.log("blockees", blockees);
+  }
+  //sort blockees by descending leverage
+  blockees.sort(function(a, b) {
+    return b.actionLeverage - a.actionLeverage;
+  });
+  if (blockees.length) console.log("blockees for", action.title, blockees);
+  //include each blockee until resulting leverage drops
+  while (blockees.length && blockees[0].actionLeverage > highestLeverageFound) {
+    console.log("blockee leverage", blockees[0].actionLeverage);
+    testCostsAndImpacts = includeActionInCostsAndImpacts(
+      blockees[0],
+      testCostsAndImpacts
+    );
+    testActionResults = simulateCostsAndImpacts(
+      testCostsAndImpacts,
+      sim,
+      defaultBaseline
+    );
+    if (
+      testActionResults.actionResultsNumbers.actionLeverage >
+      highestLeverageFound
+    ) {
+      highestLeverageFound =
+        testActionResults.actionResultsNumbers.actionLeverage;
+      actionResults = testActionResults;
+      actionResults.effectiveChainedCostsAndImpacts = testCostsAndImpacts;
+      actionResults.effectiveChainedCostsAndImpactsExcludingSelf = includeActionInCostsAndImpacts(
+        blockees[0],
+        testCostsAndImpacts
+      );
+    }
+    blockees.shift();
+  }
+  return actionResults;
+}
+
+function composeCostsAndImpactsOfSelf(action, averageEffortCostPerHour) {
+  let effortCostPerHour =
+    action.effortCostPerHrType == "use_custom"
+      ? action.customEffortCostPerHr
+      : averageEffortCostPerHour;
+  let estEffortHrs = isNaN(action.estEffortHrs) ? 0 : 0 + action.estEffortHrs;
+  let estEffortCosts = estEffortHrs * effortCostPerHour;
+  let outstandingDirectEffortHrs =
+    estEffortHrs *
+    (100 -
+      (isNaN(action.effortCompletionPercentage)
+        ? 0
+        : action.effortCompletionPercentage)) *
+    0.01;
+  let outstandingDirectEffortCosts =
+    outstandingDirectEffortHrs * effortCostPerHour;
+  let outstandingSpending = isNaN(action.outstandingSpending)
+    ? 0
+    : 0 + action.outstandingSpending;
+  let outstandingDirectCosts =
+    outstandingDirectEffortCosts + outstandingSpending;
+  let estSpending = isNaN(action.estSpending) ? 0 : 0 + action.estSpending;
+  let spentAmount = isNaN(action.spentAmount) ? 0 : 0 + action.spentAmount;
+  let estDirectCosts = estEffortCosts + estSpending;
+
+  let newCostsAndImpacts = {
+    estEffortHrs,
+    estEffortCosts,
+    estSpending,
+    estDirectCosts,
+
+    spentAmount,
+
+    outstandingDirectEffortHrs,
+    outstandingDirectEffortCosts,
+    outstandingSpending,
+    outstandingDirectCosts,
+
+    impacts: [...action.impacts],
+    includedActionIds: [action.id]
+  };
+  return newCostsAndImpacts;
+}
+
+function includeActionInCostsAndImpacts(action, costsAndImpacts) {
+  let ae = action.effectiveChainedCostsAndImpacts;
+
+  let newCostsAndImpacts = {
+    estEffortHrs: costsAndImpacts.estEffortHrs + ae.estEffortHrs,
+    estEffortCosts: costsAndImpacts.estEffortCosts + ae.estEffortCosts,
+    outstandingDirectEffortHrs:
+      costsAndImpacts.outstandingDirectEffortHrs +
+      ae.outstandingDirectEffortHrs,
+    outstandingDirectEffortCosts:
+      costsAndImpacts.outstandingDirectEffortCosts +
+      ae.outstandingDirectEffortCosts,
+    estSpending: costsAndImpacts.estSpending + ae.estSpending,
+    estDirectCosts: costsAndImpacts.estDirectCosts + ae.estDirectCosts,
+    spentAmount: costsAndImpacts.spentAmount + ae.spentAmount,
+    outstandingSpending:
+      costsAndImpacts.outstandingSpending + ae.outstandingSpending,
+    outstandingDirectCosts:
+      costsAndImpacts.outstandingDirectCosts + ae.outstandingDirectCosts,
+
+    impacts: [...costsAndImpacts.impacts, ...ae.impacts],
+    includedActionIds: [...costsAndImpacts.includedActionIds, action.id]
+  };
+  return newCostsAndImpacts;
+}
+
+function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
+  let effortImpact = {
+    nodeId: sim.roleNodes.effort,
+    durationType: "just_once",
+    impactType: "if_done",
+    operation: "+",
+    operand: testCostsAndImpacts.outstandingDirectEffortHrs
+  };
+
+  let spendingImpact = {
+    nodeId: sim.roleNodes.spending,
+    durationType: "just_once",
+    impactType: "if_done",
+    operation: "+",
+    operand: testCostsAndImpacts.outstandingSpending
+  };
+
+  let impactsToSimulate = [
+    effortImpact,
+    spendingImpact,
+    ...testCostsAndImpacts.impacts
+  ];
+
+  //TODO: gather begin and end times
+  impactsToSimulate.forEach(function(impact) {
+    if (impact.durationType == "with_half_life") {
+      impact.halfLifeS = math
+        .unit(impact.durationNumber, impact.durationUnit)
+        .toNumber("seconds");
+    }
+  });
+
+  //gather nodes for which to extract and save timeSeries
+  let onlyNodeIds = [];
+  onlyNodeIds.push(sim.roleNodes.combinedBenefit);
+  onlyNodeIds.push(sim.roleNodes.combinedCost);
+  impactsToSimulate.forEach(function(impact) {
+    onlyNodeIds.push(impact.nodeId);
+  });
+
+  //extract relevant baselineNodesValues
+  let baselineNodesValues = {};
+  onlyNodeIds.forEach(function(nodeId) {
+    baselineNodesValues[nodeId] = defaultBaseline.nodesValues[nodeId];
+  });
+
+  //TODO: if extra timepoints are required then build customTimeSPoints
+  //TODO: simulate using either default or customTimeSPoints
+  //TODO: also simulate baseline using customTimeSPoints, if any
+  let hasIfNotDoneImpacts = false;
+  impactsToSimulate.forEach(function(impact) {
+    if (impact.impactType == "if_not_done") hasIfNotDoneImpacts = true;
+  });
+
+  scenario = {
+    type: "action",
+    impactType: "if_done",
+    impactsToSimulate
+  };
+  resetScope(sim);
+  iterateThroughTime(sim, scenario);
+  if (sim.errorOccurred) return;
+  //TODO: extract and save all node values if requested by
+  //user for this device
+  //only extract the basic few nodes for calculation and display
+  let ifDoneNodesValues, ifNotDoneNodesValues;
+  ifDoneNodesValues = extractTimeSeriesNodesValues(sim, onlyNodeIds);
+
+  if (hasIfNotDoneImpacts) {
+    scenario = {
+      type: "action",
+      impactType: "if_not_done",
+      impactsToSimulate
+    };
+    resetScope(sim);
+    iterateThroughTime(sim, scenario);
+    if (sim.errorOccurred) return;
+    //TODO: extract and save all node values if requested by
+    //user for this device
+    //only extract the basic few nodes for calculation and display
+    ifNotDoneNodesValues = extractTimeSeriesNodesValues(sim, onlyNodeIds);
+  } else {
+    //use baseline values as ifNotDone values
+    ifNotDoneNodesValues = baselineNodesValues;
+  }
+
+  timeSPoints = defaultBaseline.timeSPoints;
+
+  let actionResultsNumbers = calcActionResultsFromTimeSeries(
+    testCostsAndImpacts.outstandingDirectCosts,
+    ifDoneNodesValues,
+    ifNotDoneNodesValues,
+    timeSPoints,
+    sim.roleNodes,
+    sim.yearlyDiscountRate
+  );
+
+  let simulateCostsAndImpactsResults = {
+    baselineNodesValues,
+    ifDoneNodesValues,
+    ifNotDoneNodesValues,
+    actionResultsNumbers
+  };
+
+  return simulateCostsAndImpactsResults;
+}
+function getEmptyCostsAndImpacts() {
+  let costsAndImpacts = {
+    estEffortHrs: 0,
+    estEffortCosts: 0,
+    estSpending: 0,
+    estDirectCosts: 0,
+
+    spentAmount: 0,
+
+    outstandingDirectEffortHrs: 0,
+    outstandingSpending: 0,
+    outstandingDirectEffortCosts: 0,
+    outstandingDirectCosts: 0,
+
+    impacts: [],
+    includedActionIds: []
+  };
+  return costsAndImpacts;
+}
+
+async function includeCostsAndImpactsFromChildren(action, costsAndImpacts) {
+  let childrensCostsAndImpacts = getEmptyCostsAndImpacts();
+  if (action.childrenActionIds && action.childrenActionIds.length) {
+    console.log("getting children for", action.title);
+    let childrenActions = await getActionsFromFirestore(
+      action.childrenActionIds
+    );
+
+    childrenActions.forEach(function(child) {
+      console.log("child", child);
+      costsAndImpacts = includeActionInCostsAndImpacts(child, costsAndImpacts);
+      childrensCostsAndImpacts = includeActionInCostsAndImpacts(
+        child,
+        childrensCostsAndImpacts
+      );
+    });
+  }
+  return { costsAndImpacts, childrensCostsAndImpacts };
+}
+
+async function getActionsFromFirestore(actionIds) {
+  const actionsRef = firebaseDb.collection("actions");
+  const snapshot = await actionsRef.where("id", "in", actionIds).get();
+  if (snapshot.empty) {
+    console.log("No matching actions.");
+    return;
+  }
+  let actions = [];
+  snapshot.forEach(doc => {
+    //console.log(doc.id, '=>', doc.data());
+    actions.push(doc.data());
+  });
+  return actions;
+}
+
+function calcActionResultsFromTimeSeries(
+  outstandingDirectCosts,
   ifDoneTimeSeriesNodesValues,
   ifNotDoneTimeSeriesNodesValues,
   timeSPoints,
@@ -341,9 +548,9 @@ function calcActionResults(
   let totalRoi = marginalTotalBenefitNpv / marginalTotalCostNpv;
   let actionLeverage =
     ((marginalTotalBenefitNpv * marginalTotalBenefitNpv) /
-      (marginalTotalCostNpv * outstandingDirectCost)) *
+      (marginalTotalCostNpv * outstandingDirectCosts)) *
     Math.sign(marginalTotalBenefitNpv) *
-    Math.sign(outstandingDirectCost);
+    Math.sign(outstandingDirectCosts);
 
   if (isNaN(totalRoi)) totalRoi = null;
   if (isNaN(actionLeverage)) actionLeverage = null;
@@ -359,37 +566,39 @@ function calcActionResults(
 }
 
 function getMarginalNpv(
-  deviationSeries,
-  baselineSeries,
+  ifDoneSeries,
+  ifNotDoneSeries,
   timeSPoints,
   yearlyDiscountRate
 ) {
-  //marginal npv = sum of discounted difference of the same node in the deviation and the baseline
+  //marginal npv = sum of discounted difference of the same node in the ifDone and ifNotDone series
   let tYears; //time since beginning of simulation in years
-  let deviationMinusBaseline;
+  let doneMinusNotDone;
   let Rt; //the Rt in NPV formula: sum over t of Rt/(1+i)^t
   let npvIncrement, denominator;
   let npv = 0;
   let debuggingArr = [];
   timeSPoints.forEach(function(timeS, index) {
-    deviationMinusBaseline = deviationSeries[index] - baselineSeries[index];
-    if (index == 0) prevDeviationMinusBaseline = 0;
+    doneMinusNotDone = ifDoneSeries[index] - ifNotDoneSeries[index];
+    if (index == 0) prevDoneMinusNotDone = 0;
     tYears = (timeS - timeSPoints[0]) / 31556952; // 31556952 seconds in a year
-    Rt = deviationMinusBaseline - prevDeviationMinusBaseline;
+    Rt = doneMinusNotDone - prevDoneMinusNotDone;
     npv += Rt / Math.pow(1 + yearlyDiscountRate, tYears);
     /*debuggingArr.push({
-      deviationMinusBaseline: deviationMinusBaseline,
+      doneMinusNotDone: doneMinusNotDone,
       tYears: tYears,
       Rt: Rt,
       npv: npv
     });*/
-    prevDeviationMinusBaseline = deviationMinusBaseline;
+    prevDoneMinusNotDone = doneMinusNotDone;
   });
   //console.table(debuggingArr);
   return npv;
 }
 
 function iterateThroughTime(sim, scenario) {
+  //console.log("impacts to simulate", scenario.impactsToSimulate);
+
   let timeSPoints = sim.defaultTimeSPoints;
 
   let completedLoops = 0;
@@ -418,7 +627,8 @@ function iterateThroughTime(sim, scenario) {
           //adjust the node value by action's impacts
           //loop through each of action's impacts to see if it impacts the node just calculated
           if (scenario.type == "action") {
-            scenario.action.impacts.forEach(function(impact) {
+            //TODO: sort impacts by order of impact.operation (=, *, / , +, -)
+            scenario.impactsToSimulate.forEach(function(impact) {
               if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
                 if (impact.impactType == scenario.impactType)
                   doImpactIfItAffectsCurrentTime(sim, timeS, nodeIndex, impact);
@@ -631,6 +841,7 @@ function prepEnvironment(data) {
     errorOccurred: false,
     params: data.simulationParams,
     roleNodes: data.roleNodes,
+    yearlyDiscountRate: 0.05,
     maxLoops: data.simulationParams.numTimeSteps + 1,
     initialDt: math.unit(
       data.simulationParams.timeStepNumber,
@@ -949,75 +1160,6 @@ function topoSortNodes(sim) {
   return L;
 }
 
-/*function topoSortActions(sim, actions) {
-  //topological sort with children and blockees ordered first
-
-  //prep each action for sorting
-  actions.forEach(function(action) {
-    //determine calcBlockingInDegree
-    action.calcBlockingInDegree =
-      typeof action.blockeeActionIds !== "undefined"
-        ? action.blockeeActionIds.length
-        : 0;
-    action.calcBlockingInDegree +=
-      typeof action.childrenActionIds !== "undefined"
-        ? action.childrenActionIds.length
-        : 0;
-    action.blockedDownstreamActions = [
-      ...(action.parentActionId ? [action.parentActionId] : []),
-      ...(action.blockerActionIds ? action.blockerActionIds : [])
-    ];
-  });
-
-  let L = []; //for storing sorted elements
-  let S = actions.filter(action => action.calcBlockingInDegree == 0); //actions with no calc dependencies
-  let unvisitedActions = actions.filter(
-    action => action.calcBlockingInDegree != 0
-  );
-  let a = null; //action to process
-  let downstreamAction = null; //a working variable
-
-  while (S.length) {
-    // remove an action n from S and append to tail of L
-    a = S.shift();
-    L.push(a);
-    if (a.blockedDownstreamActions && a.blockedDownstreamActions.length) {
-      a.blockedDownstreamActions.forEach(function(downstreamActionId, index) {
-        downstreamAction = unvisitedActions.find(
-          action => action.id == downstreamActionId
-        );
-        downstreamAction.calcBlockingInDegree--;
-        if (downstreamAction.calcBlockingInDegree == 0) {
-          S.push(downstreamAction);
-          //remove downstreamAction from unvisited actions
-          for (var i = 0; i < unvisitedActions.length; i++) {
-            if (unvisitedActions[i] === downstreamAction) {
-              unvisitedActions.splice(i, 1);
-            }
-          }
-        }
-      });
-    }
-  }
-  //now try to sort out unvisited actions (ones in or blocked by a cycle)
-
-  try {
-    //if there are unvisited actions, then graph has at least one cycle
-    if (unvisitedActions.length) {
-      console.log("unvisitedActions: ", unvisitedActions);
-      throw "Circular dependency detected in actions.";
-    }
-  } catch (err) {
-    console.log(err);
-    self.postMessage(err);
-  }
-  sim.calcTimeLog.push({
-    stage: "topoSortActions",
-    endTime: new Date()
-  });
-  return L;
-} */
-
 function prepNodesForSort(sim) {
   nodes = sim.data.modelNodes;
   let preppedNodes = [];
@@ -1298,4 +1440,24 @@ function replace$NodeIdsWithSymbol(workingString) {
     node => (workingString = workingString.replace("$" + node.id, node.symbol))
   );
   return workingString;
+}
+
+function changedSignificantly(newObj, oldObj, propertyName) {
+  if (isNaN(newObj[propertyName]) && !isNaN(oldObj[propertyName])) return true;
+  if (!isNaN(newObj[propertyName]) && isNaN(oldObj[propertyName])) return true;
+  if (Math.abs(newObj[propertyName] / oldObj[propertyName]) > 1.001)
+    return true;
+  if (Math.abs(oldObj[propertyName] / newObj[propertyName]) > 1.001)
+    return true;
+  return false;
+}
+
+function resultsNumbersChangedSignificantly(newObj, oldObj) {
+  if (typeof oldObj.actionLeverage == "undefined") return true;
+
+  if (changedSignificantly(newObj, oldObj, "actionLeverage")) return true;
+  if (changedSignificantly(newObj, oldObj, "marginalTotalBenefitNpv"))
+    return true;
+  if (changedSignificantly(newObj, oldObj, "marginalTotalCostNpv")) return true;
+  return false;
 }
