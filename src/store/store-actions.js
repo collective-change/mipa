@@ -101,6 +101,7 @@ const actions = {
         delete actionEffectiveChainedCostsAndImpactsExcludingSelf.actionId;
 
         let actionUpdates = {
+          //newResultsNumbers: firebase.firestore.FieldValue.delete(), //delete this field
           ...newResultsNumbers,
           resultsNumbers: newResultsNumbers,
           effectiveChainedCostsAndImpacts: actionEffectiveChainedCostsAndImpacts,

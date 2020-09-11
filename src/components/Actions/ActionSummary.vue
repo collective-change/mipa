@@ -244,7 +244,7 @@ import { GChart } from "vue-google-charts";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
-  mutationType: "uiAction/updateUiActionField"
+  mutationType: "uiAction/updateUiActionField",
 });
 
 export default {
@@ -252,11 +252,12 @@ export default {
     "modal-save-button": require("components/Shared/ModalComponents/ModalSaveButton.vue")
       .default,
     impacts: require("components/Impacts/Impacts.vue").default,
-    simpleCostsAndImpacts: require("components/Impacts/SimpleCostsAndImpacts.vue").default,
+    simpleCostsAndImpacts: require("components/Impacts/SimpleCostsAndImpacts.vue")
+      .default,
     "calculator-ui": require("components/Calc/CalculatorUi.vue").default,
     "action-relationships": require("components/Actions/Relationships/ActionRelationships.vue")
       .default,
-    gchart: GChart
+    gchart: GChart,
   },
 
   data() {
@@ -267,28 +268,28 @@ export default {
       effortCostPerHrTypeOptions: [
         {
           label: "use average effort cost per hour",
-          value: "use_average"
+          value: "use_average",
         },
         {
           label: "use custom effort cost per hour",
-          value: "use_custom"
-        }
+          value: "use_custom",
+        },
       ],
       showValuesConfig: {
         0: { lineWidth: 5, visibleInLegend: true },
         1: { lineWidth: 2, visibleInLegend: true },
         2: { lineWidth: 2, visibleInLegend: true },
-        3: { lineWidth: 0, visibleInLegend: false }
+        3: { lineWidth: 0, visibleInLegend: false },
       },
       showDifferenceConfig: {
         0: { lineWidth: 0, visibleInLegend: false },
         1: { lineWidth: 0, visibleInLegend: false },
         2: { lineWidth: 0, visibleInLegend: false },
-        3: { lineWidth: 2, visibleInLegend: true }
+        3: { lineWidth: 2, visibleInLegend: true },
       },
       actionService: interpret(actionMachine),
 
-      actionStateContext: null
+      actionStateContext: null,
     };
   },
 
@@ -319,7 +320,7 @@ export default {
       "uiAction.outstandingDirectEffortCost",
       "uiAction.outstandingSpending",
       "uiAction.dueDate",
-      "uiAction.notes"
+      "uiAction.notes",
     ]),
     ...mapMultiRowFields(["uiAction.impacts"]),
 
@@ -336,7 +337,7 @@ export default {
 
       if (actionId) {
         //TODO: if embedded, get and return action from firestore
-        return this.actions.find(function(action) {
+        return this.actions.find(function (action) {
           return action.id == actionId;
         });
       } else {
@@ -346,14 +347,16 @@ export default {
 
     averageEffortCostPerHourNode() {
       return this.nodes.find(
-        node => node.id == this.currentModel.roleNodes.averageEffortCostPerHour
+        (node) =>
+          node.id == this.currentModel.roleNodes.averageEffortCostPerHour
       );
     },
 
     directCost() {
       if (this.currentModel == null || this.nodes.length == 0) return;
       let averageEffortCostPerHourNode = this.nodes.find(
-        node => node.id == this.currentModel.roleNodes.averageEffortCostPerHour
+        (node) =>
+          node.id == this.currentModel.roleNodes.averageEffortCostPerHour
       );
       let effortCostPerHour = averageEffortCostPerHourNode.symbolFormula;
       let directEffortCost =
@@ -380,10 +383,10 @@ export default {
         sunken: ownDirectCost - outstandingDirectCost,
         outstandingDirectEffortHrs,
         outstandingDirectEffortCost,
-        outstandingSpending
+        outstandingSpending,
       };
       return directCost;
-    }
+    },
   },
 
   methods: {
@@ -397,18 +400,26 @@ export default {
       }
     },
     submitAction() {
-      //TODO: remove fields calculated elsewhere from updates
+      //remove fields calculated elsewhere from updates
       let updates = JSON.parse(JSON.stringify(this.uiAction));
-      let propertiesToDelete = ['actionLeverage', 'blockeeActionIds', 'blockerActionIds',
-       'childrenActionIds', 'parentActionId',
-      'effectiveChainedCostsAndImpacts', 'effectiveChainedCostsAndImpactsExcludingSelf',
-      'impacts', 'newResultsNumbers'];
-      propertiesToDelete.forEach(propertyName => delete updates[propertyName]);
+      let propertiesToDelete = [
+        "actionLeverage",
+        "blockeeActionIds",
+        "blockerActionIds",
+        "childrenActionIds",
+        "parentActionId",
+        "effectiveChainedCostsAndImpacts",
+        "effectiveChainedCostsAndImpactsExcludingSelf",
+        "impacts",
+      ];
+      propertiesToDelete.forEach(
+        (propertyName) => delete updates[propertyName]
+      );
 
       console.log(updates);
       let payload = {
         id: this.actionId,
-        updates
+        updates,
       };
       this.$store.dispatch("actions/updateAction", payload);
       this.$store.commit("uiAction/setUiActionChanged", false);
@@ -428,7 +439,7 @@ export default {
         let ifNotDoneValues = this.resultsOfAction.ifNotDoneNodesValues[nodeId];
         let ifDoneValues = this.resultsOfAction.ifDoneNodesValues[nodeId];
         //if nodeId does not exist in chartsDataArr then create it
-        let chart = this.chartsArr.find(chart => chart.nodeId == nodeId);
+        let chart = this.chartsArr.find((chart) => chart.nodeId == nodeId);
         if (typeof chart == "undefined") {
           let unit = (chart = {
             nodeId: nodeId,
@@ -437,9 +448,9 @@ export default {
               title: this.getNodeName(nodeId),
               vAxis: { title: this.getNodeUnit(nodeId), scaleType: "linear" },
               legend: { position: "bottom" },
-              series: this.showValuesConfig
+              series: this.showValuesConfig,
               //explorer: {}
-            }
+            },
           });
           this.chartsArr.push(chart);
         } else chart.chartData = [];
@@ -449,7 +460,7 @@ export default {
             "baseline",
             "if done",
             "if not done",
-            "difference between if done and not done"
+            "difference between if done and not done",
           ]);
           for (var i = 0; i < timeSPoints.length; i++) {
             chart.chartData.push([
@@ -457,7 +468,7 @@ export default {
               baselineValues[i],
               ifDoneValues[i],
               ifNotDoneValues[i],
-              ifDoneValues[i] - ifNotDoneValues[i]
+              ifDoneValues[i] - ifNotDoneValues[i],
             ]);
           }
         }
@@ -473,25 +484,25 @@ export default {
       defaultNodesToChart.push(this.currentModel.roleNodes.combinedBenefit);
       defaultNodesToChart.push(this.currentModel.roleNodes.combinedCost);
       //add impacted nodes
-      this.uiAction.impacts.forEach(function(impact) {
+      this.uiAction.impacts.forEach(function (impact) {
         defaultNodesToChart.push(impact.nodeId);
       });
 
       //load data into each node
-      defaultNodesToChart.forEach(nodeId =>
+      defaultNodesToChart.forEach((nodeId) =>
         this.updateChartDataForNode(nodeId)
       );
     },
     getNodeName(nodeId) {
-      const found = this.nodes.find(node => node.id == nodeId);
+      const found = this.nodes.find((node) => node.id == nodeId);
       if (found) return found.name;
       else return nodeId;
     },
     getNodeUnit(nodeId) {
-      const found = this.nodes.find(node => node.id == nodeId);
+      const found = this.nodes.find((node) => node.id == nodeId);
       if (found) return found.unit;
       else return "";
-    }
+    },
   },
 
   created() {
@@ -500,7 +511,7 @@ export default {
         !firebaseAuth.currentUser // define the condition as you like
       ) {
         //console.log("waiting for currentUser to be defined");
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
       let orgId = this.$route.params.orgId;
       let modelId = this.$route.params.orgId;
@@ -509,13 +520,13 @@ export default {
     })();
   },
   watch: {
-    nodes: function() {
+    nodes: function () {
       if (this.embedded == false) this.updateDefaultChartsArr();
     },
-    resultsOfAction: function() {
+    resultsOfAction: function () {
       if (this.embedded == false) this.updateDefaultChartsArr();
     },
-    selectedAction: function(newAction, oldAction) {
+    selectedAction: function (newAction, oldAction) {
       if (newAction && oldAction && newAction.id == oldAction.id) return;
 
       // Start with the machine's initial context
@@ -523,7 +534,7 @@ export default {
 
       //start actionService
       this.actionService
-        .onTransition(state => {
+        .onTransition((state) => {
           // Update the current state component data property with the next state
           this.actionMchState = state;
           this.$store.commit("uiAction/setActionMchState", state);
@@ -556,7 +567,7 @@ export default {
       }
     },
 
-    directCost: function() {
+    directCost: function () {
       if (typeof this.directCost == "undefined") return;
       this.ownDirectCost = this.directCost.own;
       this.outstandingDirectCost = this.directCost.outstanding;
@@ -564,7 +575,7 @@ export default {
       this.outstandingDirectEffortHrs = this.directCost.outstandingDirectEffortHrs;
       this.outstandingDirectEffortCost = this.directCost.outstandingDirectEffortCost;
       this.outstandingSpending = this.directCost.outstandingSpending;
-    }
-  }
+    },
+  },
 };
 </script>
