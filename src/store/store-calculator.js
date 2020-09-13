@@ -88,10 +88,10 @@ const actions = {
             });
             //console.log(e.data);
             if (payload.calculationType == "actions") {
-              if (e.data.actionsResultsNumbers.length == 1)
+              if (e.data.actionsResults.length == 1)
                 dispatch(
                   "calcResults/loadResultsOfAction",
-                  e.data.actionsResultsNumbers[0].actionId,
+                  e.data.actionsResults[0].id,
                   { root: true }
                 );
 

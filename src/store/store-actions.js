@@ -75,7 +75,8 @@ const actions = {
           "action results changed significantly: ",
           matchedStoreAction.id
         );
-        console.log("actionResults", actionResults);
+        //console.log("actionResults", actionResults);
+
         let actionUpdates = {
           //newResultsNumbers: firebase.firestore.FieldValue.delete(), //delete this field
           ...actionResults.actionResultsNumbers,

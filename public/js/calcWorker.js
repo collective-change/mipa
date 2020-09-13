@@ -92,13 +92,6 @@ async function calculateResultsOfActions(
     async (action, index, actionsToCalculate) => {
       let startTimeMs = new Date();
 
-      //TODO: get newest data for action from: toUpdate > idb > firestore
-      // include fields:
-      // results numbers,
-      // actionsResultsBranchAndBlockeesResultsNumbers,
-      // actionsResultsEffectiveChainedCostsAndImpacts,
-      // actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf
-
       //calculate branchAndBlockeesResults, save effectiveChainedCostsAndImpacts of self
       let branchAndBlockeesResults = await simulateActionWithDependencies(
         sim,
@@ -128,12 +121,8 @@ async function calculateResultsOfActions(
         effectiveChainedCostsAndImpactsExcludingSelf:
           branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf,
         calcDate: sim.scope.calcDate,
-        startTimeS: sim.scope.initialTimeS,
+        startTimeS: sim.scope.initialTimeS
         //calcTimeMs: calcTimeMs,
-        timeSPoints: sim.scope.timeSeries.timeSPoints,
-        baselineNodesValues: branchAndBlockeesResults.baselineNodesValues,
-        ifDoneNodesValues: branchAndBlockeesResults.ifDoneNodesValues,
-        ifNotDoneNodesValues: branchAndBlockeesResults.ifNotDoneNodesValues
       };
 
       //if action is in actionsResults, then replace it, else add it
@@ -143,29 +132,8 @@ async function calculateResultsOfActions(
       if (foundResults) {
         foundResult = Object.assign({}, actionResults);
       } else {
-        actionsResults.push(actionResults);
+        actionsResults.push(Object.assign({}, actionResults));
       }
-
-      //TODO: replace value if exists
-      actionsResultsNumbers.push({
-        actionId: action.id,
-        ...actionEffectiveResults.actionResultsNumbers
-      });
-
-      actionsResultsBranchAndBlockeesResultsNumbers.push({
-        actionId: action.id,
-        ...branchAndBlockeesResults.actionResultsNumbers
-      });
-
-      actionsResultsEffectiveChainedCostsAndImpacts.push({
-        actionId: action.id,
-        ...branchAndBlockeesResults.effectiveChainedCostsAndImpacts
-      });
-
-      actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf.push({
-        actionId: action.id,
-        ...branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf
-      });
 
       //if branchAndBlockeesResults changed significantly:
       if (
@@ -200,9 +168,15 @@ async function calculateResultsOfActions(
         //leverage is higher) and update descendants' effectiveResults
       }
 
+      //add in nodes values and calc time then save actionResults in IDB
+      actionResults.timeSPoints = sim.scope.timeSeries.timeSPoints;
+      actionResults.baselineNodesValues =
+        branchAndBlockeesResults.baselineNodesValues;
+      actionResults.ifDoneNodesValues =
+        branchAndBlockeesResults.ifDoneNodesValues;
+      actionResults.ifNotDoneNodesValues =
+        branchAndBlockeesResults.ifNotDoneNodesValues;
       actionResults.calcTimeMs = new Date() - startTimeMs;
-
-      //save action results in IDB
       putActionResultsInIdb(actionResults, action.id);
 
       if (sim.errorOccurred) return;
@@ -238,10 +212,10 @@ async function calculateResultsOfActions(
   const workerResults = {
     resultsType: "actions",
     actionsResults,
-    actionsResultsNumbers,
-    actionsResultsBranchAndBlockeesResultsNumbers,
-    actionsResultsEffectiveChainedCostsAndImpacts,
-    actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf,
+    //actionsResultsNumbers,
+    //actionsResultsBranchAndBlockeesResultsNumbers,
+    //actionsResultsEffectiveChainedCostsAndImpacts,
+    //actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf,
     calcTimeLog: sim.calcTimeLog,
     calcTimeStages,
     calcTimeMs
