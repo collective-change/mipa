@@ -51,7 +51,8 @@ const actions = {
 
   updateActionsResults({ dispatch }, data) {
     //get actions from store
-    //for each action in actionsResultsNumbers, compare with action in store
+    //for each action in actionsResults, compare with action in store
+    console.log("data", data);
     let actionsResults = data.actionsResults;
 
     let matchedStoreAction;
@@ -66,8 +67,8 @@ const actions = {
       if (
         true || //TODO: get rid of this line when done with development
         resultsNumbersChangedSignificantly(
-          actionResults.actionResultsNumbers,
-          matchedStoreAction.resultsNumbers
+          actionResults.effectiveResultsNumbers,
+          matchedStoreAction.effectiveResultsNumbers
         )
       ) {
         //add action to update list
@@ -75,12 +76,11 @@ const actions = {
           "action results changed significantly: ",
           matchedStoreAction.id
         );
-        //console.log("actionResults", actionResults);
 
         let actionUpdates = {
-          //newResultsNumbers: firebase.firestore.FieldValue.delete(), //delete this field
-          ...actionResults.actionResultsNumbers,
-          resultsNumbers: actionResults.actionResultsNumbers,
+          //resultsNumbers: firebase.firestore.FieldValue.delete(), //delete this field
+          ...actionResults.effectiveResultsNumbers,
+          effectiveResultsNumbers: actionResults.effectiveResultsNumbers,
           branchAndBlockeesResultsNumbers:
             actionResults.branchAndBlockeesResultsNumbers,
           effectiveChainedCostsAndImpacts:
@@ -89,7 +89,6 @@ const actions = {
             actionResults.effectiveChainedCostsAndImpactsExcludingSelf
         };
 
-        //console.log("action updates:", actionUpdates);
         batch.update(actionsRef.doc(actionResults.id), actionUpdates);
         batchedWrites++;
       }

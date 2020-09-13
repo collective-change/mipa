@@ -72,10 +72,6 @@ async function calculateResultsOfActions(
 
   let actionResults = {}; // for one action
   let actionsResults = []; // for multiple actions
-  let actionsResultsNumbers = []; // for multiple actions
-  let actionsResultsBranchAndBlockeesResultsNumbers = []; // for multiple actions
-  let actionsResultsEffectiveChainedCostsAndImpacts = []; //for multiple actions
-  let actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf = []; //for multiple actions
 
   let calcTimeMs = 0;
 
@@ -113,7 +109,7 @@ async function calculateResultsOfActions(
 
       actionResults = {
         id: action.id,
-        actionResultsNumbers: actionEffectiveResults.actionResultsNumbers,
+        effectiveResultsNumbers: actionEffectiveResults.actionResultsNumbers,
         branchAndBlockeesResultsNumbers:
           branchAndBlockeesResults.actionResultsNumbers,
         effectiveChainedCostsAndImpacts:
