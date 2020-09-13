@@ -52,33 +52,22 @@ const actions = {
   updateActionsResults({ dispatch }, data) {
     //get actions from store
     //for each action in actionsResultsNumbers, compare with action in store
-    let actionsResultsNumbers = data.actionsResultsNumbers;
-    let actionsResultsBranchAndBlockeesResultsNumbers =
-      data.actionsResultsBranchAndBlockeesResultsNumbers;
-    let actionsResultsEffectiveChainedCostsAndImpacts =
-      data.actionsResultsEffectiveChainedCostsAndImpacts;
-    let actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf =
-      data.actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf;
+    let actionsResults = data.actionsResults;
 
-    let newResultsNumbers, matchedStoreAction;
+    let matchedStoreAction;
     //console.log(state.actions);
     let batch = firebaseDb.batch();
     let actionsRef = firebaseDb.collection("actions");
     let batchedWrites = 0;
-    actionsResultsNumbers.forEach(function(
-      actionResultsNumbers,
-      index,
-      fullArray
-    ) {
-      newResultsNumbers = Object.assign({}, actionResultsNumbers);
+    actionsResults.forEach(function(actionResults, index, fullArray) {
       matchedStoreAction = state.actions.find(
-        action => action.id == actionResultsNumbers.actionId
+        action => action.id == actionResults.id
       );
       if (
         true || //TODO: get rid of this line when done with development
         resultsNumbersChangedSignificantly(
-          newResultsNumbers,
-          matchedStoreAction
+          actionResults.actionResultsNumbers,
+          matchedStoreAction.resultsNumbers
         )
       ) {
         //add action to update list
@@ -86,41 +75,21 @@ const actions = {
           "action results changed significantly: ",
           matchedStoreAction.id
         );
-        /*console.log(
-          "actionsResultsEffectiveChainedCostsAndImpacts",
-          actionsResultsEffectiveChainedCostsAndImpacts
-        );*/
-        delete newResultsNumbers.actionId;
-
-        let actionBranchAndBlockeesResultsNumbers = actionsResultsBranchAndBlockeesResultsNumbers.find(
-          element => element.actionId == actionResultsNumbers.actionId
-        );
-        delete actionBranchAndBlockeesResultsNumbers.actionId;
-
-        let actionEffectiveChainedCostsAndImpacts = actionsResultsEffectiveChainedCostsAndImpacts.find(
-          element => element.actionId == actionResultsNumbers.actionId
-        );
-        delete actionEffectiveChainedCostsAndImpacts.actionId;
-
-        let actionEffectiveChainedCostsAndImpactsExcludingSelf = actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf.find(
-          element => element.actionId == actionResultsNumbers.actionId
-        );
-        delete actionEffectiveChainedCostsAndImpactsExcludingSelf.actionId;
-
+        console.log("actionResults", actionResults);
         let actionUpdates = {
           //newResultsNumbers: firebase.firestore.FieldValue.delete(), //delete this field
-          ...newResultsNumbers,
-          resultsNumbers: newResultsNumbers,
-          branchAndBlockeesResultsNumbers: actionBranchAndBlockeesResultsNumbers,
-          effectiveChainedCostsAndImpacts: actionEffectiveChainedCostsAndImpacts,
-          effectiveChainedCostsAndImpactsExcludingSelf: actionEffectiveChainedCostsAndImpactsExcludingSelf
+          ...actionResults.actionResultsNumbers,
+          resultsNumbers: actionResults.actionResultsNumbers,
+          branchAndBlockeesResultsNumbers:
+            actionResults.branchAndBlockeesResultsNumbers,
+          effectiveChainedCostsAndImpacts:
+            actionResults.effectiveChainedCostsAndImpacts,
+          effectiveChainedCostsAndImpactsExcludingSelf:
+            actionResults.effectiveChainedCostsAndImpactsExcludingSelf
         };
 
         //console.log("action updates:", actionUpdates);
-        batch.update(
-          actionsRef.doc(actionResultsNumbers.actionId),
-          actionUpdates
-        );
+        batch.update(actionsRef.doc(actionResults.id), actionUpdates);
         batchedWrites++;
       }
       if (

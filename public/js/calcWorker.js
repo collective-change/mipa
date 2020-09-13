@@ -71,6 +71,7 @@ async function calculateResultsOfActions(
   //let yearlyDiscountRate = 0.05;
 
   let actionResults = {}; // for one action
+  let actionsResults = []; // for multiple actions
   let actionsResultsNumbers = []; // for multiple actions
   let actionsResultsBranchAndBlockeesResultsNumbers = []; // for multiple actions
   let actionsResultsEffectiveChainedCostsAndImpacts = []; //for multiple actions
@@ -117,8 +118,35 @@ async function calculateResultsOfActions(
         actionEffectiveResults = action.inheritedResults;
       }
 
-      //add results to toUpdate array
-      //TODO: replace value if exists, or save in object instead of array
+      actionResults = {
+        id: action.id,
+        actionResultsNumbers: actionEffectiveResults.actionResultsNumbers,
+        branchAndBlockeesResultsNumbers:
+          branchAndBlockeesResults.actionResultsNumbers,
+        effectiveChainedCostsAndImpacts:
+          branchAndBlockeesResults.effectiveChainedCostsAndImpacts,
+        effectiveChainedCostsAndImpactsExcludingSelf:
+          branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf,
+        calcDate: sim.scope.calcDate,
+        startTimeS: sim.scope.initialTimeS,
+        //calcTimeMs: calcTimeMs,
+        timeSPoints: sim.scope.timeSeries.timeSPoints,
+        baselineNodesValues: branchAndBlockeesResults.baselineNodesValues,
+        ifDoneNodesValues: branchAndBlockeesResults.ifDoneNodesValues,
+        ifNotDoneNodesValues: branchAndBlockeesResults.ifNotDoneNodesValues
+      };
+
+      //if action is in actionsResults, then replace it, else add it
+      let foundResults = actionsResults.find(
+        element => element.id == action.id
+      );
+      if (foundResults) {
+        foundResult = Object.assign({}, actionResults);
+      } else {
+        actionsResults.push(actionResults);
+      }
+
+      //TODO: replace value if exists
       actionsResultsNumbers.push({
         actionId: action.id,
         ...actionEffectiveResults.actionResultsNumbers
@@ -157,6 +185,7 @@ async function calculateResultsOfActions(
             index
           );
         }
+
         //if action has a blocker: add / move blocker to end of actionsToCalculate array
         if (action.blockerActionIds && action.blockerActionIds.length) {
           await addOrMoveActionToEndOfArray(
@@ -165,28 +194,15 @@ async function calculateResultsOfActions(
             index
           );
         }
+
+        //if action has children: write branchAndBlockeesResults to descendants
+        //in toUpdate array (add in if missing) as inheritedResults (if
+        //leverage is higher) and update descendants' effectiveResults
       }
 
-      calcTimeMs = new Date() - startTimeMs;
+      actionResults.calcTimeMs = new Date() - startTimeMs;
 
-      actionResults = {
-        id: action.id,
-        calcDate: sim.scope.calcDate,
-        startTimeS: sim.scope.initialTimeS,
-        calcTimeMs: calcTimeMs,
-        timeSPoints: sim.scope.timeSeries.timeSPoints,
-        baselineNodesValues: branchAndBlockeesResults.baselineNodesValues,
-        ifDoneNodesValues: branchAndBlockeesResults.ifDoneNodesValues,
-        ifNotDoneNodesValues: branchAndBlockeesResults.ifNotDoneNodesValues,
-        branchAndBlockeesResultsNumbers:
-          branchAndBlockeesResults.actionResultsNumbers,
-        actionResultsNumbers: actionEffectiveResults.actionResultsNumbers,
-        effectiveChainedCostsAndImpacts:
-          branchAndBlockeesResults.effectiveChainedCostsAndImpacts,
-        effectiveChainedCostsAndImpactsExcludingSelf:
-          branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf
-      };
-
+      //save action results in IDB
       putActionResultsInIdb(actionResults, action.id);
 
       if (sim.errorOccurred) return;
@@ -219,8 +235,9 @@ async function calculateResultsOfActions(
   calcTimeMs = log[log.length - 1].endTime - log[0].endTime;
   const calcTimeStages = getCalcTimeStages(log);
 
-  const results = {
+  const workerResults = {
     resultsType: "actions",
+    actionsResults,
     actionsResultsNumbers,
     actionsResultsBranchAndBlockeesResultsNumbers,
     actionsResultsEffectiveChainedCostsAndImpacts,
@@ -229,13 +246,11 @@ async function calculateResultsOfActions(
     calcTimeStages,
     calcTimeMs
   };
-  console.log(results);
+  console.log(workerResults);
 
   console.log("calcTime:", calcTimeMs, "ms");
 
-  self.postMessage(results);
-
-  //return results;
+  self.postMessage(workerResults);
 }
 
 async function asyncForEach(array, callback) {
