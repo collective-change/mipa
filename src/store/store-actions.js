@@ -88,6 +88,12 @@ const actions = {
           effectiveChainedCostsAndImpactsExcludingSelf:
             actionResults.effectiveChainedCostsAndImpactsExcludingSelf
         };
+        if (actionResults.inheritedResultsNumbers) {
+          actionUpdates.inheritedResultsNumbers =
+            actionResults.inheritedResultsNumbers;
+        } else {
+          actionUpdates.inheritedResultsNumbers = firebase.firestore.FieldValue.delete();
+        }
 
         batch.update(actionsRef.doc(actionResults.id), actionUpdates);
         batchedWrites++;

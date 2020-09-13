@@ -100,11 +100,12 @@ async function calculateResultsOfActions(
       //calculate action's effective results (max of branchAndBlockees', and inherited; based on leverage)
       let actionEffectiveResults = branchAndBlockeesResults;
       if (
-        action.inheritedResults &&
-        action.inheritedResults.actionLeverage >
-          branchAndBlockeesResults.actionLeverage
+        action.inheritedResultsNumbers &&
+        action.inheritedResultsNumbers.actionLeverage >
+          branchAndBlockeesResults.actionResultsNumbers.actionLeverage
       ) {
         actionEffectiveResults = action.inheritedResults;
+        console.log("inherited results used");
       }
 
       actionResults = {
@@ -120,6 +121,10 @@ async function calculateResultsOfActions(
         startTimeS: sim.scope.initialTimeS
         //calcTimeMs: calcTimeMs,
       };
+      //if action has a parent, then retain its inherited results
+      if (action.parentActionId) {
+        actionResults.inheritedResultsNumbers = action.inheritedResultsNumbers;
+      }
 
       //if action is in actionsResults, then replace it, else add it
       let foundResults = actionsResults.find(
@@ -159,9 +164,10 @@ async function calculateResultsOfActions(
           );
         }
 
-        //if action has children: write branchAndBlockeesResults to descendants
-        //in toUpdate array (add in if missing) as inheritedResults (if
-        //leverage is higher) and update descendants' effectiveResults
+        //if action has children: write branchAndBlockeesResults to
+        //descendants in actionsResults array (add in if missing) as
+        //inheritedResults (if leverage is higher) and update
+        //descendants' effectiveResults
       }
 
       //add in nodes values and calc time then save actionResults in IDB
@@ -208,10 +214,6 @@ async function calculateResultsOfActions(
   const workerResults = {
     resultsType: "actions",
     actionsResults,
-    //actionsResultsNumbers,
-    //actionsResultsBranchAndBlockeesResultsNumbers,
-    //actionsResultsEffectiveChainedCostsAndImpacts,
-    //actionsResultsEffectiveChainedCostsAndImpactsExcludingSelf,
     calcTimeLog: sim.calcTimeLog,
     calcTimeStages,
     calcTimeMs
