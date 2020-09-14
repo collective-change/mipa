@@ -1,7 +1,6 @@
 <template>
   <div class="row q-mb-sm">
     <q-select
-      clearable
       :options="currencies"
       :value="currency"
       @input="$emit('update:currency', $event)"

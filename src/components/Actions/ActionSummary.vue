@@ -41,11 +41,11 @@
               <q-chip outline color="primary">
                 Own direct cost
                 {{ formatNumber(uiAction.sunkenDirectCost, 3) }} /
-                {{ formatNumber(uiAction.ownDirectCost, 3) }} XDR
+                {{ formatNumber(uiAction.ownDirectCost, 3) }} {{currentOrg.currency}}
               </q-chip>
               <q-chip outline color="primary">
                 Effective outstanding direct costs
-                {{ formatNumber(uiAction.effectiveChainedCostsAndImpacts.outstandingDirectCosts, 3) }} XDR
+                {{ formatNumber(uiAction.effectiveChainedCostsAndImpacts.outstandingDirectCosts, 3) }} {{currentOrg.currency}}
               </q-chip>
               <br v-if="embedded" />
               <q-chip
@@ -54,11 +54,11 @@
               >ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip>
               <q-chip outline color="primary">
                 NPV Benefit
-                {{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }} XDR
+                {{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }} {{currentOrg.currency}}
               </q-chip>
               <q-chip outline color="primary">
                 NPV Cost
-                {{ formatNumber(uiAction.marginalTotalCostNpv, 3) }} XDR
+                {{ formatNumber(uiAction.marginalTotalCostNpv, 3) }} {{currentOrg.currency}}
               </q-chip>
             </div>
           </div>
@@ -161,7 +161,7 @@
                 v-model.number="estSpending"
                 label="預估支出金額"
                 type="number"
-                suffix="XDR"
+                :suffix="currentOrg.currency"
                 :rules="[
                   val => val == null || val >= 0 || 'Should be at least 0'
                 ]"
@@ -173,7 +173,7 @@
                 v-model.number="spentAmount"
                 label="已支出金額"
                 type="number"
-                suffix="XDR"
+                :suffix="currentOrg.currency"
                 :rules="[
                   val => val == null || val >= 0 || 'Should be at least 0'
                 ]"
