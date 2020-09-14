@@ -61,36 +61,6 @@ const mutations = {
   }
 };
 
-/*function recalculate(state) {
-  //console.log("recalculating");
-  let uiAction = state.uiAction;
-  uiAction.estEffortCostXdr = uiAction.estEffortCostXdr
-    ? uiAction.estEffortCostXdr
-    : 0;
-  uiAction.estSpending = uiAction.estSpending
-    ? uiAction.estSpending
-    : 0;
-  uiAction.estTotalCostXdr =
-    uiAction.estEffortCostXdr + uiAction.estSpending;
-  uiAction.effortCompletionPercentage = uiAction.effortCompletionPercentage
-    ? uiAction.effortCompletionPercentage
-    : 0;
-  uiAction.outstandingEffortCost =
-    uiAction.estEffortCostXdr * (1 - uiAction.effortCompletionPercentage / 100);
-  uiAction.spentAmount = uiAction.spentAmount
-    ? uiAction.spentAmount
-    : 0;
-  uiAction.outstandingPurchaseCost = Math.max(
-    0,
-    uiAction.estSpending - uiAction.spentAmount
-  );
-  uiAction.outstandingCostXdr =
-    uiAction.outstandingEffortCost + uiAction.outstandingPurchaseCost;
-  uiAction.estRoi =
-    (uiAction.estTotalBenefitXdr - uiAction.outstandingCostXdr) /
-    uiAction.outstandingCostXdr;
-}*/
-
 const actions = {
   setUiAction({ commit }, action) {
     commit("setUiAction", action);

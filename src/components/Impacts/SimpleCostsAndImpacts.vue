@@ -56,15 +56,15 @@ import { formatNumber } from "src/utils/util-formatNumber";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
-  mutationType: "uiAction/updateUiActionField"
+  mutationType: "uiAction/updateUiActionField",
 });
 
 export default {
   components: {
-    "add-edit-impact": require("components/Impacts/AddEditImpact.vue").default
+    "add-edit-impact": require("components/Impacts/AddEditImpact.vue").default,
   },
 
-  props:['costsAndImpacts'],
+  props: ["costsAndImpacts"],
 
   data() {
     return {
@@ -77,15 +77,15 @@ export default {
         "-": "−",
         "*": "×",
         "/": "÷",
-        "=": "="
+        "=": "=",
       },
       durationTypeText: {
         just_once: "just once",
         for_period: "for period of",
         with_half_life: "with half life of",
-        forever: "forever"
+        forever: "forever",
       },
-      durationTypesWithDuration: ["for_period", "with_half_life"]
+      durationTypesWithDuration: ["for_period", "with_half_life"],
     };
   },
 
@@ -94,27 +94,6 @@ export default {
     ...mapState("model", ["nodes"]),
     //...mapState("ui", ["selectedActionId"]),
     ...mapState("actions", ["actions"]),
-    //fields calculated in the uiAction store, for display only
-    //(do not modify their values in the component)
-    //...mapState("uiAction", ["uiAction"]),
-    //fields for 2-way sync between component and store
-    /*...mapFields([
-      "uiAction.title",
-      "uiAction.estTotalBenefitXdr",
-      "uiAction.estEffortCostXdr",
-      "uiAction.effortCompletionPercentage",
-      "uiAction.estSpending",
-      "uiAction.spentAmount",
-      "uiAction.dueDate",
-      "uiAction.notes",
-      "uiAction.impacts"
-    ]),*/
-
-    /*impactToEdit() {
-      if (this.editImpactId != null)
-        return this.impacts.find(impact => impact.id == this.editImpactId);
-      else return null;
-    }*/
   },
 
   methods: {
@@ -131,13 +110,13 @@ export default {
       }
     },
     getNodeName(nodeId) {
-      const found = this.nodes.find(node => node.id == nodeId);
+      const found = this.nodes.find((node) => node.id == nodeId);
       if (found) return found.name;
       else return nodeId;
     },
 
     getActionTitle(actionId) {
-      let action = this.actions.find(a => a.id == actionId);
+      let action = this.actions.find((a) => a.id == actionId);
       return action.title;
     },
 
@@ -155,6 +134,6 @@ export default {
     }*/
   },
 
-  watch: {}
+  watch: {},
 };
 </script>
