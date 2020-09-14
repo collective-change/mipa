@@ -168,6 +168,7 @@ async function calculateResultsOfActions(
         //descendants in actionsResults array (add in if missing) as
         //inheritedResults (if leverage is higher) and update
         //descendants' effectiveResults
+        //get descendents tree from branch
       }
 
       //add in nodes values and calc time then save actionResults in IDB
@@ -266,8 +267,9 @@ async function simulateActionWithDependencies(
   //get blockees
   if (action.blockeeActionIds && action.blockeeActionIds.length) {
     console.log("blockeeActionIds", action.blockeeActionIds);
-    blockees = await getActionsFromFirestore(action.blockeeActionIds);
-    //TODO: update blockees w/ newest effective numbers from toUpdate array
+    blockees = await getActionsFromFirestoreAndUpdateWithNewestValues(
+      action.blockeeActionIds
+    );
 
     console.log("blockees", blockees);
   }
@@ -506,10 +508,9 @@ async function includeCostsAndImpactsFromChildren(action, costsAndImpacts) {
   let childrensCostsAndImpacts = getEmptyCostsAndImpacts();
   if (action.childrenActionIds && action.childrenActionIds.length) {
     console.log("getting children for", action.title);
-    let childrenActions = await getActionsFromFirestore(
+    let childrenActions = await getActionsFromFirestoreAndUpdateWithNewestValues(
       action.childrenActionIds
     );
-    //TODO: update childrenActions w/ newest effective numbers from toUpdate array
 
     childrenActions.forEach(function(child) {
       console.log("child", child);
@@ -521,6 +522,12 @@ async function includeCostsAndImpactsFromChildren(action, costsAndImpacts) {
     });
   }
   return { costsAndImpacts, childrensCostsAndImpacts };
+}
+
+async function getActionsFromFirestoreAndUpdateWithNewestValues(actionIds) {
+  let actions = getActionsFromFirestore(actionIds);
+  //TODO: update actions with newest values from actionsResults
+  return actions;
 }
 
 async function getActionsFromFirestore(actionIds) {
