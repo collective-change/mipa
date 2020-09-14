@@ -10,9 +10,11 @@
           :rules="[val => !!val || 'Field is required']"
           clearable
         />
+        <modal-org-currency :currency.sync="orgToSubmit.currency" ref="modalOrgCurrency" />
       </q-card-section>
       <modal-buttons />
     </q-form>
+    <pre>{{exchangeRates}}</pre>
   </q-card>
 </template>
 
@@ -25,21 +27,22 @@ export default {
   props: ["org", "id"],
   data() {
     return {
-      orgToSubmit: {}
+      orgToSubmit: {},
     };
   },
+
   methods: {
     ...mapActions("orgs", ["updateOrg"]),
     submitOrg() {
       this.updateOrg({
         id: this.id,
-        updates: this.orgToSubmit
+        updates: this.orgToSubmit,
       });
       this.$emit("close");
-    }
+    },
   },
   mounted() {
     this.orgToSubmit = Object.assign({}, this.org);
-  }
+  },
 };
 </script>

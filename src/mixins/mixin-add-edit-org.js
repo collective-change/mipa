@@ -13,6 +13,8 @@ export default {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
     "modal-org-name": require("components/Orgs/Modals/Shared/ModalOrgName.vue")
+      .default,
+    "modal-org-currency": require("components/Orgs/Modals/Shared/ModalOrgCurrency.vue")
       .default
   }
 };

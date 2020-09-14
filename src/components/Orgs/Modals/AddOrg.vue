@@ -11,6 +11,7 @@
           clearable
         />
         <q-select v-model="orgToSubmit.orgType" :options="options" emit-value label="Type" />
+        <modal-org-currency :currency.sync="orgToSubmit.currency" ref="modalOrgCurrency" />
       </q-card-section>
       <modal-buttons />
     </q-form>
@@ -33,13 +34,13 @@ export default {
         { label: "Business", value: "business" },
         { label: "Non-profit", value: "non-profit" },
         { label: "Government", value: "government" },
-        { label: "Other", value: "other" }
+        { label: "Other", value: "other" },
       ],
       orgToSubmit: {
         name: "",
         goal: "",
-        orgType: ""
-      }
+        orgType: "",
+      },
     };
   },
   methods: {
@@ -49,7 +50,7 @@ export default {
       this.addOrg(this.orgToSubmit);
       //console.log(this.orgToSubmit);
       this.$emit("close");
-    }
-  }
+    },
+  },
 };
 </script>
