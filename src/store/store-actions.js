@@ -33,7 +33,7 @@ const actions = {
     let payload = JSON.parse(JSON.stringify(originalPayload));
     payload.updates.updateTime = firebase.firestore.FieldValue.serverTimestamp();
     payload.updates.updatedBy = firebaseAuth.currentUser.uid;
-
+    //console.log(payload);
     firebaseDb
       .collection("actions")
       .doc(payload.id)

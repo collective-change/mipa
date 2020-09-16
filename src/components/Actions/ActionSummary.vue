@@ -43,7 +43,7 @@
                 Own direct cost
                 {{ formatNumber(uiAction.sunkenDirectCost, 3) }} /
                 {{ formatNumber(uiAction.ownDirectCost, 3) }}
-                {{ currentOrg.currency }}
+                {{ currentOrg ? currentOrg.currency : "" }}
               </q-chip>
               <q-chip
                 outline
@@ -58,7 +58,7 @@
                     3
                   )
                 }}
-                {{ currentOrg.currency }}
+                {{ currentOrg ? currentOrg.currency : "" }}
               </q-chip>
               <br v-if="embedded" />
               <q-chip color="primary" text-color="white"
@@ -67,12 +67,12 @@
               <q-chip outline color="primary">
                 NPV Benefit
                 {{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }}
-                {{ currentOrg.currency }}
+                {{ currentOrg ? currentOrg.currency : "" }}
               </q-chip>
               <q-chip outline color="primary">
                 NPV Cost
                 {{ formatNumber(uiAction.marginalTotalCostNpv, 3) }}
-                {{ currentOrg.currency }}
+                {{ currentOrg ? currentOrg.currency : "" }}
               </q-chip>
             </div>
           </div>
@@ -437,8 +437,8 @@ export default {
         "childrenActionIds",
         "parentActionId",
         "effectiveChainedCostsAndImpacts",
-        "effectiveChainedCostsAndImpactsExcludingSelf",
-        "impacts"
+        "effectiveChainedCostsAndImpactsExcludingSelf"
+        //"impacts"
       ];
       propertiesToDelete.forEach(propertyName => delete updates[propertyName]);
 

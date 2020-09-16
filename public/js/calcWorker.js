@@ -790,10 +790,10 @@ function doImpactWithHalfLife(sim, nodeIndex, impact) {
 function checkUnits(sim, nodeIndex) {
   expectedUnit = sim.expectedUnits[nodeIndex];
   if (sim.sortedNodes[nodeIndex].id == "Ltv3Efz9rxwVXMI37Jd6") {
-    console.log("problem node");
+    //console.log("problem node");
     let expectedUnitSnapshot = JSON.parse(JSON.stringify(expectedUnit));
-    console.log("expectedUnit", expectedUnitSnapshot);
-    console.log("calculated", sim.scope["$" + sim.sortedNodes[nodeIndex].id]);
+    //console.log("expectedUnit", expectedUnitSnapshot);
+    //console.log("calculated", sim.scope["$" + sim.sortedNodes[nodeIndex].id]);
   }
   if (
     // calculation result is a unitless number and the expected isn't

@@ -104,7 +104,8 @@ export default {
           required: true,
           label: "標題",
           align: "left",
-          field: row => row.id.substring(0, 2) + " " + row.title,
+          //field: row => row.id.substring(0, 2) + " " + row.title,
+          field: row => row.title,
           sortable: true
         },
         /*{
@@ -141,10 +142,10 @@ export default {
           sortBy: "desc"
         },
         {
-          name: "direct cost",
+          name: "outstandingDirectCost",
           align: "right",
           label: "直接成本",
-          field: "totalDirectCost",
+          field: "outstandingDirectCost",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
         },
