@@ -31,8 +31,15 @@ service cloud.firestore {
       }
     }
 
-    match /actions/{action} {
+    match /actions/{action}  {
+      //allow write if org referred to by written action.orgId has user
+      //allow write: if orgHasUser(resource.data.orgId, request.auth.uid)
+      //allow write: if request.auth.uid in getOrg(resource.data.orgId).data.users
+      allow write: if request.auth.uid in get(/databases/$(database)/documents/orgs/$(request.resource.data.orgId)).data.users;
+
+      //allow write if user is in action's users
       //allow read, write if user in action's org's users
+      allow read, write;
       allow read, write: if request.auth.uid in get(/databases/$(database)/documents/orgs/$(resource.data.orgId)).data.users;
     }
 
@@ -56,5 +63,6 @@ service cloud.firestore {
       allow read, update, delete: if request.auth.uid == userId;
       allow create: if request.auth.uid != null;
     }
+
   }
 }
