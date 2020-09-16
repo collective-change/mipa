@@ -7,7 +7,7 @@ importScripts(
 //importScripts("https://cdn.jsdelivr.net/npm/comlinkjs/comlink.global.min.js");
 
 //import { parse, format, toTex } from "mathjs";
-importScripts("https://unpkg.com/mathjs@6.6.4/dist/math.min.js");
+importScripts("https://unpkg.com/mathjs@7.2.0/dist/math.min.js");
 
 //var idb = {}; //placeholder for IndexedDB
 
@@ -789,6 +789,12 @@ function doImpactWithHalfLife(sim, nodeIndex, impact) {
 
 function checkUnits(sim, nodeIndex) {
   expectedUnit = sim.expectedUnits[nodeIndex];
+  if (sim.sortedNodes[nodeIndex].id == "Ltv3Efz9rxwVXMI37Jd6") {
+    console.log("problem node");
+    let expectedUnitSnapshot = JSON.parse(JSON.stringify(expectedUnit));
+    console.log("expectedUnit", expectedUnitSnapshot);
+    console.log("calculated", sim.scope["$" + sim.sortedNodes[nodeIndex].id]);
+  }
   if (
     // calculation result is a unitless number and the expected isn't
     (typeof sim.scope["$" + sim.sortedNodes[nodeIndex].id] == "number" &&
