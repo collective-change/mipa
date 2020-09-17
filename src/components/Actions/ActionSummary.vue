@@ -62,7 +62,7 @@
               </q-chip>
               <br v-if="embedded" />
               <q-chip color="primary" text-color="white"
-                >ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip
+                >SROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip
               >
               <q-chip outline color="primary">
                 NPV Benefit
@@ -230,12 +230,12 @@
                   size="xs"
                   :options="[
                     {
-                      label: 'values',
-                      value: showValuesConfig
-                    },
-                    {
                       label: 'difference',
                       value: showDifferenceConfig
+                    },
+                    {
+                      label: 'values',
+                      value: showValuesConfig
                     }
                   ]"
                 />

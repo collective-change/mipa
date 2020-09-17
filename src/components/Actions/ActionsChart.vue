@@ -24,7 +24,7 @@ var maxEstEffortHrs = null,
   minEstEffortHrs = null,
   maxActionLeverage = null,
   minActionLeverage = null,
-  maxTotalDirectCost = null;
+  maxOwnDirectCost = null;
 
 export default {
   components: {
@@ -114,7 +114,7 @@ export default {
             action => action.actionLeverage > 0 && action.estEffortHrs > 0
           )
           .sort(function(a, b) {
-            return b.totalDirectCost - a.totalDirectCost;
+            return b.ownDirectCost - a.ownDirectCost;
           });
       else return [];
     }
@@ -199,9 +199,9 @@ export default {
         let rVal = d3
           .scalePow()
           .exponent(1 / 3)
-          .domain([0, maxTotalDirectCost])
+          .domain([0, maxOwnDirectCost])
           .range([0, 100])
-          .call(this, action.totalDirectCost);
+          .call(this, action.ownDirectCost);
         return [xVal, yVal + sign * rVal];
       } else return null;
     },
@@ -227,9 +227,9 @@ export default {
             d3
               .scalePow()
               .exponent(1 / 3)
-              .domain([0, maxTotalDirectCost])
+              .domain([0, maxOwnDirectCost])
               .range([0, 100])
-              .call(this, action[0].totalDirectCost),
+              .call(this, action[0].ownDirectCost),
           textSize = width / 8,
           tspan = text
             .text(null)
@@ -238,7 +238,7 @@ export default {
             .attr("font-size", `${textSize}px`)
             .attr("y", y)
             .attr("dy", dy + "em");
-        //console.log("totalDirectCost", action[0].totalDirectCost);
+        //console.log("ownDirectCost", action[0].ownDirectCost);
         while ((word = words.pop())) {
           line.push(word);
           lineWordCount++;
@@ -300,10 +300,10 @@ export default {
           return a.actionLeverage;
         })
       );
-      maxTotalDirectCost = Math.max.apply(
+      maxOwnDirectCost = Math.max.apply(
         Math,
         newActions.map(function(a) {
-          return a.totalDirectCost;
+          return a.ownDirectCost;
         })
       );
 
@@ -352,7 +352,7 @@ export default {
         //.scaleSqrt()
         .scalePow()
         .exponent(1 / 3)
-        .domain([0, maxTotalDirectCost])
+        .domain([0, maxOwnDirectCost])
         .range([0, this.maxRadius]);
 
       //add links
@@ -436,7 +436,7 @@ export default {
           return y(d.actionLeverage);
         })
         .attr("r", function(d) {
-          return r(d.totalDirectCost);
+          return r(d.ownDirectCost);
         })
         .on("mouseover", showTooltip)
         .on("mousemove", moveTooltip)

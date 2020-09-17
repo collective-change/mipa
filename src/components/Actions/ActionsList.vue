@@ -135,7 +135,7 @@ export default {
           name: "totalRoi",
           required: true,
           align: "right",
-          label: "總 ROI",
+          label: "總 SROI",
           field: "totalRoi",
           format: val => `${formatNumber(val, 2)}`,
           sortable: true,
