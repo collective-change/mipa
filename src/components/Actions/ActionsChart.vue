@@ -325,8 +325,8 @@ export default {
         .append("text")
         .attr("text-anchor", "end")
         .attr("x", width)
-        .attr("y", height + 50)
-        .text("Effort hrs");
+        .attr("y", height + 40)
+        .text("Outstanding direct effort hrs");
 
       // Add Y axis
       var y = d3

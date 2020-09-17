@@ -474,7 +474,7 @@ export default {
               title: this.getNodeName(nodeId),
               vAxis: { title: this.getNodeUnit(nodeId), scaleType: "linear" },
               legend: { position: "bottom" },
-              series: this.showValuesConfig
+              series: this.showDifferenceConfig
               //explorer: {}
             }
           });
@@ -509,6 +509,8 @@ export default {
       //add combinedBenefit and combinedCost nodes
       defaultNodesToChart.push(this.currentModel.roleNodes.combinedBenefit);
       defaultNodesToChart.push(this.currentModel.roleNodes.combinedCost);
+      defaultNodesToChart.push(this.currentModel.roleNodes.effort);
+      defaultNodesToChart.push(this.currentModel.roleNodes.spending);
       //add impacted nodes
       this.uiAction.impacts.forEach(function(impact) {
         defaultNodesToChart.push(impact.nodeId);

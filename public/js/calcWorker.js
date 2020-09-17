@@ -349,6 +349,7 @@ function composeCostsAndImpactsOfSelf(action, averageEffortCostPerHour) {
     impacts: [...action.impacts],
     includedActionIds: [action.id]
   };
+  //console.log("newCostsAndImpacts", newCostsAndImpacts);
   return newCostsAndImpacts;
 }
 
@@ -401,6 +402,8 @@ function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
     ...testCostsAndImpacts.impacts
   ];
 
+  console.log("impactsToSimulate", impactsToSimulate);
+
   //TODO: gather begin and end times
   impactsToSimulate.forEach(function(impact) {
     if (impact.durationType == "with_half_life") {
@@ -414,6 +417,8 @@ function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
   let onlyNodeIds = [];
   onlyNodeIds.push(sim.roleNodes.combinedBenefit);
   onlyNodeIds.push(sim.roleNodes.combinedCost);
+  onlyNodeIds.push(sim.roleNodes.effort);
+  onlyNodeIds.push(sim.roleNodes.spending);
   impactsToSimulate.forEach(function(impact) {
     onlyNodeIds.push(impact.nodeId);
   });
@@ -635,9 +640,9 @@ function getMarginalNpv(
   let debuggingArr = [];
   timeSPoints.forEach(function(timeS, index) {
     doneMinusNotDone = ifDoneSeries[index] - ifNotDoneSeries[index];
-    if (index == 0) prevDoneMinusNotDone = 0;
+    //if (index == 0) prevDoneMinusNotDone = 0;
     tYears = (timeS - timeSPoints[0]) / 31556952; // 31556952 seconds in a year
-    Rt = doneMinusNotDone - prevDoneMinusNotDone;
+    Rt = doneMinusNotDone; // - prevDoneMinusNotDone;
     npv += Rt / Math.pow(1 + yearlyDiscountRate, tYears);
     /*debuggingArr.push({
       doneMinusNotDone: doneMinusNotDone,
@@ -645,7 +650,7 @@ function getMarginalNpv(
       Rt: Rt,
       npv: npv
     });*/
-    prevDoneMinusNotDone = doneMinusNotDone;
+    //prevDoneMinusNotDone = doneMinusNotDone;
   });
   //console.table(debuggingArr);
   return npv;

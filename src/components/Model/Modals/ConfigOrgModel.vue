@@ -1,6 +1,8 @@
 <template>
   <q-card>
-    <modal-header v-if="modelToSubmit.isOrgMainModel" v-slot:header>Configure main model</modal-header>
+    <modal-header v-if="modelToSubmit.isOrgMainModel" v-slot:header
+      >Configure main model</modal-header
+    >
     <modal-header v-else v-slot:header>Configure model</modal-header>
 
     <q-form @submit.prevent="submitModel">
@@ -123,7 +125,7 @@
               fill-input
             />
             <q-select
-              label="Combined benefit"
+              label="Combined benefit for interval"
               v-model="modelToSubmit.roleNodes.combinedBenefit"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
@@ -137,7 +139,7 @@
               fill-input
             />
             <q-select
-              label="Combined cost"
+              label="Combined cost for interval"
               v-model="modelToSubmit.roleNodes.combinedCost"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
