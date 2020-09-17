@@ -341,11 +341,11 @@ export default {
       // Add Y axis label:
       this.svgInner
         .append("text")
-        .attr("text-anchor", "end")
+        .attr("text-anchor", "middle")
         .attr("x", 0)
         .attr("y", -20)
-        .text("Leverage")
-        .attr("text-anchor", "start");
+        .text("Leverage");
+      //.attr("text-anchor", "start");
 
       // Add a scale for bubble size
       var r = d3
