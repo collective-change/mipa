@@ -949,6 +949,10 @@ function prepEnvironment(data) {
       baseName: "person",
       aliases: ["persons", "people", "user", "users"]
     },
+    workhour: {
+      baseName: "workhour",
+      aliases: ["workhours"]
+    },
     operation: {
       baseName: "operation",
       aliases: ["operations", "ops"]
