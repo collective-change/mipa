@@ -98,6 +98,51 @@ export default {
       .attr("offset", "100%")
       .attr("stop-color", "#69b3a2")
       .attr("stop-opacity", 1);
+
+    // Begin initialize axis
+    // Add X axis
+    var x = d3
+      .scaleLog()
+      .domain([
+        minEstEffortHrs / (1 + axisBuffer),
+        maxEstEffortHrs * (1 + axisBuffer)
+      ])
+      .range([0, width]);
+    this.svgInner
+      .append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x).ticks(3));
+
+    // Add X axis label:
+    this.svgInner
+      .append("text")
+      .attr("text-anchor", "end")
+      .attr("x", width)
+      .attr("y", height + 40)
+      .text("Outstanding direct effort hrs");
+
+    // Add Y axis
+    var y = d3
+      .scaleLog()
+      .domain([
+        minActionLeverage / (1 + axisBuffer),
+        maxActionLeverage * (1 + axisBuffer)
+      ])
+      .range([height, 0]);
+    this.svgInner
+      .append("g")
+      .attr("class", "y axis")
+      .call(d3.axisLeft(y));
+
+    // Add Y axis label:
+    this.svgInner
+      .append("text")
+      .attr("text-anchor", "middle")
+      .attr("x", 0)
+      .attr("y", -20)
+      .text("Leverage");
+    // end initialize axis
   },
 
   computed: {
@@ -307,7 +352,6 @@ export default {
         })
       );
 
-      // Add X axis
       var x = d3
         .scaleLog()
         .domain([
@@ -315,20 +359,6 @@ export default {
           maxEstEffortHrs * (1 + axisBuffer)
         ])
         .range([0, width]);
-      this.svgInner
-        .append("g")
-        .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x).ticks(3));
-
-      // Add X axis label:
-      this.svgInner
-        .append("text")
-        .attr("text-anchor", "end")
-        .attr("x", width)
-        .attr("y", height + 40)
-        .text("Outstanding direct effort hrs");
-
-      // Add Y axis
       var y = d3
         .scaleLog()
         .domain([
@@ -336,16 +366,10 @@ export default {
           maxActionLeverage * (1 + axisBuffer)
         ])
         .range([height, 0]);
-      this.svgInner.append("g").call(d3.axisLeft(y));
 
-      // Add Y axis label:
-      this.svgInner
-        .append("text")
-        .attr("text-anchor", "middle")
-        .attr("x", 0)
-        .attr("y", -20)
-        .text("Leverage");
-      //.attr("text-anchor", "start");
+      //update axis
+      this.svgInner.selectAll("g .x.axis").call(d3.axisBottom(x).ticks(3));
+      this.svgInner.selectAll("g .y.axis").call(d3.axisLeft(y));
 
       // Add a scale for bubble size
       var r = d3
