@@ -125,7 +125,7 @@
               fill-input
             />
             <q-select
-              label="Combined benefit for interval"
+              label="Combined benefit for interval (before subtracting costs and investments)"
               v-model="modelToSubmit.roleNodes.combinedBenefit"
               @filter="filterFn"
               @filter-abort="abortFilterFn"

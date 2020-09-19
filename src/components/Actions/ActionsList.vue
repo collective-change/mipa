@@ -116,10 +116,10 @@ export default {
           sortable: true
         },*/
         {
-          name: "benefit",
+          name: "netBenefit",
           align: "right",
-          label: "總效益",
-          field: "marginalTotalBenefitNpv",
+          label: "總淨效益",
+          field: "marginalNetTotalBenefitNpv",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
         },

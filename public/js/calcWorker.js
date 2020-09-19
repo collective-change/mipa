@@ -605,11 +605,19 @@ function calcActionResultsFromTimeSeries(
   );
 
   //calculate actionLeverage and prepare results
-  let totalRoi = marginalTotalBenefitNpv / marginalTotalCostNpv;
+  /*let totalRoi = marginalTotalBenefitNpv / marginalTotalCostNpv;
   let actionLeverage =
     ((marginalTotalBenefitNpv * marginalTotalBenefitNpv) /
       (marginalTotalCostNpv * outstandingDirectCosts)) *
     Math.sign(marginalTotalBenefitNpv) *
+    Math.sign(outstandingDirectCosts); */
+  let marginalNetTotalBenefitNpv =
+    marginalTotalBenefitNpv - marginalTotalCostNpv;
+  let totalRoi = marginalNetTotalBenefitNpv / marginalTotalCostNpv;
+  let actionLeverage =
+    ((marginalNetTotalBenefitNpv * marginalNetTotalBenefitNpv) /
+      (marginalTotalCostNpv * outstandingDirectCosts)) *
+    Math.sign(marginalNetTotalBenefitNpv) *
     Math.sign(outstandingDirectCosts);
 
   if (isNaN(totalRoi)) totalRoi = null;
@@ -617,6 +625,7 @@ function calcActionResultsFromTimeSeries(
 
   let roiResults = {
     marginalTotalBenefitNpv,
+    marginalNetTotalBenefitNpv,
     marginalTotalCostNpv,
     totalRoi,
     actionLeverage
@@ -1526,7 +1535,7 @@ function resultsNumbersChangedSignificantly(newObj, oldObj) {
   if (typeof oldObj.actionLeverage == "undefined") return true;
 
   if (changedSignificantly(newObj, oldObj, "actionLeverage")) return true;
-  if (changedSignificantly(newObj, oldObj, "marginalTotalBenefitNpv"))
+  if (changedSignificantly(newObj, oldObj, "marginalNetTotalBenefitNpv"))
     return true;
   if (changedSignificantly(newObj, oldObj, "marginalTotalCostNpv")) return true;
   return false;

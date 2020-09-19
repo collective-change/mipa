@@ -330,7 +330,7 @@ function resultsNumbersChangedSignificantly(newObj, oldObj) {
   if (typeof oldObj.actionLeverage == "undefined") return true;
 
   if (changedSignificantly(newObj, oldObj, "actionLeverage")) return true;
-  if (changedSignificantly(newObj, oldObj, "marginalTotalBenefitNpv"))
+  if (changedSignificantly(newObj, oldObj, "marginalNetTotalBenefitNpv"))
     return true;
   if (changedSignificantly(newObj, oldObj, "marginalTotalCostNpv")) return true;
   return false;

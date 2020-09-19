@@ -65,8 +65,8 @@
                 >SROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip
               >
               <q-chip outline color="primary">
-                NPV Benefit
-                {{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }}
+                NPV Net Benefit
+                {{ formatNumber(uiAction.marginalNetTotalBenefitNpv, 3) }}
                 {{ currentOrg ? currentOrg.currency : "" }}
               </q-chip>
               <q-chip outline color="primary">

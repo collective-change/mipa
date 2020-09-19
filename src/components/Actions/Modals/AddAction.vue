@@ -4,7 +4,10 @@
 
     <q-form @submit.prevent="submitForm">
       <q-card-section>
-        <modal-action-title :title.sync="actionToSubmit.title" ref="modalActionTitle" />
+        <modal-action-title
+          :title.sync="actionToSubmit.title"
+          ref="modalActionTitle"
+        />
       </q-card-section>
       <modal-buttons />
     </q-form>
@@ -32,6 +35,7 @@ export default {
         spentAmount: null,
         totalDirectCost: 0,
         marginalTotalBenefitNpv: 0,
+        marginalNetTotalBenefitNpv: 0,
         marginalTotalCostNpv: 0,
         actionLeverage: null
       }
