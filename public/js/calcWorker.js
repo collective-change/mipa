@@ -691,11 +691,17 @@ function iterateThroughTime(sim, scenario) {
           //flag for each node. If influencer nodes of the current node
           //haven't changed for this iteration, then use the baseline's
           //value instead of evaluating.
+          if (sim.sortedNodes[nodeIndex].id == "4Y160pX7YePRYFzYlyV5") {
+            console.log("code", code.toString());
+          }
           code.evaluate(sim.scope);
+          if (sim.sortedNodes[nodeIndex].id == "4Y160pX7YePRYFzYlyV5") {
+            console.log("done evaluation for 4Y160pX7YePRYFzYlyV5");
+          }
 
-          //adjust the node value by action's impacts
-          //loop through each of action's impacts to see if it impacts the node just calculated
           if (scenario.type == "action") {
+            //adjust the node value by action's impacts
+            //loop through each of action's impacts to see if it impacts the node just calculated
             //TODO: sort impacts by order of impact.operation (=, *, / , +, -)
             scenario.impactsToSimulate.forEach(function(impact) {
               if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
@@ -803,11 +809,14 @@ function doImpactWithHalfLife(sim, nodeIndex, impact) {
 
 function checkUnits(sim, nodeIndex) {
   expectedUnit = sim.expectedUnits[nodeIndex];
-  if (sim.sortedNodes[nodeIndex].id == "Ltv3Efz9rxwVXMI37Jd6") {
-    //console.log("problem node");
+  if (sim.sortedNodes[nodeIndex].id == "4Y160pX7YePRYFzYlyV5") {
+    console.log("problem node");
     let expectedUnitSnapshot = JSON.parse(JSON.stringify(expectedUnit));
-    //console.log("expectedUnit", expectedUnitSnapshot);
-    //console.log("calculated", sim.scope["$" + sim.sortedNodes[nodeIndex].id]);
+    let calculated = JSON.parse(
+      JSON.stringify(sim.scope["$" + sim.sortedNodes[nodeIndex].id])
+    );
+    console.log("expectedUnit", expectedUnitSnapshot);
+    console.log("calculated", calculated);
   }
   if (
     // calculation result is a unitless number and the expected isn't
@@ -818,7 +827,12 @@ function checkUnits(sim, nodeIndex) {
     (typeof sim.scope["$" + sim.sortedNodes[nodeIndex].id] == "object" &&
       !sim.expectedUnits[nodeIndex].equalBase(
         sim.scope["$" + sim.sortedNodes[nodeIndex].id]
+      ) &&
+      !sim.scope["$" + sim.sortedNodes[nodeIndex].id].equalBase(
+        sim.expectedUnits[nodeIndex]
       ))
+    /*sim.expectedUnits[nodeIndex].unit !=
+      sim.scope["$" + sim.sortedNodes[nodeIndex].id].unit*/
   )
     throw `dimensions of expected units and calculated units do not match.
               <br/> Expected unit: "${expectedUnit.toString()}"
@@ -1058,16 +1072,22 @@ function prepExpressionsArray(sim) {
           expressionsArray.push("$" + node.id + " = " + node.sysFormula);
         } else {
           //else set as value and units
-          if (node.unit == "") throw "missing unit";
-          expressionsArray.push(
-            "$" +
-              node.id +
-              " = unit(" +
-              node.sysFormula +
-              ",'" +
-              node.unit +
-              "')"
-          );
+          if (node.unit == "") {
+            expressionsArray.push(
+              //"$" + node.id + " = unit(" + node.sysFormula + ")"//
+              "$" + node.id + " = " + node.sysFormula
+            );
+          } else {
+            expressionsArray.push(
+              "$" +
+                node.id +
+                " = unit(" +
+                node.sysFormula +
+                ",'" +
+                node.unit +
+                "')"
+            );
+          }
         }
       } catch (err) {
         console.log(err);
