@@ -107,7 +107,7 @@ export default {
         {
           name: "benefit",
           align: "right",
-          label: "總效益",
+          label: "總邊際效益",
           field: "marginalTotalBenefitNpv",
           format: (val) => `${formatNumber(val, 3)}`,
           sortable: true,
@@ -115,7 +115,7 @@ export default {
         {
           name: "cost",
           align: "right",
-          label: "總成本",
+          label: "總邊際成本",
           field: "marginalTotalCostNpv",
           format: (val) => `${formatNumber(val, 3)}`,
           sortable: true,
@@ -123,7 +123,7 @@ export default {
         {
           name: "netBenefit",
           align: "right",
-          label: "總淨效益",
+          label: "總淨邊際效益",
           field: "marginalNetTotalBenefitNpv",
           format: (val) => `${formatNumber(val, 3)}`,
           sortable: true,
