@@ -2,19 +2,9 @@
   <q-layout view="hHh lpR fFf">
     <q-header elevated class="bg-white text-grey-8 q-py-none print-hide">
       <q-toolbar>
-        <div class="text-h6">{{ orgGoal }}</div>
-        <q-btn
-          flat
-          no-caps
-          no-wrap
-          class="q-ml-xs"
-          v-if="$q.screen.gt.xs"
-          clickable
-          to="/"
-        >
-          <q-toolbar-title shrink class="text-weight-bold text-primary"
-            >mipa</q-toolbar-title
-          >
+        <div class="text-h6">{{ orgName }}</div>
+        <q-btn flat no-caps no-wrap class="q-ml-xs" v-if="$q.screen.gt.xs" clickable to="/">
+          <q-toolbar-title shrink class="text-weight-bold text-primary">mipa</q-toolbar-title>
         </q-btn>
         <q-btn-dropdown v-if="currentOrg" dense flat :label="currentLinkGroup">
           <q-list>
@@ -22,11 +12,7 @@
               <q-separator class="q-my-xs" />
               <q-item class="q-py-none">
                 <q-item-section avatar class="q-py-none">
-                  <q-icon
-                    color="grey"
-                    :name="linkGroup.icon"
-                    :class="linkGroup.icon_class"
-                  />
+                  <q-icon color="grey" :name="linkGroup.icon" :class="linkGroup.icon_class" />
                 </q-item-section>
                 <q-item-section class="q-py-none">
                   <q-item-label>{{ linkGroup.text }}</q-item-label>
@@ -44,11 +30,7 @@
                 >
                   <q-item-section>
                     <q-item-section avatar>
-                      <q-icon
-                        color="grey"
-                        :name="link.icon"
-                        :class="link.icon_class"
-                      />
+                      <q-icon color="grey" :name="link.icon" :class="link.icon_class" />
                     </q-item-section>
                     <q-item-section>
                       <q-item-label>{{ link.text }}</q-item-label>
@@ -75,25 +57,12 @@
           <q-btn v-if="loggedIn" round dense flat color="grey-8" icon="message">
             <q-tooltip>Messages</q-tooltip>
           </q-btn>
-          <q-btn
-            v-if="loggedIn"
-            round
-            dense
-            flat
-            color="grey-8"
-            icon="notifications"
-          >
+          <q-btn v-if="loggedIn" round dense flat color="grey-8" icon="notifications">
             <q-badge color="red" text-color="white" floating>2</q-badge>
             <q-tooltip>Notifications</q-tooltip>
           </q-btn>
 
-          <q-btn
-            v-if="!loggedIn"
-            to="/auth"
-            flat
-            icon-right="account_circle"
-            label="Login"
-          />
+          <q-btn v-if="!loggedIn" to="/auth" flat icon-right="account_circle" label="Login" />
           <q-btn
             v-else
             flat
@@ -116,14 +85,7 @@
     >
       <q-scroll-area class="fit">
         <q-list padding>
-          <q-item
-            v-for="link in links1"
-            :key="link.text"
-            v-ripple
-            clickable
-            :to="link.to"
-            exact
-          >
+          <q-item v-for="link in links1" :key="link.text" v-ripple clickable :to="link.to" exact>
             <q-item-section avatar>
               <q-icon color="grey" :name="link.icon" :class="link.icon_class" />
             </q-item-section>
@@ -134,14 +96,7 @@
 
           <q-separator class="q-my-md" />
 
-          <q-item
-            v-for="link in links2"
-            :key="link.text"
-            v-ripple
-            clickable
-            :to="link.to"
-            exact
-          >
+          <q-item v-for="link in links2" :key="link.text" v-ripple clickable :to="link.to" exact>
             <q-item-section avatar>
               <q-icon color="grey" :name="link.icon" />
             </q-item-section>
@@ -174,8 +129,7 @@
                 :key="button.text"
                 class="drawer-footer-link"
                 href="javascript:void(0)"
-                >{{ button.text }}</a
-              >
+              >{{ button.text }}</a>
             </div>
           </div>
           <div class="q-py-md q-px-md text-grey-9">
@@ -185,8 +139,7 @@
                 :key="button.text"
                 class="drawer-footer-link"
                 href="javascript:void(0)"
-                >{{ button.text }}</a
-              >
+              >{{ button.text }}</a>
             </div>
           </div>
         </q-list>
@@ -214,19 +167,19 @@ export default {
       links2: [
         { icon: "settings", text: "Settings", to: "/settings" },
         { icon: "help", text: "Help", to: "/settings/help" },
-        { icon: "feedback", text: "Send feedback" }
+        { icon: "feedback", text: "Send feedback" },
       ],
       links3: [{ icon: "exit_to_app", text: "Logout", onclick: "logoutUser" }],
       buttons1: [
         { text: "About" },
         { text: "Copyright" },
-        { text: "Contact us" }
+        { text: "Contact us" },
       ],
       buttons2: [
         { text: "Terms" },
         { text: "Privacy" },
-        { text: "Policy & Safety" }
-      ]
+        { text: "Policy & Safety" },
+      ],
     };
   },
   computed: {
@@ -266,8 +219,8 @@ export default {
           icon: "home",
           links: [
             { text: "My dashboard", to: "/" },
-            { text: "To do", to: "/todo" }
-          ]
+            { text: "To do", to: "/todo" },
+          ],
         },
         organization: {
           text: "Organization",
@@ -277,10 +230,10 @@ export default {
             { text: "Users", to: "/organization/users" },
             {
               text: "Structure and permissions",
-              to: "/organizations/structure-and-permissions"
+              to: "/organizations/structure-and-permissions",
             },
-            { text: "Performance", to: "/organization/performance" }
-          ]
+            { text: "Performance", to: "/organization/performance" },
+          ],
         },
         model: {
           text: "Model",
@@ -289,13 +242,13 @@ export default {
           links: [
             {
               text: "Model",
-              to: `/org/${this.orgNameSlug}/model/${this.orgId}/${this.modelId}`
+              to: `/org/${this.orgNameSlug}/model/${this.orgId}/${this.modelId}`,
             },
             { text: "Units", to: "/placeholder" },
             { text: "Update values", to: "/placeholder" },
             { text: "Analysis", to: "/placeholder" },
-            { text: "Templates", to: "/placeholder" }
-          ]
+            { text: "Templates", to: "/placeholder" },
+          ],
         },
         ideate: {
           text: "Ideate",
@@ -308,11 +261,11 @@ export default {
               //to: `/org/${this.orgNameSlug}/actions/${this.orgId}`
               to: {
                 name: "actions",
-                params: { orgNameSlug: this.orgNameSlug, orgId: this.orgId }
-              }
+                params: { orgNameSlug: this.orgNameSlug, orgId: this.orgId },
+              },
             },
-            { text: "Templates", to: "/placeholder" }
-          ]
+            { text: "Templates", to: "/placeholder" },
+          ],
         },
         prioritize: {
           text: "Prioritize",
@@ -320,8 +273,8 @@ export default {
           links: [
             { text: "Priorities", to: "/placeholder" },
             { text: "Resource allocation", to: "/placeholder" },
-            { text: "Roadmap", to: "/placeholder" }
-          ]
+            { text: "Roadmap", to: "/placeholder" },
+          ],
         },
         achieve: {
           text: "Achieve",
@@ -330,9 +283,9 @@ export default {
             { text: "My current focus", to: "/placeholder" },
             { text: "To do", to: "/placeholder" },
             { text: "Time log", to: "/placeholder" },
-            { text: "My team's work", to: "/placeholder" }
-          ]
-        }
+            { text: "My team's work", to: "/placeholder" },
+          ],
+        },
       };
     },
 
@@ -352,7 +305,7 @@ export default {
       } else {
         return "home";
       }
-    }
+    },
   },
   methods: {
     ...mapActions("auth", ["logoutUser"]),
@@ -376,7 +329,7 @@ export default {
       this.$store.dispatch("model/unbindCurrentModel");
       this.$store.dispatch("model/unbindNodes");
       //this.$store.dispatch("calcResults/unbindBaseline");
-    }
+    },
   },
   created() {
     (async () => {
@@ -384,7 +337,7 @@ export default {
         !firebaseAuth.currentUser // define the condition as you like
       ) {
         //console.log("waiting for currentUser to be defined");
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
       this.bindPublicData();
       let orgId = this.$route.params.orgId;
@@ -411,8 +364,8 @@ export default {
       if (newOrgId == "") {
         this.unbindAllOrgRelatedData();
       }
-    }
-  }
+    },
+  },
 };
 </script>
 
