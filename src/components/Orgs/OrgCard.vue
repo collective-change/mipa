@@ -15,13 +15,7 @@
 
     <q-card-actions align="right">
       <div class="row">
-        <q-btn
-          :to="`/org/${org.nameSlug}/details/${id}`"
-          flat
-          round
-          dense
-          icon="people"
-        >
+        <q-btn :to="`/org/${org.nameSlug}/details/${id}`" flat round dense icon="people">
           <q-tooltip>Organization details</q-tooltip>
         </q-btn>
         <q-btn
@@ -54,18 +48,12 @@
         <q-btn to="/model/model" flat round dense icon="whatshot">
           <q-tooltip>Achieve</q-tooltip>
         </q-btn>
-        <q-btn
-          @click.stop="showEditOrgModal"
-          flat
-          round
-          dense
-          color="primary"
-          icon="edit"
-        >
+        <q-btn @click.stop="showEditOrgModal" flat round dense color="primary" icon="edit">
           <q-tooltip>Edit organization</q-tooltip>
         </q-btn>
         <q-btn
           @click.stop="promptToDelete(id)"
+          disable
           flat
           round
           dense
@@ -90,11 +78,11 @@ export default {
   props: ["org", "id"],
   data() {
     return {
-      showEditOrg: false
+      showEditOrg: false,
     };
   },
   computed: {
-    ...mapGetters("settings", ["settings"])
+    ...mapGetters("settings", ["settings"]),
   },
   methods: {
     ...mapActions("orgs", ["updateOrg", "deleteOrg"]),
@@ -107,16 +95,16 @@ export default {
           title: "Confirm",
           message: "Really delete?",
           cancel: true,
-          persistent: true
+          persistent: true,
         })
         .onOk(() => {
           this.deleteOrg(orgId);
         });
-    }
+    },
   },
   components: {
-    "edit-org": require("components/Orgs/Modals/EditOrg.vue").default
-  }
+    "edit-org": require("components/Orgs/Modals/EditOrg.vue").default,
+  },
 };
 </script>
 
