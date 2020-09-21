@@ -46,7 +46,7 @@ function getRelationshipsDisplay(row) {
   if (row.blockerActionIds && row.blockerActionIds.length)
     relationships.push("blocked by " + row.blockerActionIds.length);
   if (row.blockeeActionIds && row.blockeeActionIds.length)
-    relationships.push("blocks" + row.blockeeActionIds.length);
+    relationships.push("blocks " + row.blockeeActionIds.length);
   return relationships.join("; ");
 }
 
