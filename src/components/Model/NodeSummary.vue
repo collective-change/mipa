@@ -32,11 +32,7 @@
               'Cannot start with a number'
           ]"
         />
-        <q-markup-table
-          flat
-          bordered
-          v-if="influencerNodesInfo.length"
-        >
+        <q-markup-table flat bordered v-if="influencerNodesInfo.length">
           <thead>
             <tr>
               <th class="text-left">Influencer</th>
@@ -44,10 +40,7 @@
               <th class="text-left">Unit</th>
             </tr>
           </thead>
-          <tr
-            v-for="influencer in influencerNodesInfo"
-            :key="influencer.id"
-          >
+          <tr v-for="influencer in influencerNodesInfo" :key="influencer.id">
             <td>{{ influencer.name }}</td>
             <td>{{ influencer.symbol }}</td>
             <td>{{ influencer.unit }}</td>
@@ -64,10 +57,7 @@
         <div v-if="parserError == '' && latexFormula">
           <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
         </div>
-        <div
-          v-else
-          class="text-negative"
-        >{{ parserError }}</div>
+        <div v-else class="text-negative">{{ parserError }}</div>
         <q-input
           v-model="nodeToSubmit.currentValue"
           label="Current value"
@@ -75,16 +65,16 @@
           :suffix="nodeToSubmit.unit"
           debounce="300"
         />
-        <div v-if="chartData.length > 0">
+        <div v-if="nodeChart.chartData.length > 0">
           <gchart
-            v-if="chartData.length > 0"
+            v-if="nodeChart.chartData.length > 0"
             type="LineChart"
-            :data="chartData"
-            :options="chartOptions"
+            :data="nodeChart.chartData"
+            :options="nodeChart.chartOptions"
           />
           <div class="row justify-center">
             <q-btn-toggle
-              v-model="chartOptions.vAxis.scaleType"
+              v-model="nodeChart.chartOptions.vAxis.scaleType"
               toggle-color="primary"
               size="xs"
               :options="[
@@ -95,11 +85,23 @@
           </div>
         </div>
 
-        <q-input
-          v-model="nodeToSubmit.notes"
-          label="Notes"
-          autogrow
-        />
+        <div v-if="influencerChartsArr.length" class="text-h6">Influencers</div>
+        <div v-for="chart in influencerChartsArr" :key="chart.nodeId" class="q-pa-md">
+          <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
+          <div class="row justify-center q-gutter-x-md">
+            <q-btn-toggle
+              v-model="chart.chartOptions.vAxis.scaleType"
+              action-color="primary"
+              size="xs"
+              :options="[
+                    { label: 'linear', value: 'linear' },
+                    { label: 'log', value: 'log' }
+                  ]"
+            />
+          </div>
+        </div>
+
+        <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
       </q-form>
 
@@ -131,10 +133,10 @@ export default {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
     gchart: GChart,
-    "vue-mathjax": VueMathjax
+    "vue-mathjax": VueMathjax,
   },
 
-  data () {
+  data() {
     return {
       nodeToSubmit: {},
       oldNodeToSubmit: {}, //used for comparing changes to nodeToSubmit
@@ -142,11 +144,17 @@ export default {
       model: null,
       parserError: "",
 
-      chartData: [],
+      nodeChart: {},
+      /*chartData: [],
       chartOptions: {
         vAxis: { scaleType: "linear" },
-        legend: { position: "none" }
-      }
+        legend: { position: "none" },
+
+        title: this.getNodeName(nodeId),
+        vAxis: { title: this.getNodeUnit(nodeId), scaleType: "linear" },
+        legend: { position: "none" },
+      },*/
+      influencerChartsArr: [],
     };
   },
 
@@ -154,24 +162,24 @@ export default {
     ...mapState("ui", [
       "selectedNodeId",
       "uiNodeChanged",
-      "uiNodeChangedFields"
+      "uiNodeChangedFields",
     ]),
     ...mapState("calcResults", ["baseline"]),
     ...mapGetters("model", ["nodes", "links"]),
 
-    selectedNode () {
+    selectedNode() {
       let that = this;
       return this.nodes.find(function (node) {
         return node.id == that.selectedNodeId;
       });
     },
 
-    influencerNodesInfo () {
+    influencerNodesInfo() {
       let nodeToSubmit = this.nodeToSubmit;
       let influencerNodesInfo = [];
       if (typeof nodeToSubmit.influencers == "undefined")
         return influencerNodesInfo;
-      let influencerNodes = this.nodes.filter(node =>
+      let influencerNodes = this.nodes.filter((node) =>
         nodeToSubmit.influencers.includes(node.id)
       );
       influencerNodes.forEach(function (influencerNode) {
@@ -183,7 +191,7 @@ export default {
           isBlocking: nodeToSubmit.blockingInfluencers.includes(
             influencerNode.id
           ),
-          isUnused: nodeToSubmit.unusedInfluencers.includes(influencerNode.id)
+          isUnused: nodeToSubmit.unusedInfluencers.includes(influencerNode.id),
         };
         influencerNodesInfo.push(influencerNodeInfo);
       });
@@ -191,7 +199,7 @@ export default {
     },
 
     //parse symbol formula
-    parsedSymbolFormula () {
+    parsedSymbolFormula() {
       try {
         let parsedSymbolFormula = this.nodeToSubmit.symbolFormula
           ? parse(this.nodeToSubmit.symbolFormula)
@@ -204,34 +212,34 @@ export default {
       }
     },
 
-    watchedObjectForNodePropertyRecalculation () {
+    watchedObjectForNodePropertyRecalculation() {
       return {
         currentValue: this.nodeToSubmit.currentValue,
-        parsedFormula: this.parsedSymbolFormula
+        parsedFormula: this.parsedSymbolFormula,
       };
     },
 
     //latexFormula from parsedSymbolFormula
-    latexFormula () {
+    latexFormula() {
       return this.parsedSymbolFormula
         ? this.parsedSymbolFormula.toTex({
-          parenthesis: "keep",
-          implicit: "hide"
-        })
+            parenthesis: "keep",
+            implicit: "hide",
+          })
         : "";
       console.log("LaTeX expression:", latex);
-    }
+    },
   },
 
   methods: {
     ...mapActions("model", ["updateNode"]),
-    submitForm () {
+    submitForm() {
       this.$refs.nodeName.validate();
       if (!this.$refs.nodeName.hasError) {
         this.submitNode();
       }
     },
-    submitNode () {
+    submitNode() {
       let oldCurrentVal = this.selectedNode.currentValue;
       let newCurrentVal = this.nodeToSubmit.currentValue;
       let oldCurrentValIsANumber =
@@ -254,14 +262,14 @@ export default {
         modelId: this.$route.params.modelId,
         updates: this.nodeToSubmit,
         currentValueExistenceChanged: currentValueExistenceChanged,
-        symbolChanged: symbolChanged
+        symbolChanged: symbolChanged,
         /* "symbolChanged" doesn't actually work yet to classify influencers
         of node's influencees, because classifyInfluencers currently
         starts with sysFormula, which would not change until it's recomposed.
         */
       });
     },
-    updateChartData () {
+    updateChartData() {
       // if baseline.nodes contains the selected node then load baseline for this nde
       if (
         this.selectedNodeId !== "null" &&
@@ -271,21 +279,103 @@ export default {
       ) {
         let timeSPoints = this.baseline.timeSPoints;
         let values = this.baseline.nodesValues[this.selectedNodeId];
-        this.chartData = [];
+        this.nodeChart.chartData = [];
         if (values.length > 0) {
-          this.chartData.push(["time", "value"]);
+          this.nodeChart.chartData.push(["time", "value"]);
           for (var i = 0; i < timeSPoints.length; i++) {
-            this.chartData.push([new Date(timeSPoints[i] * 1000), values[i]]);
+            this.nodeChart.chartData.push([
+              new Date(timeSPoints[i] * 1000),
+              values[i],
+            ]);
           }
+          this.nodeChart.chartOptions = {
+            title: this.selectedNode.name,
+            vAxis: { title: this.selectedNode.unit, scaleType: "linear" },
+            legend: { position: "none" },
+          };
         }
       } else {
         //console.log("nope");
-        this.chartData = [];
+        this.nodeChart.chartData = [];
       }
-    }
+    },
+    updateChartDataForNode(nodeId) {
+      //console.log(this.resultsOfAction.timeSPoints);
+
+      // if baseline.nodes contains the selected node then load baseline for this nde
+      if (
+        this.selectedNodeId !== "null" &&
+        typeof this.baseline !== "undefined" &&
+        typeof this.baseline.nodesValues != "undefined" &&
+        nodeId in this.baseline.nodesValues
+      ) {
+        let timeSPoints = this.baseline.timeSPoints;
+        let values = this.baseline.nodesValues[nodeId];
+
+        //if nodeId does not exist in chartsDataArr then create it
+        let chart = this.influencerChartsArr.find(
+          (chart) => chart.nodeId == nodeId
+        );
+        if (typeof chart == "undefined") {
+          let foundNode = this.nodes.find((node) => node.id == nodeId);
+          let unit = (chart = {
+            nodeId: nodeId,
+            chartData: [],
+            chartOptions: {
+              title: this.getNodeName(nodeId) + " (" + foundNode.symbol + ")",
+              vAxis: { title: this.getNodeUnit(nodeId), scaleType: "linear" },
+              legend: { position: "none" },
+              //legend: { position: "bottom" },
+              //series: this.showDifferenceConfig,
+              //explorer: {}
+            },
+          });
+          this.influencerChartsArr.push(chart);
+        } else chart.chartData = [];
+        if (values.length > 0) {
+          chart.chartData.push(["time", "value"]);
+          for (var i = 0; i < timeSPoints.length; i++) {
+            chart.chartData.push([new Date(timeSPoints[i] * 1000), values[i]]);
+          }
+        }
+      } else {
+        this.influencerChartsArr = [];
+      }
+    },
+    updateInfluencerChartsArr() {
+      if (!this.selectedNode) return;
+      let influencerNodesToChart = this.selectedNode.influencers;
+      /*
+      //add combinedBenefit and combinedCost nodes
+      influencerNodesToChart.push(this.currentModel.roleNodes.combinedBenefit);
+      influencerNodesToChart.push(this.currentModel.roleNodes.combinedCost);
+      influencerNodesToChart.push(this.currentModel.roleNodes.effort);
+      influencerNodesToChart.push(this.currentModel.roleNodes.spending);
+      //add impacted nodes
+      this.uiAction.impacts.forEach(function (impact) {
+        influencerNodesToChart.push(impact.nodeId);
+      });
+      */
+
+      //load data into each node
+      if (influencerNodesToChart)
+        influencerNodesToChart.forEach((nodeId) =>
+          this.updateChartDataForNode(nodeId)
+        );
+    },
+    getNodeName(nodeId) {
+      const found = this.nodes.find((node) => node.id == nodeId);
+      if (found) return found.name;
+      else return nodeId;
+    },
+    getNodeUnit(nodeId) {
+      const found = this.nodes.find((node) => node.id == nodeId);
+      if (found) return found.unit;
+      else return "";
+    },
   },
 
-  mounted () {
+  mounted() {
     //load mathjax
     const plugin = document.createElement("script");
     plugin.setAttribute(
@@ -301,7 +391,10 @@ export default {
       this.nodeToSubmitIsFreshlyAssigned = true;
       this.nodeToSubmit = Object.assign({}, this.selectedNode);
       this.$store.commit("ui/setUiNodeChanged", false);
+      this.influencerChartsArr = [];
+      this.nodeChart = {};
       this.updateChartData();
+      this.updateInfluencerChartsArr();
     },
 
     nodeToSubmit: {
@@ -310,7 +403,7 @@ export default {
         if (!this.nodeToSubmitIsFreshlyAssigned) {
           let oldNode = this.oldNodeToSubmit;
           let differences = Object.keys(newNode).filter(
-            k =>
+            (k) =>
               (newNode[k] ? newNode[k] : {}).toString() !==
               (oldNode[k] ? oldNode[k] : {}).toString()
           );
@@ -321,7 +414,7 @@ export default {
               "class",
               "blockingInfluencers",
               "unusedInfluencers",
-              "updateTime"
+              "updateTime",
             ].includes(item);
           });
           if (differences.length) {
@@ -333,7 +426,7 @@ export default {
           this.nodeToSubmitIsFreshlyAssigned = false;
         }
         Object.assign(this.oldNodeToSubmit, newNode);
-      }
+      },
     },
 
     baseline: function () {
@@ -355,7 +448,7 @@ export default {
         var potentials = [];
         potentials.push({
           symbol: this.nodeToSubmit.symbol,
-          id: this.nodeToSubmit.id
+          id: this.nodeToSubmit.id,
         });
         if (
           "influencers" in this.nodeToSubmit &&
@@ -367,7 +460,7 @@ export default {
             });
             potentials.push({
               symbol: influencerNode.symbol,
-              id: influencerNodeId
+              id: influencerNodeId,
             });
           });
         }
@@ -392,7 +485,7 @@ export default {
       //calculate blockingInfluencers
       let classifiedInfluencers = classifyInfluencers({
         thisNode: this.nodeToSubmit,
-        nodes: this.nodes
+        nodes: this.nodes,
       });
       //console.log("classifyInfluencers ran");
       this.nodeToSubmit.blockingInfluencers = classifiedInfluencers.blocking;
@@ -400,7 +493,7 @@ export default {
       this.nodeToSubmit.isSelfBlocking = classifiedInfluencers.blocking.includes(
         this.nodeToSubmit.id
       );
-    }
-  }
+    },
+  },
 };
 </script>
