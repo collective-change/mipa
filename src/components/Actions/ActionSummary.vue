@@ -473,7 +473,7 @@ export default {
             "baseline",
             "if done",
             "if not done",
-            "difference between if done and not done",
+            "done minus not done",
           ]);
           for (var i = 0; i < timeSPoints.length; i++) {
             chart.chartData.push([
