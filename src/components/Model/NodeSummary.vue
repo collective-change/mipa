@@ -59,6 +59,7 @@
         </div>
         <div v-else class="text-negative">{{ parserError }}</div>
         <q-input
+          v-if="false"
           v-model="nodeToSubmit.currentValue"
           label="Current value"
           type="number"
