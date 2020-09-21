@@ -14,7 +14,7 @@
             </div>
             <div class="row items-center">
               <q-chip>{{ getNodeName(impact.nodeId) }}</q-chip>
-              {{ mathSymbols[impact.operation] }} {{ impact.operand }}
+              {{ mathSymbols[impact.operation] }} {{ Number(impact.operand).toLocaleString() }}
               {{ durationTypeText[impact.durationType] }}
               {{
               durationTypesWithDuration.includes(impact.durationType)
