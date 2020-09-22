@@ -536,10 +536,10 @@ export default {
   },
   watch: {
     nodes: function () {
-      if (this.embedded == false) this.updateDefaultChartsArr();
+      /*if (this.embedded == false)*/ this.updateDefaultChartsArr();
     },
     resultsOfAction: function () {
-      if (this.embedded == false) this.updateDefaultChartsArr();
+      /*if (this.embedded == false)*/ this.updateDefaultChartsArr();
     },
     selectedAction: function (newAction, oldAction) {
       if (newAction && oldAction && newAction.id == oldAction.id) return;
