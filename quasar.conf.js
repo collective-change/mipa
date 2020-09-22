@@ -65,7 +65,7 @@ module.exports = function(ctx) {
       manifest: {
         // name: 'mipa',
         // short_name: 'mipa',
-        // description: 'A strategic management app',
+        // description: 'A strategic coordination app',
         display: "standalone",
         orientation: "portrait",
         background_color: "#ffffff",

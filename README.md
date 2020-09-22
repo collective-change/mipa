@@ -1,6 +1,6 @@
 # MIPA (mipa)
 
-A strategic management app
+A strategic coordination app
 
 ## Install the dependencies
 

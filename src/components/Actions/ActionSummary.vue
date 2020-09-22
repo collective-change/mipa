@@ -454,6 +454,7 @@ export default {
         //if nodeId does not exist in chartsDataArr then create it
         let chart = this.chartsArr.find((chart) => chart.nodeId == nodeId);
         if (typeof chart == "undefined") {
+          console.log("existing chart not found");
           let unit = (chart = {
             nodeId: nodeId,
             chartData: [],
@@ -466,7 +467,10 @@ export default {
             },
           });
           this.chartsArr.push(chart);
-        } else chart.chartData = [];
+        } else {
+          console.log("existing chart found");
+          chart.chartData = [];
+        }
         if (ifDoneValues.length > 0) {
           chart.chartData.push([
             "time",
@@ -492,6 +496,7 @@ export default {
     updateDefaultChartsArr() {
       if (!this.currentModel || typeof this.uiAction.impacts == "undefined")
         return;
+      console.log("updateDefaultChartsArr");
       let defaultNodesToChart = [];
       //add combinedBenefit and combinedCost nodes
       defaultNodesToChart.push(this.currentModel.roleNodes.combinedBenefit);
