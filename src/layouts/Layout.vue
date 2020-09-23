@@ -16,7 +16,12 @@
             >mipa</q-toolbar-title
           >
         </q-btn>
-        <q-btn-dropdown v-if="currentOrg" dense flat :label="currentLinkGroup">
+        <q-btn-dropdown
+          v-if="currentOrg"
+          dense
+          flat
+          :label="$t(currentLinkGroup)"
+        >
           <q-list>
             <div v-for="(linkGroup, key) in linkGroups" v-bind:key="key">
               <q-separator class="q-my-xs" />
@@ -73,7 +78,7 @@
 
         <div class="q-gutter-sm row items-center no-wrap">
           <q-btn v-if="loggedIn" round dense flat color="grey-8" icon="message">
-            <q-tooltip>Messages</q-tooltip>
+            <q-tooltip>{{ $t("Messages") }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="loggedIn"
@@ -84,7 +89,7 @@
             icon="notifications"
           >
             <q-badge color="red" text-color="white" floating>2</q-badge>
-            <q-tooltip>Notifications</q-tooltip>
+            <q-tooltip>{{ $t("Notifications") }}</q-tooltip>
           </q-btn>
 
           <q-btn
@@ -92,7 +97,7 @@
             to="/auth"
             flat
             icon-right="account_circle"
-            label="Login"
+            :label="$t('Login')"
           />
           <q-btn
             v-else
@@ -100,7 +105,7 @@
             icon-right="account_circle"
             @click="rightDrawerOpen = !rightDrawerOpen"
           >
-            <q-tooltip>Account</q-tooltip>
+            <q-tooltip>{{ $t("Account") }}</q-tooltip>
           </q-btn>
 
           <q-select
@@ -143,7 +148,7 @@
               <q-icon color="grey" :name="link.icon" :class="link.icon_class" />
             </q-item-section>
             <q-item-section>
-              <q-item-label>{{ link.text }}</q-item-label>
+              <q-item-label>{{ $t(link.text) }}</q-item-label>
             </q-item-section>
           </q-item>
 
@@ -161,7 +166,7 @@
               <q-icon color="grey" :name="link.icon" />
             </q-item-section>
             <q-item-section>
-              <q-item-label>{{ link.text }}</q-item-label>
+              <q-item-label>{{ $t(link.text) }}</q-item-label>
             </q-item-section>
           </q-item>
 
@@ -176,7 +181,7 @@
               <q-icon color="grey" :name="link.icon" />
             </q-item-section>
             <q-item-section>
-              <q-item-label>{{ link.text }}</q-item-label>
+              <q-item-label>{{ $t(link.text) }}</q-item-label>
             </q-item-section>
           </q-item>
 
@@ -189,7 +194,7 @@
                 :key="button.text"
                 class="drawer-footer-link"
                 href="javascript:void(0)"
-                >{{ button.text }}</a
+                >{{ $t(button.text) }}</a
               >
             </div>
           </div>
@@ -200,7 +205,7 @@
                 :key="button.text"
                 class="drawer-footer-link"
                 href="javascript:void(0)"
-                >{{ button.text }}</a
+                >{{ $t(button.text) }}</a
               >
             </div>
           </div>
@@ -237,7 +242,7 @@ export default {
       links2: [
         { icon: "settings", text: "Settings", to: "/settings" },
         { icon: "help", text: "Help", to: "/settings/help" },
-        { icon: "feedback", text: "Send feedback" }
+        { icon: "feedback", text: "SendFeedback" }
       ],
       links3: [{ icon: "exit_to_app", text: "Logout", onclick: "logoutUser" }],
       buttons1: [
@@ -285,75 +290,78 @@ export default {
     linkGroups() {
       return {
         home: {
-          text: "Home",
+          text: this.$t("Home"),
           icon: "home",
           links: [
-            { text: "My dashboard", to: "/" },
-            { text: "To do", to: "/todo" }
+            { text: this.$t("My dashboard"), to: "/" },
+            { text: this.$t("To do"), to: "/todo" }
           ]
         },
         organization: {
-          text: "Organization",
+          text: this.$t("Organization"),
           icon: "people",
           links: [
-            { text: "Basic information", to: "/organization/basic-info" },
-            { text: "Users", to: "/organization/users" },
             {
-              text: "Structure and permissions",
+              text: this.$t("Basic information"),
+              to: "/organization/basic-info"
+            },
+            { text: this.$t("Users"), to: "/organization/users" },
+            {
+              text: this.$t("Structure and permissions"),
               to: "/organizations/structure-and-permissions"
             },
-            { text: "Performance", to: "/organization/performance" }
+            { text: this.$t("Performance"), to: "/organization/performance" }
           ]
         },
         model: {
-          text: "Model",
+          text: this.$t("Model_verb"),
           icon: "share",
           icon_class: "flip-horizontal",
           links: [
             {
-              text: "Model",
+              text: this.$t("Model_noun"),
               to: `/org/${this.orgNameSlug}/model/${this.orgId}/${this.modelId}`
             },
-            { text: "Units", to: "/placeholder" },
-            { text: "Update values", to: "/placeholder" },
-            { text: "Analysis", to: "/placeholder" },
-            { text: "Templates", to: "/placeholder" }
+            { text: this.$t("Units"), to: "/placeholder" },
+            { text: this.$t("Update values"), to: "/placeholder" },
+            { text: this.$t("Analysis"), to: "/placeholder" },
+            { text: this.$t("Model templates"), to: "/placeholder" }
           ]
         },
         ideate: {
-          text: "Ideate",
+          text: this.$t("Ideate"),
           icon: "wb_incandescent",
           icon_class: "flip-vertical",
           links: [
-            { text: "Strategic analysis", to: "/placeholder" },
+            { text: this.$t("Strategic analysis"), to: "/placeholder" },
             {
-              text: "Actions",
+              text: this.$t("Actions"),
               //to: `/org/${this.orgNameSlug}/actions/${this.orgId}`
               to: {
                 name: "actions",
                 params: { orgNameSlug: this.orgNameSlug, orgId: this.orgId }
               }
             },
-            { text: "Templates", to: "/placeholder" }
+            { text: this.$t("Action templates"), to: "/placeholder" }
           ]
         },
         prioritize: {
-          text: "Prioritize",
+          text: this.$t("Prioritize"),
           icon: "poll",
           links: [
-            { text: "Priorities", to: "/placeholder" },
-            { text: "Resource allocation", to: "/placeholder" },
-            { text: "Roadmap", to: "/placeholder" }
+            { text: this.$t("Priorities"), to: "/placeholder" },
+            { text: this.$t("Resource allocation"), to: "/placeholder" },
+            { text: this.$t("Roadmap"), to: "/placeholder" }
           ]
         },
         achieve: {
-          text: "Achieve",
+          text: this.$t("Achieve"),
           icon: "whatshot",
           links: [
-            { text: "My current focus", to: "/placeholder" },
-            { text: "To do", to: "/placeholder" },
-            { text: "Time log", to: "/placeholder" },
-            { text: "My team's work", to: "/placeholder" }
+            { text: this.$t("My current focus"), to: "/placeholder" },
+            { text: this.$t("To do"), to: "/placeholder" },
+            { text: this.$t("Time log"), to: "/placeholder" },
+            { text: this.$t("My team's work"), to: "/placeholder" }
           ]
         }
       };
