@@ -5,7 +5,7 @@ module.exports = function(ctx) {
   return {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
-    boot: ["firebase", "router-auth"],
+    boot: ["firebase", "router-auth", "i18n"],
 
     css: ["app.styl"],
 
@@ -32,7 +32,7 @@ module.exports = function(ctx) {
       directives: ["Ripple", "ClosePopup", "TouchHold"],
 
       // Quasar plugins
-      plugins: ["Notify", "Dialog", "LocalStorage", "SessionStorage"]
+      plugins: ["Notify", "Dialog", "LocalStorage", "SessionStorage", "Cookies"]
     },
 
     build: {

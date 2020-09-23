@@ -20,6 +20,7 @@
     "object-sizeof": "^1.5.1",
     "quasar": "^1.12.8",
     "vue-google-charts": "^0.3.2",
+    "vue-i18n": "^8.21.1",
     "vue-mathjax": "0.0.11",
     "vuex-map-fields": "^1.4.0",
     "vuexfire": "^3.1.2",
