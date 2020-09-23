@@ -15,12 +15,23 @@
       <template v-slot:top>
         <div class="col-2 q-table__title">行動</div>
         <div class="row q-gutter-sm">
-          <q-btn color="primary" :disable="loading" label="新增" @click="showAddAction = true" />
+          <q-btn
+            color="primary"
+            :disable="loading"
+            label="新增"
+            @click="showAddAction = true"
+          />
           <calculator-ui calculationType="actions" buttonLabel="Recalculate" />
         </div>
 
         <q-space />
-        <q-input dense debounce="300" color="primary" v-model="filter" clearable>
+        <q-input
+          dense
+          debounce="300"
+          color="primary"
+          v-model="filter"
+          clearable
+        >
           <template v-slot:append>
             <q-icon name="search" />
           </template>
@@ -53,7 +64,7 @@ function getRelationshipsDisplay(row) {
 export default {
   components: {
     "add-action": require("components/Actions/Modals/AddAction.vue").default,
-    "calculator-ui": require("components/Calc/CalculatorUi.vue").default,
+    "calculator-ui": require("components/Calc/CalculatorUi.vue").default
   },
   data() {
     return {
@@ -65,7 +76,7 @@ export default {
         sortBy: "actionLeverage",
         descending: true,
         page: 1,
-        rowsPerPage: 10,
+        rowsPerPage: 10
         // rowsNumber: xx if getting data from a server
       },
       columns: [
@@ -73,20 +84,20 @@ export default {
           name: "actionLeverage",
           required: true,
           align: "right",
-          label: "行動 ROI",
+          label: "效應比",
           field: "actionLeverage",
-          format: (val) => `${formatNumber(val, 2)}`,
+          format: val => `${formatNumber(val, 2)}`,
           sortable: true,
-          sortBy: "desc",
+          sortBy: "desc"
         },
         {
           name: "state",
           align: "center",
           label: "狀態",
           field: "actionMchState",
-          format: (ams) => `${ams.value}`,
+          format: ams => `${ams.value}`,
           sortable: true,
-          sort: (a, b) => ("" + a.value).localeCompare(b.value),
+          sort: (a, b) => ("" + a.value).localeCompare(b.value)
         },
         {
           name: "title",
@@ -94,8 +105,8 @@ export default {
           label: "標題",
           align: "left",
           //field: row => row.id.substring(0, 2) + " " + row.title,
-          field: (row) => row.title,
-          sortable: true,
+          field: row => row.title,
+          sortable: true
         },
         /*{
           name: "isProject",
@@ -109,52 +120,51 @@ export default {
           align: "right",
           label: "總邊際效益",
           field: "marginalTotalBenefitNpv",
-          format: (val) => `${formatNumber(val, 3)}`,
-          sortable: true,
+          format: val => `${formatNumber(val, 3)}`,
+          sortable: true
         },
         {
           name: "cost",
           align: "right",
           label: "總邊際成本",
           field: "marginalTotalCostNpv",
-          format: (val) => `${formatNumber(val, 3)}`,
-          sortable: true,
+          format: val => `${formatNumber(val, 3)}`,
+          sortable: true
         },
         {
           name: "netBenefit",
           align: "right",
           label: "總淨邊際效益",
           field: "marginalNetTotalBenefitNpv",
-          format: (val) => `${formatNumber(val, 3)}`,
-          sortable: true,
+          format: val => `${formatNumber(val, 3)}`,
+          sortable: true
         },
-        /*
-        {
-          name: "totalRoi",
-          required: true,
-          align: "right",
-          label: "總 ROI",
-          field: "totalRoi",
-          format: (val) => `${formatNumber(val, 2)}`,
-          sortable: true,
-          sortBy: "desc",
-        }, */
         {
           name: "outstandingDirectCost",
           align: "right",
           label: "需再投入直接成本",
           field: "outstandingDirectCost",
-          format: (val) => `${formatNumber(val, 3)}`,
+          format: val => `${formatNumber(val, 3)}`,
+          sortable: true
+        },
+        {
+          name: "totalRoi",
+          required: true,
+          align: "right",
+          label: "SROI",
+          field: "totalRoi",
+          format: val => `${formatNumber(val, 2)}`,
           sortable: true,
+          sortBy: "desc"
         },
         {
           name: "effortCompletionRate",
           align: "right",
           label: "完成度",
           field: "effortCompletionPercentage",
-          format: (val) =>
+          format: val =>
             `${formatNumber(val, 3)}${typeof val == "number" ? "%" : ""}`,
-          sortable: true,
+          sortable: true
         },
         {
           name: "relationships",
@@ -163,8 +173,8 @@ export default {
           field: "childrenIds",
           //format: val => `${formatNumber(val, 3)}`,
           format: (val, row) => getRelationshipsDisplay(row),
-          sortable: false,
-        },
+          sortable: false
+        }
         /*{
           name: "dueDate",
           align: "center",
@@ -172,7 +182,7 @@ export default {
           field: "dueDate",
           sortable: true
         }*/
-      ],
+      ]
     };
   },
 
@@ -180,7 +190,7 @@ export default {
     //...mapGetters("settings", ["settings"]),
     ...mapState("actions", ["actions"]),
     ...mapState("uiAction", ["uiActionChanged"]),
-    ...mapState("ui", ["selectedActionId"]),
+    ...mapState("ui", ["selectedActionId"])
   },
 
   methods: {
@@ -197,7 +207,7 @@ export default {
             message:
               "Any changes you made will be lost. Really switch to another action?",
             cancel: true,
-            persistent: true,
+            persistent: true
           })
           .onOk(() => {
             this.$store.dispatch("ui/setSelectedActionId", row.id);
@@ -218,7 +228,7 @@ export default {
         this.data = [
           ...this.data.slice(0, index),
           addRow,
-          ...this.data.slice(index),
+          ...this.data.slice(index)
         ];
         this.loading = false;
       }, 500);
@@ -230,12 +240,12 @@ export default {
         const index = Math.floor(Math.random() * this.data.length);
         this.data = [
           ...this.data.slice(0, index),
-          ...this.data.slice(index + 1),
+          ...this.data.slice(index + 1)
         ];
         this.loading = false;
       }, 500);
-    },
-  },
+    }
+  }
 };
 </script>
 
