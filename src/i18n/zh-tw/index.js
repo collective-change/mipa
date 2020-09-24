@@ -32,8 +32,8 @@ export default {
   "Structure and permissions": "架構和權限",
   Performance: "績效",
 
-  Model_verb: "發展模型",
-  Model_noun: "模型",
+  ModelVerb: "發展模型",
+  ModelNoun: "模型",
   model: "發展模型",
   Units: "計量單位",
   "Update values": "更新數值",
@@ -42,7 +42,7 @@ export default {
 
   Ideate: "醞釀計畫",
   "Strategic analysis": "策略性分析",
-  Actions: "行動",
+  Actions: "行動提案",
   "Action templates": "行動模板",
 
   Prioritize: "訂出優先",

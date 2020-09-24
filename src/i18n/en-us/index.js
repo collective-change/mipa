@@ -32,8 +32,8 @@ export default {
   "Structure and permissions": "permissions",
   Performance: "Performance",
 
-  Model_verb: "Model",
-  Model_noun: "Model",
+  ModelVerb: "Model",
+  ModelNoun: "Model",
   model: "model",
   Units: "Units",
   "Update values": "Update values",
@@ -42,7 +42,7 @@ export default {
 
   Ideate: "Ideate",
   "Strategic analysis": "Strategic analysis",
-  Actions: "Actions",
+  Actions: "Action",
   "Action templates": "Action templates",
 
   Prioritize: "Prioritize",

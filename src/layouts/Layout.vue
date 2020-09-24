@@ -209,6 +209,11 @@
               >
             </div>
           </div>
+          <div class="q-py-md q-px-md text-grey-9">
+            <div class="row items-center q-gutter-x-sm q-gutter-y-xs">
+              User id: {{ userId }}
+            </div>
+          </div>
         </q-list>
       </q-scroll-area>
     </q-drawer>
@@ -229,6 +234,7 @@ export default {
   name: "MyLayout",
   data() {
     return {
+      userId: null,
       lang: this.$i18n.locale,
       langOptions: [
         { value: "en-us", label: "English" },
@@ -314,12 +320,12 @@ export default {
           ]
         },
         model: {
-          text: this.$t("Model_verb"),
+          text: this.$t("ModelVerb"),
           icon: "share",
           icon_class: "flip-horizontal",
           links: [
             {
-              text: this.$t("Model_noun"),
+              text: this.$t("ModelNoun"),
               to: `/org/${this.orgNameSlug}/model/${this.orgId}/${this.modelId}`
             },
             { text: this.$t("Units"), to: "/placeholder" },
@@ -418,6 +424,7 @@ export default {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       this.bindPublicData();
+      this.userId = firebaseAuth.currentUser.uid;
       let orgId = this.$route.params.orgId;
       if (orgId) {
         this.bindMinimalOrgRelatedData(orgId);
