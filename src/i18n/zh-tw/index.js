@@ -25,7 +25,7 @@ export default {
 
   //for linkGroups
   "My dashboard": "我的儀錶板",
-  "To do": "待辦",
+  "To do": "待辦事項",
   Organization: "組織",
   "Basic information": "基本資料",
 
