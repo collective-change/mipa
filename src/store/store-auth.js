@@ -49,7 +49,7 @@ const actions = {
   },
   handleAuthStateChange({ commit, dispatch }) {
     firebaseAuth.onAuthStateChanged(user => {
-      //Loading.hide();
+      Loading.hide();
       if (user) {
         // User is signed in.
         commit("setLoggedIn", true);
