@@ -316,7 +316,10 @@ export default {
               text: this.$t("Structure and permissions"),
               to: "/organizations/structure-and-permissions"
             },
-            { text: this.$t("Performance"), to: "/organization/performance" }
+            {
+              text: this.$t("Performance and certification"),
+              to: "/organization/performance-and-certification"
+            }
           ]
         },
         model: {

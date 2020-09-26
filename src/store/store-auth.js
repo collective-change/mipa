@@ -44,7 +44,7 @@ const actions = {
   },
   logoutUser({ dispatch }) {
     //this.detachUserTasksListener();
-    dispatch("tasks/detachUserTasksListenerAction", null, { root: true });
+    //dispatch("tasks/detachUserTasksListenerAction", null, { root: true });
     firebaseAuth.signOut();
   },
   handleAuthStateChange({ commit, dispatch }) {
@@ -65,6 +65,7 @@ const actions = {
         //commit("tasks/clearTasks", null, { root: true });
         //commit("tasks/setTasksDownloaded", false, { root: true });
         commit("orgs/clearOrgs", null, { root: true });
+        //TODO: clear other data from store
         //commit("orgs/setOrgsDownloaded", false, { root: true });
       }
     });

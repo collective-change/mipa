@@ -11,6 +11,7 @@ export default {
   Login: "登入",
   Account: "帳戶",
   Home: "首頁",
+  home: "首頁",
   Settings: "設定",
   Help: "協助",
   SendFeedback: "回饋",
@@ -30,7 +31,7 @@ export default {
 
   Users: "使用者",
   "Structure and permissions": "架構和權限",
-  Performance: "績效",
+  "Performance and certification": "績效和認證",
 
   ModelVerb: "發展模型",
   ModelNoun: "模型",

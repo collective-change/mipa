@@ -11,6 +11,7 @@ export default {
   Login: "Log in",
   Account: "Account",
   Home: "Home",
+  home: "home",
   Settings: "Settings",
   Help: "Help",
   SendFeedback: "Send feedback",
@@ -30,7 +31,7 @@ export default {
 
   Users: "User",
   "Structure and permissions": "permissions",
-  Performance: "Performance",
+  "Performance and certification": "Performance and certification",
 
   ModelVerb: "Model",
   ModelNoun: "Model",
