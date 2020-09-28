@@ -34,7 +34,7 @@
             filled
             autogrow
             style="width: 30em;"
-          />
+          />{{ impact.thenText }}
         </div>
         <div class="q-gutter-sm row items-center">
           <div>That is,</div>
@@ -64,7 +64,7 @@
             autogrow
             :suffix="unitDisplay"
             :style="'width: ' + operandFieldWidthEm + 'em; max-width: 30em'"
-          />
+          />{{ impact.operand }}
           <q-select
             filled
             v-model="impact.durationType"
@@ -122,7 +122,9 @@ export default {
         id: null,
         impactType: "if_done",
         hasDeadline: false,
+        thenText: null,
         operation: "+",
+        operand: null,
         durationType: "for_period",
         durationUnit: "months"
       },
