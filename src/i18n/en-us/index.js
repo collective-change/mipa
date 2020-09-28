@@ -29,8 +29,8 @@ export default {
   Organization: "Organization",
   "Basic information": "Basic information",
 
-  Users: "User",
-  "Structure and permissions": "permissions",
+  Users: "Users",
+  "Structure and permissions": "Structure and permissions",
   "Performance and certification": "Performance and certification",
 
   ModelVerb: "Model",
