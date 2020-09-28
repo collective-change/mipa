@@ -1,7 +1,9 @@
 <template>
   <q-card style="max-width:1500px; width:1000px">
     <q-card-section>
-      <modal-header v-slot:header>{{ addOrEdit }} impact</modal-header>
+      <modal-header
+        ><template v-slot:header>{{ addOrEdit }} impact</template></modal-header
+      >
     </q-card-section>
 
     <q-form @submit.prevent="submitImpact">
@@ -34,7 +36,7 @@
             filled
             autogrow
             style="width: 30em;"
-          />{{ impact.thenText }}
+          />
         </div>
         <div class="q-gutter-sm row items-center">
           <div>That is,</div>
@@ -64,7 +66,7 @@
             autogrow
             :suffix="unitDisplay"
             :style="'width: ' + operandFieldWidthEm + 'em; max-width: 30em'"
-          />{{ impact.operand }}
+          />
           <q-select
             filled
             v-model="impact.durationType"
@@ -122,9 +124,9 @@ export default {
         id: null,
         impactType: "if_done",
         hasDeadline: false,
-        thenText: null,
+        thenText: "",
         operation: "+",
-        operand: null,
+        operand: "",
         durationType: "for_period",
         durationUnit: "months"
       },
