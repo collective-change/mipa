@@ -175,6 +175,10 @@ export default {
       ],
       durationTypeOptions: [
         {
+          label: "forever",
+          value: "forever"
+        },
+        {
           label: "just once",
           value: "just_once"
         },
@@ -185,10 +189,6 @@ export default {
         {
           label: "with half life of",
           value: "with_half_life"
-        },
-        {
-          label: "forever",
-          value: "forever"
         }
       ],
       durationUnitOptions: [
