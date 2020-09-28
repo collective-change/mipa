@@ -152,6 +152,78 @@
               hide-selected
               fill-input
             />
+            <!-- four new role nodes -->
+            <q-select
+              label="Cost to organization"
+              v-model="modelToSubmit.roleNodes.costToOrg"
+              @filter="filterFn"
+              @filter-abort="abortFilterFn"
+              :options="filteredNodeOptions"
+              :rules="[val => !!val || 'Field is required']"
+              emit-value
+              map-options
+              filled
+              use-input
+              hide-selected
+              fill-input
+            />
+            <q-select
+              label="Cost to world"
+              v-model="modelToSubmit.roleNodes.costToWorld"
+              @filter="filterFn"
+              @filter-abort="abortFilterFn"
+              :options="filteredNodeOptions"
+              :rules="[val => !!val || 'Field is required']"
+              emit-value
+              map-options
+              filled
+              use-input
+              hide-selected
+              fill-input
+            />
+            <q-select
+              label="Benefit to organization"
+              v-model="modelToSubmit.roleNodes.benefitToOrg"
+              @filter="filterFn"
+              @filter-abort="abortFilterFn"
+              :options="filteredNodeOptions"
+              :rules="[val => !!val || 'Field is required']"
+              emit-value
+              map-options
+              filled
+              use-input
+              hide-selected
+              fill-input
+            />
+            <q-select
+              label="Benefit to world"
+              v-model="modelToSubmit.roleNodes.benefitToWorld"
+              @filter="filterFn"
+              @filter-abort="abortFilterFn"
+              :options="filteredNodeOptions"
+              :rules="[val => !!val || 'Field is required']"
+              emit-value
+              map-options
+              filled
+              use-input
+              hide-selected
+              fill-input
+            />
+            <div class="text-h6">Benevolence ratio</div>
+            <q-slider
+              v-model.number="
+                modelToSubmit.simulationParams.worldToOrgWeightingRatio
+              "
+              :min="0"
+              :max="1"
+              :step="0.01"
+              color="primary"
+            />
+            <q-badge color="primary">
+              Self
+              {{ modelToSubmit.simulationParams.worldWeightingFactor }} :
+              {{ modelToSubmit.simulationParams.orgWeightingFactor }} World
+            </q-badge>
           </q-card-section>
         </div>
       </div>
@@ -219,6 +291,9 @@ export default {
       return this.nodes.map(node => {
         return { label: node.name, value: node.id };
       });
+    },
+    worldToOrgWeightingRatio() {
+      return this.modelToSubmit.simulationParams.worldToOrgWeightingRatio;
     }
   },
   methods: {
@@ -266,6 +341,18 @@ export default {
       if (newVal) {
         this.modelToSubmit.simulationParams.finalTimeNumber = newVal.number;
         this.modelToSubmit.simulationParams.finalTimeUnit = newVal.unit;
+      }
+    },
+
+    worldToOrgWeightingRatio(ratio) {
+      if (ratio <= 0.5) {
+        this.modelToSubmit.simulationParams.worldWeightingFactor = 1;
+        this.modelToSubmit.simulationParams.orgWeightingFactor =
+          Math.round((ratio / (1 - ratio)) * 100) / 100;
+      } else {
+        this.modelToSubmit.simulationParams.orgWeightingFactor = 1;
+        this.modelToSubmit.simulationParams.worldWeightingFactor =
+          Math.round(((1 - ratio) / ratio) * 100) / 100;
       }
     }
   }
