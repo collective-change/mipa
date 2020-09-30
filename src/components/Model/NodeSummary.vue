@@ -32,7 +32,7 @@
               'Cannot start with a number',
             val =>
               this.isAlphanumeric(val) ||
-              'Only alphanumeric characters and underscores allowed'
+              'Only alphanumeric characters and underscores supported'
           ]"
         />
         <q-markup-table flat bordered v-if="influencerNodesInfo.length">
