@@ -1,9 +1,11 @@
 <template>
   <q-card>
-    <modal-header v-if="modelToSubmit.isOrgMainModel" v-slot:header
-      >Configure main model</modal-header
+    <modal-header v-if="modelToSubmit.isOrgMainModel"
+      ><template v-slot:header>Configure main model</template></modal-header
     >
-    <modal-header v-else v-slot:header>Configure model</modal-header>
+    <modal-header v-else
+      ><template v-slot:header>Configure model</template></modal-header
+    >
 
     <q-form @submit.prevent="submitModel">
       <q-card-section>
