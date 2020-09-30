@@ -141,7 +141,7 @@ export default {
       .attr("text-anchor", "middle")
       .attr("x", 0)
       .attr("y", -20)
-      .text("leverage");
+      .text("Leverage");
     // end initialize axis
   },
 
