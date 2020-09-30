@@ -156,7 +156,10 @@ export default {
       if (this.blockingRelationships)
         return this.actions
           .filter(
-            action => action.actionLeverage > 0 && action.estEffortHrs > 0
+            action =>
+              action.actionLeverage > 0 &&
+              isFinite(action.actionLeverage) &&
+              action.estEffortHrs > 0
           )
           .sort(function(a, b) {
             return b.ownDirectCost - a.ownDirectCost;
