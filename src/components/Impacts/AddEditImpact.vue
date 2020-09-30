@@ -233,7 +233,7 @@ export default {
     },
     operandFieldWidthEm() {
       let operandWidthEm = 4;
-      if (typeof this.impact.operand != "undefined") {
+      if (this.impact.operand !== undefined) {
         operandWidthEm = Math.min(
           20,
           Math.max(operandWidthEm, this.impact.operand.length * 0.6)
@@ -276,7 +276,7 @@ export default {
 
     getNodeUnit(nodeId) {
       const found = this.nodes.find(node => node.id == nodeId);
-      return found.unit;
+      return found.unit == undefined ? "" : found.unit;
     },
 
     submitImpact() {

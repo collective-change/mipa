@@ -158,16 +158,17 @@ export default {
       model: null,
       parserError: "",
 
-      nodeChart: {},
-      /*chartData: [],
-      chartOptions: {
-        vAxis: { scaleType: "linear" },
-        legend: { position: "none" },
+      nodeChart: {
+        chartData: [],
+        chartOptions: {
+          vAxis: { scaleType: "linear" },
+          legend: { position: "none" }
 
-        title: this.getNodeName(nodeId),
+          /*title: this.getNodeName(nodeId),
         vAxis: { title: this.getNodeUnit(nodeId), scaleType: "linear" },
-        legend: { position: "none" },
-      },*/
+        legend: { position: "none" },*/
+        }
+      },
       influencerChartsArr: []
     };
   },
