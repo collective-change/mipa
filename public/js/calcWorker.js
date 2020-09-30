@@ -266,21 +266,21 @@ async function simulateActionWithDependencies(
   let blockees = [];
   //get blockees
   if (action.blockeeActionIds && action.blockeeActionIds.length) {
-    console.log("blockeeActionIds", action.blockeeActionIds);
+    //console.log("blockeeActionIds", action.blockeeActionIds);
     blockees = await getActionsFromFirestoreAndUpdateWithNewestValues(
       action.blockeeActionIds
     );
 
-    console.log("blockees", blockees);
+    //console.log("blockees", blockees);
   }
   //sort blockees by descending leverage
   blockees.sort(function(a, b) {
     return b.actionLeverage - a.actionLeverage;
   });
-  if (blockees.length) console.log("blockees for", action.title, blockees);
+  //if (blockees.length) console.log("blockees for", action.title, blockees);
   //include each blockee until resulting leverage drops
   while (blockees.length && blockees[0].actionLeverage > highestLeverageFound) {
-    console.log("blockee leverage", blockees[0].actionLeverage);
+    //console.log("blockee leverage", blockees[0].actionLeverage);
     testCostsAndImpacts = includeActionInCostsAndImpacts(
       blockees[0],
       testCostsAndImpacts
@@ -402,7 +402,7 @@ function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
     ...testCostsAndImpacts.impacts
   ];
 
-  console.log("impactsToSimulate", impactsToSimulate);
+  //console.log("impactsToSimulate", impactsToSimulate);
 
   //TODO: gather begin and end times
   impactsToSimulate.forEach(function(impact) {
@@ -677,8 +677,8 @@ function iterateThroughTime(sim, scenario) {
 
   let timeSPoints = sim.defaultTimeSPoints;
 
-  let completedLoops = 0;
-  let expectedUnit = null;
+  /*let completedLoops = 0;
+  let expectedUnit = null;*/
 
   timeSPoints.forEach(function(timeS, timeSIndex) {
     sim.scope.timeS = timeS;
@@ -691,45 +691,56 @@ function iterateThroughTime(sim, scenario) {
     }
     // evaluate the expressions for each node
     sim.compiledExpressions.forEach(function(code, nodeIndex) {
-      if (!sim.errorOccurred)
-        try {
-          //TODO: if timeS == initialTimeS then evaluate current value
-          //TODO: if simulating an action, set a changedFromBaseline
-          //flag for each node. If influencer nodes of the current node
-          //haven't changed for this iteration, then use the baseline's
-          //value instead of evaluating.
-          if (sim.sortedNodes[nodeIndex].id == "4Y160pX7YePRYFzYlyV5") {
-            console.log("code", code.toString());
-          }
-          code.evaluate(sim.scope);
-          if (sim.sortedNodes[nodeIndex].id == "4Y160pX7YePRYFzYlyV5") {
-            console.log("done evaluation for 4Y160pX7YePRYFzYlyV5");
-          }
+      if (!sim.errorOccurred) {
+        /*if (sim.sortedNodes[nodeIndex].id == "JjPn4UTYMcsaoUCeYRyn") {
+          console.log(code.evaluate);
+        }*/
 
-          if (scenario.type == "action") {
-            //adjust the node value by action's impacts
-            //loop through each of action's impacts to see if it impacts the node just calculated
-            //TODO: sort impacts by order of impact.operation (=, *, / , +, -)
-            scenario.impactsToSimulate.forEach(function(impact) {
-              if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
-                if (impact.impactType == scenario.impactType)
-                  doImpactIfItAffectsCurrentTime(sim, timeS, nodeIndex, impact);
-              }
-            });
-          }
-          //on first 2 loops, check result of evaluation against units expected by user.
-          if (timeSIndex < 2) checkUnits(sim, nodeIndex);
+        //TODO: if timeS == initialTimeS then evaluate current value
+        //TODO: if simulating an action, set a changedFromBaseline
+        //flag for each node. If influencer nodes of the current node
+        //haven't changed for this iteration, then use the baseline's
+        //value instead of evaluating.
+        try {
+          code.evaluate(sim.scope);
+          /*if (sim.sortedNodes[nodeIndex].id == "JjPn4UTYMcsaoUCeYRyn") {
+          console.log("done evaluation for JjPn4UTYMcsaoUCeYRyn");
+        }*/
         } catch (err) {
+          sim.errorOccurred = true;
           self.postMessage({
             errorType: "evaluation error",
             errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err} <br/> ${nodeIndex}`
           });
-          sim.errorOccurred = true;
         }
-      if (sim.errorOccurred) return;
+
+        if (sim.errorOccurred) return;
+
+        if (scenario.type == "action") {
+          //adjust the node value by action's impacts
+          //loop through each of action's impacts to see if it impacts the node just calculated
+          //TODO: sort impacts by order of impact.operation (=, *, / , +, -)
+          scenario.impactsToSimulate.forEach(function(impact) {
+            if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
+              if (impact.impactType == scenario.impactType)
+                try {
+                  doImpactIfItAffectsCurrentTime(sim, timeS, nodeIndex, impact);
+                } catch (err) {
+                  sim.errorOccurred = true;
+                  self.postMessage({
+                    errorType: "adjustment by impact error",
+                    errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}", impact operation "${impact.operation}" <br/> ${err} <br/> ${nodeIndex}`
+                  });
+                }
+            }
+          });
+        }
+        //on first 2 loops, check result of evaluation against units expected by user.
+        if (timeSIndex < 2) checkUnits(sim, nodeIndex);
+      }
+      //if (sim.errorOccurred) return;
     });
     if (!sim.errorOccurred) composeTimeSeries(sim);
-    if (sim.errorOccurred) return;
   });
 
   if (scenario.type == "baseline")
@@ -770,19 +781,23 @@ function doImpact(sim, nodeIndex, impact, operandScalingFactor = 1) {
     case "+":
       sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.add(
         sim.scope["$" + sim.sortedNodes[nodeIndex].id],
-        math.multiply(
-          impact.operand * operandScalingFactor,
-          sim.expectedUnits[nodeIndex]
-        )
+        sim.expectedUnits[nodeIndex].units.length
+          ? math.multiply(
+              impact.operand * operandScalingFactor,
+              sim.expectedUnits[nodeIndex]
+            )
+          : impact.operand * operandScalingFactor
       );
       break;
     case "-":
       sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.subtract(
         sim.scope["$" + sim.sortedNodes[nodeIndex].id],
-        math.multiply(
-          impact.operand * operandScalingFactor,
-          sim.expectedUnits[nodeIndex]
-        )
+        sim.expectedUnits[nodeIndex].units.length
+          ? math.multiply(
+              impact.operand * operandScalingFactor,
+              sim.expectedUnits[nodeIndex]
+            )
+          : impact.operand * operandScalingFactor
       );
       break;
     case "*":
@@ -798,10 +813,14 @@ function doImpact(sim, nodeIndex, impact, operandScalingFactor = 1) {
       );
       break;
     case "=":
-      sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.multiply(
-        impact.operand * operandScalingFactor,
-        sim.expectedUnits[nodeIndex]
-      );
+      sim.scope["$" + sim.sortedNodes[nodeIndex].id] = sim.expectedUnits[
+        nodeIndex
+      ].units.length
+        ? math.multiply(
+            impact.operand * operandScalingFactor,
+            sim.expectedUnits[nodeIndex]
+          )
+        : impact.operand * operandScalingFactor;
       break;
   }
 }
@@ -816,7 +835,7 @@ function doImpactWithHalfLife(sim, nodeIndex, impact) {
 
 function checkUnits(sim, nodeIndex) {
   expectedUnit = sim.expectedUnits[nodeIndex];
-  if (sim.sortedNodes[nodeIndex].id == "4Y160pX7YePRYFzYlyV5") {
+  /*if (sim.sortedNodes[nodeIndex].id == "4Y160pX7YePRYFzYlyV5") {
     console.log("problem node");
     let expectedUnitSnapshot = JSON.parse(JSON.stringify(expectedUnit));
     let calculated = JSON.parse(
@@ -824,7 +843,7 @@ function checkUnits(sim, nodeIndex) {
     );
     console.log("expectedUnit", expectedUnitSnapshot);
     console.log("calculated", calculated);
-  }
+  }*/
   if (
     // calculation result is a unitless number and the expected isn't
     (typeof sim.scope["$" + sim.sortedNodes[nodeIndex].id] == "number" &&
