@@ -415,8 +415,12 @@ function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
 
   //gather nodes for which to extract and save timeSeries
   let onlyNodeIds = [];
-  onlyNodeIds.push(sim.roleNodes.combinedBenefit);
-  onlyNodeIds.push(sim.roleNodes.combinedCost);
+  onlyNodeIds.push(sim.roleNodes.orgBenefit);
+  onlyNodeIds.push(sim.roleNodes.orgCost);
+  onlyNodeIds.push(sim.roleNodes.worldBenefit);
+  onlyNodeIds.push(sim.roleNodes.worldCost);
+  //onlyNodeIds.push(sim.roleNodes.combinedBenefit);
+  //onlyNodeIds.push(sim.roleNodes.combinedCost);
   onlyNodeIds.push(sim.roleNodes.effort);
   onlyNodeIds.push(sim.roleNodes.spending);
   impactsToSimulate.forEach(function(impact) {
@@ -580,17 +584,72 @@ function calcActionResultsFromTimeSeries(
   yearlyDiscountRate
 ) {
   //prepare inputs for calculating NPVs
-  let ifDoneTotalBenefitSeries =
+  let ifDoneOrgBenefitSeries =
+    ifDoneTimeSeriesNodesValues[roleNodes.orgBenefit];
+  let ifNotDoneOrgBenefitSeries =
+    ifNotDoneTimeSeriesNodesValues[roleNodes.orgBenefit];
+  let ifDoneOrgCostSeries = ifDoneTimeSeriesNodesValues[roleNodes.orgCost];
+  let ifNotDoneOrgCostSeries =
+    ifNotDoneTimeSeriesNodesValues[roleNodes.orgCost];
+
+  let ifDoneWorldBenefitSeries =
+    ifDoneTimeSeriesNodesValues[roleNodes.worldBenefit];
+  let ifNotDoneWorldBenefitSeries =
+    ifNotDoneTimeSeriesNodesValues[roleNodes.worldBenefit];
+  let ifDoneWorldCostSeries = ifDoneTimeSeriesNodesValues[roleNodes.worldCost];
+  let ifNotDoneWorldCostSeries =
+    ifNotDoneTimeSeriesNodesValues[roleNodes.worldCost];
+
+  /*let ifDoneTotalBenefitSeries =
     ifDoneTimeSeriesNodesValues[roleNodes.combinedBenefit];
   let ifNotDoneTotalBenefitSeries =
     ifNotDoneTimeSeriesNodesValues[roleNodes.combinedBenefit];
   let ifDoneTotalCostSeries =
     ifDoneTimeSeriesNodesValues[roleNodes.combinedCost];
   let ifNotDoneTotalCostSeries =
-    ifNotDoneTimeSeriesNodesValues[roleNodes.combinedCost];
+    ifNotDoneTimeSeriesNodesValues[roleNodes.combinedCost];*/
+
+  /* console.log(
+    "org",
+    ifDoneOrgBenefitSeries.length,
+    ifNotDoneOrgBenefitSeries.length,
+    ifDoneOrgCostSeries.length,
+    ifNotDoneOrgCostSeries.length
+  );*/
 
   //calculate NPVs
-  let marginalTotalBenefitNpv = getMarginalNpv(
+  let marginalOrgBenefitNpv = getMarginalNpv(
+    ifDoneOrgBenefitSeries,
+    ifNotDoneOrgBenefitSeries,
+    timeSPoints,
+    yearlyDiscountRate
+  );
+
+  let marginalOrgCostNpv = getMarginalNpv(
+    ifDoneOrgCostSeries,
+    ifNotDoneOrgCostSeries,
+    timeSPoints,
+    yearlyDiscountRate
+  );
+
+  let marginalWorldBenefitNpv = getMarginalNpv(
+    ifDoneWorldBenefitSeries,
+    ifNotDoneWorldBenefitSeries,
+    timeSPoints,
+    yearlyDiscountRate
+  );
+
+  let marginalWorldCostNpv = getMarginalNpv(
+    ifDoneWorldCostSeries,
+    ifNotDoneWorldCostSeries,
+    timeSPoints,
+    yearlyDiscountRate
+  );
+
+  let marginalTotalBenefitNpv = marginalOrgBenefitNpv + marginalWorldBenefitNpv;
+  let marginalTotalCostNpv = marginalOrgCostNpv + marginalWorldCostNpv;
+
+  /*let marginalTotalBenefitNpv = getMarginalNpv(
     ifDoneTotalBenefitSeries,
     ifNotDoneTotalBenefitSeries,
     timeSPoints,
@@ -602,7 +661,7 @@ function calcActionResultsFromTimeSeries(
     ifNotDoneTotalCostSeries,
     timeSPoints,
     yearlyDiscountRate
-  );
+  );*/
 
   //calculate actionLeverage and prepare results
   let marginalNetTotalBenefitNpv =
@@ -641,9 +700,9 @@ function getMarginalNpv(
   let tYears; //time since beginning of simulation in years
   let doneMinusNotDone;
   let Rt; //the Rt in NPV formula: sum over t of Rt/(1+i)^t
-  let npvIncrement, denominator;
+  //let npvIncrement, denominator;
   let npv = 0;
-  let debuggingArr = [];
+  //let debuggingArr = [];
   timeSPoints.forEach(function(timeS, index) {
     doneMinusNotDone = ifDoneSeries[index] - ifNotDoneSeries[index];
     //if (index == 0) prevDoneMinusNotDone = 0;
@@ -953,6 +1012,8 @@ function prepEnvironment(data) {
       data.simulationParams.timeStepUnit
     ) //delta time
   };
+
+  //console.log("roleNodes", sim.roleNodes);
 
   sim.calcTimeLog.push({ stage: "start", endTime: new Date() });
   self.postMessage({ progressValue: 0 });

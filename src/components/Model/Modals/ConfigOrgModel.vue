@@ -130,7 +130,7 @@
 
             <q-select
               label="Cost to organization during interval"
-              v-model="modelToSubmit.roleNodes.costToOrg"
+              v-model="modelToSubmit.roleNodes.orgCost"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
@@ -144,7 +144,7 @@
             />
             <q-select
               label="Cost to world during interval"
-              v-model="modelToSubmit.roleNodes.costToWorld"
+              v-model="modelToSubmit.roleNodes.worldCost"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
@@ -158,7 +158,7 @@
             />
             <q-select
               label="Benefit to organization during interval"
-              v-model="modelToSubmit.roleNodes.benefitToOrg"
+              v-model="modelToSubmit.roleNodes.orgBenefit"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
@@ -172,7 +172,7 @@
             />
             <q-select
               label="Benefit to world during interval"
-              v-model="modelToSubmit.roleNodes.benefitToWorld"
+              v-model="modelToSubmit.roleNodes.worldBenefit"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
