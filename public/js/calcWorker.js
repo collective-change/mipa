@@ -605,12 +605,6 @@ function calcActionResultsFromTimeSeries(
   );
 
   //calculate actionLeverage and prepare results
-  /*let totalRoi = marginalTotalBenefitNpv / marginalTotalCostNpv;
-  let actionLeverage =
-    ((marginalTotalBenefitNpv * marginalTotalBenefitNpv) /
-      (marginalTotalCostNpv * outstandingDirectCosts)) *
-    Math.sign(marginalTotalBenefitNpv) *
-    Math.sign(outstandingDirectCosts); */
   let marginalNetTotalBenefitNpv =
     marginalTotalBenefitNpv - marginalTotalCostNpv;
   let marginalTotalCostExcludingAction =
@@ -618,13 +612,9 @@ function calcActionResultsFromTimeSeries(
   let totalRoi =
     marginalNetTotalBenefitNpv /
     (outstandingDirectCosts + math.max(0, marginalTotalCostExcludingAction));
-  //let actionRoi = marginalNetTotalBenefitNpv / outstandingDirectCosts;
   let actionLeverage =
     ((marginalNetTotalBenefitNpv * totalRoi) / outstandingDirectCosts) *
     Math.sign(marginalNetTotalBenefitNpv);
-  /*Math.sign(outstandingDirectCosts);*/
-  //let actionLeverage = marginalNetTotalBenefitNpv / outstandingDirectCosts;
-  //let actionRoi = marginalNetTotalBenefitNpv / outstandingDirectCosts;
 
   if (isNaN(totalRoi)) totalRoi = null;
   if (isNaN(actionLeverage)) actionLeverage = null;

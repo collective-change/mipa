@@ -68,21 +68,22 @@
               <q-input
                 v-model.number="modelToSubmit.simulationParams.finalTimeNumber"
                 label="final time"
+                :suffix="modelToSubmit.simulationParams.finalTimeUnit"
                 readonly
               />
-              <q-select
+              <!--<q-select
                 v-model="modelToSubmit.simulationParams.finalTimeUnit"
                 :options="timeUnitOptions"
                 label="units"
                 emit-value
                 map-options
                 readonly
-              />
+              />-->
             </div>
           </q-card-section>
         </div>
-        <div class="col">
-          <q-card-section v-if="modelToSubmit.isOrgMainModel">
+        <div class="col" v-if="modelToSubmit.isOrgMainModel">
+          <q-card-section>
             <div class="text-h6">Node assignments</div>
             <q-select
               label="Average effort cost per hour"
@@ -126,6 +127,80 @@
               hide-selected
               fill-input
             />
+
+            <q-select
+              label="Cost to organization during interval"
+              v-model="modelToSubmit.roleNodes.costToOrg"
+              @filter="filterFn"
+              @filter-abort="abortFilterFn"
+              :options="filteredNodeOptions"
+              :rules="[val => !!val || 'Field is required']"
+              emit-value
+              map-options
+              filled
+              use-input
+              hide-selected
+              fill-input
+            />
+            <q-select
+              label="Cost to world during interval"
+              v-model="modelToSubmit.roleNodes.costToWorld"
+              @filter="filterFn"
+              @filter-abort="abortFilterFn"
+              :options="filteredNodeOptions"
+              :rules="[val => !!val || 'Field is required']"
+              emit-value
+              map-options
+              filled
+              use-input
+              hide-selected
+              fill-input
+            />
+            <q-select
+              label="Benefit to organization during interval"
+              v-model="modelToSubmit.roleNodes.benefitToOrg"
+              @filter="filterFn"
+              @filter-abort="abortFilterFn"
+              :options="filteredNodeOptions"
+              :rules="[val => !!val || 'Field is required']"
+              emit-value
+              map-options
+              filled
+              use-input
+              hide-selected
+              fill-input
+            />
+            <q-select
+              label="Benefit to world during interval"
+              v-model="modelToSubmit.roleNodes.benefitToWorld"
+              @filter="filterFn"
+              @filter-abort="abortFilterFn"
+              :options="filteredNodeOptions"
+              :rules="[val => !!val || 'Field is required']"
+              emit-value
+              map-options
+              filled
+              use-input
+              hide-selected
+              fill-input
+            />
+            <div class="text-subtitle2">Benevolence ratio</div>
+            <q-slider
+              v-model.number="
+                modelToSubmit.simulationParams.worldToOrgWeightingRatio
+              "
+              :min="0"
+              :max="1"
+              :step="0.01"
+              color="primary"
+            />
+            <div style="position: relative" class="q-mb-lg">
+              <q-badge color="primary" class="q-mb-sm absolute-center">
+                Self
+                {{ modelToSubmit.simulationParams.worldWeightingFactor }} :
+                {{ modelToSubmit.simulationParams.orgWeightingFactor }} World
+              </q-badge>
+            </div>
             <q-select
               label="Combined benefit for interval (before subtracting costs and investments)"
               v-model="modelToSubmit.roleNodes.combinedBenefit"
@@ -154,78 +229,6 @@
               hide-selected
               fill-input
             />
-            <!-- four new role nodes -->
-            <q-select
-              label="Cost to organization"
-              v-model="modelToSubmit.roleNodes.costToOrg"
-              @filter="filterFn"
-              @filter-abort="abortFilterFn"
-              :options="filteredNodeOptions"
-              :rules="[val => !!val || 'Field is required']"
-              emit-value
-              map-options
-              filled
-              use-input
-              hide-selected
-              fill-input
-            />
-            <q-select
-              label="Cost to world"
-              v-model="modelToSubmit.roleNodes.costToWorld"
-              @filter="filterFn"
-              @filter-abort="abortFilterFn"
-              :options="filteredNodeOptions"
-              :rules="[val => !!val || 'Field is required']"
-              emit-value
-              map-options
-              filled
-              use-input
-              hide-selected
-              fill-input
-            />
-            <q-select
-              label="Benefit to organization"
-              v-model="modelToSubmit.roleNodes.benefitToOrg"
-              @filter="filterFn"
-              @filter-abort="abortFilterFn"
-              :options="filteredNodeOptions"
-              :rules="[val => !!val || 'Field is required']"
-              emit-value
-              map-options
-              filled
-              use-input
-              hide-selected
-              fill-input
-            />
-            <q-select
-              label="Benefit to world"
-              v-model="modelToSubmit.roleNodes.benefitToWorld"
-              @filter="filterFn"
-              @filter-abort="abortFilterFn"
-              :options="filteredNodeOptions"
-              :rules="[val => !!val || 'Field is required']"
-              emit-value
-              map-options
-              filled
-              use-input
-              hide-selected
-              fill-input
-            />
-            <div class="text-h6">Benevolence ratio</div>
-            <q-slider
-              v-model.number="
-                modelToSubmit.simulationParams.worldToOrgWeightingRatio
-              "
-              :min="0"
-              :max="1"
-              :step="0.01"
-              color="primary"
-            />
-            <q-badge color="primary">
-              Self
-              {{ modelToSubmit.simulationParams.worldWeightingFactor }} :
-              {{ modelToSubmit.simulationParams.orgWeightingFactor }} World
-            </q-badge>
           </q-card-section>
         </div>
       </div>
