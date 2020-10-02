@@ -648,10 +648,14 @@ function calcActionResultsFromTimeSeries(
   );
 
   //TODO: use benevolence ratio (sim.)
-  console.log("world weight", sim.params.worldWeightingFactor);
-  console.log("org weight", sim.params.orgWeightingFactor);
-  let marginalTotalBenefitNpv = marginalOrgBenefitNpv + marginalWorldBenefitNpv;
-  let marginalTotalCostNpv = marginalOrgCostNpv + marginalWorldCostNpv;
+  let worldWeightingFactor = sim.params.worldWeightingFactor;
+  let orgWeightingFactor = sim.params.orgWeightingFactor;
+  let marginalTotalBenefitNpv =
+    marginalOrgBenefitNpv * orgWeightingFactor +
+    marginalWorldBenefitNpv * worldWeightingFactor;
+  let marginalTotalCostNpv =
+    marginalOrgCostNpv * orgWeightingFactor +
+    marginalWorldCostNpv * worldWeightingFactor;
 
   /*let marginalTotalBenefitNpv = getMarginalNpv(
     ifDoneTotalBenefitSeries,
