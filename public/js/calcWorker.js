@@ -480,8 +480,7 @@ function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
     ifDoneNodesValues,
     ifNotDoneNodesValues,
     timeSPoints,
-    sim.roleNodes,
-    sim.yearlyDiscountRate
+    sim
   );
 
   let simulateCostsAndImpactsResults = {
@@ -580,9 +579,11 @@ function calcActionResultsFromTimeSeries(
   ifDoneTimeSeriesNodesValues,
   ifNotDoneTimeSeriesNodesValues,
   timeSPoints,
-  roleNodes,
-  yearlyDiscountRate
+  sim
 ) {
+  let roleNodes = sim.roleNodes;
+  let yearlyDiscountRate = sim.yearlyDiscountRate;
+
   //prepare inputs for calculating NPVs
   let ifDoneOrgBenefitSeries =
     ifDoneTimeSeriesNodesValues[roleNodes.orgBenefit];
@@ -646,6 +647,9 @@ function calcActionResultsFromTimeSeries(
     yearlyDiscountRate
   );
 
+  //TODO: use benevolence ratio (sim.)
+  console.log("world weight", sim.params.worldWeightingFactor);
+  console.log("org weight", sim.params.orgWeightingFactor);
   let marginalTotalBenefitNpv = marginalOrgBenefitNpv + marginalWorldBenefitNpv;
   let marginalTotalCostNpv = marginalOrgCostNpv + marginalWorldCostNpv;
 

@@ -197,8 +197,8 @@
             <div style="position: relative" class="q-mb-lg">
               <q-badge color="primary" class="q-mb-sm absolute-center">
                 Self
-                {{ modelToSubmit.simulationParams.worldWeightingFactor }} :
-                {{ modelToSubmit.simulationParams.orgWeightingFactor }} World
+                {{ modelToSubmit.simulationParams.orgWeightingFactor }} :
+                {{ modelToSubmit.simulationParams.worldWeightingFactor }} World
               </q-badge>
             </div>
             <q-select
@@ -351,12 +351,12 @@ export default {
 
     worldToOrgWeightingRatio(ratio) {
       if (ratio <= 0.5) {
-        this.modelToSubmit.simulationParams.worldWeightingFactor = 1;
-        this.modelToSubmit.simulationParams.orgWeightingFactor =
-          Math.round((ratio / (1 - ratio)) * 100) / 100;
-      } else {
         this.modelToSubmit.simulationParams.orgWeightingFactor = 1;
         this.modelToSubmit.simulationParams.worldWeightingFactor =
+          Math.round((ratio / (1 - ratio)) * 100) / 100;
+      } else {
+        this.modelToSubmit.simulationParams.worldWeightingFactor = 1;
+        this.modelToSubmit.simulationParams.orgWeightingFactor =
           Math.round(((1 - ratio) / ratio) * 100) / 100;
       }
     }
