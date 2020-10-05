@@ -201,6 +201,7 @@
                 {{ modelToSubmit.simulationParams.worldWeightingFactor }} World
               </q-badge>
             </div>
+            <!--
             <q-select
               label="Combined benefit for interval (before subtracting costs and investments)"
               v-model="modelToSubmit.roleNodes.combinedBenefit"
@@ -228,7 +229,7 @@
               use-input
               hide-selected
               fill-input
-            />
+            />-->
           </q-card-section>
         </div>
       </div>
