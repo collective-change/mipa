@@ -151,7 +151,7 @@ export default {
           name: "totalRoi",
           required: true,
           align: "right",
-          label: "SROI",
+          label: "Total ROI",
           field: "totalRoi",
           format: val => `${formatNumber(val, 2)}`,
           sortable: true,
