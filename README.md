@@ -10,9 +10,9 @@ After obtaining a copy of mipa, do the following to run your instance.
 
 These instructions are current as of 2020.10.14. If you notice that something in the process has changed, please help update this documentation.
 
-### Prepare a project on Google Firebase
+### Create a project on Google Firebase
 1. Go to https://console.firebase.google.com/ (you may need to create an account first)
-2. Click **Add project**. Name the new project, perhaps something like "mipa-dev-yourName". Enable Google Analytics if you wish.
+2. Click **Add project**. Name the new project something like "mipa-dev-yourName". Enabling Google Analytics is optional.
 3. Once the Firebase project is created, click on the **</>** icon to add a web app. Give the app a nickname, like "my mipa web app". Check the box to set up Firebase Hosting. Then click **Register app**.
 4. Ignore "Add Firebase SDK" instructions. Mipa's code already has this set up. So just click **Next**.
 5. Install firebase-tools per on-screen instructions.
