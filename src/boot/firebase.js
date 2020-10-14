@@ -9,13 +9,13 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 
 // Your web app's Firebase configuration
 var firebaseConfig = {
-  apiKey: "AIzaSyAdeJJGRZwCSeE-hc0uALhMrrrInUWHqyY",
-  authDomain: "mipa-1.firebaseapp.com",
-  databaseURL: "https://mipa-1.firebaseio.com",
-  projectId: "mipa-1",
-  storageBucket: "",
-  messagingSenderId: "960836598374",
-  appId: "1:960836598374:web:063890d614348251"
+  apiKey: process.env.apiKey,
+  authDomain: process.env.authDomain,
+  databaseURL: process.env.databaseURL,
+  projectId: process.env.projectId,
+  storageBucket: process.env.storageBucket,
+  messagingSenderId: process.env.messagingSenderId,
+  appId: process.env.appId
 };
 // Initialize Firebase
 let firebaseApp = firebase.initializeApp(firebaseConfig);
