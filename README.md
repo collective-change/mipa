@@ -21,8 +21,9 @@ These instructions are current as of 2020.10.14. If you notice that something in
 
 ### Add your project's credentials
 1. Make a copy of the **.quasar.env_sample.json** file and name it **.quasar.env.json**.
-2. On https://console.firebase.google.com/, go to **Settings** > **General**.
-3. In the newly created **.quasar.env.json** file, add in your Firebase project's credentials from the above step. **.quasar.env.json** is already in .gitignore so the file will not be synced back to the repository.
+2. On a browser tab, go to https://console.cloud.google.com/ choose the project you just created, then APIs & Services > Credentials. We'll need the API key (browser key) from here for step 4.
+3. On another browser tab, go to https://console.firebase.google.com/, go to **Settings** > **General**.
+4. In the newly created **.quasar.env.json** file, add in your Firebase project's credentials from the above steps. **.quasar.env.json** is already in .gitignore so the file will not be synced back to the repository.
 
 ### Install dependencies
 If you don't have **yarn** installed yet, follow these instructions to install it: https://classic.yarnpkg.com/en/docs/install/
