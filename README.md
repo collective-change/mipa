@@ -24,7 +24,7 @@ Make a copy of the **.quasar.env_sample.json** file and name it **.quasar.env.js
 * **General** for most credentials
 * **Service Accounts > Database secrets** which we will enter as the apiKey
 
-In the newly created **.quasar.env.json** file, add in your Firebase project's credentials from the above two tabs.
+In the newly created **.quasar.env.json** file, add in your Firebase project's credentials from the above two tabs. **.quasar.env.json** is already in .gitignore so the file will not be synced back to the repository.
 
 ### Install dependencies
 If you don't have **yarn** installed yet, follow these instructions to install it: https://classic.yarnpkg.com/en/docs/install/
