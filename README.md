@@ -18,9 +18,10 @@ These instructions are current as of 2020.10.14. If you notice that something in
 5. Install firebase-tools per on-screen instructions.
 6. Per on-screen instructions, sign in to Google; but don't initiate your project with firebase init or deploy it yet. Just click **continue to console**.
 7. Back on the firebase console for your mipa project, click **Cloud Firestore**. Then **Create database**; select **Start in production mode**; pick a database location that makes sense for you, then **enable**.
+8. Create an API key here: https://console.developers.google.com/apis/credentials. 
 
 ### Add your project's credentials
-Make a copy of **.quasar.env_sample.json** and name it **.quasar.env.json**. Fill in your Firebase project's credentials.
+Make a copy of **.quasar.env_sample.json** and name it **.quasar.env.json**. In the new file, add in your Firebase project's credentials from Firestore console > Settings > General.
 
 ### Install the dependencies
 
@@ -35,10 +36,10 @@ yarn
 yarn dev
 ```
 
-### Build the app for production
+### Build the app for production and deploy to Firebase
 
 ```bash
-yarn build
+yarn build; firebase deploy
 ```
 
 ### Customize the configuration
