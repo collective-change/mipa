@@ -20,11 +20,9 @@ These instructions are current as of 2020.10.14. If you notice that something in
 7. Back on the firebase console for your mipa project, click **Cloud Firestore**. Then **Create database**; select **Start in production mode**; pick a database location that makes sense for you, then **enable**.
 
 ### Add your project's credentials
-Make a copy of the **.quasar.env_sample.json** file and name it **.quasar.env.json**. Then go to Firestore console > Settings; we're interested in the information in these two tabs:
-* **General** for most credentials
-* **Service Accounts > Database secrets** which we will enter as the apiKey
-
-In the newly created **.quasar.env.json** file, add in your Firebase project's credentials from the above two tabs. **.quasar.env.json** is already in .gitignore so the file will not be synced back to the repository.
+1. Make a copy of the **.quasar.env_sample.json** file and name it **.quasar.env.json**.
+2. On https://console.firebase.google.com/, go to **Settings** > **General**.
+3. In the newly created **.quasar.env.json** file, add in your Firebase project's credentials from the above step. **.quasar.env.json** is already in .gitignore so the file will not be synced back to the repository.
 
 ### Install dependencies
 If you don't have **yarn** installed yet, follow these instructions to install it: https://classic.yarnpkg.com/en/docs/install/
