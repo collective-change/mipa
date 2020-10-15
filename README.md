@@ -1,6 +1,6 @@
 # MIPA (mipa)
 
-Mipa is the strategic coordination software created for the mission of collective-change.org.
+Mipa is the strategic coordination software created for the mission of collective-change.org. Find out more about mipa by visiting the site.
 
 This program is released under GNU Affero General Public License v3.0
 
@@ -47,6 +47,4 @@ yarn build
 firebase deploy
 ```
 
-### Customize the configuration
-
-See [Configuring quasar.conf.js](https://quasar.dev/quasar-cli/quasar-conf-js).
+That's it! We look forward to your joining our mission to save the world!
