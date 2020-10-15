@@ -39,7 +39,7 @@ yarn
 ```bash
 yarn dev
 ```
-If all went well your browser should auto-load mipa's login page. Create an account for yourself and poke around!
+If all went well your browser should auto-load mipa's login page. Create an account for yourself then add a new organization on the homepage to test things out.
 
 ### Build the app for production and deploy to Firebase
 
