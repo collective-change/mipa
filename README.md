@@ -17,8 +17,8 @@ These instructions are current as of 2020.10.14. If you notice that something in
 4. Ignore "Add Firebase SDK" instructions. Mipa's code already has this set up. So just click **Next**.
 5. Install firebase-tools per on-screen instructions. Then click **Next**.
 6. Per on-screen instructions, sign in to Google; but don't initiate your project with firebase init or deploy it yet. Just click **continue to console**.
-7. On the firebase console, click **Authentication**. Then **Set up sign-in method**; enable **Email/Password**, then **Save**.
-8. On the firebase console, click **Cloud Firestore**. Then **Create database**; select **Start in production mode**; pick a database location that makes sense for you, then **enable**.
+7. On the firebase console, click the **Authentication** block, then **Set up sign-in method**. Enable **Email/Password**, then **Save**.
+8. Go back to the Project Overview page by clicking on the home icon, then on the **Cloud Firestore** block, then **Create database**. Select **Start in production mode**, then **Next**, then pick a database location, then **enable**.
 
 ### Add your project's credentials
 1. Make a copy of the **.quasar.env_sample.json** file and name it **.quasar.env.json**.
