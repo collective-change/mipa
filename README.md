@@ -17,7 +17,7 @@ These instructions are current as of 2020.10.14. If you notice that something in
 4. Ignore "Add Firebase SDK" instructions. Mipa's code already has this set up. So just click **Next**.
 5. Install firebase-tools per on-screen instructions. Then click **Next**.
 6. Per on-screen instructions, sign in to Google; but don't initiate your project with firebase init or deploy it yet. Just click **continue to console**.
-7. On the firebase console, click **Authentication**. Then **Set up sign-in method**; enable **Email/Password**.
+7. On the firebase console, click **Authentication**. Then **Set up sign-in method**; enable **Email/Password**, then **Save**.
 8. On the firebase console, click **Cloud Firestore**. Then **Create database**; select **Start in production mode**; pick a database location that makes sense for you, then **enable**.
 
 ### Add your project's credentials
