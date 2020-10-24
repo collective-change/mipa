@@ -56,11 +56,11 @@ yarn build
 firebase deploy
 ```
 
-If all went well, you should be able to see mipa running at https://your-project-id.web.app. Register an account for yourself, then on the app's homepage add a new organization, and have at it!
+If all went well, mipa will be running at https://your-project-id.web.app. Register an account for yourself, and have at it!
 
 ### Start the app in development mode (hot-code reloading, error reporting, etc.)
 
-For development, it's easier to serve from localhost.  Do this:
+For development, it's easier to serve from localhost rather than deploying to firebase.  Do this:
 
 ```bash
 yarn dev
