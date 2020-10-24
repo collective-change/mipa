@@ -15,7 +15,7 @@ These instructions are current as of 2020.10.14. If you notice that something in
 2. Click **Add project**. Name the new project something like "mipa-dev-yourName". Enabling Google Analytics is optional.
 3. Once the Firebase project is created, add a web app by clicking on the **</>** icon. Give the app a nickname, like "my mipa web app". Check the box to set up Firebase Hosting. Then click **Register app**.
 4. Ignore "Add Firebase SDK" instructions. Mipa's code already has this set up. So just click **Next**.
-5. Install firebase-tools per on-screen instructions.
+5. Install firebase-tools per on-screen instructions. Then click **Next**.
 6. Per on-screen instructions, sign in to Google; but don't initiate your project with firebase init or deploy it yet. Just click **continue to console**.
 7. On the firebase console, click **Authentication**. Then **Set up sign-in method**; enable **Email/Password**.
 8. On the firebase console, click **Cloud Firestore**. Then **Create database**; select **Start in production mode**; pick a database location that makes sense for you, then **enable**.
