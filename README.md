@@ -1,6 +1,6 @@
 # MIPA (mipa)
 
-Mipa is the strategic coordination software created for the mission of collective-change.org. Find out more about mipa by visiting the site.
+Mipa is the strategic coordination software created for the mission of https://collective-change.org. Find out more about mipa by visiting the site.
 
 This program is released under GNU Affero General Public License v3.0
 
