@@ -41,10 +41,19 @@ const actions = {
   },
 
   async calculate({ commit, dispatch }, payload) {
-    //TODO: add in blocked and children issues
+    let firebaseConfig = {
+      apiKey: process.env.apiKey,
+      authDomain: process.env.authDomain,
+      databaseURL: process.env.databaseURL,
+      projectId: process.env.projectId,
+      storageBucket: process.env.storageBucket,
+      messagingSenderId: process.env.messagingSenderId,
+      appId: process.env.appId
+    };
     let done = false;
     let calcWorker = await dispatch("getNewCalcWorker");
     calcWorker.postMessage({
+      firebaseConfig,
       calculationType: payload.calculationType,
       orgId: payload.orgId,
       modelId: payload.modelId,

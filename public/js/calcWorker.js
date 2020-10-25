@@ -11,20 +11,7 @@ importScripts("https://unpkg.com/mathjs@7.2.0/dist/math.min.js");
 
 //var idb = {}; //placeholder for IndexedDB
 
-// Your web app's Firebase configuration
-var firebaseConfig = {
-  apiKey: "AIzaSyAdeJJGRZwCSeE-hc0uALhMrrrInUWHqyY",
-  authDomain: "mipa-1.firebaseapp.com",
-  databaseURL: "https://mipa-1.firebaseio.com",
-  projectId: "mipa-1",
-  storageBucket: "",
-  messagingSenderId: "960836598374",
-  appId: "1:960836598374:web:063890d614348251"
-};
-// Initialize Firebase
-let firebaseApp = firebase.initializeApp(firebaseConfig);
-let firebaseAuth = firebaseApp.auth();
-let firebaseDb = firebaseApp.firestore();
+var firebaseApp, firebaseAuth, firebaseDb;
 
 const parser = self.math.parser();
 var modelNodes = [];
@@ -48,6 +35,13 @@ onmessage = function(e) {
 
 function coordinateScenarioSimulations(data) {
   //prep environment, scope, etc
+  // Initialize Firebase
+  if (!firebaseApp){
+    firebaseApp = firebase.initializeApp(data.firebaseConfig);
+    firebaseAuth = firebaseApp.auth();
+    firebaseDb = firebaseApp.firestore();
+  }
+
   let sim = prepSim(data);
   if (sim.errorOccurred) return;
   currentUserId = data.currentUserId;
