@@ -2,5 +2,40 @@
   "@quasar/qenv": {
     "common_root_object": "none",
     "add_qenv_to_gitignore": true
-  }
+  },
+  "@quasar/testing": {
+    "harnesses": [
+      "unit-jest",
+      "e2e-cypress",
+      "e2e-webdriver",
+      "quality",
+      "security",
+      "security-antivuln"
+    ]
+  },
+  "@quasar/testing-unit-jest": {
+    "babel": "babelrc",
+    "options": [
+      "scripts",
+      "wallabyjs",
+      "majestic"
+    ]
+  },
+  "@quasar/testing-e2e-cypress": {
+    "options": [
+      "scripts"
+    ]
+  },
+  "@quasar/testing-quality": {
+    "options": [
+      "scripts"
+    ]
+  },
+  "@quasar/testing-security": {
+    "options": [
+      "zap_local"
+    ],
+    "zapbrowser": "Chrome"
+  },
+  "@quasar/testing-security-antivuln": {}
 }
