@@ -50,8 +50,8 @@ export default {
     return {
       formData: {
         email: "",
-        password: ""
-      }
+        password: "",
+      },
     };
   },
   methods: {
@@ -70,12 +70,12 @@ export default {
           this.registerUser(this.formData);
         }
       }
-    }
+    },
   },
   filters: {
     titleCase(value) {
       return value.charAt(0).toUpperCase() + value.slice(1);
-    }
-  }
+    },
+  },
 };
 </script>
