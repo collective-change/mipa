@@ -3,7 +3,7 @@
     <q-table
       title="Actions"
       :data="actions"
-      :columns="columns"
+      :columns="columnsI18n"
       row-key="id"
       :filter="filter"
       :loading="loading"
@@ -13,15 +13,15 @@
       @row-click="onRowClick"
     >
       <template v-slot:top>
-        <div class="col-2 q-table__title">行動</div>
+        <div class="col-2 q-table__title">{{ $t('Actions') }}</div>
         <div class="row q-gutter-sm">
           <q-btn
             color="primary"
             :disable="loading"
-            label="新增"
+            :label="$t('Add')"
             @click="showAddAction = true"
           />
-          <calculator-ui calculationType="actions" buttonLabel="Recalculate" />
+          <calculator-ui calculationType="actions" :buttonLabel="$t('Recalculate')" />
         </div>
 
         <q-space />
@@ -79,12 +79,22 @@ export default {
         rowsPerPage: 10
         // rowsNumber: xx if getting data from a server
       },
-      columns: [
+
+    };
+  },
+
+  computed: {
+    //...mapGetters("settings", ["settings"]),
+    ...mapState("actions", ["actions"]),
+    ...mapState("uiAction", ["uiActionChanged"]),
+    ...mapState("ui", ["selectedActionId"]),
+    columnsI18n() {
+      let columns = [
         {
           name: "actionLeverage",
           required: true,
           align: "right",
-          label: "效應比",
+          label: this.$t('Leverage'),
           field: "actionLeverage",
           format: val => `${formatNumber(val, 2)}`,
           sortable: true,
@@ -93,7 +103,7 @@ export default {
         {
           name: "state",
           align: "center",
-          label: "狀態",
+          label: this.$t('Status'),
           field: "actionMchState",
           format: ams => `${ams.value}`,
           sortable: true,
@@ -102,7 +112,7 @@ export default {
         {
           name: "title",
           required: true,
-          label: "標題",
+          label: this.$t('Title'),
           align: "left",
           //field: row => row.id.substring(0, 2) + " " + row.title,
           field: row => row.title,
@@ -111,14 +121,14 @@ export default {
         /*{
           name: "isProject",
           align: "center",
-          label: "專案",
+          label: this.$t('isProject'),
           field: "isProject",
           sortable: true
         },*/
         {
           name: "benefit",
           align: "right",
-          label: "總邊際效益",
+          label: this.$t('marginalTotalBenefitNpv'),
           field: "marginalTotalBenefitNpv",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
@@ -126,7 +136,7 @@ export default {
         {
           name: "cost",
           align: "right",
-          label: "總邊際成本",
+          label: this.$t('marginalTotalCostNpv'),
           field: "marginalTotalCostNpv",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
@@ -134,7 +144,7 @@ export default {
         {
           name: "netBenefit",
           align: "right",
-          label: "總淨邊際效益",
+          label: this.$t(''),
           field: "marginalNetTotalBenefitNpv",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
@@ -142,7 +152,7 @@ export default {
         {
           name: "outstandingDirectCost",
           align: "right",
-          label: "需再投入直接成本",
+          label: this.$t('outstandingDirectCost'),
           field: "outstandingDirectCost",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
@@ -151,7 +161,7 @@ export default {
           name: "totalRoi",
           required: true,
           align: "right",
-          label: "總 ROI",
+          label: this.$t('totalRoi'),
           field: "totalRoi",
           format: val => `${formatNumber(val, 2)}`,
           sortable: true,
@@ -160,7 +170,7 @@ export default {
         {
           name: "effortCompletionRate",
           align: "right",
-          label: "完成度",
+          label: this.$t('effortCompletionPercentage'),
           field: "effortCompletionPercentage",
           format: val =>
             `${formatNumber(val, 3)}${typeof val == "number" ? "%" : ""}`,
@@ -169,7 +179,7 @@ export default {
         {
           name: "relationships",
           align: "left",
-          label: "關係",
+          label: this.$t('relationships'),
           field: "childrenIds",
           //format: val => `${formatNumber(val, 3)}`,
           format: (val, row) => getRelationshipsDisplay(row),
@@ -178,19 +188,13 @@ export default {
         /*{
           name: "dueDate",
           align: "center",
-          label: "截止日期",
+          label: this.$t('dueDate'),
           field: "dueDate",
           sortable: true
         }*/
       ]
-    };
-  },
-
-  computed: {
-    //...mapGetters("settings", ["settings"]),
-    ...mapState("actions", ["actions"]),
-    ...mapState("uiAction", ["uiActionChanged"]),
-    ...mapState("ui", ["selectedActionId"])
+      return columns
+    }
   },
 
   methods: {

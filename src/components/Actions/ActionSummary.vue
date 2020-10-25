@@ -108,14 +108,14 @@
           <div
             v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
           >
-            <q-input v-model="notes" label="筆記" filled autogrow />
+            <q-input v-model="notes" :label="$t('Notes')" filled autogrow />
 
             <impacts />
 
             <div class="row q-gutter-md q-mt-md items-start">
               <q-select
                 v-model="effortCostPerHrType"
-                label="每小時人員成本"
+                :label="$t('effortCostPerHour')"
                 :options="effortCostPerHrTypeOptions"
                 emit-value
                 map-options
@@ -124,7 +124,7 @@
               <q-input
                 v-if="effortCostPerHrType == 'use_custom'"
                 v-model.number="customEffortCostPerHr"
-                label="特殊每小時人員成本"
+                :label="$t('customEffortCostPerHr')"
                 type="number"
                 :suffix="
                   averageEffortCostPerHourNode
@@ -140,7 +140,7 @@
               />
               <q-input
                 v-model.number="estEffortHrs"
-                label="預估人員時間"
+                :label="$t('estEffortHrs')"
                 type="number"
                 suffix="hours"
                 :rules="[
@@ -153,7 +153,7 @@
               <q-input
                 v-model.number="effortCompletionPercentage"
                 type="number"
-                suffix="% 完成"
+                :suffix="$t('percentDone')"
                 :rules="[
                   val => val == null || val >= 0 || 'Should be at least 0'
                 ]"
@@ -178,7 +178,7 @@
             <div class="q-gutter-md q-mt-md row items-start">
               <q-input
                 v-model.number="estSpending"
-                label="預估支出金額"
+                :label="$t('estSpending')"
                 type="number"
                 :suffix="currentOrg.currency"
                 :rules="[
@@ -190,7 +190,7 @@
               />
               <q-input
                 v-model.number="spentAmount"
-                label="已支出金額"
+                :label="$t('spentAmount')"
                 type="number"
                 :suffix="currentOrg.currency"
                 :rules="[

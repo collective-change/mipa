@@ -43,7 +43,7 @@ export default {
 
   Ideate: "醞釀計畫",
   "Strategic analysis": "策略性分析",
-  Actions: "行動提案",
+  Actions: "行動",
   "Action templates": "行動模板",
 
   Prioritize: "訂出優先",
@@ -55,5 +55,30 @@ export default {
   "My current focus": "我的焦聚",
   "To do": "待辦",
   "Time log": "時間紀錄",
-  "My team's work": "小組的工作"
+  "My team's work": "小組的工作",
+
+  // for ActionsList.vue
+  Add: "新增",
+  Recalculate: "重新計算",
+  Leverage: "效應比",
+  Status: "狀態",
+  Title: "標題",
+  isProject: "專案",
+  marginalTotalBenefitNpv: "總邊際效益",
+  marginalTotalCostNpv: "總邊際成本",
+  marginalNetTotalBenefitNpv: "總淨邊際效益",
+  outstandingDirectCost: "需再投入直接成本",
+  totalRoi: "總 ROI",
+  effortCompletionPercentage: "完成度",
+  relationships: "關係",
+  dueDate: "截止日期",
+
+  // for ActionSummary.vue
+  Notes: "筆記",
+  effortCostPerHour: "每小時人員成本",
+  customEffortCostPerHr: "特殊每小時人員成本",
+  estEffortHrs: "預估人員時間",
+  percentDone: "% 完成",
+  estSpending: "預估支出金額",
+  spentAmount: "已支出金額"
 };
