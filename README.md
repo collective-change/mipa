@@ -12,7 +12,7 @@ These instructions are current as of 2020.10.14. If you notice that something in
 
 ### Create a project on Google Firebase
 1. Go to https://console.firebase.google.com/ (you may need to create an account first)
-2. Click **Add project**. Name the new project something like "mipa-dev-yourName". Enabling Google Analytics is optional.
+2. Click **Add project**. Name the new project something like "mipa-yourName". Enabling Google Analytics is optional.
 3. Once the Firebase project is created, click on the **</>** icon to add a web app. Give the app a nickname, like "my mipa web app". Check the box to set up Firebase Hosting. Then click **Register app**.
 4. Ignore "Add Firebase SDK" instructions. Mipa's code already has this set up. So just click **Next**.
 5. Install firebase-tools per on-screen instructions.
@@ -30,40 +30,37 @@ These instructions are current as of 2020.10.14. If you notice that something in
 1. Make a copy of the **.firebaserc_sample** file and name it **.firebaserc**.
 2. In the file, in the "default" property, use your project id.
 
-### Install dependencies
-We use **yarn** instead of **npm** because of the more deterministic way it chooses dependencies, and this has proven helpful for our project.
-
-If you don't have **yarn** installed yet, follow these instructions to install it: https://classic.yarnpkg.com/en/docs/install/
-
-Then run yarn in mipa's root directory to install mipa's dependencies.
+### Install dependencies for Cloud Functions
+Go to `functions` directory
 ```bash
+cd functions
 npm install
-npm install --global cross-env
-yarn
-yarn add tslint
-yarn add cross-env
 ```
 
-if you see an error like this: "ModuleBuildError: Module build failed (from ./node_modules/sass-loader/dist/cjs.js)" then run
+### Install dependencies for other parts of the project
+For the rest of the project we use yarn instead of npm because of the more deterministic way it chooses dependencies. This helps us developers keep our dependencies identical.
 
+If you don't have yarn installed yet, follow these instructions to install it: https://classic.yarnpkg.com/en/docs/install/
+
+Go back to mipa's root directory and install dependencies using yarn.
 ```bash
-npm rebuild node-sass
+yarn install
 ```
 
 ### Build the app and deploy to Firebase
 
-This will deploy to the `production` environment you configured in your **.quasar.env.json** file. This loads **firestore.rules** into Firestore, which we need even for development.
+This will deploy to the `production` environment you configured in your **.quasar.env.json** file. This loads **firestore.rules** into Firestore, which we need even for development (assuming you configured `development` and `production` with the same credentials in .quasar.env.json).
 
 ```bash
 yarn build
 firebase deploy
 ```
 
-If all went well, you should be able to see mipa running at https://your-project-id.web.app. Register an account for yourself, then on the app's homepage add a new organization, and have at it!
+If all went well, mipa will be running at https://your-project-id.web.app. Register an account for yourself, and have at it!
 
 ### Start the app in development mode (hot-code reloading, error reporting, etc.)
 
-For development, it's easier to serve from localhost.  Do this:
+For development, it's easier to serve from localhost rather than deploying to firebase.  Do this:
 
 ```bash
 yarn dev
