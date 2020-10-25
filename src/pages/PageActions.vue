@@ -13,15 +13,8 @@
         </div>
         -->
         <div class="col-12 col-md-8">
-          <q-toggle v-model="useRoi" label="分析優先順序" />
-          <div v-if="useRoi">
             <actions-chart></actions-chart>
             <actions-list></actions-list>
-          </div>
-          <div v-else>
-            <unprioritized-actions-list></unprioritized-actions-list>
-          </div>
-
           <!-- <pre>{{ actions}}</pre> -->
         </div>
         <div class="col-12 col-md-4">
@@ -53,7 +46,7 @@ export default {
   },
   data() {
     return {
-      useRoi: true
+ 
     };
   },
   computed: {
