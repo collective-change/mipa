@@ -42,8 +42,9 @@ For the rest of the project we use yarn instead of npm because of the more deter
 
 If you don't have yarn installed yet, follow these instructions to install it: https://classic.yarnpkg.com/en/docs/install/
 
-Go back to mipa's root directory and install dependencies using yarn.
+Go back to your project's root directory and install dependencies using yarn.
 ```bash
+cd your-project-directory
 yarn install
 ```
 
