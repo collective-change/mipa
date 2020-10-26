@@ -25,7 +25,7 @@ export default {
   props: ["team", "id"],
   data() {
     return {
-      teamToSubmit: {}
+      teamToSubmit: {},
     };
   },
   methods: {
@@ -33,13 +33,13 @@ export default {
     submitTeam() {
       this.updateTeam({
         id: this.id,
-        updates: this.teamToSubmit
+        updates: this.teamToSubmit,
       });
       this.$emit("close");
-    }
+    },
   },
   mounted() {
     this.teamToSubmit = Object.assign({}, this.team);
-  }
+  },
 };
 </script>

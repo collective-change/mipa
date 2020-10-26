@@ -35,15 +35,15 @@ export default {
   data() {
     return {
       options: this.nodeOptions,
-      selected: this.targetNodeId
+      selected: this.targetNodeId,
     };
   },
   computed: {
     ...mapState("ui", ["selectedNodeId"]),
     ...mapGetters("model", ["nodes"]),
     nodeOptions() {
-      return this.nodes.filter(node => node.id != this.selectedNodeId);
-    }
+      return this.nodes.filter((node) => node.id != this.selectedNodeId);
+    },
   },
   methods: {
     filterFn(val, update) {
@@ -57,10 +57,10 @@ export default {
       update(() => {
         const needle = val.toLowerCase();
         this.options = this.nodeOptions.filter(
-          node => node.name.toLowerCase().indexOf(needle) > -1
+          (node) => node.name.toLowerCase().indexOf(needle) > -1
         );
       });
-    }
-  }
+    },
+  },
 };
 </script>

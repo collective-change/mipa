@@ -26,10 +26,10 @@ export default {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
     "modal-node-selection": require("components/Model/Modals/Shared/ModalNodeSelection.vue")
-      .default
+      .default,
   },
   computed: {
-    ...mapState("model", ["selectedNodeId"])
+    ...mapState("model", ["selectedNodeId"]),
   },
   methods: {
     ...mapActions("model", ["addLink"]),
@@ -44,10 +44,10 @@ export default {
     submitLink() {
       this.addLink({
         link: this.linkToSubmit,
-        modelId: this.$route.params.modelId
+        modelId: this.$route.params.modelId,
       });
       this.$emit("close");
-    }
-  }
+    },
+  },
 };
 </script>

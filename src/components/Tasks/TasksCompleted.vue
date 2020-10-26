@@ -15,11 +15,11 @@ import { mapGetters } from "vuex";
 export default {
   props: ["tasksCompleted"],
   computed: {
-    ...mapGetters("settings", ["settings"])
+    ...mapGetters("settings", ["settings"]),
   },
   components: {
     "list-header": require("components/Shared/ListHeader.vue").default,
-    task: require("components/Tasks/Task.vue").default
-  }
+    task: require("components/Tasks/Task.vue").default,
+  },
 };
 </script>

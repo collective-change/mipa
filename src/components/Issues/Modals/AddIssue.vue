@@ -4,14 +4,8 @@
 
     <q-form @submit.prevent="submitForm">
       <q-card-section>
-        <modal-issue-title
-          :title.sync="issueToSubmit.title"
-          ref="modalIssueTitle"
-        />
-        <modal-issue-type
-          :type.sync="issueToSubmit.type"
-          ref="modalIssueType"
-        />
+        <modal-issue-title :title.sync="issueToSubmit.title" ref="modalIssueTitle" />
+        <modal-issue-type :type.sync="issueToSubmit.type" ref="modalIssueType" />
       </q-card-section>
       <modal-buttons />
     </q-form>

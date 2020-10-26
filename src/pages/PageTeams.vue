@@ -35,13 +35,13 @@ import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 export default {
   data() {
     return {
-      showAddTeam: false
+      showAddTeam: false,
     };
   },
 
   computed: {
     ...mapGetters("settings", ["settings"]),
-    ...mapState("teams", ["teams", "teamsDownloaded"])
+    ...mapState("teams", ["teams", "teamsDownloaded"]),
   },
 
   actions: {
@@ -54,7 +54,7 @@ export default {
       while (
         !firebaseAuth.currentUser // define the condition as you like
       )
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
       this.$store.dispatch("teams/bindTeams");
     })();
     //console.log("above code doesn't block main function stack");
@@ -74,8 +74,8 @@ export default {
   components: {
     "no-teams": require("components/Teams/NoTeams.vue").default,
     teams: require("components/Teams/Teams.vue").default,
-    "add-team": require("components/Teams/Modals/AddTeam.vue").default
-  }
+    "add-team": require("components/Teams/Modals/AddTeam.vue").default,
+  },
 };
 </script>
 

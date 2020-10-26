@@ -54,13 +54,13 @@ import { mapGetters, mapState } from "vuex";
 export default {
   data() {
     return {
-      showAddTask: false
+      showAddTask: false,
     };
   },
   computed: {
     ...mapGetters("tasks", ["tasksTodo", "tasksCompleted"]),
     ...mapGetters("settings", ["settings"]),
-    ...mapState("tasks", ["search", "tasksDownloaded"])
+    ...mapState("tasks", ["search", "tasksDownloaded"]),
   },
   mounted() {
     this.$root.$on("showAddTask", () => {
@@ -78,8 +78,8 @@ export default {
     "tasks-completed": require("components/Tasks/TasksCompleted.vue").default,
     "add-task": require("components/Tasks/Modals/AddTask.vue").default,
     search: require("components/Tasks/Tools/Search.vue").default,
-    sort: require("components/Tasks/Tools/Sort.vue").default
-  }
+    sort: require("components/Tasks/Tools/Sort.vue").default,
+  },
 };
 </script>
 

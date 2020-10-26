@@ -19,6 +19,6 @@
 
 <script>
 export default {
-  props: ["type"]
+  props: ["type"],
 };
 </script>

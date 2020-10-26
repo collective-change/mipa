@@ -17,8 +17,8 @@ export default {
     return {
       options: [
         { label: "Name", value: "name" },
-        { label: "Date", value: "dueDate" }
-      ]
+        { label: "Date", value: "dueDate" },
+      ],
     };
   },
   computed: {
@@ -29,12 +29,12 @@ export default {
       },
       set(value) {
         this.setSort(value);
-      }
-    }
+      },
+    },
   },
   methods: {
-    ...mapActions("tasks", ["setSort"])
-  }
+    ...mapActions("tasks", ["setSort"]),
+  },
 };
 </script>
 

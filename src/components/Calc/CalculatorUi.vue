@@ -25,7 +25,7 @@ export default {
   data() {
     return {
       showBaselineCalculator: false,
-      calcWorker: null
+      calcWorker: null,
     };
   },
   computed: {
@@ -33,12 +33,12 @@ export default {
     ...mapState("model", ["currentModel"]),
     ...mapState("calculator", [
       "calculatorIsRunning",
-      "calculationProgress"
+      "calculationProgress",
       //"calculationProgressLabel"
     ]),
     ...mapState("adHocDocs", ["exchangeRates"]),
     ...mapGetters("actions", ["actions"]),
-    loading() {}
+    loading() {},
   },
   methods: {
     calculate() {
@@ -51,7 +51,7 @@ export default {
         nodes: this.nodes,
         exchangeRates: this.exchangeRates,
         simulationParams: this.currentModel.simulationParams,
-        roleNodes: this.currentModel.roleNodes
+        roleNodes: this.currentModel.roleNodes,
       };
       switch (this.calculationType) {
         case "baseline":
@@ -69,10 +69,10 @@ export default {
           throw `Calculation type "${this.calculationType}" not recognized.`;
       }
       this.$store.dispatch("calculator/calculate", payload);
-    }
+    },
   },
   created() {},
   mounted() {},
-  beforeDestroy() {}
+  beforeDestroy() {},
 };
 </script>

@@ -44,24 +44,24 @@ export default {
     "unprioritized-issues-list": require("components/Issues/UnprioritizedIssuesList.vue")
       .default,
     //"add-issue": require("components/Issues/Modals/AddIssue.vue").default,
-    "issue-summary": require("components/Issues/IssueSummary.vue").default
+    "issue-summary": require("components/Issues/IssueSummary.vue").default,
     //search: require("components/Issues/Tools/Search.vue").default,
     //sort: require("components/Issues/Tools/Sort.vue").default
   },
   data() {
     return {
-      useRoi: true
+      useRoi: true,
     };
   },
   computed: {
-    ...mapState("issues", ["issues"])
+    ...mapState("issues", ["issues"]),
   },
   created() {
     (async () => {
       while (
         !firebaseAuth.currentUser // define the condition as you like
       )
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
 
       let orgId = this.$route.params.orgId;
       this.$store.dispatch("issues/bindIssues", orgId);
@@ -73,6 +73,6 @@ export default {
     if (this.$route.name in ["issues", "issueDetails"]) {
       this.$store.dispatch("issues/unbindIssues");
     }
-  }
+  },
 };
 </script>

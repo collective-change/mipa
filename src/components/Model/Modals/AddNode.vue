@@ -1,9 +1,7 @@
 <template>
   <q-card>
     <modal-header>
-      <template v-slot:header
-        >Add {{ newNodeRole ? "new " + newNodeRole : "node" }}</template
-      >
+      <template v-slot:header>Add {{ newNodeRole ? "new " + newNodeRole : "node" }}</template>
     </modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
@@ -26,14 +24,14 @@ export default {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
     "modal-node-name": require("components/Model/Modals/Shared/ModalNodeName.vue")
-      .default
+      .default,
   },
   data() {
     return {
       nodeToSubmit: {
         name: "",
-        class: "unlinked"
-      }
+        class: "unlinked",
+      },
     };
   },
 
@@ -55,10 +53,10 @@ export default {
         node: this.nodeToSubmit,
         sourceNodeId: this.sourceNodeId,
         newNodeRole: this.newNodeRole,
-        modelId: this.$route.params.modelId
+        modelId: this.$route.params.modelId,
       });
       this.$emit("close");
-    }
-  }
+    },
+  },
 };
 </script>
