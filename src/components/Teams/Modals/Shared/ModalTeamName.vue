@@ -20,7 +20,7 @@ import { selectAll } from "src/directives/directive-select-all";
 export default {
   props: ["name"],
   directives: {
-    selectAll
-  }
+    selectAll,
+  },
 };
 </script>

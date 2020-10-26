@@ -33,7 +33,7 @@ export default {
     "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
       .default,
     "modal-cancel-delete-buttons": require("components/Shared/ModalComponents/ModalCancelDeleteButtons.vue")
-      .default
+      .default,
   },
 
   props: ["node"],
@@ -50,7 +50,7 @@ export default {
       } else {
         return true;
       }
-    }
+    },
   },
 
   methods: {
@@ -60,7 +60,7 @@ export default {
       if (this.nodeReadyToDelete) {
         this.deleteNode({
           node: this.node,
-          modelId: this.$route.params.modelId
+          modelId: this.$route.params.modelId,
         });
         this.$emit("close");
       } else {
@@ -68,7 +68,7 @@ export default {
           "Node cannot be deleted because its formula, influencers or influencees array is not empty."
         );
       }
-    }
-  }
+    },
+  },
 };
 </script>

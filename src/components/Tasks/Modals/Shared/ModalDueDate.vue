@@ -23,6 +23,6 @@
 
 <script>
 export default {
-  props: ["dueDate"]
+  props: ["dueDate"],
 };
 </script>

@@ -13,8 +13,8 @@
         </div>
         -->
         <div class="col-12 col-md-8">
-            <actions-chart></actions-chart>
-            <actions-list></actions-list>
+          <actions-chart></actions-chart>
+          <actions-list></actions-list>
           <!-- <pre>{{ actions}}</pre> -->
         </div>
         <div class="col-12 col-md-4">
@@ -40,25 +40,23 @@ export default {
     "unprioritized-actions-list": require("components/Actions/UnprioritizedActionsList.vue")
       .default,
     //"add-action": require("components/Actions/Modals/AddAction.vue").default,
-    "action-summary": require("components/Actions/ActionSummary.vue").default
+    "action-summary": require("components/Actions/ActionSummary.vue").default,
     //search: require("components/Actions/Tools/Search.vue").default,
     //sort: require("components/Actions/Tools/Sort.vue").default
   },
   data() {
-    return {
- 
-    };
+    return {};
   },
   computed: {
     ...mapState("actions", ["actions"]),
-    ...mapState("uiAction", ["uiActionChanged"])
+    ...mapState("uiAction", ["uiActionChanged"]),
   },
   created() {
     (async () => {
       while (
         !firebaseAuth.currentUser // define the condition as you like
       )
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
 
       let orgId = this.$route.params.orgId;
       this.$store.dispatch("actions/bindActions", orgId);
@@ -72,7 +70,7 @@ export default {
           title: "Unsaved changes",
           message: "Any changes you made will be lost. Really leave?",
           cancel: true,
-          persistent: true
+          persistent: true,
         })
         .onOk(() => {
           next();
@@ -85,6 +83,6 @@ export default {
     if (this.$route.name in ["actions", "actionDetails"]) {
       this.$store.dispatch("actions/unbindActions");
     }
-  }
+  },
 };
 </script>

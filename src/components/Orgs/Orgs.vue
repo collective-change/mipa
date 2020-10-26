@@ -16,10 +16,10 @@ import { mapGetters } from "vuex";
 export default {
   props: ["orgs"],
   computed: {
-    ...mapGetters("settings", ["settings"])
+    ...mapGetters("settings", ["settings"]),
   },
   components: {
-    orgCard: require("components/Orgs/OrgCard.vue").default
-  }
+    orgCard: require("components/Orgs/OrgCard.vue").default,
+  },
 };
 </script>

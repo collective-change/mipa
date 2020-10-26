@@ -54,7 +54,7 @@ export default {
   props: ["task", "id"],
   data() {
     return {
-      showEditTask: false
+      showEditTask: false,
     };
   },
   computed: {
@@ -68,7 +68,7 @@ export default {
         );
       }
       return this.task.dueTime;
-    }
+    },
   },
   methods: {
     ...mapActions("tasks", ["updateTask", "deleteTask"]),
@@ -81,12 +81,12 @@ export default {
           title: "Confirm",
           message: "Really delete?",
           cancel: true,
-          persistent: true
+          persistent: true,
         })
         .onOk(() => {
           this.deleteTask(id);
         });
-    }
+    },
   },
   filters: {
     niceDate(value) {
@@ -95,16 +95,16 @@ export default {
     searchHighlight(value, search) {
       if (search) {
         let searchRegExp = new RegExp(search, "ig");
-        return value.replace(searchRegExp, match => {
+        return value.replace(searchRegExp, (match) => {
           return '<span class="bg-yellow-6">' + match + "</span>";
         });
       }
       return value;
-    }
+    },
   },
   components: {
-    "edit-task": require("components/Tasks/Modals/EditTask.vue").default
-  }
+    "edit-task": require("components/Tasks/Modals/EditTask.vue").default,
+  },
 };
 </script>
 

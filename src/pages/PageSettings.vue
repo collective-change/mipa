@@ -68,7 +68,7 @@ export default {
       },
       set(value) {
         this.setShow12HourTimeFormat(value);
-      }
+      },
     },
     showTasksInOneList: {
       get() {
@@ -76,21 +76,21 @@ export default {
       },
       set(value) {
         this.setShowTasksInOneList(value);
-      }
-    }
+      },
+    },
   },
   methods: {
     ...mapActions("settings", [
       "setShow12HourTimeFormat",
-      "setShowTasksInOneList"
+      "setShowTasksInOneList",
     ]),
     visitOurWebsite() {
       openURL("http://www.google.com");
     },
     emailUs() {
       window.location.href = "mailto: hello@mipa.io?subject=MIPA Todo Feedback";
-    }
-  }
+    },
+  },
 };
 </script>
 

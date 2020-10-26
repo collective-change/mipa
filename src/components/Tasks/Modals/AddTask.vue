@@ -25,8 +25,8 @@ export default {
         name: "",
         dueDate: "",
         dueTime: "",
-        completed: false
-      }
+        completed: false,
+      },
     };
   },
   methods: {
@@ -35,7 +35,7 @@ export default {
     submitTask() {
       this.addTask(this.taskToSubmit);
       this.$emit("close");
-    }
-  }
+    },
+  },
 };
 </script>

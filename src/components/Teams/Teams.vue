@@ -16,10 +16,10 @@ import { mapGetters } from "vuex";
 export default {
   props: ["teams"],
   computed: {
-    ...mapGetters("settings", ["settings"])
+    ...mapGetters("settings", ["settings"]),
   },
   components: {
-    teamCard: require("components/Teams/TeamCard.vue").default
-  }
+    teamCard: require("components/Teams/TeamCard.vue").default,
+  },
 };
 </script>

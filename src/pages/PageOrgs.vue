@@ -36,13 +36,13 @@ export default {
   data() {
     return {
       //orgsLoaded: false,
-      showAddOrg: false
+      showAddOrg: false,
     };
   },
 
   computed: {
     ...mapGetters("settings", ["settings"]),
-    ...mapState("orgs", ["orgs"])
+    ...mapState("orgs", ["orgs"]),
   },
 
   actions: {},
@@ -53,7 +53,7 @@ export default {
       while (
         !firebaseAuth.currentUser // define the condition as you like
       )
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
       this.$store.dispatch("orgs/bindOrgs");
     })();
     //console.log("above code doesn't block main function stack");
@@ -85,8 +85,8 @@ export default {
   components: {
     "no-orgs": require("components/Orgs/NoOrgs.vue").default,
     orgs: require("components/Orgs/Orgs.vue").default,
-    "add-org": require("components/Orgs/Modals/AddOrg.vue").default
-  }
+    "add-org": require("components/Orgs/Modals/AddOrg.vue").default,
+  },
 };
 </script>
 

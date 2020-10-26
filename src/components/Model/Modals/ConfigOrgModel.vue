@@ -1,11 +1,11 @@
 <template>
   <q-card>
-    <modal-header v-if="modelToSubmit.isOrgMainModel"
-      ><template v-slot:header>Configure main model</template></modal-header
-    >
-    <modal-header v-else
-      ><template v-slot:header>Configure model</template></modal-header
-    >
+    <modal-header v-if="modelToSubmit.isOrgMainModel">
+      <template v-slot:header>Configure main model</template>
+    </modal-header>
+    <modal-header v-else>
+      <template v-slot:header>Configure model</template>
+    </modal-header>
 
     <q-form @submit.prevent="submitModel">
       <q-card-section>
@@ -249,7 +249,7 @@ export default {
       modelToSubmit: {
         name: "",
         simulationParams: {},
-        roleNodes: {}
+        roleNodes: {},
       },
       timeUnitOptions: [
         { label: "seconds", value: "seconds" },
@@ -261,9 +261,9 @@ export default {
         { label: "years", value: "years" },
         { label: "decades", value: "decades" },
         { label: "centuries", value: "centuries" },
-        { label: "millennia", value: "millennia" }
+        { label: "millennia", value: "millennia" },
       ],
-      filteredNodeOptions: []
+      filteredNodeOptions: [],
     };
   },
   components: {
@@ -272,7 +272,7 @@ export default {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
       .default,
     "modal-org-name": require("components/Orgs/Modals/Shared/ModalOrgName.vue")
-      .default
+      .default,
   },
   computed: {
     ...mapState("orgs", ["currentOrg"]),
@@ -294,13 +294,13 @@ export default {
       return finalTime;
     },
     nodeOptions() {
-      return this.nodes.map(node => {
+      return this.nodes.map((node) => {
         return { label: node.name, value: node.id };
       });
     },
     worldToOrgWeightingRatio() {
       return this.modelToSubmit.simulationParams.worldToOrgWeightingRatio;
-    }
+    },
   },
   methods: {
     ...mapActions("model", ["updateModel"]),
@@ -311,7 +311,7 @@ export default {
         } else {
           const needle = val.toLowerCase();
           this.filteredNodeOptions = this.nodeOptions.filter(
-            v => v.label.toLowerCase().indexOf(needle) > -1
+            (v) => v.label.toLowerCase().indexOf(needle) > -1
           );
         }
       });
@@ -322,12 +322,12 @@ export default {
     submitModel() {
       this.updateModel({
         modelId: this.currentModel.id,
-        updates: this.modelToSubmit
+        updates: this.modelToSubmit,
       });
       this.$emit("close");
-    }
+    },
   },
-  created: function() {
+  created: function () {
     //compose option values first, so we don't need to wait
     //for filteredNodeOptions to compute, which results in q-select
     //displaying option value instead of option label.
@@ -360,7 +360,7 @@ export default {
         this.modelToSubmit.simulationParams.orgWeightingFactor =
           Math.round(((1 - ratio) / ratio) * 100) / 100;
       }
-    }
-  }
+    },
+  },
 };
 </script>

@@ -204,13 +204,13 @@ import { createHelpers } from "vuex-map-fields";
 
 const { mapFields } = createHelpers({
   getterType: "uiIssue/getField",
-  mutationType: "uiIssue/updateUiIssueField"
+  mutationType: "uiIssue/updateUiIssueField",
 });
 
 export default {
   components: {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default
+      .default,
   },
 
   data() {
@@ -218,7 +218,7 @@ export default {
       embedded: false, //whether this component is embedded or a full page
       issueId: null,
       //issue: {},
-      estimatedRoi: null
+      estimatedRoi: null,
     };
   },
 
@@ -238,7 +238,7 @@ export default {
       "uiIssue.estSpending",
       "uiIssue.spentAmount",
       "uiIssue.dueDate",
-      "uiIssue.notes"
+      "uiIssue.notes",
     ]),
 
     selectedIssue() {
@@ -251,10 +251,10 @@ export default {
         this.embedded = true;
       }
       let issueId = this.issueId;
-      return this.issues.find(function(issue) {
+      return this.issues.find(function (issue) {
         return issue.id == issueId;
       });
-    }
+    },
   },
 
   methods: {
@@ -268,16 +268,16 @@ export default {
     submitIssue() {
       let payload = {
         id: this.issueId,
-        updates: this.uiIssue
+        updates: this.uiIssue,
       };
       this.$store.dispatch("issues/updateIssue", payload);
-    }
+    },
   },
 
   watch: {
-    selectedIssue: function(newIssue, oldIssue) {
+    selectedIssue: function (newIssue, oldIssue) {
       this.$store.dispatch("uiIssue/setUiIssue", this.selectedIssue);
-    }
-  }
+    },
+  },
 };
 </script>

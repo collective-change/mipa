@@ -55,11 +55,11 @@ export default {
   props: ["team", "id"],
   data() {
     return {
-      showEditTeam: false
+      showEditTeam: false,
     };
   },
   computed: {
-    ...mapGetters("settings", ["settings"])
+    ...mapGetters("settings", ["settings"]),
   },
   methods: {
     ...mapActions("teams", ["updateTeam", "deleteTeam"]),
@@ -72,16 +72,16 @@ export default {
           title: "Confirm",
           message: "Really delete?",
           cancel: true,
-          persistent: true
+          persistent: true,
         })
         .onOk(() => {
           this.deleteTeam(id);
         });
-    }
+    },
   },
   components: {
-    "edit-team": require("components/Teams/Modals/EditTeam.vue").default
-  }
+    "edit-team": require("components/Teams/Modals/EditTeam.vue").default,
+  },
 };
 </script>
 
