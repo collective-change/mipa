@@ -33,13 +33,13 @@ export default {
         { label: "Business", value: "business" },
         { label: "Non-profit", value: "non-profit" },
         { label: "Government", value: "government" },
-        { label: "Other", value: "other" }
+        { label: "Other", value: "other" },
       ],
       teamToSubmit: {
         name: "",
         goal: "",
-        teamType: ""
-      }
+        teamType: "",
+      },
     };
   },
   methods: {
@@ -49,7 +49,7 @@ export default {
       this.addTeam(this.teamToSubmit);
       console.log(this.teamToSubmit);
       this.$emit("close");
-    }
-  }
+    },
+  },
 };
 </script>

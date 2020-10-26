@@ -22,7 +22,7 @@ export default {
   props: ["task", "id"],
   data() {
     return {
-      taskToSubmit: {}
+      taskToSubmit: {},
     };
   },
   methods: {
@@ -30,13 +30,13 @@ export default {
     submitTask() {
       this.updateTask({
         id: this.id,
-        updates: this.taskToSubmit
+        updates: this.taskToSubmit,
       });
       this.$emit("close");
-    }
+    },
   },
   mounted() {
     this.taskToSubmit = Object.assign({}, this.task);
-  }
+  },
 };
 </script>

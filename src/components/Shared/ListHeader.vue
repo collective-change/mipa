@@ -8,7 +8,7 @@
 
 <script>
 export default {
-  props: ["bg_color"]
+  props: ["bg_color"],
 };
 </script>
 

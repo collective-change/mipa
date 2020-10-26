@@ -4,10 +4,7 @@
 
     <q-form @submit.prevent="submitForm">
       <q-card-section>
-        <modal-action-title
-          :title.sync="actionToSubmit.title"
-          ref="modalActionTitle"
-        />
+        <modal-action-title :title.sync="actionToSubmit.title" ref="modalActionTitle" />
       </q-card-section>
       <modal-buttons />
     </q-form>
@@ -37,8 +34,8 @@ export default {
         marginalTotalBenefitNpv: 0,
         marginalNetTotalBenefitNpv: 0,
         marginalTotalCostNpv: 0,
-        actionLeverage: null
-      }
+        actionLeverage: null,
+      },
     };
   },
   methods: {
@@ -54,7 +51,7 @@ export default {
       if (!this.$refs.modalActionTitle.$refs.title.hasError) {
         this.submitAction();
       }
-    }
+    },
   },
   components: {
     "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
@@ -62,7 +59,7 @@ export default {
     "modal-action-title": require("components/Actions/Modals/Shared/ModalActionTitle.vue")
       .default,
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default
-  }
+      .default,
+  },
 };
 </script>

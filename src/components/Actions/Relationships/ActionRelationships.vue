@@ -29,8 +29,7 @@
                 addParent(parentToAdd);
                 parentToAdd = null;
               "
-              >add</q-btn
-            >
+            >add</q-btn>
           </div>
         </div>
       </q-item-label>
@@ -40,8 +39,7 @@
         removable
         v-if="parentActionId"
         @remove="promptToDelete(parentActionId, 'child-parent')"
-        >{{ getActionTitle(parentActionId) }}</q-chip
-      >
+      >{{ getActionTitle(parentActionId) }}</q-chip>
       <q-separator spaced />
       <q-item-label header class="q-py-xs">
         <div class="row items-center">
@@ -70,8 +68,7 @@
                 addChild(childToAdd);
                 childToAdd = null;
               "
-              >add</q-btn
-            >
+            >add</q-btn>
           </div>
         </div>
       </q-item-label>
@@ -82,8 +79,7 @@
         v-for="actionId in childrenActionIds"
         :key="actionId"
         @remove="promptToDelete(actionId, 'parent-child')"
-        >{{ getActionTitle(actionId) }}</q-chip
-      >
+      >{{ getActionTitle(actionId) }}</q-chip>
       <q-separator spaced />
       <q-item-label header class="q-py-xs">
         <div class="row items-center">
@@ -112,8 +108,7 @@
                 addBlocker(blockerToAdd);
                 blockerToAdd = null;
               "
-              >add</q-btn
-            >
+            >add</q-btn>
           </div>
         </div>
       </q-item-label>
@@ -124,8 +119,7 @@
         v-for="actionId in blockerActionIds"
         :key="actionId"
         @remove="promptToDelete(actionId, 'blockee-blocker')"
-        >{{ getActionTitle(actionId) }}</q-chip
-      >
+      >{{ getActionTitle(actionId) }}</q-chip>
       <q-separator spaced />
       <q-item-label header class="q-py-xs">
         <div class="row items-center">
@@ -154,8 +148,7 @@
                 addBlockee(blockeeToAdd);
                 blockeeToAdd = null;
               "
-              >add</q-btn
-            >
+            >add</q-btn>
           </div>
         </div>
       </q-item-label>
@@ -166,8 +159,7 @@
         v-for="actionId in blockeeActionIds"
         :key="actionId"
         @remove="promptToDelete(actionId, 'blocker-blockee')"
-        >{{ getActionTitle(actionId) }}</q-chip
-      >
+      >{{ getActionTitle(actionId) }}</q-chip>
       <q-separator spaced />
     </q-list>
   </div>
@@ -180,7 +172,7 @@ import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
-  mutationType: "uiAction/updateUiActionField"
+  mutationType: "uiAction/updateUiActionField",
 });
 
 export default {
@@ -197,7 +189,7 @@ export default {
       childToAdd: null,
       blockerToAdd: null,
       blockeeToAdd: null,
-      filteredActionOptions: []
+      filteredActionOptions: [],
     };
   },
 
@@ -212,14 +204,14 @@ export default {
       "uiAction.blockerActionIds",
       "uiAction.blockeeActionIds",
       "uiAction.parentActionId",
-      "uiAction.childrenActionIds"
+      "uiAction.childrenActionIds",
     ]),
     //...mapMultiRowFields(["uiAction.impacts"]),
     actionOptions() {
-      return this.actions.map(action => {
+      return this.actions.map((action) => {
         return { label: action.title, value: action.id };
       });
-    }
+    },
   },
 
   methods: {
@@ -228,7 +220,7 @@ export default {
       "addChild",
       "addBlocker",
       "addBlockee",
-      "deleteRelationship"
+      "deleteRelationship",
     ]),
     filterFn(val, update, abort) {
       // call abort() at any time if you can't retrieve data somehow
@@ -240,7 +232,7 @@ export default {
         } else {
           const needle = val.toLowerCase();
           this.filteredActionOptions = this.actionOptions.filter(
-            v => v.label.toLowerCase().indexOf(needle) > -1
+            (v) => v.label.toLowerCase().indexOf(needle) > -1
           );
         }
       });
@@ -252,7 +244,7 @@ export default {
     },
 
     getActionTitle(actionId) {
-      let action = this.actions.find(a => a.id == actionId);
+      let action = this.actions.find((a) => a.id == actionId);
       return action.title;
     },
 
@@ -263,7 +255,7 @@ export default {
           title: "Confirm",
           message: "Really remove the relationship?",
           cancel: true,
-          persistent: true
+          persistent: true,
         })
         .onOk(() => {
           switch (relationshipType) {
@@ -271,38 +263,38 @@ export default {
               this.deleteRelationship({
                 type: "nesting",
                 parent: sourceActionId,
-                child: targetActionId
+                child: targetActionId,
               });
               break;
             case "child-parent":
               this.deleteRelationship({
                 type: "nesting",
                 child: sourceActionId,
-                parent: targetActionId
+                parent: targetActionId,
               });
               break;
             case "blockee-blocker":
               this.deleteRelationship({
                 type: "blocking",
                 blockee: sourceActionId,
-                blocker: targetActionId
+                blocker: targetActionId,
               });
               break;
             case "blocker-blockee":
               this.deleteRelationship({
                 type: "blocking",
                 blocker: sourceActionId,
-                blockee: targetActionId
+                blockee: targetActionId,
               });
               break;
             default:
               throw `Delete relationship type ${relationshipType} not found.`;
           }
         });
-    }
+    },
   },
 
-  created: function() {
+  created: function () {
     //compose option values first, so we don't need to wait
     //for filteredActionOptions to compute, which results in q-select
     //displaying option value instead of option label.
@@ -313,6 +305,6 @@ export default {
     }*/
   },
 
-  watch: {}
+  watch: {},
 };
 </script>

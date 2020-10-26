@@ -32,14 +32,14 @@ export default {
       },
       set(value) {
         this.setSearch(value);
-      }
-    }
+      },
+    },
   },
   methods: {
-    ...mapActions("tasks", ["setSearch"])
+    ...mapActions("tasks", ["setSearch"]),
   },
   directives: {
-    selectAll
-  }
+    selectAll,
+  },
 };
 </script>

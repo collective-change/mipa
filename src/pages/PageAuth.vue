@@ -33,12 +33,12 @@
 export default {
   data() {
     return {
-      tab: "login"
+      tab: "login",
     };
   },
   components: {
-    "login-register": require("components/Auth/LoginRegister.vue").default
-  }
+    "login-register": require("components/Auth/LoginRegister.vue").default,
+  },
 };
 </script>
 

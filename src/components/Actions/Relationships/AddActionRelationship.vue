@@ -1,7 +1,7 @@
 <template>
   <q-card>
     <q-card-section>
-      <modal-header v-slot:header>Add {{ targetType }} </modal-header>
+      <modal-header v-slot:header>Add {{ targetType }}</modal-header>
     </q-card-section>
 
     <q-form @submit.prevent="submitImpact">
@@ -40,7 +40,7 @@ export default {
     "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
       .default,
     "modal-save-button": require("components/Shared/ModalComponents/ModalSaveButton.vue")
-      .default
+      .default,
   },
 
   data() {
@@ -52,91 +52,91 @@ export default {
         hasDeadline: false,
         operation: "+",
         durationType: "for_period",
-        durationUnit: "months"
+        durationUnit: "months",
       },
       filteredNodeOptions: [],
       typeOptions: [
         {
           label: "If done",
-          value: "if_done"
+          value: "if_done",
         },
         {
           label: "If not done",
-          value: "if_not_done"
-        }
+          value: "if_not_done",
+        },
       ],
       deadlineOptions: [
         {
           label: "at some time",
-          value: false
+          value: false,
         },
         {
           label: "by deadline",
-          value: true
-        }
+          value: true,
+        },
       ],
       operationOptions: [
         {
           label: "+", // unicode U+0002B
-          value: "+"
+          value: "+",
         },
         {
           label: "−", // unicode U+02212
-          value: "-"
+          value: "-",
         },
         {
           label: "×", // unicode U+000D7
-          value: "*"
+          value: "*",
         },
         {
           label: "÷", // unicode U+000F7
-          value: "/"
+          value: "/",
         },
         {
           label: "=", // unicode U+0003D
-          value: "="
-        }
+          value: "=",
+        },
       ],
       durationTypeOptions: [
         {
           label: "just once",
-          value: "just_once"
+          value: "just_once",
         },
         {
           label: "for period of",
-          value: "for_period"
+          value: "for_period",
         },
         {
           label: "with half life of",
-          value: "with_half_life"
+          value: "with_half_life",
         },
         {
           label: "forever",
-          value: "forever"
-        }
+          value: "forever",
+        },
       ],
       durationUnitOptions: [
         {
           label: "days",
-          value: "days"
+          value: "days",
         },
         {
           label: "weeks",
-          value: "weeks"
+          value: "weeks",
         },
         {
           label: "months",
-          value: "months"
+          value: "months",
         },
         {
           label: "years",
-          value: "years"
-        }
-      ]
+          value: "years",
+        },
+      ],
     };
   },
 
-  created: function() {
+  created: function () {
     //compose option values first, so we don't need to wait
     //for filteredNodeOptions to compute, which results in q-select
     //displaying option value instead of option label.
@@ -147,11 +147,11 @@ export default {
     }
   },
 
-  mounted: function() {},
+  mounted: function () {},
 
   computed: {
     nodeOptions() {
-      return this.nodes.map(node => {
+      return this.nodes.map((node) => {
         return { label: node.name, value: node.id };
       });
     },
@@ -173,7 +173,7 @@ export default {
       } else {
         return "";
       }
-    }
+    },
   },
 
   methods: {
@@ -187,7 +187,7 @@ export default {
         } else {
           const needle = val.toLowerCase();
           this.filteredNodeOptions = this.nodeOptions.filter(
-            v => v.label.toLowerCase().indexOf(needle) > -1
+            (v) => v.label.toLowerCase().indexOf(needle) > -1
           );
         }
       });
@@ -199,7 +199,7 @@ export default {
     },
 
     getNodeUnit(nodeId) {
-      const found = this.nodes.find(node => node.id == nodeId);
+      const found = this.nodes.find((node) => node.id == nodeId);
       return found.unit;
     },
 
@@ -228,7 +228,7 @@ export default {
         }
         this.$emit("close");
       }
-    }
-  }
+    },
+  },
 };
 </script>

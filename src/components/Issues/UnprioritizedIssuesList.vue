@@ -20,13 +20,8 @@
           color="primary"
           size="16px"
           icon="add"
-        /> -->
-        <q-btn
-          color="primary"
-          :disable="loading"
-          label="新增"
-          @click="showAddIssue = true"
-        />
+        />-->
+        <q-btn color="primary" :disable="loading" label="新增" @click="showAddIssue = true" />
 
         <!--
         <q-btn
