@@ -3,7 +3,6 @@ export default {
   appTitle: "mipa",
   person: "人",
   people: "人",
-  copyright: "© " + new Date().getFullYear() + " 慈濟基金會",
 
   //for Layout.vue
   Messages: "訊息",
@@ -30,8 +29,11 @@ export default {
   "Basic information": "基本資料",
 
   Users: "使用者",
-  "Structure and permissions": "架構和權限",
-  "Performance and certification": "績效和認證",
+  Structure: "組織架構",
+  Suppliers: "供應商",
+  Purchases: "採購",
+  Metrics: "績效指標",
+  Frameworks: "管理框架",
 
   ModelVerb: "發展模型",
   ModelNoun: "模型",
