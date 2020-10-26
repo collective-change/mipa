@@ -3,7 +3,6 @@ export default {
   appTitle: "mipa",
   person: "person",
   people: "people",
-  copyright: "Copyright © " + new Date().getFullYear() + " Tzu Chi Foundation",
 
   //for Layout.vue
   Messages: "Messages",
@@ -30,8 +29,11 @@ export default {
   "Basic information": "Basic information",
 
   Users: "Users",
-  "Structure and permissions": "Structure and permissions",
-  "Performance and certification": "Performance and certification",
+  Structure: "Structure",
+  Suppliers: "Suppliers",
+  Purchases: "Purchases",
+  Metrics: "Metrics",
+  Frameworks: "Frameworks",
 
   ModelVerb: "Model",
   ModelNoun: "Model",
