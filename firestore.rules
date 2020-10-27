@@ -32,34 +32,11 @@ service cloud.firestore {
     }
 
     match /actions/{action}  {
-      //allow write if org referred to by written action.orgId has user
-      //allow write: if orgHasUser(resource.data.orgId, request.auth.uid)
-      //allow write: if request.auth.uid in getOrg(resource.data.orgId).data.users
-      allow write: if request.auth.uid in get(/databases/$(database)/documents/orgs/$(request.resource.data.orgId)).data.users;
-
-      //allow write if user is in action's users
-      //allow read, write if user in action's org's users
-      allow read, write;
-      allow read, write: if request.auth.uid in get(/databases/$(database)/documents/orgs/$(resource.data.orgId)).data.users;
-    }
-
-    // Match any document in the 'teams' collection
-    match /teams/{team} {
-      allow list, create: if request.auth.uid != null;
-      allow read: if request.auth.uid in resource.data.users;
-      allow update, delete: if request.auth.uid in resource.data.superAdmins;
-    }
-
-    // Match any document in the 'teams' collection or subcollections
-    match /teams/{team}/{document=**} {
-      //allow read, write
-      allow create: if request.auth.uid != null;
-      allow read, update, delete: if request.auth.uid in get(/databases/$(database)/documents/teams/$(team)).data.users;
-      //allow delete: if request.auth.uid in team.data.superAdmins;
+      //allow read, write if user is in action's org's users
+      allow read, write: if request.auth.uid in get(/databases/$(database)/documents/orgs/$(request.resource.data.orgId)).data.users;
     }
 
     match /users/{userId} {
-      //allow read, write
       allow read, update, delete: if request.auth.uid == userId;
       allow create: if request.auth.uid != null;
     }
