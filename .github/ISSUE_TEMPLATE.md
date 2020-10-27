@@ -26,7 +26,7 @@
 
 ## Your Environment
 <!--- Include as many relevant details about the environment you experienced the bug in -->
-* Version used:
+* Version used (if different from current release at mipa.collective-change.org):
 * Browser Name and version:
 * Operating System and version (desktop or mobile):
 * Link to your project:
