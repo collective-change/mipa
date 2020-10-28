@@ -49,6 +49,7 @@
             :key="link.text"
             :to="link.to"
             :label="link.text"
+            :disable="link.disable"
           />
         </q-tabs>
 
