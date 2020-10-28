@@ -44,7 +44,7 @@ If you don't have yarn installed yet, follow these instructions to install it: h
 
 Go back to your project's root directory and install dependencies using yarn.
 ```bash
-cd your-project-directory
+cd ..
 yarn install
 ```
 
