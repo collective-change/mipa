@@ -4,17 +4,13 @@ import { vuexfireMutations } from "vuexfire";
 
 import auth from "./store-auth";
 import settings from "./store-settings";
-import tasks from "./store-tasks";
-import teams from "./store-teams";
 import orgs from "./store-orgs";
 import model from "./store-model";
-import issues from "./store-issues";
 import actions from "./store-actions";
 import adHocDocs from "./store-adHocDocs";
 import calculator from "./store-calculator";
 import calcResults from "./store-calcResults";
 import ui from "./store-ui";
-import uiIssue from "./store-uiIssue";
 import uiAction from "./store-uiAction";
 
 Vue.use(Vuex);
@@ -33,17 +29,13 @@ export default function(/* { ssrContext } */) {
     modules: {
       auth,
       settings,
-      tasks,
       orgs,
-      teams,
       model,
-      issues,
       actions,
       adHocDocs,
       calculator,
       calcResults,
       ui,
-      uiIssue,
       uiAction
     },
 
