@@ -6,7 +6,7 @@
   "author": "",
   "private": true,
   "scripts": {
-    "test": "echo \"See package.json => scripts for available tests.\" && exit 0",
+    "test": "cross-env QENV=test quasar test --unit jest",
     "dev": "cross-env QENV=development quasar dev",
     "build": "cross-env QENV=production quasar build",
     "build:pwa": "cross-env QENV=production quasar build -m pwa",
