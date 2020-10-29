@@ -6,9 +6,8 @@
   "author": "",
   "private": true,
   "scripts": {
-    "test": "echo \"No test specified\" && exit 0",
+    "test": "cross-env QENV=test echo \"No test specified\" && exit 0",
     "dev": "cross-env QENV=development quasar dev",
-    "combined": "cross-env QENV=development+test quasar dev",
     "build": "cross-env QENV=production quasar build",
     "build:pwa": "cross-env QENV=production quasar build -m pwa"
   },

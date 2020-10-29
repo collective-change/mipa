@@ -57,7 +57,6 @@ const actions = {
         if (this.$router.currentRoute.path == "/auth") {
           this.$router.push("/");
         }
-        dispatch("tasks/fbReadData", null, { root: true });
       } else {
         commit("setLoggedIn", false);
         LocalStorage.set("loggedIn", false);
