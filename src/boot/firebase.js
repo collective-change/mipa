@@ -22,8 +22,8 @@ let firebaseApp = firebase.initializeApp(firebaseConfig);
 let firebaseAuth = firebaseApp.auth();
 let firebaseDb = firebaseApp.firestore();
 
-// Use Firebase emulator for localhost (i.e. when in development mode)
-if (location.hostname === "localhost") {
+// Use Firebase emulator for testing
+if (process.env.ENV_TYPE == "Running Test") {
   firebaseApp.auth().useEmulator("http://localhost:9099/");
   firebaseDb.useEmulator("localhost", 5002);
 }
@@ -33,8 +33,8 @@ if (location.hostname === "localhost") {
   cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
 }); */
 
-// enable offline persistence if not on localhost (i.e. not in development mode)
-if (location.hostname != "localhost") {
+// enable offline persistence if in production or dev environments (not testing)
+if (process.env.PROD || process.env.DEV) {
   firebase
     .firestore()
     .enablePersistence({ synchronizeTabs: true })
