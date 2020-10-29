@@ -1,9 +1,9 @@
 // Firebase App (the core Firebase SDK) is always required and must be listed first
-import * as firebase from "firebase/app";
+import firebase from "firebase/app";
 
 // Add the Firebase products that you want to use
-import "firebase/auth";
-import "firebase/firestore";
+require("firebase/auth").default;
+require("firebase/firestore").default;
 
 import { showErrorMessage } from "src/utils/util-show-error-message";
 
@@ -22,28 +22,36 @@ let firebaseApp = firebase.initializeApp(firebaseConfig);
 let firebaseAuth = firebaseApp.auth();
 let firebaseDb = firebaseApp.firestore();
 
+// Use Firebase emulator for localhost (i.e. when in development mode)
+if (location.hostname === "localhost") {
+  firebaseApp.auth().useEmulator("http://localhost:9099/");
+  firebaseDb.useEmulator("localhost", 5002);
+}
+
 // set unlimited cache size
 /* firebase.firestore().settings({
   cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
 }); */
 
-// enable offline persistence
-firebase
-  .firestore()
-  .enablePersistence({ synchronizeTabs: true })
-  .catch(function(err) {
-    if (err.code == "failed-precondition") {
-      showErrorMessage(
-        "Error enabling persistence (failed precondition)",
-        error.message
-      );
-    } else if (err.code == "unimplemented") {
-      showErrorMessage(
-        "Error enabling persistence (unimplemented)",
-        error.message
-      );
-    }
-  });
+// enable offline persistence if not on localhost (i.e. not in development mode)
+if (location.hostname != "localhost") {
+  firebase
+    .firestore()
+    .enablePersistence({ synchronizeTabs: true })
+    .catch(function(err) {
+      if (err.code == "failed-precondition") {
+        showErrorMessage(
+          "Error enabling persistence (failed precondition)",
+          error.message
+        );
+      } else if (err.code == "unimplemented") {
+        showErrorMessage(
+          "Error enabling persistence (unimplemented)",
+          error.message
+        );
+      }
+    });
+}
 
 // Export types that exists in Firestore
 // This is not always necessary, but it's used in other examples in Vuexfire docs
