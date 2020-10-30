@@ -22,8 +22,10 @@ let firebaseApp = firebase.initializeApp(firebaseConfig);
 let firebaseAuth = firebaseApp.auth();
 let firebaseDb = firebaseApp.firestore();
 
-// Use Firebase emulator for testing
-if (process.env.ENV_TYPE == "Running Test") {
+// Use Firebase emulator for development and testing
+if (process.env.DEV || process.env.ENV_TYPE == "Running Test") {
+  console.log("process.env.DEV", process.env.DEV);
+  console.log("process.env.ENV_TYPE", process.env.ENV_TYPE);
   firebaseApp.auth().useEmulator("http://localhost:9099/");
   firebaseDb.useEmulator("localhost", 5002);
 }
