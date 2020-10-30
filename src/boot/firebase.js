@@ -28,6 +28,10 @@ if (process.env.DEV || process.env.ENV_TYPE == "Running Test") {
   console.log("process.env.ENV_TYPE", process.env.ENV_TYPE);
   firebaseApp.auth().useEmulator("http://localhost:9099/");
   firebaseDb.useEmulator("localhost", 5002);
+  //TODO: if process.env.DEV, use admin sdk to create dev user
+  // on firebase auth that corresponds to the user in
+  // initial-firestore-emulator-data, so developer can log in
+  // to development instance of mipa
 }
 
 // set unlimited cache size
