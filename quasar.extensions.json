@@ -2,5 +2,16 @@
   "@quasar/qenv": {
     "common_root_object": "none",
     "add_qenv_to_gitignore": true
+  },
+  "@quasar/testing": {
+    "harnesses": [
+      "unit-jest"
+    ]
+  },
+  "@quasar/testing-unit-jest": {
+    "babel": "babelrc",
+    "options": [
+      "scripts"
+    ]
   }
 }
