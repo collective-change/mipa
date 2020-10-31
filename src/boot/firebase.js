@@ -17,7 +17,7 @@ var firebaseConfig = {
   messagingSenderId: process.env.messagingSenderId,
   appId: process.env.appId
 };
-console.log("process.env.NODE_ENV", process.env.NODE_ENV);
+
 // in test environment, .env is not loaded, so the properties
 // in firebaseConfig are all undefined. To initialize firebase
 // we need to put in at least a fake api key and fake project id.
@@ -25,7 +25,7 @@ if (process.env.NODE_ENV == "test") {
   firebaseConfig.apiKey = "fake-api-key";
   firebaseConfig.projectId = "fake-project-id";
 }
-console.log(firebaseConfig);
+
 // Initialize Firebase
 let firebaseApp = firebase.initializeApp(firebaseConfig);
 let firebaseAuth = firebaseApp.auth();
@@ -34,6 +34,7 @@ let firebaseDb = firebaseApp.firestore();
 // Use Firebase emulator for development and testing
 if (process.env.NODE_ENV == "development" || process.env.NODE_ENV == "test") {
   console.log("process.env.NODE_ENV", process.env.NODE_ENV);
+  console.log("Using Firebase emulators");
   firebaseApp.auth().useEmulator("http://localhost:9099/");
   firebaseDb.useEmulator("localhost", 5002);
 }
@@ -43,8 +44,11 @@ if (process.env.NODE_ENV == "development" || process.env.NODE_ENV == "test") {
   cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
 }); */
 
-// enable offline persistence if in production or dev environments (not testing)
-if (process.env.NODE_ENV != "test") {
+// enable offline persistence if in production or dev environments
+if (
+  process.env.NODE_ENV == "production" ||
+  process.env.NODE_ENV == "development"
+) {
   firebase
     .firestore()
     .enablePersistence({ synchronizeTabs: true })
