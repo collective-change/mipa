@@ -45,10 +45,11 @@
     "electron": "^7.2.4",
     "electron-debug": "^3.0.1",
     "electron-devtools-installer": "^2.2.4",
+    "eslint-plugin-jest": "^23.8.2",
+    "flush-promises": "^1.0.2",
     "node-sass": "^4.12.0",
     "sass-loader": "^7.3.1",
-    "workbox-webpack-plugin": "5.0.0",
-    "eslint-plugin-jest": "^23.8.2"
+    "workbox-webpack-plugin": "5.0.0"
   },
   "engines": {
     "node": ">= 8.9.0",
