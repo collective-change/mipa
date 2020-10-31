@@ -33,8 +33,7 @@ describe("LoginRegister.vue", () => {
 
   it("accepts email input", async () => {
     const email = "a1@b2.cd";
-    const emailInput = wrapper.find("input[name=email]");
-    await emailInput.setValue(email);
-    expect(vm.formData.email).toBe(email);
+    await wrapper.find("input[name=email]").setValue(email);
+    expect(wrapper.vm.formData.email).toBe(email);
   });
 });
