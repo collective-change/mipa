@@ -33,3 +33,7 @@ package-lock.json
 # Emulator data for each instance
 /my-firestore-emulator-data
 
+
+development.env
+production.env
+.env

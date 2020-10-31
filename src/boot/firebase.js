@@ -17,21 +17,25 @@ var firebaseConfig = {
   messagingSenderId: process.env.messagingSenderId,
   appId: process.env.appId
 };
+console.log("process.env.NODE_ENV", process.env.NODE_ENV);
+// in test environment, .env is not loaded, so the properties
+// in firebaseConfig are all undefined. To initialize firebase
+// we need to put in at least a fake api key and fake project id.
+if (process.env.NODE_ENV == "test") {
+  firebaseConfig.apiKey = "fake-api-key";
+  firebaseConfig.projectId = "fake-project-id";
+}
+console.log(firebaseConfig);
 // Initialize Firebase
 let firebaseApp = firebase.initializeApp(firebaseConfig);
 let firebaseAuth = firebaseApp.auth();
 let firebaseDb = firebaseApp.firestore();
 
 // Use Firebase emulator for development and testing
-if (process.env.DEV || process.env.ENV_TYPE == "Running Test") {
-  console.log("process.env.DEV", process.env.DEV);
-  console.log("process.env.ENV_TYPE", process.env.ENV_TYPE);
+if (process.env.NODE_ENV == "development" || process.env.NODE_ENV == "test") {
+  console.log("process.env.NODE_ENV", process.env.NODE_ENV);
   firebaseApp.auth().useEmulator("http://localhost:9099/");
   firebaseDb.useEmulator("localhost", 5002);
-  //TODO: if process.env.DEV, use admin sdk to create dev user
-  // on firebase auth that corresponds to the user in
-  // initial-firestore-emulator-data, so developer can log in
-  // to development instance of mipa
 }
 
 // set unlimited cache size
@@ -40,7 +44,7 @@ if (process.env.DEV || process.env.ENV_TYPE == "Running Test") {
 }); */
 
 // enable offline persistence if in production or dev environments (not testing)
-if (process.env.PROD || process.env.DEV) {
+if (process.env.NODE_ENV != "test") {
   firebase
     .firestore()
     .enablePersistence({ synchronizeTabs: true })
