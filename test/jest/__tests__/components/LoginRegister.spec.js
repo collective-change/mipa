@@ -1,7 +1,7 @@
 import { mount, createLocalVue, shallowMount } from "@vue/test-utils";
 import Vuex from "vuex";
-import LoginRegister from "../../../src/components/Auth/LoginRegister.vue";
-import authStore from "../../../src/store/store-auth";
+import LoginRegister from "src/components/Auth/LoginRegister.vue";
+import authStore from "src/store/store-auth";
 import * as All from "quasar";
 // import langEn from 'quasar/lang/en-us' // change to any language you wish! => this breaks wallaby :(
 const { Quasar } = All;
