@@ -44,11 +44,8 @@ if (process.env.NODE_ENV == "development" || process.env.NODE_ENV == "test") {
   cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
 }); */
 
-// enable offline persistence if in production or dev environments
-if (
-  process.env.NODE_ENV == "production" ||
-  process.env.NODE_ENV == "development"
-) {
+// enable offline persistence for production environment
+if (process.env.NODE_ENV == "production") {
   firebase
     .firestore()
     .enablePersistence({ synchronizeTabs: true })
