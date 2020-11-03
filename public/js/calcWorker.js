@@ -36,7 +36,7 @@ onmessage = function(e) {
 function coordinateScenarioSimulations(data) {
   //prep environment, scope, etc
   // Initialize Firebase
-  if (!firebaseApp){
+  if (!firebaseApp) {
     firebaseApp = firebase.initializeApp(data.firebaseConfig);
     firebaseAuth = firebaseApp.auth();
     firebaseDb = firebaseApp.firestore();
@@ -1025,8 +1025,16 @@ function prepEnvironment(data) {
 
   //import custom functions
   delay.rawArgs = true;
+  getDayOfWeek.rawArgs = true;
+  getMonth.rawArgs = true;
+  getCalendarMonth.rawArgs = true;
+  getYear.rawArgs = true;
   math.import({
-    delay: delay
+    delay,
+    getDayOfWeek,
+    getMonth,
+    getCalendarMonth,
+    getYear
   });
 
   //create currency units
@@ -1375,6 +1383,26 @@ function prepNodesForSort(sim) {
   });
   sim.calcTimeLog.push({ stage: "prepNodesForSort", endTime: new Date() });
   return preppedNodes;
+}
+
+function getDayOfWeek(args, math, scope) {
+  var date = new Date(scope.timeS * 1000);
+  return date.getDay();
+}
+
+function getMonth(args, math, scope) {
+  var date = new Date(scope.timeS * 1000);
+  return date.getMonth();
+}
+
+function getCalendarMonth(args, math, scope) {
+  var date = new Date(scope.timeS * 1000);
+  return date.getMonth() + 1;
+}
+
+function getYear(args, math, scope) {
+  var date = new Date(scope.timeS * 1000);
+  return date.getFullYear();
 }
 
 function delay(args, math, scope) {
