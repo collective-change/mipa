@@ -1066,6 +1066,18 @@ function prepEnvironment(data) {
     operation: {
       baseName: "operation",
       aliases: ["operations", "ops"]
+    },
+    organization: {
+      baseName: "organization",
+      aliases: ["organizations", "org", "orgs"]
+    },
+    baseproduct: {
+      baseName: "baseproduct",
+      aliases: ["baseproducts", "baseProduct", "baseProducts", "bp"]
+    },
+    sku: {
+      baseName: "sku",
+      aliases: ["skus"]
     }
   });
 
