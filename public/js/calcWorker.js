@@ -1069,7 +1069,7 @@ function prepEnvironment(data) {
     },
     organization: {
       baseName: "organization",
-      aliases: ["organizations", "org", "orgs"]
+      aliases: ["organizations", "org", "orgs", "company", "companies"]
     },
     baseproduct: {
       baseName: "baseproduct",
