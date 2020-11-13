@@ -1397,24 +1397,55 @@ function prepNodesForSort(sim) {
   return preppedNodes;
 }
 
-function getDayOfWeek(args, math, scope) {
-  var date = new Date(scope.timeS * 1000);
-  return date.getDay();
+function getSimDayOfWeek(args, math, scope) {
+  const adjustedDate = getAdjustedDate(args, math, scope, "getSimDayOfWeek()");
+  return adjustedDate.getDay();
 }
 
-function getMonth(args, math, scope) {
-  var date = new Date(scope.timeS * 1000);
-  return date.getMonth();
+function getSimMonth(args, math, scope) {
+  const adjustedDate = getAdjustedDate(args, math, scope, "getSimMonth()");
+  return adjustedDate.getMonth();
 }
 
-function getCalendarMonth(args, math, scope) {
-  var date = new Date(scope.timeS * 1000);
-  return date.getMonth() + 1;
+function getSimCalendarMonth(args, math, scope) {
+  const adjustedDate = getAdjustedDate(
+    args,
+    math,
+    scope,
+    "getSimCalendarMonth()"
+  );
+  return adjustedDate.getMonth() + 1;
 }
 
-function getYear(args, math, scope) {
-  var date = new Date(scope.timeS * 1000);
-  return date.getFullYear();
+function getSimYear(args, math, scope) {
+  const adjustedDate = getAdjustedDate(args, math, scope, "getSimYear()");
+  return adjustedDate.getFullYear();
+}
+
+function getAdjustedDate(args, math, scope, caller) {
+  switch (true) {
+    case args.length == 0:
+      return new Date(scope.timeS * 1000);
+      break;
+    case args.length == 1:
+      if (args[0].args) {
+        //user did not wrap argument to caller in quotation marks
+        var n = args[0];
+      } else {
+        //user wrapped argument to caller in quotation marks
+        var n = math.parse(args[0].value);
+      }
+      var timeAdjustment = n.compile().evaluate(scope);
+      return new Date(
+        (scope.timeS + timeAdjustment.toNumber("seconds")) * 1000
+      );
+      break;
+    case args.length > 1:
+      throw new Error(
+        caller + " takes at most one argument. " + args.length + " received."
+      );
+      break;
+  }
 }
 
 function delay(args, math, scope) {
