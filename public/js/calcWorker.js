@@ -1025,16 +1025,16 @@ function prepEnvironment(data) {
 
   //import custom functions
   delay.rawArgs = true;
-  getDayOfWeek.rawArgs = true;
-  getMonth.rawArgs = true;
-  getCalendarMonth.rawArgs = true;
-  getYear.rawArgs = true;
+  getSimDayOfWeek.rawArgs = true;
+  getSimMonth.rawArgs = true;
+  getSimCalendarMonth.rawArgs = true;
+  getSimYear.rawArgs = true;
   math.import({
     delay,
-    getDayOfWeek,
-    getMonth,
-    getCalendarMonth,
-    getYear
+    getSimDayOfWeek,
+    getSimMonth,
+    getSimCalendarMonth,
+    getSimYear
   });
 
   //create currency units
