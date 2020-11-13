@@ -1347,8 +1347,9 @@ function topoSortNodes(sim) {
   try {
     //if there are unvisited nodes, then graph has at least one cycle
     if (unvisitedNodes.length) {
-      console.log("unvisitedNodes: ", unvisitedNodes);
-      throw "Circular dependency detected in nodes.";
+      const nodeNames = unvisitedNodes.map(node => node.name).join(", ");
+      console.log("unvisitedNodes: ", nodeNames);
+      throw "Circular dependency detected in nodes: " + nodeNames;
     }
   } catch (err) {
     console.log(err);
