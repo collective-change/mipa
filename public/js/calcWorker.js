@@ -761,7 +761,7 @@ function iterateThroughTime(sim, scenario) {
           sim.errorOccurred = true;
           self.postMessage({
             errorType: "evaluation error",
-            errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err} <br/> ${nodeIndex}`
+            errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`
           });
         }
 
@@ -787,7 +787,16 @@ function iterateThroughTime(sim, scenario) {
           });
         }
         //on first 2 loops, check result of evaluation against units expected by user.
-        if (timeSIndex < 2) checkUnits(sim, nodeIndex);
+        if (timeSIndex < 2)
+          try {
+            checkUnits(sim, nodeIndex);
+          } catch (err) {
+            sim.errorOccurred = true;
+            self.postMessage({
+              errorType: "Unit mismatch",
+              errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}" ${err}`
+            });
+          }
       }
       //if (sim.errorOccurred) return;
     });
