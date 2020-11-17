@@ -109,7 +109,7 @@
         <modal-buttons />
       </q-form>
 
-      <p>nodeToSubmit: {{ nodeToSubmit.id }}</p>
+      <p>Node ID: {{ nodeToSubmit.id }}</p>
       <!--
       <p>symbolFormula</p>
       <pre>{{ nodeToSubmit.symbolFormula }}</pre>
@@ -325,12 +325,12 @@ export default {
           (chart) => chart.nodeId == nodeId
         );
         if (typeof chart == "undefined") {
-          let foundNode = this.nodes.find((node) => node.id == nodeId);
+          //let foundNode = this.nodes.find((node) => node.id == nodeId);
           let unit = (chart = {
             nodeId: nodeId,
             chartData: [],
             chartOptions: {
-              title: this.getNodeName(nodeId) + " (" + foundNode.symbol + ")",
+              title: this.getNodeName(nodeId),
               vAxis: { title: this.getNodeUnit(nodeId), scaleType: "linear" },
               legend: { position: "none" },
               //legend: { position: "bottom" },
