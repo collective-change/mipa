@@ -39,6 +39,16 @@
       <q-space />
       <q-btn color="primary" :label="tab" type="submit" />
     </div>
+    <div class="row">
+      <q-space />
+      <q-btn
+        size="sm"
+        flat
+        color="primary"
+        label="send password reset email"
+        @click="sendPwdResetEmail"
+      />
+    </div>
   </q-form>
 </template>
 
@@ -57,7 +67,7 @@ export default {
     };
   },
   methods: {
-    ...mapActions("auth", ["registerUser", "loginUser"]),
+    ...mapActions("auth", ["registerUser", "loginUser", "sendPasswordResetEmail"]),
     isValidEmailAddress(email) {
       var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
       return re.test(String(email).toLowerCase());
@@ -71,6 +81,12 @@ export default {
         } else {
           this.registerUser(this.formData);
         }
+      }
+    },
+    sendPwdResetEmail() {
+      this.$refs.email.validate();
+      if (!this.$refs.email.hasError) {
+        this.sendPasswordResetEmail(this.formData);
       }
     },
   },

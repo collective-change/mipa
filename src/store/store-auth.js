@@ -1,4 +1,4 @@
-import { LocalStorage, Loading } from "quasar";
+import { LocalStorage, Loading, Notify } from "quasar";
 import { firebase, firebaseAuth, firebaseDb } from "src/boot/firebase";
 import { showErrorMessage } from "src/utils/util-show-error-message";
 
@@ -46,6 +46,16 @@ const actions = {
     //this.detachUserTasksListener();
     //dispatch("tasks/detachUserTasksListenerAction", null, { root: true });
     firebaseAuth.signOut();
+  },
+  sendPasswordResetEmail({}, payload) {
+    firebaseAuth
+      .sendPasswordResetEmail(payload.email)
+      .then(function() {
+        Notify.create("Email sent");
+      })
+      .catch(error => {
+        showErrorMessage("Error", error.message);
+      });
   },
   handleAuthStateChange({ commit, dispatch }) {
     firebaseAuth.onAuthStateChanged(user => {
