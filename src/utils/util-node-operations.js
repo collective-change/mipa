@@ -14,6 +14,7 @@ function classifyInfluencers(payload) {
   let used = [];
   let blocking = [];
   let delayCallsArgs = [];
+  let nonDelayedInfluencers = [];
 
   if (formulaExists) {
     let sysFormula = thisNode.sysFormula;
@@ -29,7 +30,10 @@ function classifyInfluencers(payload) {
     //get all delay calls
 
     let selfDelay = false;
+
     parsedSysFormula.traverse(function(expressionNode, path, parent) {
+      //get number of total appearances of a node,
+      //get number of appearances of a node in a self-delay function
       if (expressionNode.type == "FunctionNode") {
         if (expressionNode.fn.name == "delay") {
           delayCallsArgs.push(expressionNode.args);
@@ -39,7 +43,19 @@ function classifyInfluencers(payload) {
             expressionNode.args[0].name == "$" + thisNode.id
           )
             selfDelay = true;
+        } else {
+          // a function node but not a delay function
+          // set blocking = true later on
         }
+      } else {
+        //console.log("function args ", expressionNode.args[0].name);
+
+        console.log(expressionNode.type);
+        expressionNode.args.forEach(function(arg) {
+          console.log(arg);
+          //if (arg.name) console.log("arg.name ", arg.name);
+          //nonDelayedInfluencers.push(expressionNode.args[0].name.substr(1));
+        });
       }
     });
     if (selfDelay == true) blocking.push(thisNode.id);
@@ -92,6 +108,13 @@ function classifyInfluencers(payload) {
           influencerIsBlocking = true;
       }
     });
+    //TODO: if influencer is otherwise used in a blocking way (not in a delay)
+    //then set blocking = true
+    console.log("nonDelayedInfluencers ", nonDelayedInfluencers);
+    if (nonDelayedInfluencers.includes("$" + influencerId)) {
+      console.log("nonDelayedInfluencer ", influencerId);
+      influencerIsBlocking = true;
+    }
     if (influencerIsBlocking == false) {
       //remove influencer from blocking array
       //console.log("removing", influencerId);
