@@ -388,8 +388,7 @@ const actions = {
         let influenceeNode = state.nodes.find(node => node.id == influenceeId);
         //run classifyInfluencers
         let classifiedInfluencers = classifyInfluencers({
-          thisNode: influenceeNode,
-          nodes: state.nodes
+          thisNode: influenceeNode
         });
 
         //save results

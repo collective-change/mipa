@@ -493,7 +493,6 @@ export default {
       //calculate blockingInfluencers
       let classifiedInfluencers = classifyInfluencers({
         thisNode: this.nodeToSubmit,
-        nodes: this.nodes,
       });
       //console.log("classifyInfluencers ran");
       this.nodeToSubmit.blockingInfluencers = classifiedInfluencers.blocking;
