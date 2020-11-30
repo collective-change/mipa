@@ -49,7 +49,7 @@ import { sleep } from "src/utils/util-sleep";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import {
   getNodeLinkEndPoints,
-  getDistance,
+  getDistance
 } from "src/utils/util-getNodeLinkEndPoints";
 
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
@@ -64,7 +64,7 @@ export default {
   components: {
     "add-node": require("components/Model/Modals/AddNode.vue").default,
     "delete-node": require("components/Model/Modals/DeleteNode.vue").default,
-    "add-link": require("components/Model/Modals/AddLink.vue").default,
+    "add-link": require("components/Model/Modals/AddLink.vue").default
   },
   props: ["initialCirclePositions"],
   data() {
@@ -78,7 +78,7 @@ export default {
       selections: {},
       d3Data: {
         nodes: [],
-        links: [],
+        links: []
       },
       simulation: null,
       iterationCount: 0,
@@ -86,42 +86,42 @@ export default {
         gravity: {
           strength: 80,
           distanceMin: 1,
-          distanceMax: 1000,
+          distanceMax: 1000
         },
         charge: {
           strength: -200,
           distanceMin: 1,
-          distanceMax: 400,
+          distanceMax: 400
         },
         collide: {
           strength: 0.7,
-          iterations: 1,
+          iterations: 1
           //radius: nodeRadius
         },
         forceX: {
           strength: 0.03,
-          x: svgWidth / 2,
+          x: svgWidth / 2
         },
         forceY: {
           strength: 0.03,
-          y: svgHeight / 2,
+          y: svgHeight / 2
         },
         link: {
           distance: 90,
-          //strength: 1.5,
-          iterations: 1,
-        },
+          strength: 1,
+          iterations: 1
+        }
       },
       addNodeProps: {
         sourceNodeId: "",
-        newNodeRole: "",
+        newNodeRole: ""
       },
       linkToSubmit: {
         sourceNodeId: "",
         targetNodeId: "",
-        targetType: "",
+        targetType: ""
         //type: ""
-      },
+      }
     };
   },
 
@@ -130,7 +130,7 @@ export default {
       "selectedNodeId",
       "selectedNodeGroup",
       "uiNodeChanged",
-      "uiNodeChangedFields",
+      "uiNodeChangedFields"
     ]),
     ...mapGetters("model", ["nodes", "links"]),
     ...mapState("model", ["currentModel"]),
@@ -145,11 +145,11 @@ export default {
       },
       set(value) {
         this.$store.commit("ui/setExpandedNodeGroups", value);
-      },
+      }
     },
     selectedNode() {
       let that = this;
-      return this.nodes.find(function (node) {
+      return this.nodes.find(function(node) {
         return node.id == that.selectedNodeId;
       });
     },
@@ -161,7 +161,7 @@ export default {
 
     storeData() {
       return { nodes: this.nodes, links: this.links };
-    },
+    }
   },
 
   created() {
@@ -169,7 +169,7 @@ export default {
       .forceSimulation()
       .force(
         "link",
-        d3.forceLink().id(function (d) {
+        d3.forceLink().id(function(d) {
           return d.id;
         })
       )
@@ -227,7 +227,7 @@ export default {
     svg.call(this.zoom);
 
     //require ctrlKey in addition to mouse
-    this.zoom.filter(function () {
+    this.zoom.filter(function() {
       return d3.event.ctrlKey;
     });
 
@@ -248,10 +248,13 @@ export default {
     ...mapActions("model", [
       "addLink",
       "deleteLink",
+      "relaxLink",
+      "relaxLinkMore",
+      "restoreLinkForce",
       "createNodeGroup",
       "addToNodeGroup",
       "removeNodeFromGroup",
-      "disbandNodeGroup",
+      "disbandNodeGroup"
     ]),
     ...mapActions("ui", ["setSelectedNodeId"]),
 
@@ -266,7 +269,7 @@ export default {
       this.simulation
         .force("collide")
         .strength(that.forceProperties.collide.strength)
-        .radius(function (node) {
+        .radius(function(node) {
           if (node.toRemove) return 0;
           else return nodeRadius * 1 - that.simulation.alpha();
         })
@@ -274,7 +277,7 @@ export default {
 
       this.simulation
         .force("link")
-        .distance(function (link) {
+        .distance(function(link) {
           if (link.newlyEntered)
             return (
               that.forceProperties.link.distance *
@@ -285,11 +288,11 @@ export default {
         //.strength(that.forceProperties.link.strength)
         .iterations(that.forceProperties.link.iterations);
 
-      const transform = (d) => {
+      const transform = d => {
         return "translate(" + d.x + "," + d.y + ")";
       };
 
-      const link = (d) => {
+      const link = d => {
         const linkEndPoints = getNodeLinkEndPoints(d, nodeRadius, 3);
         return (
           "M" +
@@ -315,7 +318,7 @@ export default {
       const graph = this.selections.graph;
       let circlePositions = [];
       let logged = false;
-      graph.selectAll("circle").each(function () {
+      graph.selectAll("circle").each(function() {
         const thisCircle = d3.select(this);
         let tempStr = thisCircle.attr("transform").replace("translate(", "");
         tempStr = tempStr.replace(")", "");
@@ -323,14 +326,14 @@ export default {
         circlePositions.push({
           id: thisCircle.data()[0].id,
           x: xy[0],
-          y: xy[1],
+          y: xy[1]
         });
       });
       this.simulation.on("end", null); //remove savePositions function from simulation on end
       let saveFile = {
         modelId: this.currentModel.id,
         expandedNodeGroups: this.expandedNodeGroups,
-        circlePositions,
+        circlePositions
       };
       //if circlePositions are valid, then save
       if (circlePositions.length && !isNaN(circlePositions[0].x)) {
@@ -348,13 +351,13 @@ export default {
       let links = [...this.storeData.links];
 
       //remove newlyEntered from d3Data nodes and inks
-      this.d3Data.nodes.forEach((n) => (n.newlyEntered = false));
-      this.d3Data.links.forEach((l) => (l.newlyEntered = false));
+      this.d3Data.nodes.forEach(n => (n.newlyEntered = false));
+      this.d3Data.links.forEach(l => (l.newlyEntered = false));
 
       //compute collapsedNodeGroups
       if (this.currentModel.nodeGroups && this.expandedNodeGroups)
         collapsedNodeGroups = this.currentModel.nodeGroups.filter(
-          (group) => !that.expandedNodeGroups.includes(group.id)
+          group => !that.expandedNodeGroups.includes(group.id)
         );
       else if (this.currentModel.nodeGroups)
         collapsedNodeGroups = [...this.currentModel.nodeGroups];
@@ -362,7 +365,7 @@ export default {
 
       //TODO: topoSort collapsedNodeGroups?
       //for collapsed node groups, replace individual nodes with a group node
-      collapsedNodeGroups.forEach(function (collapsedGroup) {
+      collapsedNodeGroups.forEach(function(collapsedGroup) {
         let d3Node,
           xSum = 0,
           ySum = 0,
@@ -374,13 +377,13 @@ export default {
           class: "group",
           isNew: false,
           isSelfBlocking: false,
-          symbolFormula: "exist",
+          symbolFormula: "exist"
         };
         //collect problems from nodes in group then remove the nodes
-        nodesInCollapsedGroup = nodes.filter((node) =>
+        nodesInCollapsedGroup = nodes.filter(node =>
           collapsedGroup.nodeIds.includes(node.id)
         );
-        nodesInCollapsedGroup.forEach(function (node) {
+        nodesInCollapsedGroup.forEach(function(node) {
           if (node.isNew) nodeForCollapsedGroup.isNew = true;
           if (node.isSelfBlocking) nodeForCollapsedGroup.isSelfBlocking = true;
           if (node.symbolFormula == "")
@@ -389,7 +392,7 @@ export default {
           // add node's x y positions to accumulator in preparation for
           // calculating average position
           if (that.d3Data.nodes.length) {
-            d3Node = that.d3Data.nodes.find((n) => n.id == node.id);
+            d3Node = that.d3Data.nodes.find(n => n.id == node.id);
             if (d3Node) {
               xSum += d3Node.x;
               ySum += d3Node.y;
@@ -398,9 +401,7 @@ export default {
           }
         });
         //remove nodes from collapsed node group
-        nodes = nodes.filter(
-          (node) => !collapsedGroup.nodeIds.includes(node.id)
-        );
+        nodes = nodes.filter(node => !collapsedGroup.nodeIds.includes(node.id));
 
         //add group node; first initialize with average position of child nodes if available
         if (collapsedD3NodesInGroupCount) {
@@ -410,7 +411,7 @@ export default {
         nodes.push(nodeForCollapsedGroup);
 
         //remove links with both ends in group
-        links = links.filter(function (link) {
+        links = links.filter(function(link) {
           return !(
             collapsedGroup.nodeIds.includes(link.source) &&
             collapsedGroup.nodeIds.includes(link.target)
@@ -419,7 +420,7 @@ export default {
 
         //redirect links w/ one end in group to group node
         //TODO: do not allow delete on these links
-        links.forEach(function (link, index, linksArray) {
+        links.forEach(function(link, index, linksArray) {
           if (
             collapsedGroup.nodeIds.includes(link.source) &&
             !collapsedGroup.nodeIds.includes(link.target)
@@ -442,17 +443,17 @@ export default {
       //get nodes in newly expanded nodeGroup, use exiting group node position for new nodes
       if (payload && payload.newlyExpandedGroupId) {
         let newlyExpandedGroup = this.currentModel.nodeGroups.find(
-          (g) => g.id == payload.newlyExpandedGroupId //
+          g => g.id == payload.newlyExpandedGroupId //
         );
         //console.log("newly expanded group", newlyExpandedGroup);
         //get exiting group node position
         let exitingGroupNode = that.d3Data.nodes.find(
-          (n) => n.id == newlyExpandedGroup.id
+          n => n.id == newlyExpandedGroup.id
         );
         //console.log("exiting groupNode", exitingGroupNode);
         let nodeInGroupCount = 0;
-        newlyExpandedGroup.nodeIds.forEach(function (nodeId) {
-          let nodeInGroup = nodes.find((n) => n.id == nodeId);
+        newlyExpandedGroup.nodeIds.forEach(function(nodeId) {
+          let nodeInGroup = nodes.find(n => n.id == nodeId);
           if (exitingGroupNode && nodeInGroup) {
             //set position to be around the exiting group node
             nodeInGroup.x =
@@ -476,8 +477,8 @@ export default {
       if (that.d3Data.nodes.length == 0) {
         let circlePositions = that.initialCirclePositions;
         if (circlePositions && circlePositions.length)
-          nodes.forEach(function (node) {
-            let circlePosition = circlePositions.find((c) => c.id == node.id);
+          nodes.forEach(function(node) {
+            let circlePosition = circlePositions.find(c => c.id == node.id);
             if (circlePosition) {
               if (!isNaN(circlePosition.x)) node.x = Number(circlePosition.x);
               if (!isNaN(circlePosition.y)) node.y = Number(circlePosition.y);
@@ -503,19 +504,19 @@ export default {
       var graphTextChange = false;
       //mark each node in d3Data.nodes as unconfirmed
       if (this.d3Data.nodes.length > 0) {
-        this.d3Data.nodes.forEach(function (d3Node) {
+        this.d3Data.nodes.forEach(function(d3Node) {
           d3Node.unconfirmed = "true";
         });
         modifyingExistingGraph = true;
       }
       let matchedD3Node = null;
       //for each in visibleNodes, update in d3Data.nodes, add it, or remove it
-      visibleNodes.forEach(function (visibleNode) {
+      visibleNodes.forEach(function(visibleNode) {
         //if visibleNode exists in d3Data.nodes already
         if (
           //declaration inside if conditional intended
           (matchedD3Node = that.d3Data.nodes.filter(
-            (d3Node) => d3Node.id == visibleNode.id
+            d3Node => d3Node.id == visibleNode.id
           )[0])
         ) {
           //remove "unconfirmed" flag
@@ -549,7 +550,7 @@ export default {
       //remove unconfirmed nodes in data.nodes
       if (that.d3Data.nodes.length > 0) {
         var originalNodeCount = that.d3Data.nodes.length;
-        that.d3Data.nodes = that.d3Data.nodes.filter(function (node) {
+        that.d3Data.nodes = that.d3Data.nodes.filter(function(node) {
           return typeof node.unconfirmed === "undefined"; //node does not have 'unconfirmed' property
         });
         if (that.d3Data.nodes.length != originalNodeCount) {
@@ -561,22 +562,23 @@ export default {
       //console.log("finished handling nodes; starting on links");
       //mark each link in data.links as unconfirmed
       if (this.d3Data.links.length > 0) {
-        this.d3Data.links.forEach(function (d3Link) {
+        this.d3Data.links.forEach(function(d3Link) {
           d3Link.unconfirmed = "true";
         });
       }
       let matchedD3Link = null;
       //for each in visibleLinks,
-      visibleLinks.forEach(function (visibleLink) {
+      visibleLinks.forEach(function(visibleLink) {
         if (
           //if a match in d3Data.links is found
           (matchedD3Link = that.d3Data.links.filter(
-            (d3Link) =>
+            d3Link =>
               d3Link.source.id == visibleLink.source &&
               d3Link.target.id == visibleLink.target &&
               d3Link.hasReciprocal == visibleLink.hasReciprocal &&
               d3Link.isBlocking == visibleLink.isBlocking &&
-              d3Link.isUnused == visibleLink.isUnused
+              d3Link.isUnused == visibleLink.isUnused &&
+              d3Link.strengthFactor == visibleLink.strengthFactor
           )[0])
         ) {
           //then remove "unconfirmed" mark
@@ -591,7 +593,7 @@ export default {
       //remove unconfirmed links in data.links
       if (that.d3Data.links.length > 0) {
         var originalLinkCount = that.d3Data.links.length;
-        that.d3Data.links = that.d3Data.links.filter(function (link) {
+        that.d3Data.links = that.d3Data.links.filter(function(link) {
           //only keep links that do not have 'unconfirmed' property
           return typeof link.unconfirmed === "undefined";
         });
@@ -626,29 +628,24 @@ export default {
       const graph = this.selections.graph;
       const svg = this.selections.svg;
 
-      var linkContextMenu = this.contextMenu().items({
-        label: "Delete link",
-        handler: function () {
-          //"this" is the parameter of handler.call(parameter); a link in this case
-          that.deleteLink({
-            link: {
-              influencerNodeId: this.source.id,
-              influenceeNodeId: this.target.id,
-            },
-            modelId: that.$route.params.modelId,
-          });
-        },
-      });
-
-      graph.selectAll("path").data(this.d3Data.links).exit().remove();
+      graph
+        .selectAll("path")
+        .data(this.d3Data.links)
+        .exit()
+        .remove();
 
       //Ted: Somehow, we need to remove all links if there are more than 1.
       //Otherwise link styles won't update when isBlocking/isUnused changes.
       if (
-        graph.selectAll("path").data(this.d3Data.links).exit()._groups[0]
-          .length > 1
+        graph
+          .selectAll("path")
+          .data(this.d3Data.links)
+          .exit()._groups[0].length > 1
       ) {
-        graph.selectAll("path").data(this.d3Data.links).remove();
+        graph
+          .selectAll("path")
+          .data(this.d3Data.links)
+          .remove();
       }
 
       graph
@@ -658,13 +655,83 @@ export default {
         .append("path")
         .attr(
           "class",
-          (d) =>
+          d =>
             "link " +
             (d.isBlocking ? "" : "nonBlocking ") +
-            (d.isUnused ? "unused " : "")
+            (d.isUnused ? "unused " : "") +
+            (d.strengthFactor < 1 ? "relaxed " : "")
         )
-        .on("contextmenu", function (d) {
+        .on("contextmenu", function(d) {
           d3.event.preventDefault();
+          function composeLinkContextMenuItems(d) {
+            let linkIsRelaxed = d.strengthFactor < 1;
+            const baseLinkContextMenuItems = [
+              {
+                label: "Delete link",
+                handler: function() {
+                  //"this" is the parameter of handler.call(parameter); a link in this case
+                  that.deleteLink({
+                    link: {
+                      influencerNodeId: this.source.id,
+                      influenceeNodeId: this.target.id
+                    },
+                    modelId: that.$route.params.modelId
+                  });
+                }
+              },
+            ];
+            const unrelaxedLinkContextMenuItems = [
+              {
+                label: "Relax link",
+                handler: function() {
+                  //"this" is the parameter of handler.call(parameter); a link in this case
+                  that.relaxLink({
+                    link: {
+                      influencerNodeId: this.source.id,
+                      influenceeNodeId: this.target.id
+                    },
+                    modelId: that.$route.params.modelId
+                  });
+                }
+              }
+            ];
+            const relaxedLinkContextMenuItems = [
+              {
+                label: "Relax more",
+                  handler: function() {
+                  //"this" is the parameter of handler.call(parameter); a link in this case
+                  that.relaxLinkMore({
+                    link: {
+                      influencerNodeId: this.source.id,
+                      influenceeNodeId: this.target.id
+                    },
+                    modelId: that.$route.params.modelId
+                  });
+                }
+              },
+              {
+                label: "Restore force",
+                handler: function() {
+                  //"this" is the parameter of handler.call(parameter); a link in this case
+                  that.restoreLinkForce({
+                    link: {
+                      influencerNodeId: this.source.id,
+                      influenceeNodeId: this.target.id
+                    },
+                    modelId: that.$route.params.modelId
+                  });
+                }
+              },
+            ];
+            let items = [];
+            //TODO: distinguish between links to nodes and to node groups
+            items.push(...baseLinkContextMenuItems);
+            if (linkIsRelaxed) items.push(...relaxedLinkContextMenuItems);
+            else items.push(...unrelaxedLinkContextMenuItems);
+            return items;
+          }
+          let linkContextMenuItems = composeLinkContextMenuItems(d);
+          let linkContextMenu = that.contextMenu().items(...linkContextMenuItems);
           linkContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
         });
 
@@ -677,9 +744,11 @@ export default {
         .data(this.d3Data.nodes)
         .enter()
         .append("circle")
-        .each(function (node, i) {
+        .each(function(node, i) {
           if (node.newlyEntered) {
-            d3.select(this).transition().attr("r", nodeRadius);
+            d3.select(this)
+              .transition()
+              .attr("r", nodeRadius);
           } else {
             d3.select(this).attr("r", nodeRadius);
           }
@@ -693,7 +762,7 @@ export default {
         )
         .on("mouseover", this.nodeMouseOver)
         .on("mouseout", this.nodeMouseOut)
-        .on("contextmenu", function (d) {
+        .on("contextmenu", function(d) {
           d3.event.preventDefault();
           that.nodeClick(d, null, "contextMenuClick");
 
@@ -706,7 +775,7 @@ export default {
             let nodeIsGroupNode = false;
             //console.log("selectedNodeId", that.selectedNodeId);
             if (that.currentModel.nodeGroups)
-              that.currentModel.nodeGroups.forEach(function (nodeGroup) {
+              that.currentModel.nodeGroups.forEach(function(nodeGroup) {
                 if (nodeGroup.nodeIds.includes(that.selectedNodeId)) {
                   //console.log("nodeIsInGroup");
                   nodeIsInGroup = true;
@@ -728,105 +797,105 @@ export default {
             const baseNodeContextMenuItems = [
               {
                 label: "Add new influencer",
-                handler: function () {
+                handler: function() {
                   that.showAddNode = true;
                   that.addNodeProps.sourceNodeId = that.selectedNodeId;
                   that.addNodeProps.newNodeRole = "influencer";
-                },
+                }
               },
               {
                 label: "Add new influencee",
-                handler: function () {
+                handler: function() {
                   that.showAddNode = true;
                   that.addNodeProps.sourceNodeId = that.selectedNodeId;
                   that.addNodeProps.newNodeRole = "influencee";
-                },
+                }
               },
               {
                 label: "Link to influencer",
-                handler: function () {
+                handler: function() {
                   that.showAddLink = true;
                   that.linkToSubmit.sourceNodeId = that.selectedNodeId;
                   that.linkToSubmit.targetNodeId = "";
                   that.linkToSubmit.targetType = "influencer";
-                },
+                }
               },
               {
                 label: "Link to influencee",
-                handler: function () {
+                handler: function() {
                   that.showAddLink = true;
                   that.linkToSubmit.sourceNodeId = that.selectedNodeId;
                   that.linkToSubmit.targetNodeId = "";
                   that.linkToSubmit.targetType = "influencee";
-                },
+                }
               },
 
               {
                 label: "Delete node",
-                handler: function () {
+                handler: function() {
                   that.showDeleteNode = true;
-                },
-              },
+                }
+              }
             ];
 
             const notInNodeGroupContextMenuItems = [
               {
                 label: "Start node group",
-                handler: async function () {
+                handler: async function() {
                   let node = that.storeData.nodes.find(
-                    (n) => n.id == that.selectedNodeId
+                    n => n.id == that.selectedNodeId
                   );
                   let nodeGroup = await that.createNodeGroup({
                     nodeId: that.selectedNodeId,
-                    groupName: node.name,
+                    groupName: node.name
                   });
                   that.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
                   //TODO: set nodeGroup as expanded
                   let expandedNodeGroups = [...that.expandedNodeGroups];
                   expandedNodeGroups.push(nodeGroup.id);
                   that.expandedNodeGroups = expandedNodeGroups;
-                },
-              },
+                }
+              }
             ];
 
             const addToSelectedNodeGroupMenuItems = [
               {
                 label: "Add to selected group",
-                handler: async function () {
+                handler: async function() {
                   await that.addToNodeGroup({
                     nodeId: that.selectedNodeId,
                     nodeIsGroupNode: nodeIsGroupNode,
-                    nodeGroupId: that.selectedNodeGroup.id,
+                    nodeGroupId: that.selectedNodeGroup.id
                   });
-                },
-              },
+                }
+              }
             ];
 
             const selectedNodeIsGroupNodeMenuItems = [
               {
                 label: "Expand group",
-                handler: async function () {
+                handler: async function() {
                   let expandedNodeGroups = [...that.expandedNodeGroups];
                   expandedNodeGroups.push(that.selectedNodeId);
                   that.expandedNodeGroups = expandedNodeGroups;
-                },
-              },
+                }
+              }
             ];
 
             const selectedInNodeGroupMenuItems = [
               {
                 label: "Remove from group",
-                handler: async function () {
+                handler: async function() {
                   await that.removeNodeFromGroup({
                     nodeId: that.selectedNodeId,
                     nodeIsGroupNode: nodeIsGroupNode,
-                    nodeGroupId: that.selectedNodeGroup.id,
+                    nodeGroupId: that.selectedNodeGroup.id
                   });
-                },
+                }
               },
               {
                 label: "Collapse group",
-                handler: async function () {
+                handler: async function() {
                   let expandedNodeGroups = [...that.expandedNodeGroups];
                   const index = that.expandedNodeGroups.indexOf(
                     that.selectedNodeGroup.id
@@ -835,15 +904,15 @@ export default {
                     expandedNodeGroups.splice(index, 1);
                     that.expandedNodeGroups = expandedNodeGroups;
                   }
-                },
+                }
               },
               {
                 label: "Disband group",
-                handler: async function () {
+                handler: async function() {
                   //TODO: ask for user to confirm
                   await that.disbandNodeGroup(that.selectedNodeGroup.id);
-                },
-              },
+                }
+              }
             ];
 
             let items = [];
@@ -863,18 +932,21 @@ export default {
             return items;
           }
 
-          let menuItems = composeNodeContextMenuItems();
-          let nodeContextMenu = that.contextMenu().items(...menuItems);
+          let nodeContextMenuItems = composeNodeContextMenuItems();
+          let nodeContextMenu = that.contextMenu().items(...nodeContextMenuItems);
           nodeContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
         })
         //.on("click", this.nodeClick);
-        .on("click", function (d, i) {
+        .on("click", function(d, i) {
           that.nodeClick(d, i, "regularClick");
         });
       this.updateNodeClassAndText(false);
 
       // Add 'marker-end' attribute to each path
-      svg.selectAll("g").selectAll("path").attr("marker-end", "url(#end)");
+      svg
+        .selectAll("g")
+        .selectAll("path")
+        .attr("marker-end", "url(#end)");
 
       if (restartForceSimulation) {
         this.simulation.on("end", this.savePositions);
@@ -892,7 +964,7 @@ export default {
         .selectAll("circle")
         .data(this.d3Data.nodes)
         //.attr("r", nodeRadius)
-        .attr("class", (d) =>
+        .attr("class", d =>
           d.class.concat(
             d.isSelfBlocking ? " selfBlocking" : "",
             d.isNew ? " new" : "",
@@ -916,7 +988,7 @@ export default {
         .attr("x", 0)
         .attr("y", ".31em")
         .attr("text-anchor", "middle")
-        .text((d) =>
+        .text(d =>
           d.name.concat(
             d.isSelfBlocking ? " (self-blocking)" : "",
             d.isNew ? " (new)" : "",
@@ -950,7 +1022,7 @@ export default {
       simulation
         .force("forceX")
         .x(forceProperties.forceX.x)
-        .strength(function (d) {
+        .strength(function(d) {
           if (d.class == "unlinked") {
             return forceProperties.forceX.strength;
           } else {
@@ -960,7 +1032,7 @@ export default {
       simulation
         .force("forceY")
         .y(forceProperties.forceY.y)
-        .strength((d) => {
+        .strength(d => {
           if (d.class == "unlinked") {
             return forceProperties.forceX.strength;
             //return 0;
@@ -968,11 +1040,11 @@ export default {
             return 0;
           }
         });
-      /*simulation
+      simulation
         .force("link")
         .distance(forceProperties.link.distance)
-        .strength(forceProperties.link.strength)
-        .iterations(forceProperties.link.iterations);*/
+        .strength(d => { return forceProperties.link.strength * d.strengthFactor})
+        .iterations(forceProperties.link.iterations);
 
       // updates ignored until this is run
       // restarts the simulation (important if simulation has already slowed down)
@@ -1018,7 +1090,7 @@ export default {
       this.simulation
         .force("link")
         .links()
-        .forEach((link) => {
+        .forEach(link => {
           if (link.source === d || link.target === d) {
             relatedLinks.push(link);
             if (related.indexOf(link.source) === -1) {
@@ -1030,15 +1102,13 @@ export default {
           }
         });
       circles.classed("faded", true);
-      circles
-        .filter((df) => related.indexOf(df) > -1)
-        .classed("highlight", true);
+      circles.filter(df => related.indexOf(df) > -1).classed("highlight", true);
       paths.classed("faded", true);
       paths
-        .filter((df) => df.source === d || df.target === d)
+        .filter(df => df.source === d || df.target === d)
         .classed("highlight", true);
       texts.classed("faded", true);
-      texts.filter((df) => related.indexOf(df) > -1).classed("highlight", true);
+      texts.filter(df => related.indexOf(df) > -1).classed("highlight", true);
     },
     nodeMouseOut(d) {
       const graph = this.selections.graph;
@@ -1057,7 +1127,7 @@ export default {
       const circles = this.selections.graph.selectAll("circle");
 
       circles.classed("selected", false);
-      circles.filter((td) => td === d).classed("selected", true);
+      circles.filter(td => td === d).classed("selected", true);
 
       if (this.uiNodeChanged) {
         this.$q
@@ -1069,25 +1139,25 @@ export default {
               "<p/><p>The changes you made will be lost. Really switch to another node?</p>",
             cancel: true,
             persistent: true,
-            html: true,
+            html: true
           })
 
           .onOk(() => {
             this.setSelectedNodeId(d.id);
             circles.classed("selected", false);
-            circles.filter((td) => td === d).classed("selected", true);
+            circles.filter(td => td === d).classed("selected", true);
           });
       } else {
         this.setSelectedNodeId(d.id);
         circles.classed("selected", false);
-        circles.filter((td) => td === d).classed("selected", true);
+        circles.filter(td => td === d).classed("selected", true);
       }
       if (clickType == "regularClick") {
         const that = this;
         //look for node in model.nodeGroups
         if (this.currentModel.hasOwnProperty("nodeGroups")) {
           let selectedNodeGroupFound = false;
-          this.currentModel.nodeGroups.forEach(function (nodeGroup) {
+          this.currentModel.nodeGroups.forEach(function(nodeGroup) {
             if (
               (nodeGroup.hasOwnProperty("nodeIds") &&
                 nodeGroup.nodeIds.includes(d.id)) ||
@@ -1118,16 +1188,16 @@ export default {
             mouseout: {
               fill: "rgb(244,244,244)",
               stroke: "white",
-              "stroke-width": "1px",
+              "stroke-width": "1px"
             },
             mouseover: {
-              fill: "rgb(200,200,200)",
-            },
+              fill: "rgb(200,200,200)"
+            }
           },
           text: {
             fill: "steelblue",
-            "font-size": "15",
-          },
+            "font-size": "15"
+          }
         };
 
       function menu(x, y, hostD) {
@@ -1145,33 +1215,37 @@ export default {
           .append("g")
           .attr("class", "menu-entry")
           .style("cursor", "pointer")
-          .on("mouseover", function () {
-            d3.select(this).select("rect").styles(style.rect.mouseover);
+          .on("mouseover", function() {
+            d3.select(this)
+              .select("rect")
+              .styles(style.rect.mouseover);
           })
-          .on("mouseout", function () {
-            d3.select(this).select("rect").styles(style.rect.mouseout);
+          .on("mouseout", function() {
+            d3.select(this)
+              .select("rect")
+              .styles(style.rect.mouseout);
           });
 
         d3.selectAll(".menu-entry")
           .append("rect")
           .attr("x", x)
-          .attr("y", function (d, i) {
+          .attr("y", function(d, i) {
             return y + i * height;
           })
           .attr("width", width)
           .attr("height", height)
           .styles(style.rect.mouseout)
-          .on("click", function (d) {
+          .on("click", function(d) {
             d.handler.call(hostD);
           });
 
         d3.selectAll(".menu-entry")
           .append("text")
-          .text(function (d) {
+          .text(function(d) {
             return d.label;
           })
           .attr("x", x)
-          .attr("y", function (d, i) {
+          .attr("y", function(d, i) {
             return y + i * height;
           })
           .attr("dy", height - margin / 2)
@@ -1179,12 +1253,12 @@ export default {
           .styles(style.text);
 
         // Other interactions
-        d3.select("body").on("click", function () {
+        d3.select("body").on("click", function() {
           d3.select(".context-menu").remove();
         });
       }
 
-      menu.items = function (e) {
+      menu.items = function(e) {
         if (!arguments.length) return items;
         for (var i in arguments) items.push(arguments[i]);
         rescale = true;
@@ -1200,7 +1274,7 @@ export default {
             .data(items)
             .enter()
             .append("text")
-            .text(function (d) {
+            .text(function(d) {
               return d.label;
             })
             .styles(style.text)
@@ -1210,18 +1284,18 @@ export default {
           var z = d3
             .selectAll(".tmp")
             .nodes()
-            .map(function (x) {
+            .map(function(x) {
               return x.getBBox();
             });
           width = d3.max(
-            z.map(function (x) {
+            z.map(function(x) {
               return x.width;
             })
           );
           margin = margin * width;
           width = width + 2 * margin;
           height = d3.max(
-            z.map(function (x) {
+            z.map(function(x) {
               return x.height + margin / 2;
             })
           );
@@ -1234,9 +1308,12 @@ export default {
       return menu;
     },
     wrap(texts, width) {
-      texts.each(function () {
+      texts.each(function() {
         var text = d3.select(this),
-          words = text.text().split(/\s+/).reverse(),
+          words = text
+            .text()
+            .split(/\s+/)
+            .reverse(),
           word,
           line = [],
           lineWordCount = 0,
@@ -1283,10 +1360,10 @@ export default {
     submitLink() {
       this.addLink({
         link: this.linkToSubmit,
-        modelId: this.$route.params.modelId,
+        modelId: this.$route.params.modelId
       });
       this.$emit("close");
-    },
+    }
   },
 
   watch: {
@@ -1294,14 +1371,14 @@ export default {
       handler(newForce) {
         this.updateForces();
       },
-      deep: true,
+      deep: true
     },
 
     selectedNodeGroup: {
       deep: true,
       handler() {
         this.updateNodeClassAndText(true, 0.001);
-      },
+      }
     },
 
     nodeGroups: {
@@ -1309,11 +1386,11 @@ export default {
       handler(nodeGroups) {
         if (nodeGroups && this.selectedNodeGroup) {
           let nodeGroup = nodeGroups.find(
-            (ng) => ng.id == this.selectedNodeGroup.id
+            ng => ng.id == this.selectedNodeGroup.id
           );
           this.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
         }
-      },
+      }
     },
 
     // watcher for store nodes
@@ -1326,7 +1403,16 @@ export default {
           //console.log('nodes watcher calling prepD3DataAndUpdate')
           this.prepD3DataAndUpdate();
         }
-      },
+      }
+    },
+
+    links: {
+      immediate: true,
+      deep: true,
+      handler(newLinks, oldLinks){
+        console.log('links changed');
+        this.prepD3DataAndUpdate();
+      }
     },
 
     expandedNodeGroups: {
@@ -1336,12 +1422,12 @@ export default {
         if (this.nodes && this.currentModel && oldExpandedGroups) {
           let idOfNodeGroupToSelect;
           let newlyExpandedGroups = newExpandedGroups.filter(
-            (g) => !oldExpandedGroups.includes(g)
+            g => !oldExpandedGroups.includes(g)
           );
           let newlyExpandedGroupId = newlyExpandedGroups[0]; //at most one match expected
 
           let newlyCollapsedGroups = oldExpandedGroups.filter(
-            (g) => !newExpandedGroups.includes(g)
+            g => !newExpandedGroups.includes(g)
           );
           let newlyCollapsedGroupId = newlyCollapsedGroups[0]; //at most one match expected
 
@@ -1351,16 +1437,16 @@ export default {
           if (newlyCollapsedGroupId)
             idOfNodeGroupToSelect = newlyCollapsedGroupId;
           let nodeGroupToSelect = this.currentModel.nodeGroups.find(
-            (ng) => ng.id == idOfNodeGroupToSelect
+            ng => ng.id == idOfNodeGroupToSelect
           );
           this.$store.commit("ui/setSelectedNodeGroup", nodeGroupToSelect);
 
           //notify prepD3DataAndUpdate with newly expanded node group
           this.prepD3DataAndUpdate({ newlyExpandedGroupId });
         }
-      },
-    },
-  },
+      }
+    }
+  }
 };
 </script>
 
@@ -1392,6 +1478,9 @@ path.link.unused {
 }
 path.link.usedInFormula {
   stroke: #333;
+}
+path.link.relaxed {
+  stroke: #eee;
 }
 
 circle {
