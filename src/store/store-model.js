@@ -278,6 +278,70 @@ const actions = {
       });
   },
 
+  async relaxLink({}, payload) {
+    let success = false;
+    let relaxedLink = {
+      influenceeNodeId: payload.link.influenceeNodeId,
+      influencerNodeId: payload.link.influencerNodeId,
+      strengthFactor: 0.1
+    };
+    var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
+    try {
+      const res = await modelRef.update({
+        relaxedLinks: firebase.firestore.FieldValue.arrayUnion(relaxedLink)
+      });
+      success = true;
+      Notify.create("Link relaxed!");
+    } catch (error) {
+      showErrorMessage("Error relaxing link", error.message);
+    }
+    if (success) return relaxedLink;
+  },
+
+  async relaxLinkMore({}, payload) {
+    //find existing relaxedLink from array then update its strengthFactor
+    let tempRelaxedLinks = JSON.parse(
+      JSON.stringify(state.currentModel.relaxedLinks)
+    );
+    let matchingRelaxedLink = tempRelaxedLinks.find(
+      link =>
+        link.influenceeNodeId == payload.link.influenceeNodeId &&
+        link.influencerNodeId == payload.link.influencerNodeId
+    );
+    matchingRelaxedLink.strengthFactor *= 0.1;
+    var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
+    try {
+      const res = await modelRef.update({
+        relaxedLinks: tempRelaxedLinks
+      });
+      Notify.create("Link relaxed more!");
+    } catch (error) {
+      showErrorMessage("Error relaxing link", error.message);
+    }
+  },
+
+  async restoreLinkForce({}, payload) {
+    let tempRelaxedLinks = JSON.parse(
+      JSON.stringify(state.currentModel.relaxedLinks)
+    );
+    tempRelaxedLinks = tempRelaxedLinks.filter(
+      link =>
+        !(
+          link.influenceeNodeId == payload.link.influenceeNodeId &&
+          link.influencerNodeId == payload.link.influencerNodeId
+        )
+    );
+    var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
+    try {
+      const res = await modelRef.update({
+        relaxedLinks: tempRelaxedLinks
+      });
+      Notify.create("Link force restored!");
+    } catch (error) {
+      showErrorMessage("Error restoring link force", error.message);
+    }
+  },
+
   deleteLink({ commit, dispatch }, payload) {
     let link = payload.link;
     let influencerNodeId = link.influencerNodeId;
@@ -505,6 +569,14 @@ const getters = {
       //console.log(node.id);
       if ("influencers" in node) {
         node.influencers.forEach(function(influencerId) {
+          let matchingRelaxedLink = null;
+          if (state.currentModel.relaxedLinks)
+            matchingRelaxedLink = state.currentModel.relaxedLinks.find(
+              link =>
+                link.influenceeNodeId == node.id &&
+                link.influencerNodeId == influencerId
+            );
+
           allLinks.push({
             source: influencerId,
             target: node.id,
@@ -519,7 +591,10 @@ const getters = {
             isUnused:
               "unusedInfluencers" in node
                 ? node.unusedInfluencers.includes(influencerId)
-                : false
+                : false,
+            strengthFactor: matchingRelaxedLink
+              ? matchingRelaxedLink.strengthFactor
+              : 1
           });
         });
       }
