@@ -337,8 +337,8 @@ export default {
       };
       //if circlePositions are valid, then save
       if (circlePositions.length && !isNaN(circlePositions[0].x)) {
-        console.log("saving positions");
-        console.log("iterationCount", this.iterationCount);
+        //console.log("saving positions");
+        //console.log("iterationCount", this.iterationCount);
         idb.saveDependencyGraphDisplay(saveFile);
       }
     },
@@ -678,7 +678,7 @@ export default {
                     modelId: that.$route.params.modelId
                   });
                 }
-              },
+              }
             ];
             const unrelaxedLinkContextMenuItems = [
               {
@@ -698,7 +698,7 @@ export default {
             const relaxedLinkContextMenuItems = [
               {
                 label: "Relax more",
-                  handler: function() {
+                handler: function() {
                   //"this" is the parameter of handler.call(parameter); a link in this case
                   that.relaxLinkMore({
                     link: {
@@ -721,7 +721,7 @@ export default {
                     modelId: that.$route.params.modelId
                   });
                 }
-              },
+              }
             ];
             let items = [];
             //TODO: distinguish between links to nodes and to node groups
@@ -731,7 +731,9 @@ export default {
             return items;
           }
           let linkContextMenuItems = composeLinkContextMenuItems(d);
-          let linkContextMenu = that.contextMenu().items(...linkContextMenuItems);
+          let linkContextMenu = that
+            .contextMenu()
+            .items(...linkContextMenuItems);
           linkContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
         });
 
@@ -933,7 +935,9 @@ export default {
           }
 
           let nodeContextMenuItems = composeNodeContextMenuItems();
-          let nodeContextMenu = that.contextMenu().items(...nodeContextMenuItems);
+          let nodeContextMenu = that
+            .contextMenu()
+            .items(...nodeContextMenuItems);
           nodeContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
         })
         //.on("click", this.nodeClick);
@@ -1043,7 +1047,9 @@ export default {
       simulation
         .force("link")
         .distance(forceProperties.link.distance)
-        .strength(d => { return forceProperties.link.strength * d.strengthFactor})
+        .strength(d => {
+          return forceProperties.link.strength * d.strengthFactor;
+        })
         .iterations(forceProperties.link.iterations);
 
       // updates ignored until this is run
@@ -1409,8 +1415,7 @@ export default {
     links: {
       immediate: true,
       deep: true,
-      handler(newLinks, oldLinks){
-        console.log('links changed');
+      handler(newLinks, oldLinks) {
         this.prepD3DataAndUpdate();
       }
     },
