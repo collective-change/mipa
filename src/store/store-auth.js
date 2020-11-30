@@ -3,12 +3,16 @@ import { firebase, firebaseAuth, firebaseDb } from "src/boot/firebase";
 import { showErrorMessage } from "src/utils/util-show-error-message";
 
 const state = {
-  loggedIn: false
+  loggedIn: false,
+  userId: null
 };
 
 const mutations = {
   setLoggedIn(state, value) {
     state.loggedIn = value;
+  },
+  setUserId(state, value) {
+    state.userId = value;
   }
 };
 
@@ -63,12 +67,14 @@ const actions = {
       if (user) {
         // User is signed in.
         commit("setLoggedIn", true);
+        commit("setUserId", firebaseAuth.currentUser.uid);
         LocalStorage.set("loggedIn", true);
         if (this.$router.currentRoute.path == "/auth") {
           this.$router.push("/");
         }
       } else {
         commit("setLoggedIn", false);
+        commit("setUserId", null);
         LocalStorage.set("loggedIn", false);
         this.$router.replace("/auth");
         //commit("tasks/clearTasks", null, { root: true });

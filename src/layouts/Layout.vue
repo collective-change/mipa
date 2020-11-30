@@ -159,7 +159,7 @@
               >{{ $t(button.text) }}</a>
             </div>
           </div>
-          <div class="q-py-md q-px-md text-grey-9">
+          <div v-if="loggedIn" class="q-py-md q-px-md text-grey-9">
             <div class="row items-center q-gutter-x-sm q-gutter-y-xs">User id: {{ userId }}</div>
           </div>
         </q-list>
@@ -182,7 +182,6 @@ export default {
   name: "MyLayout",
   data() {
     return {
-      userId: null,
       lang: this.$i18n.locale,
       langOptions: [
         { value: "en-us", label: "English" },
@@ -212,10 +211,14 @@ export default {
     };
   },
   computed: {
-    ...mapState("auth", ["loggedIn"]),
+    ...mapState("auth", ["loggedIn", "userId"]),
     ...mapState("model", ["currentModel"]),
     ...mapState("orgs", ["orgs", "currentOrg"]),
     ...mapState("adHocDocs", ["exchangeRates"]),
+
+    currentUser() {
+      return firebaseAuth.currentUser;
+    },
 
     currentRoute() {
       return this.$route.path;
@@ -419,20 +422,11 @@ export default {
     },
   },
   created() {
-    (async () => {
-      while (
-        !firebaseAuth.currentUser // define the condition as you like
-      ) {
-        //console.log("waiting for currentUser to be defined");
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
       this.bindPublicData();
-      this.userId = firebaseAuth.currentUser.uid;
       let orgId = this.$route.params.orgId;
       if (orgId) {
         this.bindMinimalOrgRelatedData(orgId);
       }
-    })();
   },
   mounted() {
     if (this.$q.cookies.has("locale")) {
