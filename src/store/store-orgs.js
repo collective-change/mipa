@@ -94,7 +94,6 @@ const actions = {
   }),
 
   bindCurrentOrg: firestoreAction(({ bindFirestoreRef }, orgId) => {
-    let userId = firebaseAuth.currentUser.uid;
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "currentOrg",

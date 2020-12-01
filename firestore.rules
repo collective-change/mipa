@@ -32,13 +32,17 @@ service cloud.firestore {
     }
 
     match /actions/{action}  {
-      //allow read, write if user is in action's org's users
-      allow read, write: if request.auth.uid in get(/databases/$(database)/documents/orgs/$(request.resource.data.orgId)).data.users;
+      //allow read, write if user is in action's org
+      allow read, write: if userInOrg(resource.data.orgId);
     }
 
     match /users/{userId} {
       allow read, update, delete: if request.auth.uid == userId;
       allow create: if request.auth.uid != null;
+    }
+
+    function userInOrg(orgId) {
+      return request.auth.uid in get(/databases/$(database)/documents/orgs/$(orgId)).data.users;
     }
 
   }
