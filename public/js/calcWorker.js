@@ -17,6 +17,7 @@ const parser = self.math.parser();
 var modelNodes = [];
 var workerGlobalActions = [];
 var currentUserId;
+var orgId;
 
 onmessage = function(e) {
   switch (e.data.calculationType) {
@@ -45,6 +46,7 @@ function coordinateScenarioSimulations(data) {
   let sim = prepSim(data);
   if (sim.errorOccurred) return;
   currentUserId = data.currentUserId;
+  orgId = data.orgId;
 
   testInitializeIdb();
 
@@ -534,14 +536,16 @@ async function getActionsFromFirestoreAndUpdateWithNewestValues(actionIds) {
 
 async function getActionsFromFirestore(actionIds) {
   const actionsRef = firebaseDb.collection("actions");
-  const snapshot = await actionsRef.where("id", "in", actionIds).get();
+  const snapshot = await actionsRef
+    .where("id", "in", actionIds)
+    .where("orgId", "==", orgId)
+    .get();
   if (snapshot.empty) {
     console.log("No matching actions.");
     return;
   }
   let actions = [];
   snapshot.forEach(doc => {
-    //console.log(doc.id, '=>', doc.data());
     actions.push(doc.data());
   });
   return actions;
