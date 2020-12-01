@@ -24,6 +24,9 @@
         <div class="row">
           <calculator-ui calculationType="baseline" buttonLabel="Calculate baseline" />
         </div>
+        <div class="row">
+          <export-calc-results data-source="baseline" buttonLabel="Export baseline TSV" />
+        </div>
         <div class="row">Node groups</div>
         <div>
           <q-tree
@@ -87,13 +90,14 @@
 import { mapGetters, mapState } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import idb from "src/api/idb";
+//import ExportCalcResults from "../components/Calc/ExportCalcResults.vue";
 
 const nest = (items, id = null, link = "parentId") => {
   return items
-    .filter((item) => item[link] == id)
-    .map((item) => ({
+    .filter(item => item[link] == id)
+    .map(item => ({
       ...item,
-      children: nest(items, item.id),
+      children: nest(items, item.id)
     }));
 };
 
@@ -102,8 +106,10 @@ export default {
     "config-org-model": require("components/Model/Modals/ConfigOrgModel.vue")
       .default,
     "calculator-ui": require("components/Calc/CalculatorUi.vue").default,
+    "export-calc-results": require("components/Calc/ExportCalcResults.vue")
+      .default,
     "dependency-graph": require("components/Model/DependencyGraph.vue").default,
-    "node-summary": require("components/Model/NodeSummary.vue").default,
+    "node-summary": require("components/Model/NodeSummary.vue").default
   },
   data() {
     return {
@@ -113,7 +119,7 @@ export default {
       modelOptions: ["Tzu Chi", "Human-Earth system model"],
       selectedNodeGroupId: null,
       expanded: null,
-      initialCirclePositions: null,
+      initialCirclePositions: null
     };
   },
   computed: {
@@ -122,7 +128,7 @@ export default {
     ...mapState("ui", [
       "uiNodeChanged",
       "uiNodeChangedFields",
-      "selectedNodeGroup",
+      "selectedNodeGroup"
     ]),
     expandedNodeGroups: {
       get() {
@@ -132,7 +138,7 @@ export default {
       },
       set(value) {
         this.$store.commit("ui/setExpandedNodeGroups", value);
-      },
+      }
     },
 
     nodeGroupsForTree() {
@@ -146,7 +152,7 @@ export default {
       let nodeGroups = [...this.currentModel.nodeGroups];
       let nodeGroupsList = JSON.parse(JSON.stringify(nodeGroups.sort(compare)));
       return nest(nodeGroupsList);
-    },
+    }
   },
 
   methods: {
@@ -155,16 +161,16 @@ export default {
         JSON.stringify(this.currentModel.nodeGroups)
       );
       let nodeGroup = clonedNodeGroups.find(
-        (nodeGroup) => nodeGroup.id == groupId
+        nodeGroup => nodeGroup.id == groupId
       );
       nodeGroup.name = name;
       //save name to model
       let payload = {
         modelId: this.currentModel.id,
-        updates: { nodeGroups: clonedNodeGroups },
+        updates: { nodeGroups: clonedNodeGroups }
       };
       this.$store.dispatch("model/updateModel", payload);
-    },
+    }
   },
 
   watch: {
@@ -175,7 +181,7 @@ export default {
         this.selectedNodeGroup.id != this.selectedNodeGroupId
       ) {
         let nodeGroup = this.currentModel.nodeGroups.find(
-          (nodeGroup) => nodeGroup.id == this.selectedNodeGroupId
+          nodeGroup => nodeGroup.id == this.selectedNodeGroupId
         );
         this.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
       }
@@ -185,7 +191,7 @@ export default {
       if (this.selectedNodeGroup)
         this.selectedNodeGroupId = this.selectedNodeGroup.id;
       else this.selectedNodeGroupId = null;
-    },
+    }
   },
   created() {
     (async () => {
@@ -193,7 +199,7 @@ export default {
       while (
         !firebaseAuth.currentUser // define the condition as you like
       )
-        await new Promise((resolve) => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 200));
       //bind to list of models the org-user can view
       //(user is in model's owners, editors, or viewers)
       //this.$store.dispatch("orgs/bindReadableModels", this.$route.params.orgId);
@@ -238,7 +244,7 @@ export default {
 
           cancel: true,
           persistent: true,
-          html: true,
+          html: true
         })
         .onOk(() => {
           next();
@@ -248,6 +254,6 @@ export default {
 
   beforeDestroy() {
     // don't unbind firestore refs here; leave it until org change in Layout.vue
-  },
+  }
 };
 </script>
