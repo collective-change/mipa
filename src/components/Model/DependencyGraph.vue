@@ -364,7 +364,6 @@ export default {
         collapsedNodeGroups = [...this.currentModel.nodeGroups];
       else collapsedNodeGroups = [];
 
-      //TODO: topoSort nodeGroups
       let sortedNodeGroups = [];
       if (this.currentModel.nodeGroups.length)
         sortedNodeGroups = this.topoSortNodeGroups(
