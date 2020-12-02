@@ -1,7 +1,6 @@
 <template>
   <q-page padding>
     <div class="text-h5">
-      <span v-if="currentOrg">{{ currentOrg.name }}&nbsp;</span>
       <span v-if="currentOrg">{{ currentOrg.goal }}</span>
     </div>
 
