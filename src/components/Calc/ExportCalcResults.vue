@@ -1,7 +1,7 @@
 <template>
   <div>
     <q-btn
-      @click="exportSimResults()"
+      @click="exportCalcResults()"
       class="all-pointer-events print-hide"
       color="primary"
     >{{ buttonLabel }}</q-btn>
@@ -12,7 +12,7 @@
 import { mapGetters, mapState } from "vuex";
 
 export default {
-  props: ["dataSource", "buttonLabel"],
+  props: ["dataSource", "actionId", "actionTitle", "buttonLabel"],
   components: {},
   data() {
     return {};
@@ -21,21 +21,53 @@ export default {
     ...mapState("orgs", ["currentOrg"]),
     ...mapState("model", ["currentModel"]),
     ...mapGetters("model", ["nodes"]),
-    ...mapState("calcResults", ["baseline"])
+    ...mapState("calcResults", ["baseline", "resultsOfAction"])
   },
   methods: {
-    exportSimResults() {
+    async exportCalcResults() {
       let modelId = this.$route.params.modelId
         ? this.$route.params.modelId
         : this.$route.params.orgId;
       let tsvContent = "data:text/tab-separated-values;charset=utf-8,";
       let calcDate = new Date(1970, 0, 1);
+      let filename = "";
       switch (this.dataSource) {
         case "baseline":
           tsvContent += prepBaselineArray(this.baseline, this.nodes)
             .map(e => e.join("\t"))
             .join("\n");
           calcDate.setSeconds(this.baseline.calcDate / 1000);
+          filename =
+            this.currentOrg.name.replace(" ", "-") +
+            "_" +
+            this.currentModel.name.replace(" ", "-") +
+            "_" +
+            this.dataSource +
+            "_" +
+            calcDate.toISOString() +
+            ".tsv";
+          break;
+        case "resultsOfAction":
+          await this.$store.dispatch(
+            "calcResults/loadResultsOfAction",
+            this.actionId
+          );
+          tsvContent += prepResultsOfActionArray(
+            this.resultsOfAction,
+            this.nodes
+          )
+            .map(e => e.join("\t"))
+            .join("\n");
+          calcDate.setSeconds(this.resultsOfAction.calcDate / 1000);
+          filename =
+            this.currentOrg.name.replace(" ", "-") +
+            "_" +
+            this.dataSource +
+            "_" +
+            this.actionTitle +
+            "_" +
+            calcDate.toISOString() +
+            ".tsv";
           break;
         default:
           throw `Data source "${this.dataSource}" not recognized.`;
@@ -44,17 +76,7 @@ export default {
       let encodedUri = encodeURI(tsvContent);
       var link = document.createElement("a");
       link.setAttribute("href", encodedUri);
-      link.setAttribute(
-        "download",
-        this.currentOrg.name.replace(" ", "-") +
-          "_" +
-          this.currentModel.name.replace(" ", "-") +
-          "_" +
-          this.dataSource +
-          "_" +
-          calcDate.toISOString() +
-          ".tsv"
-      );
+      link.setAttribute("download", filename);
       document.body.appendChild(link); // Required for FF
       link.click(); // This will download the data file named [dataSource].tsv.
     }
@@ -72,6 +94,7 @@ function prepBaselineArray(calcResults, nodes) {
 
   //compose header row
   tempRow = [
+    "Result type",
     "Node ID",
     "Symbol",
     "Unit",
@@ -85,9 +108,9 @@ function prepBaselineArray(calcResults, nodes) {
   rows.push(tempRow);
 
   //compose values rows
-  let t;
   sortedNodes.forEach(function(node) {
     tempRow = [
+      "baseline",
       node.id,
       node.symbol,
       node.unit,
@@ -98,6 +121,70 @@ function prepBaselineArray(calcResults, nodes) {
   });
 
   return rows;
+}
+
+function prepResultsOfActionArray(calcResults, nodes) {
+  let tempRow = [];
+  let rows = [];
+  //sort nodes by name
+  let sortedNodes = nodes.sort(sortByName);
+
+  //compose header row
+  tempRow = [
+    "Result type",
+    "Node ID",
+    "Symbol",
+    "Unit",
+    "Name",
+    ...calcResults.timeSPoints.map(s => {
+      let date = new Date(1970, 0, 1);
+      date.setSeconds(s);
+      return date.toISOString();
+    })
+  ];
+  rows.push(tempRow);
+
+  //compose values rows
+  sortedNodes.forEach(function(node) {
+    composeActionResultsValueRow(
+      node,
+      "baseline",
+      calcResults.baselineNodesValues,
+      rows
+    );
+    composeActionResultsValueRow(
+      node,
+      "if done",
+      calcResults.ifDoneNodesValues,
+      rows
+    );
+    composeActionResultsValueRow(
+      node,
+      "if not done",
+      calcResults.ifNotDoneNodesValues,
+      rows
+    );
+  });
+
+  return rows;
+}
+
+function composeActionResultsValueRow(
+  node,
+  nodesValuesType,
+  nodesValues,
+  rows
+) {
+  if (node.id in nodesValues) {
+    rows.push([
+      nodesValuesType,
+      node.id,
+      node.symbol,
+      node.unit,
+      node.name,
+      ...nodesValues[node.id]
+    ]);
+  }
 }
 
 function sortByName(a, b) {

@@ -251,7 +251,8 @@ async function simulateActionWithDependencies(
   let testActionResults = simulateCostsAndImpacts(
     testCostsAndImpacts,
     sim,
-    defaultBaseline
+    defaultBaseline,
+    action.saveFullResults
   );
   let actionResults = testActionResults;
   actionResults.effectiveChainedCostsAndImpacts = testCostsAndImpacts;
@@ -284,7 +285,8 @@ async function simulateActionWithDependencies(
     testActionResults = simulateCostsAndImpacts(
       testCostsAndImpacts,
       sim,
-      defaultBaseline
+      defaultBaseline,
+      action.saveFullResults
     );
     if (
       testActionResults.actionResultsNumbers.actionLeverage >
@@ -375,7 +377,12 @@ function includeActionInCostsAndImpacts(action, costsAndImpacts) {
   return newCostsAndImpacts;
 }
 
-function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
+function simulateCostsAndImpacts(
+  testCostsAndImpacts,
+  sim,
+  defaultBaseline,
+  saveFullResults
+) {
   let effortImpact = {
     nodeId: sim.roleNodes.effort,
     durationType: "just_once",
@@ -411,17 +418,21 @@ function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
 
   //gather nodes for which to extract and save timeSeries
   let onlyNodeIds = [];
-  onlyNodeIds.push(sim.roleNodes.orgBenefit);
-  onlyNodeIds.push(sim.roleNodes.orgCost);
-  onlyNodeIds.push(sim.roleNodes.worldBenefit);
-  onlyNodeIds.push(sim.roleNodes.worldCost);
-  //onlyNodeIds.push(sim.roleNodes.combinedBenefit);
-  //onlyNodeIds.push(sim.roleNodes.combinedCost);
-  onlyNodeIds.push(sim.roleNodes.effort);
-  onlyNodeIds.push(sim.roleNodes.spending);
-  impactsToSimulate.forEach(function(impact) {
-    onlyNodeIds.push(impact.nodeId);
-  });
+  if (saveFullResults) {
+    sim.nodes.forEach(function(node) {
+      onlyNodeIds.push(node.id);
+    });
+  } else {
+    onlyNodeIds.push(sim.roleNodes.orgBenefit);
+    onlyNodeIds.push(sim.roleNodes.orgCost);
+    onlyNodeIds.push(sim.roleNodes.worldBenefit);
+    onlyNodeIds.push(sim.roleNodes.worldCost);
+    onlyNodeIds.push(sim.roleNodes.effort);
+    onlyNodeIds.push(sim.roleNodes.spending);
+    impactsToSimulate.forEach(function(impact) {
+      onlyNodeIds.push(impact.nodeId);
+    });
+  }
 
   //extract relevant baselineNodesValues
   let baselineNodesValues = {};
@@ -445,8 +456,6 @@ function simulateCostsAndImpacts(testCostsAndImpacts, sim, defaultBaseline) {
   resetScope(sim);
   iterateThroughTime(sim, scenario);
   if (sim.errorOccurred) return;
-  //TODO: extract and save all node values if requested by
-  //user for this device
   //only extract the basic few nodes for calculation and display
   let ifDoneNodesValues, ifNotDoneNodesValues;
   ifDoneNodesValues = extractTimeSeriesNodesValues(sim, onlyNodeIds);

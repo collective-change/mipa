@@ -9,6 +9,7 @@ const fieldsToTriggerRecalculation = [
 
 const fieldsToIgnoreForUiActionChanged = [
   "actionMchState",
+  "saveFullResults", //a temporary field that's not saved
   "ownDirectCost", //a computed field
   "outstandingDirectCost", //a computed field
   "sunkenDirectCost", //a computed field
@@ -31,7 +32,7 @@ const mutations = {
     if (typeof state.uiAction.id == "undefined") return;
     let fieldName = field.path.replace("uiAction.", "");
     updateField(state, field);
-    //console.log("updated ", fieldName, "to", state.uiAction[fieldName]);
+    console.log("updated ", fieldName, "to", state.uiAction[fieldName]);
     if (!fieldsToIgnoreForUiActionChanged.includes(fieldName)) {
       state.uiActionChanged = true;
       console.log("uiActionChanged due to ", fieldName);
@@ -63,6 +64,7 @@ const mutations = {
 
 const actions = {
   setUiAction({ commit }, action) {
+    action.saveFullResults = false; //add this non-persisted flag
     commit("setUiAction", action);
   }
 };
