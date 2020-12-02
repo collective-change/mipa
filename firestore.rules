@@ -33,6 +33,7 @@ service cloud.firestore {
 
     match /actions/{action}  {
       //allow read, write if user is in action's org
+      allow write: if userInOrg(request.resource.data.orgId);
       allow read, write: if userInOrg(resource.data.orgId);
     }
 
