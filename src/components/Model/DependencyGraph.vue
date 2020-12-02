@@ -51,6 +51,7 @@ import {
   getNodeLinkEndPoints,
   getDistance
 } from "src/utils/util-getNodeLinkEndPoints";
+import { showErrorMessage } from "src/utils/util-show-error-message";
 
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
 
@@ -363,83 +364,98 @@ export default {
         collapsedNodeGroups = [...this.currentModel.nodeGroups];
       else collapsedNodeGroups = [];
 
-      //TODO: topoSort collapsedNodeGroups?
-      //for collapsed node groups, replace individual nodes with a group node
-      collapsedNodeGroups.forEach(function(collapsedGroup) {
-        let d3Node,
-          xSum = 0,
-          ySum = 0,
-          collapsedD3NodesInGroupCount = 0;
-        let nodeForCollapsedGroup = {
-          id: collapsedGroup.id,
-          name: collapsedGroup.name,
-          isNodeGroup: true,
-          class: "group",
-          isNew: false,
-          isSelfBlocking: false,
-          symbolFormula: "exist"
-        };
-        //collect problems from nodes in group then remove the nodes
-        nodesInCollapsedGroup = nodes.filter(node =>
-          collapsedGroup.nodeIds.includes(node.id)
+      //TODO: topoSort nodeGroups
+      let sortedNodeGroups = [];
+      if (this.currentModel.nodeGroups.length)
+        sortedNodeGroups = this.topoSortNodeGroups(
+          this.currentModel.nodeGroups
         );
-        nodesInCollapsedGroup.forEach(function(node) {
-          if (node.isNew) nodeForCollapsedGroup.isNew = true;
-          if (node.isSelfBlocking) nodeForCollapsedGroup.isSelfBlocking = true;
-          if (node.symbolFormula == "")
-            nodeForCollapsedGroup.symbolFormula = "";
 
-          // add node's x y positions to accumulator in preparation for
-          // calculating average position
-          if (that.d3Data.nodes.length) {
-            d3Node = that.d3Data.nodes.find(n => n.id == node.id);
-            if (d3Node) {
-              xSum += d3Node.x;
-              ySum += d3Node.y;
-              collapsedD3NodesInGroupCount++;
-            }
-          }
-        });
-        //remove nodes from collapsed node group
-        nodes = nodes.filter(node => !collapsedGroup.nodeIds.includes(node.id));
-
-        //add group node; first initialize with average position of child nodes if available
-        if (collapsedD3NodesInGroupCount) {
-          nodeForCollapsedGroup.x = xSum / collapsedD3NodesInGroupCount;
-          nodeForCollapsedGroup.y = ySum / collapsedD3NodesInGroupCount;
-        }
-        nodes.push(nodeForCollapsedGroup);
-
-        //remove links with both ends in group
-        links = links.filter(function(link) {
-          return !(
-            collapsedGroup.nodeIds.includes(link.source) &&
-            collapsedGroup.nodeIds.includes(link.target)
+      //for collapsed node groups, replace individual nodes with a group node
+      sortedNodeGroups.forEach(function(nodeGroup) {
+        //find collapsedNodeGroup with matching id as the sorted group
+        let collapsedGroup = collapsedNodeGroups.find(
+          group => group.id == nodeGroup.id
+        );
+        if (collapsedGroup) {
+          let d3Node,
+            xSum = 0,
+            ySum = 0,
+            collapsedD3NodesInGroupCount = 0;
+          let nodeForCollapsedGroup = {
+            id: collapsedGroup.id,
+            name: collapsedGroup.name,
+            isNodeGroup: true,
+            class: "group",
+            isNew: false,
+            isSelfBlocking: false,
+            symbolFormula: "exist"
+          };
+          //collect problems from nodes in group then remove the nodes
+          nodesInCollapsedGroup = nodes.filter(node =>
+            collapsedGroup.nodeIds.includes(node.id)
           );
-        });
+          nodesInCollapsedGroup.forEach(function(node) {
+            if (node.isNew) nodeForCollapsedGroup.isNew = true;
+            if (node.isSelfBlocking)
+              nodeForCollapsedGroup.isSelfBlocking = true;
+            if (node.symbolFormula == "")
+              nodeForCollapsedGroup.symbolFormula = "";
 
-        //redirect links w/ one end in group to group node
-        //TODO: do not allow delete on these links
-        links.forEach(function(link, index, linksArray) {
-          if (
-            collapsedGroup.nodeIds.includes(link.source) &&
-            !collapsedGroup.nodeIds.includes(link.target)
-          ) {
-            let newLink = Object.assign({}, link);
-            newLink.source = collapsedGroup.id;
-            links.splice(index, 1, newLink);
+            // add node's x y positions to accumulator in preparation for
+            // calculating average position
+            if (that.d3Data.nodes.length) {
+              d3Node = that.d3Data.nodes.find(n => n.id == node.id);
+              if (d3Node) {
+                xSum += d3Node.x;
+                ySum += d3Node.y;
+                collapsedD3NodesInGroupCount++;
+              }
+            }
+          });
+
+          //remove nodes from collapsed node group
+          nodes = nodes.filter(
+            node => !collapsedGroup.nodeIds.includes(node.id)
+          );
+
+          //add group node; first initialize with average position of child nodes if available
+          if (collapsedD3NodesInGroupCount) {
+            nodeForCollapsedGroup.x = xSum / collapsedD3NodesInGroupCount;
+            nodeForCollapsedGroup.y = ySum / collapsedD3NodesInGroupCount;
           }
-          if (
-            !collapsedGroup.nodeIds.includes(link.source) &&
-            collapsedGroup.nodeIds.includes(link.target)
-          ) {
-            let newLink = Object.assign({}, link);
-            newLink.target = collapsedGroup.id;
-            links.splice(index, 1, newLink);
-          }
-        });
+          nodes.push(nodeForCollapsedGroup);
+
+          //remove links with both ends in group
+          links = links.filter(function(link) {
+            return !(
+              collapsedGroup.nodeIds.includes(link.source) &&
+              collapsedGroup.nodeIds.includes(link.target)
+            );
+          });
+
+          //redirect links w/ one end in group to group node
+          //TODO: do not allow delete on these links
+          links.forEach(function(link, index, linksArray) {
+            if (
+              collapsedGroup.nodeIds.includes(link.source) &&
+              !collapsedGroup.nodeIds.includes(link.target)
+            ) {
+              let newLink = Object.assign({}, link);
+              newLink.source = collapsedGroup.id;
+              links.splice(index, 1, newLink);
+            }
+            if (
+              !collapsedGroup.nodeIds.includes(link.source) &&
+              collapsedGroup.nodeIds.includes(link.target)
+            ) {
+              let newLink = Object.assign({}, link);
+              newLink.target = collapsedGroup.id;
+              links.splice(index, 1, newLink);
+            }
+          });
+        }
       });
-
       //get nodes in newly expanded nodeGroup, use exiting group node position for new nodes
       if (payload && payload.newlyExpandedGroupId) {
         let newlyExpandedGroup = this.currentModel.nodeGroups.find(
@@ -490,6 +506,57 @@ export default {
 
       return { nodes, links };
     },
+
+    topoSortNodeGroups(nodeGroups) {
+      //compute inDegrees of each node group
+      nodeGroups.forEach(group => {
+        //how many times the group appears as the parent
+        group.parentDegree = nodeGroups.filter(
+          x => x.parentId == group.id
+        ).length;
+      });
+      let L = []; //for storing sorted elements
+      let S = nodeGroups.filter(group => group.parentDegree == 0); //groups with no children
+      let unvisitedGroups = nodeGroups.filter(group => group.parentDegree != 0);
+      let g = null; //group to process
+      let parent = null; //a working variable
+
+      while (S.length) {
+        // remove a group g from S and append to tail of L
+        g = S.shift();
+        L.push(g);
+        if (g.parentId) {
+          parent = unvisitedGroups.find(group => group.id == g.parentId);
+          parent.parentDegree--;
+          if (parent.parentDegree == 0) {
+            S.push(parent);
+            //remove parent from unvisited groups
+            for (var i = 0; i < unvisitedGroups.length; i++) {
+              if (unvisitedGroups[i] === parent) {
+                unvisitedGroups.splice(i, 1);
+              }
+            }
+          }
+        }
+      }
+      //now try to sort out unvisited groups (ones in or blocked by a cycle)
+
+      try {
+        //if there are unvisited groups, then graph has at least one cycle
+        if (unvisitedGroups.length) {
+          const groupNames = unvisitedGroups
+            .map(group => group.name)
+            .join(", ");
+          console.log("unvisitedNodeGroups: ", groupNames);
+          throw "Circular hierarchy detected in node groups: " + groupNames;
+        }
+      } catch (err) {
+        console.log(err);
+        showErrorMessage("Error sorting node groups", err.message);
+      }
+      return L;
+    },
+
     prepD3DataAndUpdate(payload) {
       if (this.nodes && this.currentModel) {
         /*continue*/
