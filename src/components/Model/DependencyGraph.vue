@@ -526,13 +526,15 @@ export default {
         L.push(g);
         if (g.parentId) {
           parent = unvisitedGroups.find(group => group.id == g.parentId);
-          parent.parentDegree--;
-          if (parent.parentDegree == 0) {
-            S.push(parent);
-            //remove parent from unvisited groups
-            for (var i = 0; i < unvisitedGroups.length; i++) {
-              if (unvisitedGroups[i] === parent) {
-                unvisitedGroups.splice(i, 1);
+          if (parent) {
+            parent.parentDegree--;
+            if (parent.parentDegree == 0) {
+              S.push(parent);
+              //remove parent from unvisited groups
+              for (var i = 0; i < unvisitedGroups.length; i++) {
+                if (unvisitedGroups[i] === parent) {
+                  unvisitedGroups.splice(i, 1);
+                }
               }
             }
           }
