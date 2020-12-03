@@ -10,6 +10,7 @@
       color="primary"
       label="Add node"
     />
+
     <svg
       id="dependencyGraph"
       :width="svgWidth"
@@ -208,7 +209,7 @@ export default {
       .data(["end"]) // Different link/path types can be defined here
       .enter()
       .append("svg:marker") // This section adds in the arrows
-      .attr("id", String)
+      .attr("id", "end")
       .attr("viewBox", "0 -5 10 10")
       .attr("refX", 5) //Prevents arrowhead from being covered by circle
       .attr("refY", 0)
@@ -216,6 +217,38 @@ export default {
       .attr("markerWidth", 15)
       .attr("markerHeight", 15)
       .attr("fill", "#666")
+      .attr("orient", "auto")
+      .append("svg:path")
+      .attr("d", "M0,-5L10,0L0,5");
+
+    // Define the arrow marker for unused links
+    svg
+      .select("defs")
+      .append("svg:marker") // This section adds in the arrows
+      .attr("id", "end-unused")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 5) //Prevents arrowhead from being covered by circle
+      .attr("refY", 0)
+      .attr("markerUnits", "userSpaceOnUse")
+      .attr("markerWidth", 15)
+      .attr("markerHeight", 15)
+      .attr("fill", "#aaa")
+      .attr("orient", "auto")
+      .append("svg:path")
+      .attr("d", "M0,-5L10,0L0,5");
+
+    // Define the arrow marker for relaxed links
+    svg
+      .select("defs")
+      .append("svg:marker") // This section adds in the arrows
+      .attr("id", "end-relaxed")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 5) //Prevents arrowhead from being covered by circle
+      .attr("refY", 0)
+      .attr("markerUnits", "userSpaceOnUse")
+      .attr("markerWidth", 15)
+      .attr("markerHeight", 15)
+      .attr("fill", "#eee")
       .attr("orient", "auto")
       .append("svg:path")
       .attr("d", "M0,-5L10,0L0,5");
@@ -331,17 +364,25 @@ export default {
         });
       });
       this.simulation.on("end", null); //remove savePositions function from simulation on end
-      let saveFile = {
-        modelId: this.currentModel.id,
-        expandedNodeGroups: this.expandedNodeGroups,
-        circlePositions
-      };
-      //if circlePositions are valid, then save
-      if (circlePositions.length && !isNaN(circlePositions[0].x)) {
-        //console.log("saving positions");
-        //console.log("iterationCount", this.iterationCount);
-        idb.saveDependencyGraphDisplay(saveFile);
-      }
+
+      (async () => {
+        while (
+          !this.currentModel // define the condition as you like
+        )
+          await new Promise(resolve => setTimeout(resolve, 200));
+
+        let saveFile = {
+          modelId: this.currentModel.id,
+          expandedNodeGroups: this.expandedNodeGroups,
+          circlePositions
+        };
+        //if circlePositions are valid, then save
+        if (circlePositions.length && !isNaN(circlePositions[0].x)) {
+          //console.log("saving positions");
+          //console.log("iterationCount", this.iterationCount);
+          idb.saveDependencyGraphDisplay(saveFile);
+        }
+      })();
     },
 
     getVisibleData(payload) {
@@ -506,7 +547,8 @@ export default {
       return { nodes, links };
     },
 
-    topoSortNodeGroups(nodeGroups) {
+    topoSortNodeGroups(storeNodeGroups) {
+      let nodeGroups = JSON.parse(JSON.stringify(storeNodeGroups));
       //compute inDegrees of each node group
       nodeGroups.forEach(group => {
         //how many times the group appears as the parent
@@ -1020,8 +1062,16 @@ export default {
       // Add 'marker-end' attribute to each path
       svg
         .selectAll("g")
-        .selectAll("path")
+        .selectAll("path.link")
         .attr("marker-end", "url(#end)");
+      svg
+        .selectAll("g")
+        .selectAll("path.link.unused")
+        .attr("marker-end", "url(#end-unused)");
+      svg
+        .selectAll("g")
+        .selectAll("path.link.relaxed")
+        .attr("marker-end", "url(#end-relaxed)");
 
       if (restartForceSimulation) {
         this.simulation.on("end", this.savePositions);
@@ -1551,9 +1601,6 @@ path.link.nonBlocking {
 }
 path.link.unused {
   stroke: #aaa;
-}
-path.link.usedInFormula {
-  stroke: #333;
 }
 path.link.relaxed {
   stroke: #eee;
