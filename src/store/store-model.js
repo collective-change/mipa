@@ -599,9 +599,6 @@ const getters = {
         });
       }
     });
-    //To draw relaxed links first (so they do not cover other links),
-    //sort links so relaxed links come first.
-    allLinks.sort((a, b) => a.strengthFactor - b.strengthFactor);
     return allLinks;
   }
 };

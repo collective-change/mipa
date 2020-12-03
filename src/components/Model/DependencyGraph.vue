@@ -670,6 +670,9 @@ export default {
         }
       }
       if (dataChanged) {
+        //To draw relaxed links first (so they do not cover other links),
+        //sort links so relaxed links come first.
+        that.d3Data.links.sort((a, b) => a.strengthFactor - b.strengthFactor);
         this.updateData({ modifyingExistingGraph });
       }
       if (graphTextChange && !dataChanged) {
