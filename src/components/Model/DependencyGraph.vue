@@ -1656,7 +1656,7 @@ circle.new,
 circle.noFormula,
 circle.selfBlocking {
   stroke-width: 1px;
-  stroke: red;
+  stroke: #e77;
 }
 
 circle.selected {
