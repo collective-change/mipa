@@ -232,7 +232,7 @@ export default {
       .attr("markerUnits", "userSpaceOnUse")
       .attr("markerWidth", 15)
       .attr("markerHeight", 15)
-      .attr("fill", "#aaa")
+      .attr("fill", "#e77")
       .attr("orient", "auto")
       .append("svg:path")
       .attr("d", "M0,-5L10,0L0,5");
@@ -249,6 +249,22 @@ export default {
       .attr("markerWidth", 15)
       .attr("markerHeight", 15)
       .attr("fill", "#eee")
+      .attr("orient", "auto")
+      .append("svg:path")
+      .attr("d", "M0,-5L10,0L0,5");
+
+    // Define the arrow marker for unused, relaxed links
+    svg
+      .select("defs")
+      .append("svg:marker") // This section adds in the arrows
+      .attr("id", "end-unused-relaxed")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 5) //Prevents arrowhead from being covered by circle
+      .attr("refY", 0)
+      .attr("markerUnits", "userSpaceOnUse")
+      .attr("markerWidth", 15)
+      .attr("markerHeight", 15)
+      .attr("fill", "#fdd")
       .attr("orient", "auto")
       .append("svg:path")
       .attr("d", "M0,-5L10,0L0,5");
@@ -1072,6 +1088,10 @@ export default {
         .selectAll("g")
         .selectAll("path.link.relaxed")
         .attr("marker-end", "url(#end-relaxed)");
+      svg
+        .selectAll("g")
+        .selectAll("path.link.unused.relaxed")
+        .attr("marker-end", "url(#end-unused-relaxed)");
 
       if (restartForceSimulation) {
         this.simulation.on("end", this.savePositions);
@@ -1600,10 +1620,13 @@ path.link.nonBlocking {
   stroke-dasharray: 5, 2;
 }
 path.link.unused {
-  stroke: #aaa;
+  stroke: #e77;
 }
 path.link.relaxed {
   stroke: #eee;
+}
+path.link.unused.relaxed {
+  stroke: #fdd;
 }
 
 circle {
