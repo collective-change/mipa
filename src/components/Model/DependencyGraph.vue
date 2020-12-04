@@ -422,7 +422,7 @@ export default {
       else collapsedNodeGroups = [];
 
       let sortedNodeGroups = [];
-      if (this.currentModel.nodeGroups.length)
+      if (this.currentModel.nodeGroups && this.currentModel.nodeGroups.length)
         sortedNodeGroups = this.topoSortNodeGroups(
           this.currentModel.nodeGroups
         );
