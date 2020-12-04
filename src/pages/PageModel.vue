@@ -26,11 +26,22 @@
         <div class="row">
           <export-calc-results data-source="baseline" buttonLabel="Export baseline TSV" />
         </div>
-        <div class="row">Node groups</div>
+        <div class="row text-h6">Node groups</div>
+        <div class="q-gutter-xs">
+          Expand
+          <q-btn label="menu tree" size="sm" @click="expandMenuTree" />
+          <q-btn label="all groups" size="sm" @click="expandAllGroups" />
+        </div>
+        <div class="q-gutter-xs">
+          Collapse
+          <q-btn label="menu tree" size="sm" @click="collapseMenuTree" />
+          <q-btn label="all groups" size="sm" @click="collapseAllGroups" />
+        </div>
         <div>
           <q-tree
             :nodes="nodeGroupsForTree"
             node-key="id"
+            ref="tree"
             label-key="name"
             selected-color="primary"
             :selected.sync="selectedNodeGroupId"
@@ -115,9 +126,8 @@ export default {
       //dependencyGraphSavefile: null,
       showConfigOrgModel: false,
       models: null,
-      modelOptions: ["Tzu Chi", "Human-Earth system model"],
       selectedNodeGroupId: null,
-      expanded: null,
+      expanded: [],
       initialCirclePositions: null
     };
   },
@@ -169,6 +179,28 @@ export default {
         updates: { nodeGroups: clonedNodeGroups }
       };
       this.$store.dispatch("model/updateModel", payload);
+    },
+
+    expandMenuTree() {
+      this.$nextTick(() => {
+        this.$refs.tree.expandAll();
+      });
+    },
+
+    collapseMenuTree() {
+      this.$nextTick(() => {
+        this.$refs.tree.collapseAll();
+      });
+    },
+
+    expandAllGroups() {
+      let temp = [];
+      this.currentModel.nodeGroups.forEach(group => temp.push(group.id));
+      this.expandedNodeGroups = temp;
+    },
+
+    collapseAllGroups() {
+      this.expandedNodeGroups = [];
     }
   },
 
