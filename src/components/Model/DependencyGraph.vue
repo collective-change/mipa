@@ -58,7 +58,7 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 
 var nodeRadius = 30;
 const svgWidth = 800;
-const svgHeight = 800;
+const svgHeight = 590;
 var dragStartTime, dragEndTime;
 
 export default {
@@ -76,7 +76,7 @@ export default {
       showAddLink: false,
       linkTargetType: "",
       svgWidth: svgWidth,
-      svgHeight: svgWidth,
+      svgHeight: svgHeight,
       selections: {},
       d3Data: {
         nodes: [],
