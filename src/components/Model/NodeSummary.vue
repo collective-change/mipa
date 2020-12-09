@@ -62,11 +62,11 @@
         </div>
         <div v-else class="text-negative">{{ parserError }}</div>
         <q-input
-          v-if="false"
           v-model="nodeToSubmit.currentValue"
-          label="Current value"
+          label="Current value (optional)"
           type="number"
           :suffix="nodeToSubmit.unit"
+          hint="Only used if a delay function with 'best_guess' as initial value references this node."
           debounce="300"
         />
         <div v-if="nodeChart.chartData.length > 0">
