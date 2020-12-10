@@ -137,7 +137,7 @@ export default {
         {
           name: "netBenefit",
           align: "right",
-          label: this.$t(""),
+          label: this.$t("marginalNetTotalBenefitNpv"),
           field: "marginalNetTotalBenefitNpv",
           format: val => `${formatNumber(val, 3)}`,
           sortable: true
