@@ -45,7 +45,7 @@ export default {
 
   Ideate: "Ideate",
   "Strategic analysis": "Strategic analysis",
-  Actions: "Action",
+  Actions: "Actions",
   "Action templates": "Action templates",
 
   Prioritize: "Prioritize",
@@ -83,5 +83,4 @@ export default {
   percentDone: "% done",
   estSpending: "Estimated spending",
   spentAmount: "Spent amount"
-
 };
