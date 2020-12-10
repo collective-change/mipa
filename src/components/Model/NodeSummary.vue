@@ -62,8 +62,8 @@
         </div>
         <div v-else class="text-negative">{{ parserError }}</div>
         <q-input
-          v-model="nodeToSubmit.currentValue"
-          label="Current value (optional)"
+          v-model="nodeToSubmit.latestValue"
+          label="Latest value (optional)"
           type="number"
           :suffix="nodeToSubmit.unit"
           hint="Only used if a delay function with 'best_guess' as initial value references this node."
@@ -219,7 +219,7 @@ export default {
 
     watchedObjectForNodePropertyRecalculation() {
       return {
-        currentValue: this.nodeToSubmit.currentValue,
+        latestValue: this.nodeToSubmit.latestValue,
         parsedFormula: this.parsedSymbolFormula,
       };
     },
@@ -248,8 +248,8 @@ export default {
       }
     },
     submitNode() {
-      let oldCurrentVal = this.selectedNode.currentValue;
-      let newCurrentVal = this.nodeToSubmit.currentValue;
+      let oldCurrentVal = this.selectedNode.latestValue;
+      let newCurrentVal = this.nodeToSubmit.latestValue;
       let oldCurrentValIsANumber =
         typeof oldCurrentVal != "undefined" &&
         oldCurrentVal != "" &&
@@ -258,7 +258,7 @@ export default {
         typeof newCurrentVal != "undefined" &&
         newCurrentVal != "" &&
         !isNaN(Number(newCurrentVal));
-      let currentValueExistenceChanged =
+      let latestValueExistenceChanged =
         oldCurrentValIsANumber != newCurrentValIsANumber;
 
       let oldSymbol = this.selectedNode.symbol;
@@ -269,7 +269,7 @@ export default {
       this.updateNode({
         modelId: this.$route.params.modelId,
         updates: this.nodeToSubmit,
-        currentValueExistenceChanged: currentValueExistenceChanged,
+        latestValueExistenceChanged: latestValueExistenceChanged,
         symbolChanged: symbolChanged,
         /* "symbolChanged" doesn't actually work yet to classify influencers
         of node's influencees, because classifyInfluencers currently

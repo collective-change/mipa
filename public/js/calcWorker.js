@@ -760,7 +760,7 @@ function iterateThroughTime(sim, scenario) {
           console.log(code.evaluate);
         }*/
 
-        //TODO: if timeS == initialTimeS then evaluate current value
+        //TODO: if timeS == initialTimeS then evaluate latest value
         //TODO: if simulating an action, set a changedFromBaseline
         //flag for each node. If influencer nodes of the current node
         //haven't changed for this iteration, then use the baseline's
@@ -1004,7 +1004,7 @@ function prepSim(data) {
   sim.defaultTimeSPoints = prepDefaultTimeSPoints(sim);
   if (sim.errorOccurred) return sim;
 
-  loadCurrentValues(sim);
+  loadLatestValues(sim);
   if (sim.errorOccurred) return sim;
 
   sim.expressionsArray = prepExpressionsArray(sim);
@@ -1155,29 +1155,29 @@ function resetScope(sim) {
   });
 }
 
-function loadCurrentValues(sim) {
-  // gather up current values from nodes into scope
-  //console.log("begin loading currentValues");
+function loadLatestValues(sim) {
+  // gather up latest values from nodes into scope
+  //console.log("begin loading latestValues");
   sim.sortedNodes.forEach(function(node, index) {
     if (!sim.errorOccurred)
       try {
         sim.scope["$" + node.id + "_unit"] = node.unit;
-        if ("currentValue" in node && node.currentValue != "") {
+        if ("latestValue" in node && node.latestValue != "") {
           sim.scope["$" + node.id] = math.unit(
-            Number(node.currentValue),
+            Number(node.latestValue),
             node.unit
           );
         }
       } catch (err) {
         self.postMessage({
-          errorType: "current value loading error",
-          errorMessage: `For node "${node.name}", current value "${node.currentValue}", unit "${node.unit}" <br/> ${err}`
+          errorType: "latest value loading error",
+          errorMessage: `For node "${node.name}", latest value "${node.latestValue}", unit "${node.unit}" <br/> ${err}`
         });
         sim.errorOccurred = true;
       }
   });
   sim.calcTimeLog.push({
-    stage: "load currentValues",
+    stage: "load latestValues",
     endTime: new Date()
   });
 }
@@ -1410,9 +1410,9 @@ function prepNodesForSort(sim) {
       sysFormula:
         typeof outerNode.sysFormula !== "undefined" ? outerNode.sysFormula : "",
       unit: typeof outerNode.unit !== "undefined" ? outerNode.unit : "",
-      currentValue:
-        typeof outerNode.currentValue !== "undefined"
-          ? outerNode.currentValue
+      latestValue:
+        typeof outerNode.latestValue !== "undefined"
+          ? outerNode.latestValue
           : ""
     });
   });
@@ -1489,7 +1489,7 @@ function delay(args, math, scope) {
   }
 
   let initialValue = null;
-  let currentValue = scope[$nodeId];
+  let latestValue = scope[$nodeId];
 
   if (args.length <= 1) {
     console.error('"delay" function needs at least 2 arguments.');
@@ -1520,7 +1520,7 @@ function delay(args, math, scope) {
     values,
     targetTimeS,
     initialValue,
-    currentValue,
+    latestValue,
     nodeId,
     scope
   );
@@ -1531,7 +1531,7 @@ function interpolate(
   rawValues,
   targetTimeS,
   initialValue,
-  currentValue,
+  latestValue,
   nodeId,
   scope
 ) {
@@ -1558,15 +1558,15 @@ function interpolate(
     if (valueIsANumber(initialValue))
       return math.unit(Number(initialValue), scope["$" + nodeId + "_unit"]);
     else if (initialValue == "best_guess") {
-      //if currentValue is available then return current value
-      if (currentValue != "") return currentValue;
+      //if latestValue is available then return latest value
+      if (latestValue != "") return latestValue;
       else {
         console.error(
-          `No history, no initial value, and no current value available for best guess for node "${replaceNodeIdsWithName(
+          `No history, no initial value, and no latest value available for best guess for node "${replaceNodeIdsWithName(
             nodeId
           )}", initialValue: (${typeof initialValue}) ${initialValue}`
         );
-        throw `No history, no initial value, and no current value available for best guess for node "${replaceNodeIdsWithName(
+        throw `No history, no initial value, and no latest value available for best guess for node "${replaceNodeIdsWithName(
           nodeId
         )}", initialValue: (${typeof initialValue}) ${initialValue}`;
       }
