@@ -182,11 +182,11 @@ const actions = {
       .then(function() {
         //let keys = Object.keys(payload.updates);
         Notify.create("Node updated!");
-        //if existence of currentValue changed, then run
+        //if existence of latestValue changed, then run
         //updateClassifiedInfluencersOf on the node's influencees
         if (
-          ("currentValueExistenceChanged" in payload &&
-            payload.currentValueExistenceChanged) ||
+          ("latestValueExistenceChanged" in payload &&
+            payload.latestValueExistenceChanged) ||
           ("symbolChanged" in payload && payload.symbolChanged)
         ) {
           let node = state.nodes.find(node => node.id == nodeId);
