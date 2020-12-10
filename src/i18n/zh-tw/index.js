@@ -63,7 +63,7 @@ export default {
   Add: "新增",
   Recalculate: "重新計算",
   Leverage: "效應比",
-  Status: "狀態",
+  State: "狀態",
   Title: "標題",
   isProject: "專案",
   marginalTotalBenefitNpv: "總邊際效益",

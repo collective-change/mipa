@@ -63,7 +63,7 @@ export default {
   Add: "Add",
   Recalculate: "Recalculate",
   Leverage: "Leverage",
-  Status: "Status",
+  State: "State",
   Title: "Title",
   isProject: "Is project",
   marginalTotalBenefitNpv: "Marginal total benefit NPV",
