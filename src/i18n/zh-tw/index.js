@@ -59,6 +59,16 @@ export default {
   "Time log": "時間紀錄",
   "My team's work": "小組的工作",
 
+  // action states
+  initiating: "發起中",
+  to_approve: "待核准",
+  rejected: "被退回",
+  eligible: "可進行",
+  approved: "已核准",
+  done: "已完成",
+  cancellation_requested: "取消請求待核准",
+  canceled: "已取消",
+
   // for ActionsList.vue
   Add: "新增",
   Recalculate: "重新計算",

@@ -59,6 +59,18 @@ export default {
   "Time log": "Time log",
   "My team's work": "My team's work",
 
+  // action states
+  initiating: "initiating",
+  to_approve: "to approve",
+  rejected: "rejected",
+  eligible: "eligible",
+  approved: "approved",
+  done: "done",
+  cancellation_requested: "cancellation requeted",
+  canceled: "canceled",
+
+  //TODO: action triggers
+
   // for ActionsList.vue
   Add: "Add",
   Recalculate: "Recalculate",

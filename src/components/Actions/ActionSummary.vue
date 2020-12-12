@@ -13,7 +13,7 @@
               <template v-slot:prepend>
                 <q-chip square color="primary" text-color="white">
                   {{
-                  uiAction.actionMchState.value
+                  $t(uiAction.actionMchState.value)
                   }}
                 </q-chip>
               </template>
@@ -87,18 +87,92 @@
                 :actionTitle="uiAction.title"
                 buttonLabel="Export results TSV"
               />
-              <q-btn
-                v-if="['eligible'].includes(uiAction.actionMchState.value)"
-                label="Mark as done"
-                @click="actionService.send('FINISH')"
-                color="primary"
-              />
-              <q-btn
-                v-if="['done'].includes(uiAction.actionMchState.value)"
-                label="Revert"
-                @click="actionService.send('REVERT_FINISH')"
-                color="primary"
-              />
+              <q-btn-group v-if="uiAction.actionMchState.value=='initiating'">
+                <q-btn
+                  :label="$t('Request approval')"
+                  @click="actionService.send('REQUEST_APPROVAL')"
+                  color="primary"
+                />
+                <q-btn
+                  :label="$t('Approval not needed')"
+                  @click="actionService.send('APPROVAL_NOT_NEEDED')"
+                  color="primary"
+                />
+              </q-btn-group>
+
+              <q-btn-group v-if="uiAction.actionMchState.value=='to_approve'">
+                <q-btn
+                  :label="$t('Approve')"
+                  @click="actionService.send('APPROVE')"
+                  color="primary"
+                />
+                <q-btn :label="$t('Reject')" @click="actionService.send('REJECT')" color="primary" />
+              </q-btn-group>
+
+              <q-btn-group v-if="uiAction.actionMchState.value=='rejected'">
+                <q-btn
+                  :label="$t('Request approval')"
+                  @click="actionService.send('REQUEST_APPROVAL')"
+                  color="primary"
+                />
+              </q-btn-group>
+
+              <q-btn-group v-if="uiAction.actionMchState.value=='eligible'">
+                <q-btn
+                  :label="$t('Approval needed')"
+                  @click="actionService.send('APPROVAL_NEEDED')"
+                  color="primary"
+                />
+                <q-btn :label="$t('Cancel')" @click="actionService.send('CANCEL')" color="primary" />
+                <q-btn
+                  :label="$t('Mark as done')"
+                  @click="actionService.send('FINISH')"
+                  color="primary"
+                />
+              </q-btn-group>
+
+              <q-btn-group v-if="uiAction.actionMchState.value=='approved'">
+                <q-btn
+                  :label="$t('Re-approval needed')"
+                  @click="actionService.send('APPROVAL_NEEDED')"
+                  color="primary"
+                />
+                <q-btn
+                  :label="$t('Request to cancel')"
+                  @click="actionService.send('REQUEST_CANCELLATION')"
+                  color="primary"
+                />
+                <q-btn
+                  :label="$t('Mark as done')"
+                  @click="actionService.send('FINISH')"
+                  color="primary"
+                />
+              </q-btn-group>
+
+              <q-btn-group v-if="uiAction.actionMchState.value=='done'">
+                <q-btn
+                  :label="$t('Revert to eligible')"
+                  @click="actionService.send('REVERT_FINISH')"
+                  color="primary"
+                />
+              </q-btn-group>
+
+              <q-btn-group v-if="uiAction.actionMchState.value=='cancellation_requested'">
+                <q-btn
+                  :label="$t('Reject cancellation')"
+                  @click="actionService.send('REJECT_CANCELLATION')"
+                  color="primary"
+                />
+                <q-btn
+                  :label="$t('Approve cancellation')"
+                  @click="actionService.send('APPROVE_CANCELLATION')"
+                  color="primary"
+                />
+              </q-btn-group>
+
+              <q-btn-group v-if="uiAction.actionMchState.value=='canceled'">
+                <q-btn :label="$t('Revive')" @click="actionService.send('REVIVE')" color="primary" />
+              </q-btn-group>
 
               <q-btn color="primary" label="Meet about this" />
             </div>
@@ -549,6 +623,9 @@ export default {
       this.$store.dispatch("model/bindCurrentModel", modelId);
       this.$store.dispatch("model/bindNodes", modelId);
     })();
+  },
+  destroyed() {
+    this.actionService.stop();
   },
   watch: {
     nodes: function() {
