@@ -23,7 +23,12 @@ async function getExchangeRates() {
         "&format=1"
     )
     .then((response: { data: any }) => {
-      console.log("Retrieved exchange rates");
+      if (response.data.success) {
+        console.log("Retrieved exchange rates");
+      } else {
+        console.log("Failed to retrieve exchange rates");
+        console.log(response.data);
+      }
       return response.data;
     })
     .catch(function(error: any) {
@@ -47,8 +52,13 @@ async function getExchangeRates() {
 }
 
 async function saveExchangeRates(exchangeRates: any) {
-  return db
-    .collection("adHocDocs")
-    .doc("exchangeRates")
-    .set(exchangeRates);
+  if (exchangeRates.rates) {
+    return db
+      .collection("adHocDocs")
+      .doc("exchangeRates")
+      .set(exchangeRates);
+  } else {
+    console.log("Error", "Missing exchangeRates.rates");
+    return null;
+  }
 }
