@@ -32,9 +32,7 @@ const mutations = {
 };
 
 const actions = {
-  addOrgMainModel({ dispatch }, payload) {
-    console.log("payload: ", payload);
-    console.log("id: ", payload.orgId);
+  async addOrgMainModel({ dispatch }, payload) {
     let model = {};
     model.isPublic = false;
     model.owners = { users: [firebaseAuth.currentUser.uid] };
@@ -43,16 +41,139 @@ const actions = {
     model.isOrgMainModel = true;
     model.name = "Main";
     model.unwrittenChanges = [];
+    model.simulationParams = {
+      finalTimeNumber: 120,
+      finalTimeUnit: "months",
+      numTimeSteps: 120,
+      orgWeightingFactor: 1,
+      timeStepGrowthRate: 0,
+      timeStepNumber: 1,
+      timeStepUnit: "months",
+      worldToOrgWeightingRatio: 0.5,
+      worldWeightingFactor: 1
+    };
     firebaseDb
       .collection("models")
-      .doc(payload.orgId) //use orgId as the model's id
+      .doc(payload.modelId) //use orgId as the model's id
       .set(model)
       .then(function(docRef) {
-        //Notify.create("Node added! ");
+        //Notify.create("Model added! ");
+        dispatch("createInitialNodes", {
+          modelId: payload.modelId,
+          currency: payload.currency
+        });
       })
       .catch(function(error) {
         showErrorMessage("Error creating model", error.message);
       });
+  },
+
+  async createInitialNodes({ dispatch }, payload) {
+    const basicNode = {
+      class: "unlinked",
+      isNew: false,
+      isSelfBlocking: false,
+      name: "unnamed",
+      symbol: "unnamed",
+      symbolFormula: "0",
+      sysFormula: "0",
+      unit: payload.currency,
+      unusedInfluencers: []
+    };
+    const nodes = [
+      {
+        name: "average effort cost per hour",
+        symbol: "averageEffortCostPerHour"
+      },
+      {
+        name: "one-time effort",
+        symbol: "oneTimeEffort",
+        unit: "workhours"
+      },
+      {
+        name: "one-time spending",
+        symbol: "oneTimeSpending"
+      },
+      {
+        name: "cost to organization during interval",
+        symbol: "costToOrganizationDuringInterval"
+      },
+      {
+        name: "cost to world during interval",
+        symbol: "costToWorldDuringInterval"
+      },
+      {
+        name: "benefit to organization during interval",
+        symbol: "benefitToOrganizationDuringInterval"
+      },
+      {
+        name: "benefit to world during interval",
+        symbol: "benefitToWorldDuringInterval"
+      }
+    ];
+
+    let batch = firebaseDb.batch();
+    nodes.forEach(node => {
+      let nodeRef = firebaseDb
+        .collection("models")
+        .doc(payload.modelId)
+        .collection("nodes")
+        .doc();
+      batch.set(nodeRef, Object.assign(Object.assign({}, basicNode), node));
+    });
+    await batch.commit();
+
+    const snapshot = await firebaseDb
+      .collection("models")
+      .doc(payload.modelId)
+      .collection("nodes")
+      .get();
+
+    const roleNodesProperties = [
+      {
+        name: "averageEffortCostPerHour",
+        symbol: "averageEffortCostPerHour"
+      },
+      {
+        name: "effort",
+        symbol: "oneTimeEffort"
+      },
+      {
+        name: "orgBenefit",
+        symbol: "benefitToOrganizationDuringInterval"
+      },
+      {
+        name: "orgCost",
+        symbol: "costToOrganizationDuringInterval"
+      },
+      {
+        name: "spending",
+        symbol: "oneTimeSpending"
+      },
+      {
+        name: "worldBenefit",
+        symbol: "benefitToWorldDuringInterval"
+      },
+      {
+        name: "worldCost",
+        symbol: "costToWorldDuringInterval"
+      }
+    ];
+
+    let roleNodes = {};
+    snapshot.forEach(doc => {
+      const node = doc.data();
+
+      const foundProperty = roleNodesProperties.find(
+        element => element.symbol == node.symbol
+      );
+      if (foundProperty) roleNodes[foundProperty.name] = doc.id;
+    });
+
+    dispatch("updateModel", {
+      modelId: payload.modelId,
+      updates: { roleNodes }
+    });
   },
 
   async updateModel({ dispatch }, payload) {
