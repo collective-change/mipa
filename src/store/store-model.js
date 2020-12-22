@@ -83,7 +83,9 @@ const actions = {
     const nodes = [
       {
         name: "average effort cost per hour",
-        symbol: "averageEffortCostPerHour"
+        symbol: "averageEffortCostPerHour",
+        symbolFormula: "10",
+        sysFormula: "10"
       },
       {
         name: "one-time effort",
