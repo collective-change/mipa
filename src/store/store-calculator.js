@@ -66,7 +66,7 @@ const actions = {
     });
     //console.log("Message posted to worker");
 
-    calcWorker.onmessage = function(e) {
+    calcWorker.onmessage = async function(e) {
       let payload2;
       //console.log(e.data);
       if (typeof e.data == "string") {
@@ -83,7 +83,7 @@ const actions = {
       } else if ("resultsType" in e.data) {
         switch (e.data.resultsType) {
           case "baseline":
-            dispatch("calcResults/saveBaseline", e.data, { root: true });
+            await dispatch("calcResults/saveBaseline", e.data, { root: true });
             if (payload.calculationType == "baseline") {
               dispatch("calcResults/loadBaseline", payload.modelId, {
                 root: true
@@ -92,7 +92,7 @@ const actions = {
             }
             break;
           case "actions":
-            dispatch("actions/updateActionsResults", e.data, {
+            await dispatch("actions/updateActionsResults", e.data, {
               root: true
             });
             //console.log(e.data);
