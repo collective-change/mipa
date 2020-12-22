@@ -64,7 +64,7 @@ const actions = {
         //console.log(docRef.id);
         dispatch(
           "model/addOrgMainModel",
-          { orgId: docRef.id, modelId: docRef.id },
+          { orgId: docRef.id, modelId: docRef.id, currency: org.currency },
           { root: true }
         );
         Notify.create("Organization added!");
