@@ -65,6 +65,7 @@
           v-model="nodeToSubmit.latestValue"
           label="Latest value (optional)"
           type="number"
+          step="any"
           :suffix="nodeToSubmit.unit"
           hint="Only used if a delay function with 'best_guess' as initial value references this node."
           debounce="300"
