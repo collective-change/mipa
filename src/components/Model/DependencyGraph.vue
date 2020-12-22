@@ -42,7 +42,6 @@
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 import * as d3 from "d3";
-import "d3-selection-multi"; //TODO: check if this import is needed
 import * as sizeof from "object-sizeof";
 import idb from "src/api/idb";
 import { responsify } from "src/utils/util-responsify-svg";
@@ -277,8 +276,8 @@ export default {
     svg.call(this.zoom);
 
     //require ctrlKey in addition to mouse
-    this.zoom.filter(function() {
-      return d3.event.ctrlKey;
+    this.zoom.filter(function(event, d) {
+      return event.ctrlKey;
     });
 
     this.selections.graph = svg.append("g");
@@ -790,8 +789,8 @@ export default {
             (d.isUnused ? "unused " : "") +
             (d.strengthFactor < 1 ? "relaxed " : "")
         )
-        .on("contextmenu", function(d) {
-          d3.event.preventDefault();
+        .on("contextmenu", function(event, d) {
+          event.preventDefault();
           function composeLinkContextMenuItems(d) {
             let linkIsRelaxed = d.strengthFactor < 1;
             const baseLinkContextMenuItems = [
@@ -863,7 +862,11 @@ export default {
           let linkContextMenu = that
             .contextMenu()
             .items(...linkContextMenuItems);
-          linkContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
+          linkContextMenu(
+            d3.pointer(event, svg.node())[0],
+            d3.pointer(event, svg.node())[1],
+            d
+          );
         });
 
       // Nodes should always be redrawn to avoid lines above them
@@ -893,9 +896,9 @@ export default {
         )
         .on("mouseover", this.nodeMouseOver)
         .on("mouseout", this.nodeMouseOut)
-        .on("contextmenu", function(d) {
-          d3.event.preventDefault();
-          that.nodeClick(d, null, "contextMenuClick");
+        .on("contextmenu", function(event, d) {
+          event.preventDefault();
+          that.nodeClick(event, d, "contextMenuClick");
 
           function composeNodeContextMenuItems() {
             //add additional items to menu if applicable
@@ -1067,11 +1070,15 @@ export default {
           let nodeContextMenu = that
             .contextMenu()
             .items(...nodeContextMenuItems);
-          nodeContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
+          nodeContextMenu(
+            d3.pointer(event, svg.node())[0],
+            d3.pointer(event, svg.node())[1],
+            d
+          );
         })
         //.on("click", this.nodeClick);
-        .on("click", function(d, i) {
-          that.nodeClick(d, i, "regularClick");
+        .on("click", function(event, d) {
+          that.nodeClick(event, d, "regularClick");
         });
       this.updateNodeClassAndText(false);
 
@@ -1197,25 +1204,25 @@ export default {
       // restarts the simulation (important if simulation has already slowed down)
       simulation.alpha(1).restart();
     },
-    zoomed() {
-      const transform = d3.event.transform;
+    zoomed(event, d) {
+      const transform = event.transform;
       this.selections.graph.attr("transform", transform);
     },
-    nodeDragStarted(d) {
-      if (!d3.event.active) {
+    nodeDragStarted(event, d) {
+      if (!event.active) {
         dragStartTime = new Date();
         this.simulation.alphaTarget(0.3).restart();
       }
       d.fx = d.x;
       d.fy = d.y;
     },
-    nodeDragged(d) {
-      d.fx = d3.event.x;
-      d.fy = d3.event.y;
+    nodeDragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
       this.simulation.alphaTarget(0.3).restart();
     },
-    nodeDragEnded(d) {
-      if (!d3.event.active) {
+    nodeDragEnded(event, d) {
+      if (!event.active) {
         //if dragged for more than 300ms, then save the final position
         dragEndTime = new Date();
         if (dragEndTime - dragStartTime > 300)
@@ -1270,7 +1277,7 @@ export default {
       texts.classed("faded", false);
       texts.classed("highlight", false);
     },
-    nodeClick(d, i, clickType) {
+    nodeClick(event, d, clickType) {
       const circles = this.selections.graph.selectAll("circle");
 
       circles.classed("selected", false);
@@ -1329,23 +1336,7 @@ export default {
         width,
         margin = 0.1, // fraction of width
         items = [],
-        rescale = false,
-        style = {
-          rect: {
-            mouseout: {
-              fill: "rgb(244,244,244)",
-              stroke: "white",
-              "stroke-width": "1px"
-            },
-            mouseover: {
-              fill: "rgb(200,200,200)"
-            }
-          },
-          text: {
-            fill: "steelblue",
-            "font-size": "15"
-          }
-        };
+        rescale = false;
 
       function menu(x, y, hostD) {
         d3.select(".context-menu").remove();
@@ -1365,39 +1356,48 @@ export default {
           .on("mouseover", function() {
             d3.select(this)
               .select("rect")
-              .styles(style.rect.mouseover);
+              .style("fill", "rgb(200,200,200)");
           })
           .on("mouseout", function() {
             d3.select(this)
               .select("rect")
-              .styles(style.rect.mouseout);
+              .style("fill", "rgb(244,244,244)")
+              .style("stroke", "white")
+              .style("stroke-width", "1px");
           });
 
-        d3.selectAll(".menu-entry")
-          .append("rect")
+        let rects = d3.selectAll(".menu-entry").append("rect");
+        rects
           .attr("x", x)
-          .attr("y", function(d, i) {
+          .attr("y", function(event, d) {
+            const e = rects.nodes();
+            const i = e.indexOf(this);
             return y + i * height;
           })
           .attr("width", width)
           .attr("height", height)
-          .styles(style.rect.mouseout)
-          .on("click", function(d) {
+          .style("fill", "rgb(244,244,244)")
+          .style("stroke", "white")
+          .style("stroke-width", "1px")
+          .on("click", function(event, d) {
             d.handler.call(hostD);
           });
 
-        d3.selectAll(".menu-entry")
-          .append("text")
+        let texts = d3.selectAll(".menu-entry").append("text");
+        texts
           .text(function(d) {
             return d.label;
           })
           .attr("x", x)
-          .attr("y", function(d, i) {
+          .attr("y", function(event, d) {
+            const e = texts.nodes();
+            const i = e.indexOf(this);
             return y + i * height;
           })
           .attr("dy", height - margin / 2)
           .attr("dx", margin)
-          .styles(style.text);
+          .style("fill", "steelblue")
+          .style("font-size", "15");
 
         // Other interactions
         d3.select("body").on("click", function() {
@@ -1424,7 +1424,8 @@ export default {
             .text(function(d) {
               return d.label;
             })
-            .styles(style.text)
+            .style("fill", "steelblue")
+            .style("font-size", "15")
             .attr("x", -1000)
             .attr("y", -1000)
             .attr("class", "tmp");
