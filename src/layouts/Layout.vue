@@ -476,11 +476,14 @@ export default {
         newSummary.promptToReloadNumber &&
         newSummary.promptToReloadNumber > process.env.promptToReloadNumber
       ) {
-        const r = confirm(
-          "A new version of mipa is available. Reload now? Needed on all mipa tabs."
-        );
-        if (r === true) {
-          location.reload();
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker
+            .getRegistrations()
+            .then(function(registrations) {
+              for (let registration of registrations) {
+                registration.update();
+              }
+            });
         }
       }
     }

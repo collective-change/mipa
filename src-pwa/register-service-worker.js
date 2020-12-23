@@ -25,18 +25,33 @@ register(process.env.SERVICE_WORKER_FILE, {
 
   updatefound(/* registration */) {
     console.log("New content is downloading.");
+
+    if (!!window.chrome) {
+      // for chromium based browsers
+      const r = confirm(
+        "A new version of mipa is available. Reload now? Needed for all mipa tabs."
+      );
+      if (r === true) {
+        location.reload();
+      } else {
+        console.log("You pressed Cancel!");
+      }
+    }
   },
 
   updated(/* registration */) {
     console.log("New content is available; please refresh.");
 
-    const r = confirm(
-      "A new version of mipa is available. Reload now? Needed on all mipa tabs."
-    );
-    if (r === true) {
-      location.reload();
-    } else {
-      console.log("You pressed Cancel!");
+    if (!window.chrome) {
+      // for non chromium browsers
+      const r = confirm(
+        "A new version of mipa is available. Reload now? Needed for all mipa tabs."
+      );
+      if (r === true) {
+        location.reload();
+      } else {
+        console.log("You pressed Cancel!");
+      }
     }
   },
 
