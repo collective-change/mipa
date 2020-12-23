@@ -481,7 +481,17 @@ export default {
       ) {
         const r = confirm("A new version of mipa is available. Reload now?");
         if (r === true) {
-          location.reload(true);
+          //location.reload(true);
+          //window.location = window.location.href;
+          navigator.serviceWorker.getRegistration().then(function(reg) {
+            if (reg) {
+              reg.unregister().then(function() {
+                window.location.reload(true);
+              });
+            } else {
+              window.location.reload(true);
+            }
+          });
         }
       }
     }

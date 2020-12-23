@@ -33,12 +33,31 @@ register(process.env.SERVICE_WORKER_FILE, {
     if (process.env.DEV || true) {
       console.log("New content is downloading.");
     }
+    /*if (!!window.chrome) {
+      // for chromium based browsers
+      const r = confirm("A new version of mipa is available. Reload now?");
+      if (r === true) {
+        //location.reload(true);
+        window.location = window.location.href;
+      } else {
+        console.log("You pressed Cancel!");
+      }
+    }*/
   },
 
   updated(/* registration */) {
     if (process.env.DEV || true) {
       console.log("New content is available; please refresh.");
     }
+    /*if (!window.chrome) {
+      // for non chromium browsers
+      const r = confirm("A new version of mipa is available. Reload now?");
+      if (r === true) {
+        location.reload(true);
+      } else {
+        console.log("You pressed Cancel!");
+      }
+    }*/
   },
 
   offline() {
