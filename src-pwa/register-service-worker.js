@@ -1,4 +1,4 @@
-import { register } from 'register-service-worker'
+import { register } from "register-service-worker";
 
 // The ready(), registered(), cached(), updatefound() and updated()
 // events passes a ServiceWorkerRegistration instance in their arguments.
@@ -11,45 +11,57 @@ register(process.env.SERVICE_WORKER_FILE, {
 
   // registrationOptions: { scope: './' },
 
-  ready () {
-    if (process.env.DEV) {
-      console.log('App is being served from cache by a service worker.')
+  ready() {
+    console.log("App is being served from cache by a service worker.");
+  },
+
+  registered(/* registration */) {
+    console.log("Service worker has been registered.");
+  },
+
+  cached(/* registration */) {
+    console.log("Content has been cached for offline use.");
+  },
+
+  updatefound(/* registration */) {
+    console.log("New content is downloading.");
+
+    if (!!window.chrome) {
+      // for chromium based browsers
+      const r = confirm(
+        "A new version of mipa is available. Reload now? Needed for all mipa tabs."
+      );
+      if (r === true) {
+        location.reload();
+      } else {
+        console.log("You pressed Cancel!");
+      }
     }
   },
 
-  registered (/* registration */) {
-    if (process.env.DEV) {
-      console.log('Service worker has been registered.')
+  updated(/* registration */) {
+    console.log("New content is available; please refresh.");
+
+    if (!window.chrome) {
+      // for non chromium browsers
+      const r = confirm(
+        "A new version of mipa is available. Reload now? Needed for all mipa tabs."
+      );
+      if (r === true) {
+        location.reload();
+      } else {
+        console.log("You pressed Cancel!");
+      }
     }
   },
 
-  cached (/* registration */) {
-    if (process.env.DEV) {
-      console.log('Content has been cached for offline use.')
-    }
+  offline() {
+    console.log(
+      "No internet connection found. App is running in offline mode."
+    );
   },
 
-  updatefound (/* registration */) {
-    if (process.env.DEV) {
-      console.log('New content is downloading.')
-    }
-  },
-
-  updated (/* registration */) {
-    if (process.env.DEV) {
-      console.log('New content is available; please refresh.')
-    }
-  },
-
-  offline () {
-    if (process.env.DEV) {
-      console.log('No internet connection found. App is running in offline mode.')
-    }
-  },
-
-  error (err) {
-    if (process.env.DEV) {
-      console.error('Error during service worker registration:', err)
-    }
+  error(err) {
+    console.error("Error during service worker registration:", err);
   }
-})
+});
