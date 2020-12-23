@@ -11,12 +11,8 @@
     "source": "functions"
   },
   "hosting": {
-    "public": "dist\\spa",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "public": "dist\\pwa",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "**",
