@@ -4,10 +4,7 @@
       <q-toolbar>
         <div class="text-h6">{{ orgName }}</div>
         <q-btn flat no-caps no-wrap class="q-ml-xs" v-if="$q.screen.gt.xs" clickable to="/">
-          <q-toolbar-title
-            shrink
-            class="text-weight-bold text-primary"
-          >mipa {{envPromptToReloadNumber}}</q-toolbar-title>
+          <q-toolbar-title shrink class="text-weight-bold text-primary">mipa</q-toolbar-title>
         </q-btn>
         <q-btn-dropdown v-if="currentOrg" dense flat :label="$t(currentLinkGroup)">
           <q-list>
