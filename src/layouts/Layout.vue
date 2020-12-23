@@ -469,29 +469,21 @@ export default {
     appSummary: function(newSummary, oldSummary) {
       //"promptToReloadNumber" is read from .env file; if it's smaller than the one from appSummary
       //in Firestore, then the running code is old and the page should be refreshed.
-      console.log(
+      /*console.log(
         "promptToReloadNumber from app: " +
           process.env.promptToReloadNumber +
           "; from db: " +
           newSummary.promptToReloadNumber
-      );
+      );*/
       if (
         newSummary.promptToReloadNumber &&
         newSummary.promptToReloadNumber > process.env.promptToReloadNumber
       ) {
-        const r = confirm("A new version of mipa is available. Reload now?");
+        const r = confirm(
+          "A new version of mipa is available. Reload now? Needed on all mipa tabs."
+        );
         if (r === true) {
-          //location.reload(true);
-          //window.location = window.location.href;
-          navigator.serviceWorker.getRegistration().then(function(reg) {
-            if (reg) {
-              reg.unregister().then(function() {
-                window.location.reload(true);
-              });
-            } else {
-              window.location.reload(true);
-            }
-          });
+          location.reload();
         }
       }
     }
