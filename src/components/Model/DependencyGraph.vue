@@ -1232,7 +1232,7 @@ export default {
       d.fx = null;
       d.fy = null;
     },
-    nodeMouseOver(d) {
+    nodeMouseOver(event, d) {
       const graph = this.selections.graph;
       const circles = graph.selectAll("circle");
       const paths = graph.selectAll("path");
@@ -1264,7 +1264,7 @@ export default {
       texts.classed("faded", true);
       texts.filter(df => related.indexOf(df) > -1).classed("highlight", true);
     },
-    nodeMouseOut(d) {
+    nodeMouseOut(event, d) {
       const graph = this.selections.graph;
       const circles = graph.selectAll("circle");
       const paths = graph.selectAll("path");
