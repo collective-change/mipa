@@ -1,0 +1,5 @@
+{
+  "_comment": "This is a vetur configuration file.",
+  "include": ["./src/**/*"],
+  "allowJs": true
+}
