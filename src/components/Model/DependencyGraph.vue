@@ -272,8 +272,13 @@ export default {
     this.zoom = d3
       .zoom()
       .scaleExtent([1 / 4, 2])
+      .wheelDelta(myDelta)
       .on("zoom", this.zoomed);
     svg.call(this.zoom);
+
+    function myDelta(event) {
+      return (-event.deltaY * (event.deltaMode ? 120 : 1)) / 1500;
+    }
 
     //require ctrlKey in addition to mouse
     this.zoom.filter(function(event, d) {
