@@ -1,31 +1,21 @@
 <template>
   <div>
     <div v-if="selectedNode">
-      <div class="text-h6">{{ selectedNode.name }}</div>
-
       <q-form @submit.prevent="submitForm">
         <q-input
+          class="text-h6"
           v-model="nodeToSubmit.name"
-          label="Name"
+          placeholder="Name"
           :rules="[val => !!val || 'Field is required']"
           ref="nodeName"
         />
-        <q-input
-          v-model="nodeToSubmit.unit"
-          label="Unit"
-          :rules="[
-            val =>
-              typeof val == 'undefined' ||
-              val == '' ||
-              (val != '' && isNaN(parseInt(val.substring(0, 1)))) ||
-              'Cannot start with a number'
-          ]"
-        />
-        <q-input
-          v-model="nodeToSubmit.symbol"
-          label="Symbol"
-          debounce="500"
-          :rules="[
+        <div class="row justify-between">
+          <div class="col-8">
+            <q-input
+              v-model="nodeToSubmit.symbol"
+              label="Symbol"
+              debounce="500"
+              :rules="[
             val => !!val || 'Field is required',
             val =>
               isNaN(parseInt(val.substring(0, 1))) ||
@@ -34,7 +24,22 @@
               this.isAlphanumeric(val) ||
               'Only alphanumeric characters and underscores supported'
           ]"
-        />
+            />
+          </div>
+          <div class="col-3">
+            <q-input
+              v-model="nodeToSubmit.unit"
+              label="Unit"
+              :rules="[
+            val =>
+              typeof val == 'undefined' ||
+              val == '' ||
+              (val != '' && isNaN(parseInt(val.substring(0, 1)))) ||
+              'Cannot start with a number'
+          ]"
+            />
+          </div>
+        </div>
         <q-markup-table flat bordered v-if="influencerNodesInfo.length">
           <thead>
             <tr>
