@@ -1163,7 +1163,7 @@ function loadLatestValues(sim) {
       try {
         sim.scope["$" + node.id + "_unit"] = node.unit;
         if ("latestValue" in node && node.latestValue != "") {
-          if (node.unit != "") {
+          if (node.unit) {
             sim.scope["$" + node.id] = math.unit(
               Number(node.latestValue),
               node.unit
