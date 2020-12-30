@@ -70,6 +70,8 @@
           hint="Only used if a delay function with 'best_guess' as initial value references this node."
           debounce="300"
         />
+        <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
+        <modal-buttons />
         <div v-if="nodeChart.chartData.length > 0">
           <gchart
             v-if="nodeChart.chartData.length > 0"
@@ -105,9 +107,6 @@
             />
           </div>
         </div>
-
-        <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
-        <modal-buttons />
       </q-form>
 
       <p>Node ID: {{ nodeToSubmit.id }}</p>
