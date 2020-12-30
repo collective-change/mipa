@@ -1163,10 +1163,14 @@ function loadLatestValues(sim) {
       try {
         sim.scope["$" + node.id + "_unit"] = node.unit;
         if ("latestValue" in node && node.latestValue != "") {
-          sim.scope["$" + node.id] = math.unit(
-            Number(node.latestValue),
-            node.unit
-          );
+          if (node.unit) {
+            sim.scope["$" + node.id] = math.unit(
+              Number(node.latestValue),
+              node.unit
+            );
+          } else {
+            sim.scope["$" + node.id] = Number(node.latestValue);
+          }
         }
       } catch (err) {
         self.postMessage({
@@ -1556,7 +1560,10 @@ function interpolate(
     //console.log("No history; using default value.");
     //if (typeof initialValue == "number") return initialValue;
     if (valueIsANumber(initialValue))
-      return math.unit(Number(initialValue), scope["$" + nodeId + "_unit"]);
+      return getValueWithUnitIfAvailable(
+        Number(initialValue),
+        scope["$" + nodeId + "_unit"]
+      );
     else if (initialValue == "best_guess") {
       //if latestValue is available then return latest value
       if (latestValue != "") return latestValue;
@@ -1585,14 +1592,20 @@ function interpolate(
   else if (timeSPoints[0] > targetTimeS) {
     //console.log("History starts after target time; using default value if available, else first value in history.");
     if (valueIsANumber(initialValue))
-      return math.unit(Number(initialValue), scope["$" + nodeId + "_unit"]);
+      return getValueWithUnitIfAvailable(
+        Number(initialValue),
+        scope["$" + nodeId + "_unit"]
+      );
     else if (initialValue == "best_guess") return values[0];
   }
   //else if history ends before target time, then return last value in history
   else if (timeSPoints[timeSPoints.length - 1] < targetTimeS) {
     //console.log("History ends before target time; using initialValue or best_guess.");
     if (valueIsANumber(initialValue))
-      return math.unit(Number(initialValue), scope["$" + nodeId + "_unit"]);
+      return getValueWithUnitIfAvailable(
+        Number(initialValue),
+        scope["$" + nodeId + "_unit"]
+      );
     else if (initialValue == "best_guess") return values[values.length - 1];
   }
   //else if history is only one point (should be at targetTimeS) then return its value
@@ -1605,6 +1618,11 @@ function interpolate(
     //console.log("Going to interpolate.");
     return interpolateFromLookup(timeSPoints, values, targetTimeS);
   }
+}
+
+function getValueWithUnitIfAvailable(value, unit) {
+  if (unit) return math.unit(Number(value), unit);
+  else return value;
 }
 
 function interpolateFromLookup(timeSPoints, values, targetTimeS) {
