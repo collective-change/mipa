@@ -1162,7 +1162,7 @@ function loadLatestValues(sim) {
     if (!sim.errorOccurred)
       try {
         sim.scope["$" + node.id + "_unit"] = node.unit;
-        if ("latestValue" in node && node.latestValue != "") {
+        if ("latestValue" in node && node.latestValue !== "") {
           if (node.unit) {
             sim.scope["$" + node.id] = math.unit(
               Number(node.latestValue),
@@ -1566,7 +1566,7 @@ function interpolate(
       );
     else if (initialValue == "best_guess") {
       //if latestValue is available then return latest value
-      if (latestValue != "") return latestValue;
+      if (latestValue !== "") return latestValue;
       else {
         console.error(
           `No history, no initial value, and no latest value available for best guess for node "${replaceNodeIdsWithName(
@@ -1710,7 +1710,7 @@ function putDataInIdb(payload) {
 }
 
 function valueIsANumber(val) {
-  //console.log(val, typeof val != "undefined", val != "", !isNaN(Number(val)));
+  //console.log(val, typeof val != "undefined", val !== "", !isNaN(Number(val)));
   return typeof val != "undefined" && val !== "" && !isNaN(Number(val));
 }
 
