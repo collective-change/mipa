@@ -423,15 +423,15 @@ function simulateCostsAndImpacts(
       onlyNodeIds.push(node.id);
     });
   } else {
+    impactsToSimulate.forEach(function(impact) {
+      onlyNodeIds.push(impact.nodeId);
+    });
     onlyNodeIds.push(sim.roleNodes.orgBenefit);
     onlyNodeIds.push(sim.roleNodes.orgCost);
     onlyNodeIds.push(sim.roleNodes.worldBenefit);
     onlyNodeIds.push(sim.roleNodes.worldCost);
-    onlyNodeIds.push(sim.roleNodes.effort);
-    onlyNodeIds.push(sim.roleNodes.spending);
-    impactsToSimulate.forEach(function(impact) {
-      onlyNodeIds.push(impact.nodeId);
-    });
+    //onlyNodeIds.push(sim.roleNodes.effort);
+    //onlyNodeIds.push(sim.roleNodes.spending);
   }
 
   //extract relevant baselineNodesValues
@@ -699,6 +699,14 @@ function calcActionResultsFromTimeSeries(
 
   if (isNaN(totalRoi)) totalRoi = null;
   if (isNaN(actionLeverage)) actionLeverage = null;
+
+  /*console.table({
+    marginalTotalBenefitNpv,
+    marginalTotalCostNpv,
+    marginalNetTotalBenefitNpv,
+    marginalTotalCostExcludingAction,
+    totalRoi
+  });*/
 
   let roiResults = {
     marginalTotalBenefitNpv,

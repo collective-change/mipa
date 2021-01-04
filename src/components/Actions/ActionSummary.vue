@@ -215,15 +215,18 @@
             >
               <template v-slot:header>Other effective impacts</template>
             </simpleCostsAndImpacts>
-            <div v-if="!embedded">
-              <div v-for="chart in chartsArr" :key="chart.nodeId" class="q-pa-md">
-                <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
-                <div class="row justify-center q-gutter-x-md">
-                  <q-btn-toggle
-                    v-model="chart.chartOptions.series"
-                    action-color="primary"
-                    size="xs"
-                    :options="[
+          </div>
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">right column</div>
+        </div>
+        <div v-if="!embedded" class="row q-gutter-y-lg">
+          <div class="column q-gutter-md" v-for="chart in chartsArr" :key="chart.nodeId">
+            <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
+            <div class="row justify-center q-gutter-x-md">
+              <q-btn-toggle
+                v-model="chart.chartOptions.series"
+                action-color="primary"
+                size="xs"
+                :options="[
                     {
                       label: 'difference',
                       value: showDifferenceConfig
@@ -233,22 +236,19 @@
                       value: showValuesConfig
                     }
                   ]"
-                  />
+              />
 
-                  <q-btn-toggle
-                    v-model="chart.chartOptions.vAxis.scaleType"
-                    action-color="primary"
-                    size="xs"
-                    :options="[
+              <q-btn-toggle
+                v-model="chart.chartOptions.vAxis.scaleType"
+                action-color="primary"
+                size="xs"
+                :options="[
                     { label: 'linear', value: 'linear' },
                     { label: 'log', value: 'mirrorLog' }
                   ]"
-                  />
-                </div>
-              </div>
+              />
             </div>
           </div>
-          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">right column</div>
         </div>
       </q-form>
     </div>
@@ -469,9 +469,15 @@ export default {
             chartData: [],
             chartOptions: {
               title: this.getNodeName(nodeId),
-              vAxis: { title: this.getNodeUnit(nodeId), scaleType: "linear" },
+              vAxis: {
+                title: this.getNodeUnit(nodeId),
+                scaleType: "linear",
+                format: "short"
+              },
               legend: { position: "bottom" },
-              series: this.showDifferenceConfig
+              series: this.showDifferenceConfig,
+              width: 360,
+              height: 240
               //explorer: {}
             }
           });
@@ -507,17 +513,17 @@ export default {
         return;
       console.log("updateDefaultChartsArr");
       let defaultNodesToChart = [];
+      //add impacted nodes
+      this.uiAction.impacts.forEach(function(impact) {
+        defaultNodesToChart.push(impact.nodeId);
+      });
       //add combinedBenefit and combinedCost nodes
       defaultNodesToChart.push(this.currentModel.roleNodes.orgBenefit);
       defaultNodesToChart.push(this.currentModel.roleNodes.orgCost);
       defaultNodesToChart.push(this.currentModel.roleNodes.worldBenefit);
       defaultNodesToChart.push(this.currentModel.roleNodes.worldCost);
-      defaultNodesToChart.push(this.currentModel.roleNodes.effort);
-      defaultNodesToChart.push(this.currentModel.roleNodes.spending);
-      //add impacted nodes
-      this.uiAction.impacts.forEach(function(impact) {
-        defaultNodesToChart.push(impact.nodeId);
-      });
+      //defaultNodesToChart.push(this.currentModel.roleNodes.effort);
+      //defaultNodesToChart.push(this.currentModel.roleNodes.spending);
 
       //load data into each node
       defaultNodesToChart.forEach(nodeId =>
