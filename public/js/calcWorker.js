@@ -697,12 +697,20 @@ function calcActionResultsFromTimeSeries(
   });
 
   const roiResults = {
+    outstandingDirectCosts,
+    rawMarginalOrgBenefitNpv,
+    rawMarginalOrgCostNpv,
+    rawMarginalWorldBenefitNpv,
+    rawMarginalWorldCostNpv,
+    marginalOrgBenefitNpv,
+    marginalOrgCostNpv,
+    marginalWorldBenefitNpv,
+    marginalWorldCostNpv,
     marginalTotalBenefitNpv,
     marginalNetTotalBenefitNpv,
     marginalTotalCostNpv,
     totalRoi,
     actionLeverage
-    //actionRoi //TODO: delete actionRoi
   };
   //console.log({ roiResults });
   return roiResults;

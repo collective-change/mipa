@@ -2,7 +2,7 @@
   <div>
     <div v-if="selectedAction">
       <q-form @submit.prevent="submitForm">
-        <div class="row">
+        <div class="row items-center">
           <div v-bind:class="{ 'col-12 col-md-4': !embedded, 'col-12': embedded }">
             <q-input
               class="text-h6"
@@ -32,48 +32,17 @@
             </q-input>
           </div>
 
-          <div v-bind:class="{ 'col-12 col-md-5': !embedded, 'col-12': embedded }">
+          <div v-bind:class="{ 'col-12 col-md-2': !embedded, 'col-12': embedded }">
             <div class="q-px-xs q-gutter-xs">
               <q-chip
+                outline
                 color="primary"
-                text-color="white"
               >Leverage {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip>
-              <q-chip outline color="primary">
-                Own direct cost
-                {{ formatNumber(uiAction.sunkenDirectCost, 3) }} /
-                {{ formatNumber(uiAction.ownDirectCost, 3) }}
-                {{ currentOrg ? currentOrg.currency : "" }}
-              </q-chip>
-              <q-chip outline color="primary" v-if="uiAction.effectiveChainedCostsAndImpacts">
-                Effective outstanding direct costs
-                {{
-                formatNumber(
-                uiAction.effectiveChainedCostsAndImpacts
-                .outstandingDirectCosts,
-                3
-                )
-                }}
-                {{ currentOrg ? currentOrg.currency : "" }}
-              </q-chip>
-              <br v-if="embedded" />
-              <q-chip
-                color="primary"
-                text-color="white"
-              >Total ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip>
-              <q-chip outline color="primary">
-                NPV Net Benefit
-                {{ formatNumber(uiAction.marginalNetTotalBenefitNpv, 3) }}
-                {{ currentOrg ? currentOrg.currency : "" }}
-              </q-chip>
-              <q-chip outline color="primary">
-                NPV Cost
-                {{ formatNumber(uiAction.marginalTotalCostNpv, 3) }}
-                {{ currentOrg ? currentOrg.currency : "" }}
-              </q-chip>
+              <q-chip outline color="primary">Total ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip>
             </div>
           </div>
 
-          <div v-bind:class="{ 'col-12 col-md-3': !embedded, 'col-12': embedded }">
+          <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
             <div class="row q-pa-sm q-gutter-sm">
               <calculator-ui
                 calculationType="uiAction"
@@ -105,7 +74,7 @@
           </div>
         </div>
 
-        <div class="row">
+        <div class="row q-col-gutter-md">
           <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
             <q-input v-model="notes" :label="$t('Notes')" filled autogrow />
 
@@ -216,7 +185,65 @@
               <template v-slot:header>Other effective impacts</template>
             </simpleCostsAndImpacts>
           </div>
-          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">right column</div>
+          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
+            <q-markup-table flat bordered>
+              <thead>
+                <tr>
+                  <th class="text-left">Aggregated result</th>
+                  <th class="text-left">NPV</th>
+                </tr>
+              </thead>
+              <tr>
+                <td>Outstanding direct costs</td>
+                <td>{{ formatNumber(uiAction.outstandingDirectCosts, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
+              </tr>
+              <tr>
+                <td>Raw benefit to organization</td>
+                <td>{{ formatNumber(uiAction.rawMarginalOrgBenefitNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
+              </tr>
+              <tr>
+                <td>Raw cost to organization</td>
+                <td>{{ formatNumber(uiAction.rawMarginalOrgCostNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
+              </tr>
+              <tr>
+                <td>Adjusted benefit to organization</td>
+                <td>{{ formatNumber(uiAction.marginalOrgBenefitNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
+              </tr>
+              <tr>
+                <td>Adjusted cost to organization</td>
+                <td>{{ formatNumber(uiAction.marginalOrgCostNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
+              </tr>
+              <tr>
+                <td>Raw benefit to world</td>
+                <td>{{ formatNumber(uiAction.rawMarginalWorldBenefitNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
+              </tr>
+              <tr>
+                <td>Raw cost to world</td>
+                <td>{{ formatNumber(uiAction.rawMarginalWorldCostNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
+              </tr>
+              <tr>
+                <td>Adjusted benefit to world</td>
+                <td>{{ formatNumber(uiAction.marginalWorldBenefitNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
+              </tr>
+              <tr>
+                <td>Adjusted cost to world</td>
+                <td>{{ formatNumber(uiAction.marginalWorldCostNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
+              </tr>
+
+              <tr>
+                <td>Total benefit</td>
+                <td>{{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
+              </tr>
+              <tr>
+                <td>Net total benefit</td>
+                <td>{{ formatNumber(uiAction.marginalNetTotalBenefitNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
+              </tr>
+              <tr>
+                <td>Total cost</td>
+                <td>{{ formatNumber(uiAction.marginalTotalCostNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
+              </tr>
+            </q-markup-table>
+          </div>
         </div>
         <div v-if="!embedded" class="row q-gutter-y-lg">
           <div class="column q-gutter-md" v-for="chart in chartsArr" :key="chart.nodeId">
