@@ -189,59 +189,61 @@
             <q-markup-table flat bordered>
               <thead>
                 <tr>
-                  <th class="text-left">Aggregated result</th>
-                  <th class="text-left">NPV</th>
+                  <th class="text-left">Aggregated results</th>
+                  <th class="text-right">NPV ({{ currentOrg ? currentOrg.currency : "" }})</th>
                 </tr>
               </thead>
-              <tr>
-                <td>Outstanding direct costs</td>
-                <td>{{ formatNumber(uiAction.outstandingDirectCosts, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
-              </tr>
-              <tr>
-                <td>Raw benefit to organization</td>
-                <td>{{ formatNumber(uiAction.rawMarginalOrgBenefitNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
-              </tr>
-              <tr>
-                <td>Raw cost to organization</td>
-                <td>{{ formatNumber(uiAction.rawMarginalOrgCostNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
-              </tr>
-              <tr>
-                <td>Adjusted benefit to organization</td>
-                <td>{{ formatNumber(uiAction.marginalOrgBenefitNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
-              </tr>
-              <tr>
-                <td>Adjusted cost to organization</td>
-                <td>{{ formatNumber(uiAction.marginalOrgCostNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
-              </tr>
-              <tr>
-                <td>Raw benefit to world</td>
-                <td>{{ formatNumber(uiAction.rawMarginalWorldBenefitNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
-              </tr>
-              <tr>
-                <td>Raw cost to world</td>
-                <td>{{ formatNumber(uiAction.rawMarginalWorldCostNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
-              </tr>
-              <tr>
-                <td>Adjusted benefit to world</td>
-                <td>{{ formatNumber(uiAction.marginalWorldBenefitNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
-              </tr>
-              <tr>
-                <td>Adjusted cost to world</td>
-                <td>{{ formatNumber(uiAction.marginalWorldCostNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td>Outstanding direct costs</td>
+                  <td class="text-right">{{ formatNumber(uiAction.outstandingDirectCosts, 3) }}</td>
+                </tr>
+                <tr>
+                  <td>Raw benefit to organization</td>
+                  <td class="text-right">{{ formatNumber(uiAction.rawMarginalOrgBenefitNpv, 3) }}</td>
+                </tr>
+                <tr>
+                  <td>Raw cost to organization</td>
+                  <td class="text-right">{{ formatNumber(uiAction.rawMarginalOrgCostNpv, 3) }}</td>
+                </tr>
+                <tr>
+                  <td>Adjusted benefit to organization</td>
+                  <td class="text-right">{{ formatNumber(uiAction.marginalOrgBenefitNpv, 3) }}</td>
+                </tr>
+                <tr>
+                  <td>Adjusted cost to organization</td>
+                  <td class="text-right">{{ formatNumber(uiAction.marginalOrgCostNpv, 3) }}</td>
+                </tr>
+                <tr>
+                  <td>Raw benefit to world</td>
+                  <td class="text-right">{{ formatNumber(uiAction.rawMarginalWorldBenefitNpv, 3) }}</td>
+                </tr>
+                <tr>
+                  <td>Raw cost to world</td>
+                  <td class="text-right">{{ formatNumber(uiAction.rawMarginalWorldCostNpv, 3) }}</td>
+                </tr>
+                <tr>
+                  <td>Adjusted benefit to world</td>
+                  <td class="text-right">{{ formatNumber(uiAction.marginalWorldBenefitNpv, 3) }}</td>
+                </tr>
+                <tr>
+                  <td>Adjusted cost to world</td>
+                  <td class="text-right">{{ formatNumber(uiAction.marginalWorldCostNpv, 3) }}</td>
+                </tr>
 
-              <tr>
-                <td>Total benefit</td>
-                <td>{{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
-              </tr>
-              <tr>
-                <td>Net total benefit</td>
-                <td>{{ formatNumber(uiAction.marginalNetTotalBenefitNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
-              </tr>
-              <tr>
-                <td>Total cost</td>
-                <td>{{ formatNumber(uiAction.marginalTotalCostNpv, 3) }} {{ currentOrg ? currentOrg.currency : "" }}</td>
-              </tr>
+                <tr>
+                  <td>Total benefit</td>
+                  <td class="text-right">{{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }}</td>
+                </tr>
+                <tr>
+                  <td>Total cost</td>
+                  <td class="text-right">{{ formatNumber(uiAction.marginalTotalCostNpv, 3) }}</td>
+                </tr>
+                <tr>
+                  <td>Net total benefit</td>
+                  <td class="text-right">{{ formatNumber(uiAction.marginalNetTotalBenefitNpv, 3) }}</td>
+                </tr>
+              </tbody>
             </q-markup-table>
           </div>
         </div>
