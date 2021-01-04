@@ -91,7 +91,7 @@
               size="xs"
               :options="[
                 { label: 'linear', value: 'linear' },
-                { label: 'log', value: 'log' }
+                { label: 'log', value: 'mirrorLog' }
               ]"
             />
           </div>
@@ -107,7 +107,7 @@
               size="xs"
               :options="[
                 { label: 'linear', value: 'linear' },
-                { label: 'log', value: 'log' }
+                { label: 'log', value: 'mirrorLog' }
               ]"
             />
           </div>
