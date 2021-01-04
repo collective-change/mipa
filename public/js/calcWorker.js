@@ -595,120 +595,112 @@ function calcActionResultsFromTimeSeries(
   timeSPoints,
   sim
 ) {
-  let roleNodes = sim.roleNodes;
-  let yearlyDiscountRate = sim.yearlyDiscountRate;
+  const roleNodes = sim.roleNodes;
+  const yearlyDiscountRate = sim.yearlyDiscountRate;
 
   //prepare inputs for calculating NPVs
-  let ifDoneOrgBenefitSeries =
+  const ifDoneOrgBenefitSeries =
     ifDoneTimeSeriesNodesValues[roleNodes.orgBenefit];
-  let ifNotDoneOrgBenefitSeries =
+  const ifNotDoneOrgBenefitSeries =
     ifNotDoneTimeSeriesNodesValues[roleNodes.orgBenefit];
-  let ifDoneOrgCostSeries = ifDoneTimeSeriesNodesValues[roleNodes.orgCost];
-  let ifNotDoneOrgCostSeries =
+  const ifDoneOrgCostSeries = ifDoneTimeSeriesNodesValues[roleNodes.orgCost];
+  const ifNotDoneOrgCostSeries =
     ifNotDoneTimeSeriesNodesValues[roleNodes.orgCost];
 
-  let ifDoneWorldBenefitSeries =
+  const ifDoneWorldBenefitSeries =
     ifDoneTimeSeriesNodesValues[roleNodes.worldBenefit];
-  let ifNotDoneWorldBenefitSeries =
+  const ifNotDoneWorldBenefitSeries =
     ifNotDoneTimeSeriesNodesValues[roleNodes.worldBenefit];
-  let ifDoneWorldCostSeries = ifDoneTimeSeriesNodesValues[roleNodes.worldCost];
-  let ifNotDoneWorldCostSeries =
+  const ifDoneWorldCostSeries =
+    ifDoneTimeSeriesNodesValues[roleNodes.worldCost];
+  const ifNotDoneWorldCostSeries =
     ifNotDoneTimeSeriesNodesValues[roleNodes.worldCost];
 
-  /*let ifDoneTotalBenefitSeries =
-    ifDoneTimeSeriesNodesValues[roleNodes.combinedBenefit];
-  let ifNotDoneTotalBenefitSeries =
-    ifNotDoneTimeSeriesNodesValues[roleNodes.combinedBenefit];
-  let ifDoneTotalCostSeries =
-    ifDoneTimeSeriesNodesValues[roleNodes.combinedCost];
-  let ifNotDoneTotalCostSeries =
-    ifNotDoneTimeSeriesNodesValues[roleNodes.combinedCost];*/
-
-  /* console.log(
-    "org",
-    ifDoneOrgBenefitSeries.length,
-    ifNotDoneOrgBenefitSeries.length,
-    ifDoneOrgCostSeries.length,
-    ifNotDoneOrgCostSeries.length
-  );*/
-
-  //calculate NPVs
-  let marginalOrgBenefitNpv = getMarginalNpv(
+  //calculate org benefit and cost net present values
+  const candidateMarginalOrgBenefitNpv = getMarginalNpv(
     ifDoneOrgBenefitSeries,
     ifNotDoneOrgBenefitSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  let marginalOrgCostNpv = getMarginalNpv(
+  const candidateMarginalOrgCostNpv = getMarginalNpv(
     ifDoneOrgCostSeries,
     ifNotDoneOrgCostSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  let marginalWorldBenefitNpv = getMarginalNpv(
+  //treat negative benefit as cost, negative cost as benefit
+  const marginalOrgBenefitNpv =
+    (candidateMarginalOrgBenefitNpv > 0 ? candidateMarginalOrgBenefitNpv : 0) +
+    (candidateMarginalOrgCostNpv < 0 ? -candidateMarginalOrgCostNpv : 0);
+
+  const marginalOrgCostNpv =
+    (candidateMarginalOrgCostNpv > 0 ? candidateMarginalOrgCostNpv : 0) +
+    (candidateMarginalOrgBenefitNpv < 0 ? -candidateMarginalOrgBenefitNpv : 0);
+
+  //calculate world benefit and cost net present values
+  const candidateMarginalWorldBenefitNpv = getMarginalNpv(
     ifDoneWorldBenefitSeries,
     ifNotDoneWorldBenefitSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  let marginalWorldCostNpv = getMarginalNpv(
+  const candidateMarginalWorldCostNpv = getMarginalNpv(
     ifDoneWorldCostSeries,
     ifNotDoneWorldCostSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  //TODO: use benevolence ratio (sim.)
-  let worldWeightingFactor = sim.params.worldWeightingFactor;
-  let orgWeightingFactor = sim.params.orgWeightingFactor;
-  let marginalTotalBenefitNpv =
+  //treat negative benefit as cost, negative cost as benefit
+  const marginalWorldBenefitNpv =
+    (candidateMarginalWorldBenefitNpv > 0
+      ? candidateMarginalWorldBenefitNpv
+      : 0) +
+    (candidateMarginalWorldCostNpv < 0 ? -candidateMarginalWorldCostNpv : 0);
+
+  const marginalWorldCostNpv =
+    (candidateMarginalWorldCostNpv > 0 ? candidateMarginalWorldCostNpv : 0) +
+    (candidateMarginalWorldBenefitNpv < 0
+      ? -candidateMarginalWorldBenefitNpv
+      : 0);
+
+  const worldWeightingFactor = sim.params.worldWeightingFactor;
+  const orgWeightingFactor = sim.params.orgWeightingFactor;
+  const marginalTotalBenefitNpv =
     marginalOrgBenefitNpv * orgWeightingFactor +
     marginalWorldBenefitNpv * worldWeightingFactor;
-  let marginalTotalCostNpv =
+  const marginalTotalCostNpv =
     marginalOrgCostNpv * orgWeightingFactor +
     marginalWorldCostNpv * worldWeightingFactor;
 
-  /*let marginalTotalBenefitNpv = getMarginalNpv(
-    ifDoneTotalBenefitSeries,
-    ifNotDoneTotalBenefitSeries,
-    timeSPoints,
-    yearlyDiscountRate
-  );
-
-  let marginalTotalCostNpv = getMarginalNpv(
-    ifDoneTotalCostSeries,
-    ifNotDoneTotalCostSeries,
-    timeSPoints,
-    yearlyDiscountRate
-  );*/
-
   //calculate actionLeverage and prepare results
-  let marginalNetTotalBenefitNpv =
+  const marginalNetTotalBenefitNpv =
     marginalTotalBenefitNpv - marginalTotalCostNpv;
-  let marginalTotalCostExcludingAction =
+  const marginalTotalCostExcludingAction =
     marginalTotalCostNpv - outstandingDirectCosts;
-  let totalRoi =
+  const totalRoi =
     marginalNetTotalBenefitNpv /
     (outstandingDirectCosts + math.max(0, marginalTotalCostExcludingAction));
-  let actionLeverage =
+  const actionLeverage =
     ((marginalNetTotalBenefitNpv * totalRoi) / outstandingDirectCosts) *
     Math.sign(marginalNetTotalBenefitNpv);
 
   if (isNaN(totalRoi)) totalRoi = null;
   if (isNaN(actionLeverage)) actionLeverage = null;
 
-  /*console.table({
+  console.table({
     marginalTotalBenefitNpv,
     marginalTotalCostNpv,
     marginalNetTotalBenefitNpv,
     marginalTotalCostExcludingAction,
     totalRoi
-  });*/
+  });
 
-  let roiResults = {
+  const roiResults = {
     marginalTotalBenefitNpv,
     marginalNetTotalBenefitNpv,
     marginalTotalCostNpv,
