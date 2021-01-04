@@ -617,14 +617,14 @@ function calcActionResultsFromTimeSeries(
     ifNotDoneTimeSeriesNodesValues[roleNodes.worldCost];
 
   //calculate org benefit and cost net present values
-  const candidateMarginalOrgBenefitNpv = getMarginalNpv(
+  const rawMarginalOrgBenefitNpv = getMarginalNpv(
     ifDoneOrgBenefitSeries,
     ifNotDoneOrgBenefitSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  const candidateMarginalOrgCostNpv = getMarginalNpv(
+  const rawMarginalOrgCostNpv = getMarginalNpv(
     ifDoneOrgCostSeries,
     ifNotDoneOrgCostSeries,
     timeSPoints,
@@ -633,22 +633,22 @@ function calcActionResultsFromTimeSeries(
 
   //treat negative benefit as cost, negative cost as benefit
   const marginalOrgBenefitNpv =
-    (candidateMarginalOrgBenefitNpv > 0 ? candidateMarginalOrgBenefitNpv : 0) +
-    (candidateMarginalOrgCostNpv < 0 ? -candidateMarginalOrgCostNpv : 0);
+    (rawMarginalOrgBenefitNpv > 0 ? rawMarginalOrgBenefitNpv : 0) +
+    (rawMarginalOrgCostNpv < 0 ? -rawMarginalOrgCostNpv : 0);
 
   const marginalOrgCostNpv =
-    (candidateMarginalOrgCostNpv > 0 ? candidateMarginalOrgCostNpv : 0) +
-    (candidateMarginalOrgBenefitNpv < 0 ? -candidateMarginalOrgBenefitNpv : 0);
+    (rawMarginalOrgCostNpv > 0 ? rawMarginalOrgCostNpv : 0) +
+    (rawMarginalOrgBenefitNpv < 0 ? -rawMarginalOrgBenefitNpv : 0);
 
   //calculate world benefit and cost net present values
-  const candidateMarginalWorldBenefitNpv = getMarginalNpv(
+  const rawMarginalWorldBenefitNpv = getMarginalNpv(
     ifDoneWorldBenefitSeries,
     ifNotDoneWorldBenefitSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  const candidateMarginalWorldCostNpv = getMarginalNpv(
+  const rawMarginalWorldCostNpv = getMarginalNpv(
     ifDoneWorldCostSeries,
     ifNotDoneWorldCostSeries,
     timeSPoints,
@@ -657,16 +657,12 @@ function calcActionResultsFromTimeSeries(
 
   //treat negative benefit as cost, negative cost as benefit
   const marginalWorldBenefitNpv =
-    (candidateMarginalWorldBenefitNpv > 0
-      ? candidateMarginalWorldBenefitNpv
-      : 0) +
-    (candidateMarginalWorldCostNpv < 0 ? -candidateMarginalWorldCostNpv : 0);
+    (rawMarginalWorldBenefitNpv > 0 ? rawMarginalWorldBenefitNpv : 0) +
+    (rawMarginalWorldCostNpv < 0 ? -rawMarginalWorldCostNpv : 0);
 
   const marginalWorldCostNpv =
-    (candidateMarginalWorldCostNpv > 0 ? candidateMarginalWorldCostNpv : 0) +
-    (candidateMarginalWorldBenefitNpv < 0
-      ? -candidateMarginalWorldBenefitNpv
-      : 0);
+    (rawMarginalWorldCostNpv > 0 ? rawMarginalWorldCostNpv : 0) +
+    (rawMarginalWorldBenefitNpv < 0 ? -rawMarginalWorldBenefitNpv : 0);
 
   const worldWeightingFactor = sim.params.worldWeightingFactor;
   const orgWeightingFactor = sim.params.orgWeightingFactor;
