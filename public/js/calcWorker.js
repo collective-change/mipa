@@ -688,14 +688,6 @@ function calcActionResultsFromTimeSeries(
   if (isNaN(totalRoi)) totalRoi = null;
   if (isNaN(actionLeverage)) actionLeverage = null;
 
-  console.table({
-    marginalTotalBenefitNpv,
-    marginalTotalCostNpv,
-    marginalNetTotalBenefitNpv,
-    marginalTotalCostExcludingAction,
-    totalRoi
-  });
-
   const roiResults = {
     outstandingDirectCosts,
     rawMarginalOrgBenefitNpv,
