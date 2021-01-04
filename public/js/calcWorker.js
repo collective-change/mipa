@@ -678,10 +678,10 @@ function calcActionResultsFromTimeSeries(
     marginalTotalBenefitNpv - marginalTotalCostNpv;
   const marginalTotalCostExcludingAction =
     marginalTotalCostNpv - outstandingDirectCosts;
-  const totalRoi =
+  let totalRoi =
     marginalNetTotalBenefitNpv /
     (outstandingDirectCosts + math.max(0, marginalTotalCostExcludingAction));
-  const actionLeverage =
+  let actionLeverage =
     ((marginalNetTotalBenefitNpv * totalRoi) / outstandingDirectCosts) *
     Math.sign(marginalNetTotalBenefitNpv);
 
