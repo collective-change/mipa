@@ -50,7 +50,7 @@ function coordinateScenarioSimulations(data) {
 
   testInitializeIdb();
 
-  let defaultBaseline = calculateBaseline(sim);
+  const defaultBaseline = calculateBaseline(sim);
 
   if (data.calculationType == "baseline") return;
 
@@ -443,22 +443,29 @@ function simulateCostsAndImpacts(
   //TODO: if extra timepoints are required then build customTimeSPoints
   //TODO: simulate using either default or customTimeSPoints
   //TODO: also simulate baseline using customTimeSPoints, if any
+  let hasIfDoneImpacts = false;
   let hasIfNotDoneImpacts = false;
   impactsToSimulate.forEach(function(impact) {
+    if (impact.impactType == "if_done") hasIfDoneImpacts = true;
     if (impact.impactType == "if_not_done") hasIfNotDoneImpacts = true;
   });
-
-  scenario = {
-    type: "action",
-    impactType: "if_done",
-    impactsToSimulate
-  };
-  resetScope(sim);
-  iterateThroughTime(sim, scenario);
-  if (sim.errorOccurred) return;
-  //only extract the basic few nodes for calculation and display
   let ifDoneNodesValues, ifNotDoneNodesValues;
-  ifDoneNodesValues = extractTimeSeriesNodesValues(sim, onlyNodeIds);
+
+  if (hasIfDoneImpacts) {
+    scenario = {
+      type: "action",
+      impactType: "if_done",
+      impactsToSimulate
+    };
+    resetScope(sim);
+    iterateThroughTime(sim, scenario);
+    if (sim.errorOccurred) return;
+    //only extract the basic few nodes for calculation and display
+    ifDoneNodesValues = extractTimeSeriesNodesValues(sim, onlyNodeIds);
+  } else {
+    //use baseline values as ifNotDone values
+    ifDoneNodesValues = baselineNodesValues;
+  }
 
   if (hasIfNotDoneImpacts) {
     scenario = {
@@ -1152,7 +1159,9 @@ function resetScope(sim) {
   sim.scope.timeSeries = { timeSPoints: [], nodes: {} };
   sim.sortedNodes.forEach(function(node) {
     sim.scope.timeSeries.nodes[node.id] = [];
+    delete sim.scope["$" + node.id];
   });
+  loadLatestValues(sim);
 }
 
 function loadLatestValues(sim) {
