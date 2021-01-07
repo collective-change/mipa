@@ -1103,6 +1103,10 @@ function prepEnvironment(data) {
     sku: {
       baseName: "sku",
       aliases: ["skus"]
+    },
+    count: {
+      baseName: "count",
+      aliases: ["counts"]
     }
   });
 
