@@ -110,7 +110,7 @@ const actions = {
         }
 
         if (done) {
-          //calcWorker.terminate();
+          calcWorker.terminate();
           commit("setCalculatorIsRunning", false);
           commit("setCalculationProgress", 0);
           Notify.create(
