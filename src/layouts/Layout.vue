@@ -445,7 +445,7 @@ export default {
       let newOrgId = "orgId" in newRoute.params ? newRoute.params.orgId : "";
       let oldOrgId = "orgId" in oldRoute.params ? oldRoute.params.orgId : "";
 
-      if (newOrgId != oldOrgId && newOrgId != "") {
+      if (newOrgId != oldOrgId && newOrgId !== "") {
         this.bindMinimalOrgRelatedData(newOrgId);
       }
       if (newOrgId == "") {

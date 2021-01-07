@@ -91,7 +91,7 @@
               size="xs"
               :options="[
                 { label: 'linear', value: 'linear' },
-                { label: 'log', value: 'log' }
+                { label: 'log', value: 'mirrorLog' }
               ]"
             />
           </div>
@@ -107,7 +107,7 @@
               size="xs"
               :options="[
                 { label: 'linear', value: 'linear' },
-                { label: 'log', value: 'log' }
+                { label: 'log', value: 'mirrorLog' }
               ]"
             />
           </div>
@@ -156,7 +156,7 @@ export default {
       nodeChart: {
         chartData: [],
         chartOptions: {
-          vAxis: { scaleType: "linear" },
+          vAxis: { scaleType: "linear", format: "short" },
           legend: { position: "none" }
         }
       },
@@ -249,18 +249,18 @@ export default {
       }
     },
     submitNode() {
-      let oldCurrentVal = this.selectedNode.latestValue;
+      let oldLatestVal = this.selectedNode.latestValue;
       let newCurrentVal = this.nodeToSubmit.latestValue;
-      let oldCurrentValIsANumber =
-        typeof oldCurrentVal != "undefined" &&
-        oldCurrentVal != "" &&
-        !isNaN(Number(oldCurrentVal));
+      let oldLatestValIsANumber =
+        typeof oldLatestVal != "undefined" &&
+        oldLatestVal !== "" &&
+        !isNaN(Number(oldLatestVal));
       let newCurrentValIsANumber =
         typeof newCurrentVal != "undefined" &&
-        newCurrentVal != "" &&
+        newCurrentVal !== "" &&
         !isNaN(Number(newCurrentVal));
       let latestValueExistenceChanged =
-        oldCurrentValIsANumber != newCurrentValIsANumber;
+        oldLatestValIsANumber != newCurrentValIsANumber;
 
       let oldSymbol = this.selectedNode.symbol;
       let newSymbol = this.nodeToSubmit.symbol;
@@ -297,7 +297,11 @@ export default {
           }
           chartOptions = {
             title: this.selectedNode.name,
-            vAxis: { title: this.selectedNode.unit, scaleType: "linear" },
+            vAxis: {
+              title: this.selectedNode.unit,
+              scaleType: "linear",
+              format: "short"
+            },
             legend: { position: "none" }
           };
         }
@@ -306,7 +310,7 @@ export default {
         this.nodeChart = {
           chartData: [],
           chartOptions: {
-            vAxis: { scaleType: "linear" },
+            vAxis: { scaleType: "linear", format: "short" },
             legend: { position: "none" }
           }
         };
@@ -336,7 +340,11 @@ export default {
             chartData: [],
             chartOptions: {
               title: this.getNodeName(nodeId),
-              vAxis: { title: this.getNodeUnit(nodeId), scaleType: "linear" },
+              vAxis: {
+                title: this.getNodeUnit(nodeId),
+                scaleType: "linear",
+                format: "short"
+              },
               legend: { position: "none" }
               //legend: { position: "bottom" },
               //series: this.showDifferenceConfig,

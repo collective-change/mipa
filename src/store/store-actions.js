@@ -65,7 +65,7 @@ const actions = {
         action => action.id == actionResults.id
       );
       if (
-        true || //TODO: get rid of this line when done with development
+        //true || //TODO: get rid of this line when done with development
         resultsNumbersChangedSignificantly(
           actionResults.effectiveResultsNumbers,
           matchedStoreAction.effectiveResultsNumbers

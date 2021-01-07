@@ -50,7 +50,7 @@ function coordinateScenarioSimulations(data) {
 
   testInitializeIdb();
 
-  let defaultBaseline = calculateBaseline(sim);
+  const defaultBaseline = calculateBaseline(sim);
 
   if (data.calculationType == "baseline") return;
 
@@ -423,15 +423,15 @@ function simulateCostsAndImpacts(
       onlyNodeIds.push(node.id);
     });
   } else {
+    impactsToSimulate.forEach(function(impact) {
+      onlyNodeIds.push(impact.nodeId);
+    });
     onlyNodeIds.push(sim.roleNodes.orgBenefit);
     onlyNodeIds.push(sim.roleNodes.orgCost);
     onlyNodeIds.push(sim.roleNodes.worldBenefit);
     onlyNodeIds.push(sim.roleNodes.worldCost);
-    onlyNodeIds.push(sim.roleNodes.effort);
-    onlyNodeIds.push(sim.roleNodes.spending);
-    impactsToSimulate.forEach(function(impact) {
-      onlyNodeIds.push(impact.nodeId);
-    });
+    //onlyNodeIds.push(sim.roleNodes.effort);
+    //onlyNodeIds.push(sim.roleNodes.spending);
   }
 
   //extract relevant baselineNodesValues
@@ -443,22 +443,29 @@ function simulateCostsAndImpacts(
   //TODO: if extra timepoints are required then build customTimeSPoints
   //TODO: simulate using either default or customTimeSPoints
   //TODO: also simulate baseline using customTimeSPoints, if any
+  let hasIfDoneImpacts = false;
   let hasIfNotDoneImpacts = false;
   impactsToSimulate.forEach(function(impact) {
+    if (impact.impactType == "if_done") hasIfDoneImpacts = true;
     if (impact.impactType == "if_not_done") hasIfNotDoneImpacts = true;
   });
-
-  scenario = {
-    type: "action",
-    impactType: "if_done",
-    impactsToSimulate
-  };
-  resetScope(sim);
-  iterateThroughTime(sim, scenario);
-  if (sim.errorOccurred) return;
-  //only extract the basic few nodes for calculation and display
   let ifDoneNodesValues, ifNotDoneNodesValues;
-  ifDoneNodesValues = extractTimeSeriesNodesValues(sim, onlyNodeIds);
+
+  if (hasIfDoneImpacts) {
+    scenario = {
+      type: "action",
+      impactType: "if_done",
+      impactsToSimulate
+    };
+    resetScope(sim);
+    iterateThroughTime(sim, scenario);
+    if (sim.errorOccurred) return;
+    //only extract the basic few nodes for calculation and display
+    ifDoneNodesValues = extractTimeSeriesNodesValues(sim, onlyNodeIds);
+  } else {
+    //use baseline values as ifNotDone values
+    ifDoneNodesValues = baselineNodesValues;
+  }
 
   if (hasIfNotDoneImpacts) {
     scenario = {
@@ -588,100 +595,88 @@ function calcActionResultsFromTimeSeries(
   timeSPoints,
   sim
 ) {
-  let roleNodes = sim.roleNodes;
-  let yearlyDiscountRate = sim.yearlyDiscountRate;
+  const roleNodes = sim.roleNodes;
+  const yearlyDiscountRate = sim.yearlyDiscountRate;
 
   //prepare inputs for calculating NPVs
-  let ifDoneOrgBenefitSeries =
+  const ifDoneOrgBenefitSeries =
     ifDoneTimeSeriesNodesValues[roleNodes.orgBenefit];
-  let ifNotDoneOrgBenefitSeries =
+  const ifNotDoneOrgBenefitSeries =
     ifNotDoneTimeSeriesNodesValues[roleNodes.orgBenefit];
-  let ifDoneOrgCostSeries = ifDoneTimeSeriesNodesValues[roleNodes.orgCost];
-  let ifNotDoneOrgCostSeries =
+  const ifDoneOrgCostSeries = ifDoneTimeSeriesNodesValues[roleNodes.orgCost];
+  const ifNotDoneOrgCostSeries =
     ifNotDoneTimeSeriesNodesValues[roleNodes.orgCost];
 
-  let ifDoneWorldBenefitSeries =
+  const ifDoneWorldBenefitSeries =
     ifDoneTimeSeriesNodesValues[roleNodes.worldBenefit];
-  let ifNotDoneWorldBenefitSeries =
+  const ifNotDoneWorldBenefitSeries =
     ifNotDoneTimeSeriesNodesValues[roleNodes.worldBenefit];
-  let ifDoneWorldCostSeries = ifDoneTimeSeriesNodesValues[roleNodes.worldCost];
-  let ifNotDoneWorldCostSeries =
+  const ifDoneWorldCostSeries =
+    ifDoneTimeSeriesNodesValues[roleNodes.worldCost];
+  const ifNotDoneWorldCostSeries =
     ifNotDoneTimeSeriesNodesValues[roleNodes.worldCost];
 
-  /*let ifDoneTotalBenefitSeries =
-    ifDoneTimeSeriesNodesValues[roleNodes.combinedBenefit];
-  let ifNotDoneTotalBenefitSeries =
-    ifNotDoneTimeSeriesNodesValues[roleNodes.combinedBenefit];
-  let ifDoneTotalCostSeries =
-    ifDoneTimeSeriesNodesValues[roleNodes.combinedCost];
-  let ifNotDoneTotalCostSeries =
-    ifNotDoneTimeSeriesNodesValues[roleNodes.combinedCost];*/
-
-  /* console.log(
-    "org",
-    ifDoneOrgBenefitSeries.length,
-    ifNotDoneOrgBenefitSeries.length,
-    ifDoneOrgCostSeries.length,
-    ifNotDoneOrgCostSeries.length
-  );*/
-
-  //calculate NPVs
-  let marginalOrgBenefitNpv = getMarginalNpv(
+  //calculate org benefit and cost net present values
+  const rawMarginalOrgBenefitNpv = getMarginalNpv(
     ifDoneOrgBenefitSeries,
     ifNotDoneOrgBenefitSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  let marginalOrgCostNpv = getMarginalNpv(
+  const rawMarginalOrgCostNpv = getMarginalNpv(
     ifDoneOrgCostSeries,
     ifNotDoneOrgCostSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  let marginalWorldBenefitNpv = getMarginalNpv(
+  //treat negative benefit as cost, negative cost as benefit
+  const marginalOrgBenefitNpv =
+    (rawMarginalOrgBenefitNpv > 0 ? rawMarginalOrgBenefitNpv : 0) +
+    (rawMarginalOrgCostNpv < 0 ? -rawMarginalOrgCostNpv : 0);
+
+  const marginalOrgCostNpv =
+    (rawMarginalOrgCostNpv > 0 ? rawMarginalOrgCostNpv : 0) +
+    (rawMarginalOrgBenefitNpv < 0 ? -rawMarginalOrgBenefitNpv : 0);
+
+  //calculate world benefit and cost net present values
+  const rawMarginalWorldBenefitNpv = getMarginalNpv(
     ifDoneWorldBenefitSeries,
     ifNotDoneWorldBenefitSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  let marginalWorldCostNpv = getMarginalNpv(
+  const rawMarginalWorldCostNpv = getMarginalNpv(
     ifDoneWorldCostSeries,
     ifNotDoneWorldCostSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  //TODO: use benevolence ratio (sim.)
-  let worldWeightingFactor = sim.params.worldWeightingFactor;
-  let orgWeightingFactor = sim.params.orgWeightingFactor;
-  let marginalTotalBenefitNpv =
+  //treat negative benefit as cost, negative cost as benefit
+  const marginalWorldBenefitNpv =
+    (rawMarginalWorldBenefitNpv > 0 ? rawMarginalWorldBenefitNpv : 0) +
+    (rawMarginalWorldCostNpv < 0 ? -rawMarginalWorldCostNpv : 0);
+
+  const marginalWorldCostNpv =
+    (rawMarginalWorldCostNpv > 0 ? rawMarginalWorldCostNpv : 0) +
+    (rawMarginalWorldBenefitNpv < 0 ? -rawMarginalWorldBenefitNpv : 0);
+
+  const worldWeightingFactor = sim.params.worldWeightingFactor;
+  const orgWeightingFactor = sim.params.orgWeightingFactor;
+  const marginalTotalBenefitNpv =
     marginalOrgBenefitNpv * orgWeightingFactor +
     marginalWorldBenefitNpv * worldWeightingFactor;
-  let marginalTotalCostNpv =
+  const marginalTotalCostNpv =
     marginalOrgCostNpv * orgWeightingFactor +
     marginalWorldCostNpv * worldWeightingFactor;
 
-  /*let marginalTotalBenefitNpv = getMarginalNpv(
-    ifDoneTotalBenefitSeries,
-    ifNotDoneTotalBenefitSeries,
-    timeSPoints,
-    yearlyDiscountRate
-  );
-
-  let marginalTotalCostNpv = getMarginalNpv(
-    ifDoneTotalCostSeries,
-    ifNotDoneTotalCostSeries,
-    timeSPoints,
-    yearlyDiscountRate
-  );*/
-
   //calculate actionLeverage and prepare results
-  let marginalNetTotalBenefitNpv =
+  const marginalNetTotalBenefitNpv =
     marginalTotalBenefitNpv - marginalTotalCostNpv;
-  let marginalTotalCostExcludingAction =
+  const marginalTotalCostExcludingAction =
     marginalTotalCostNpv - outstandingDirectCosts;
   let totalRoi =
     marginalNetTotalBenefitNpv /
@@ -693,13 +688,21 @@ function calcActionResultsFromTimeSeries(
   if (isNaN(totalRoi)) totalRoi = null;
   if (isNaN(actionLeverage)) actionLeverage = null;
 
-  let roiResults = {
+  const roiResults = {
+    outstandingDirectCosts,
+    rawMarginalOrgBenefitNpv,
+    rawMarginalOrgCostNpv,
+    rawMarginalWorldBenefitNpv,
+    rawMarginalWorldCostNpv,
+    marginalOrgBenefitNpv,
+    marginalOrgCostNpv,
+    marginalWorldBenefitNpv,
+    marginalWorldCostNpv,
     marginalTotalBenefitNpv,
     marginalNetTotalBenefitNpv,
     marginalTotalCostNpv,
     totalRoi,
     actionLeverage
-    //actionRoi //TODO: delete actionRoi
   };
   //console.log({ roiResults });
   return roiResults;
@@ -1152,7 +1155,9 @@ function resetScope(sim) {
   sim.scope.timeSeries = { timeSPoints: [], nodes: {} };
   sim.sortedNodes.forEach(function(node) {
     sim.scope.timeSeries.nodes[node.id] = [];
+    delete sim.scope["$" + node.id];
   });
+  loadLatestValues(sim);
 }
 
 function loadLatestValues(sim) {
@@ -1162,7 +1167,7 @@ function loadLatestValues(sim) {
     if (!sim.errorOccurred)
       try {
         sim.scope["$" + node.id + "_unit"] = node.unit;
-        if ("latestValue" in node && node.latestValue != "") {
+        if ("latestValue" in node && node.latestValue !== "") {
           if (node.unit) {
             sim.scope["$" + node.id] = math.unit(
               Number(node.latestValue),
@@ -1566,7 +1571,7 @@ function interpolate(
       );
     else if (initialValue == "best_guess") {
       //if latestValue is available then return latest value
-      if (latestValue != "") return latestValue;
+      if (latestValue !== "") return latestValue;
       else {
         console.error(
           `No history, no initial value, and no latest value available for best guess for node "${replaceNodeIdsWithName(
@@ -1710,7 +1715,7 @@ function putDataInIdb(payload) {
 }
 
 function valueIsANumber(val) {
-  //console.log(val, typeof val != "undefined", val != "", !isNaN(Number(val)));
+  //console.log(val, typeof val != "undefined", val !== "", !isNaN(Number(val)));
   return typeof val != "undefined" && val !== "" && !isNaN(Number(val));
 }
 
