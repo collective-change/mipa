@@ -325,7 +325,7 @@ export default {
         .strength(that.forceProperties.collide.strength)
         .radius(function(node) {
           if (node.toRemove) return 0;
-          else return nodeRadius * 1.25 * (1 - that.simulation.alpha());
+          else return nodeRadius * 1.3; // * (1 - that.simulation.alpha());
         })
         .iterations(that.forceProperties.collide.iterations);
 
