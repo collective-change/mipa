@@ -1490,8 +1490,8 @@ function getAdjustedDate(args, math, scope, caller) {
 
 function delay(args, math, scope) {
   const delayT0 = performance.now();
-  let $nodeId = args[0].name;
-  let nodeId = $nodeId.substr(1);
+  const $nodeId = args[0].name;
+  const nodeId = $nodeId.substr(1);
 
   const t0 = performance.now();
   /*
@@ -1509,8 +1509,8 @@ function delay(args, math, scope) {
   const t1 = performance.now();
   perf.compileEvalTimeInDelayFunc += t1 - t0;
 
-  let values = scope.timeSeries.nodes[nodeId];
-  let timeSPoints = scope.timeSeries.timeSPoints;
+  const values = scope.timeSeries.nodes[nodeId];
+  const timeSPoints = scope.timeSeries.timeSPoints;
   //let defaultValue = scope[$nodeId];
   let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
 
