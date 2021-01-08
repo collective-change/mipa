@@ -3,11 +3,9 @@ importScripts("https://www.gstatic.com/firebasejs/7.18.0/firebase-auth.js");
 importScripts(
   "https://www.gstatic.com/firebasejs/7.18.0/firebase-firestore.js"
 );
-
-//importScripts("https://cdn.jsdelivr.net/npm/comlinkjs/comlink.global.min.js");
-
-//import { parse, format, toTex } from "mathjs";
-importScripts("https://unpkg.com/mathjs@7.2.0/dist/math.min.js");
+importScripts(
+  "https://cdnjs.cloudflare.com/ajax/libs/mathjs/8.1.1/math.min.js"
+);
 
 //var idb = {}; //placeholder for IndexedDB
 
@@ -1498,6 +1496,7 @@ function delay(args, math, scope) {
   const t0 = performance.now();
   /*
   const arg1String = args[1].toString();
+  const arg1String = JSON.stringify(args[1]);
   if (!scope.compiledDelayArg1s.hasOwnProperty(arg1String)) {
     scope.compiledDelayArg1s[arg1String] = args[1].compile();
   }
@@ -1505,8 +1504,8 @@ function delay(args, math, scope) {
   */
 
   // Ted: The following statement is actually faster than caching the
-  // compiled args[1], because toString() is slow.
-  let delayTime = args[1].compile().evaluate(scope);
+  // compiled args[1], because toString() and stringify() are slow.
+  const delayTime = args[1].compile().evaluate(scope);
   const t1 = performance.now();
   perf.compileEvalTimeInDelayFunc += t1 - t0;
 
