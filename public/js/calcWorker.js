@@ -19,6 +19,14 @@ var workerGlobalActions = [];
 var currentUserId;
 var orgId;
 
+//variables for performance profiling
+var perf = {
+  evalCount: 0,
+  evalTime: 0,
+  delayFuncTime: 0,
+  compileEvalTimeInDelayFunc: 0
+};
+
 onmessage = function(e) {
   switch (e.data.calculationType) {
     case "baseline":
@@ -756,23 +764,20 @@ function iterateThroughTime(sim, scenario) {
       //we're not on the first timeSPoint
       sim.scope.dt = math.unit(timeS - timeSPoints[timeSIndex - 1], "seconds");
     }
+
     // evaluate the expressions for each node
     sim.compiledExpressions.forEach(function(code, nodeIndex) {
       if (!sim.errorOccurred) {
-        /*if (sim.sortedNodes[nodeIndex].id == "JjPn4UTYMcsaoUCeYRyn") {
-          console.log(code.evaluate);
-        }*/
-
-        //TODO: if timeS == initialTimeS then evaluate latest value
         //TODO: if simulating an action, set a changedFromBaseline
         //flag for each node. If influencer nodes of the current node
         //haven't changed for this iteration, then use the baseline's
         //value instead of evaluating.
         try {
+          const t0 = performance.now();
           code.evaluate(sim.scope);
-          /*if (sim.sortedNodes[nodeIndex].id == "JjPn4UTYMcsaoUCeYRyn") {
-          console.log("done evaluation for JjPn4UTYMcsaoUCeYRyn");
-        }*/
+          const t1 = performance.now();
+          perf.evalCount += 1;
+          perf.evalTime += t1 - t0;
         } catch (err) {
           sim.errorOccurred = true;
           self.postMessage({
@@ -814,7 +819,6 @@ function iterateThroughTime(sim, scenario) {
             });
           }
       }
-      //if (sim.errorOccurred) return;
     });
     if (!sim.errorOccurred) composeTimeSeries(sim);
   });
@@ -984,6 +988,7 @@ function calculateBaseline(sim) {
   //save to IndexedDb
   //putBaselineResultsInIdb(results, sim.data.modelId);
 
+  console.table(perf);
   console.log("baseline calcTime:", calcTimeMs, "ms");
 
   postMessage(results);
@@ -1121,7 +1126,8 @@ function prepScope(sim) {
     calcDate: calcDate,
     initialTimeS: Math.floor(calcDate / 1000), //this will remain constant throughout the simulation
     //timeS: initialTimeS, //timeS will increment with each iteration
-    timeSeries: { timeSPoints: [], nodes: {} }
+    timeSeries: { timeSPoints: [], nodes: {} },
+    compiledDelayArg1s: {}
   }; //TODO: load timeSeries with current or historical values
 
   sim.sortedNodes.forEach(function(node) {
@@ -1485,11 +1491,25 @@ function getAdjustedDate(args, math, scope, caller) {
 }
 
 function delay(args, math, scope) {
+  const delayT0 = performance.now();
   let $nodeId = args[0].name;
   let nodeId = $nodeId.substr(1);
-  let delayTime = valueIsANumber(args[1])
-    ? args[1]
-    : args[1].compile().evaluate(scope);
+
+  const t0 = performance.now();
+  /*
+  const arg1String = args[1].toString();
+  if (!scope.compiledDelayArg1s.hasOwnProperty(arg1String)) {
+    scope.compiledDelayArg1s[arg1String] = args[1].compile();
+  }
+  const delayTime = scope.compiledDelayArg1s[arg1String].evaluate(scope);
+  */
+
+  // Ted: The following statement is actually faster than caching the
+  // compiled args[1], because toString() is slow.
+  let delayTime = args[1].compile().evaluate(scope);
+  const t1 = performance.now();
+  perf.compileEvalTimeInDelayFunc += t1 - t0;
+
   let values = scope.timeSeries.nodes[nodeId];
   let timeSPoints = scope.timeSeries.timeSPoints;
   //let defaultValue = scope[$nodeId];
@@ -1528,7 +1548,7 @@ function delay(args, math, scope) {
   }
 
   //interpolate value at targetTimeS
-  return interpolate(
+  const interpolated = interpolate(
     timeSPoints,
     values,
     targetTimeS,
@@ -1537,6 +1557,9 @@ function delay(args, math, scope) {
     nodeId,
     scope
   );
+  const delayT1 = performance.now();
+  perf.delayFuncTime += delayT1 - delayT0;
+  return interpolated;
 }
 
 function interpolate(
