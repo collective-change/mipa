@@ -22,7 +22,7 @@ service cloud.firestore {
     match /models/{model}/{document=**} {
       allow create: if request.auth.uid != null;
       allow read, update: if request.auth.uid in resource.data.editors.users;
-      allow delete: if request.auth.uid in resource.data.superAdmins;
+      allow delete: if request.auth.uid in resource.data.owners.users;
       allow read: if resource.data.isPublic == true;
     
       // Match any document in a model's nodes collection
