@@ -1414,7 +1414,6 @@ function topoSortNodes(sim) {
   }
   //now try to sort out unvisited nodes (ones in or blocked by a cycle)
 
-  //try {
   //if there are unvisited nodes, then graph has at least one cycle
   if (unvisitedNodes.length) {
     const nodeNames = unvisitedNodes.map(node => node.name).join(" | ");
@@ -1424,10 +1423,7 @@ function topoSortNodes(sim) {
       message: "Nodes: " + nodeNames
     };
   }
-  /*} catch (err) {
-    console.log(err);
-    self.postMessage(err);
-  }*/
+
   sim.calcTimeLog.push({ stage: "topoSort", endTime: new Date() });
   return L;
 }
