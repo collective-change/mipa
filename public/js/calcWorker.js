@@ -41,6 +41,7 @@ onmessage = function(e) {
 };
 
 function coordinateScenarioSimulations(data) {
+  let sim;
   //prep environment, scope, etc
   // Initialize Firebase
   if (!firebaseApp) {
@@ -48,22 +49,15 @@ function coordinateScenarioSimulations(data) {
     firebaseAuth = firebaseApp.auth();
     firebaseDb = firebaseApp.firestore();
   }
-  try {
-    let sim = prepSim(data);
-  } catch (error) {
-    self.postMessage({
-      errorType: "Error preparing simulation: " + error.name,
-      errorMessage: error.message
-    });
-  }
 
-  /*if (sim.errorOccurred) {
+  sim = prepSim(data);
+  if (sim.errorOccurred) {
     self.postMessage({
       errorType: "Error preparing simulation"
       //errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`
     });
     return;
-  }*/
+  }
 
   if (sim.errorOcurred) return;
 
@@ -589,27 +583,6 @@ async function getActionsFromFirestore(actionIds) {
   return actions;
 }
 
-/*
-async function updateActionInFirestore(originalPayload) {
-  //Clone the original payload so we don't modify it (it's
-  //passed by reference) when setting the serverTimestamp.
-  console.log("in updateActionInFirestore");
-  let payload = JSON.parse(JSON.stringify(originalPayload));
-  payload.updates.calculationTime = firebase.firestore.FieldValue.serverTimestamp();
-  payload.updates.calculatedBy = currentUserId; // firebaseAuth.currentUser.uid;
-
-  firebaseDb
-    .collection("actions")
-    .doc(payload.id)
-    .set(payload.updates, { merge: true })
-    .then(function() {
-      console.log("updated action ", payload.id);
-    })
-    .catch(function(error) {
-      console.error("Error updating action", error.message);
-    });
-} */
-
 function calcActionResultsFromTimeSeries(
   outstandingDirectCosts,
   ifDoneTimeSeriesNodesValues,
@@ -944,15 +917,6 @@ function doImpactWithHalfLife(sim, nodeIndex, impact) {
 
 function checkUnits(sim, nodeIndex) {
   expectedUnit = sim.expectedUnits[nodeIndex];
-  /*if (sim.sortedNodes[nodeIndex].id == "4Y160pX7YePRYFzYlyV5") {
-    console.log("problem node");
-    let expectedUnitSnapshot = JSON.parse(JSON.stringify(expectedUnit));
-    let calculated = JSON.parse(
-      JSON.stringify(sim.scope["$" + sim.sortedNodes[nodeIndex].id])
-    );
-    console.log("expectedUnit", expectedUnitSnapshot);
-    console.log("calculated", calculated);
-  }*/
   if (
     // calculation result is a unitless number and the expected isn't
     (typeof sim.scope["$" + sim.sortedNodes[nodeIndex].id] == "number" &&
@@ -966,8 +930,6 @@ function checkUnits(sim, nodeIndex) {
       !sim.scope["$" + sim.sortedNodes[nodeIndex].id].equalBase(
         sim.expectedUnits[nodeIndex]
       ))
-    /*sim.expectedUnits[nodeIndex].unit !=
-      sim.scope["$" + sim.sortedNodes[nodeIndex].id].unit*/
   )
     throw `dimensions of expected units and calculated units do not match.
               <br/> Expected unit: "${expectedUnit.toString()}"
@@ -1073,8 +1035,6 @@ function prepEnvironment(data) {
       data.simulationParams.timeStepUnit
     ) //delta time
   };
-
-  //console.log("roleNodes", sim.roleNodes);
 
   sim.calcTimeLog.push({ stage: "start", endTime: new Date() });
   self.postMessage({ progressValue: 0 });
@@ -1372,7 +1332,6 @@ function extractTimeSeriesNodesValues(sim, onlyNodeIds = null) {
 
 function getCalcTimeStages(log) {
   let calcTimeStages = [];
-  //let prevStage = null;
   log.forEach(function(item, index) {
     if (index > 0) {
       calcTimeStages.push({
@@ -1386,7 +1345,6 @@ function getCalcTimeStages(log) {
 }
 
 function topoSortNodes(sim) {
-  //let nodes = sim.nodes;
   let L = []; //for storing sorted elements
   let S = sim.nodes.filter(node => node.blockingInDegree == 0); //nodes with no incoming edges
   let unvisitedNodes = sim.nodes.filter(node => node.blockingInDegree != 0);
@@ -1397,31 +1355,66 @@ function topoSortNodes(sim) {
     // remove a node n from S and append to tail of L
     n = S.shift();
     L.push(n);
-    //console.log("n: ", n);
     n.blockedInfluencees.forEach(function(influenceeId, index) {
       influencee = unvisitedNodes.find(node => node.id == influenceeId);
-      influencee.blockingInDegree--;
-      if (influencee.blockingInDegree == 0) {
-        S.push(influencee);
-        //remove influencee from unvisited nodes
-        for (var i = 0; i < unvisitedNodes.length; i++) {
-          if (unvisitedNodes[i] === influencee) {
-            unvisitedNodes.splice(i, 1);
+      if (influencee) {
+        influencee.blockingInDegree--;
+        if (influencee.blockingInDegree == 0) {
+          S.push(influencee);
+          //remove influencee from unvisited nodes
+          for (var i = 0; i < unvisitedNodes.length; i++) {
+            if (unvisitedNodes[i] === influencee) {
+              unvisitedNodes.splice(i, 1);
+            }
           }
         }
       }
     });
   }
+
   //now try to sort out unvisited nodes (ones in or blocked by a cycle)
 
-  //if there are unvisited nodes, then graph has at least one cycle
+  //If there are unvisited nodes, then graph has at least one cycle,
+  //but there may be nodes that come after the circle that are unvisited,
+  //so let's remove them first before notifying the user.
   if (unvisitedNodes.length) {
-    const nodeNames = unvisitedNodes.map(node => node.name).join(" | ");
+    //topoSort the unvisited nodes using reverse direction of the links
+    //to get nodes remaining in circular dependency
+    let L2 = []; //for storing sorted elements
+    let S2 = unvisitedNodes.filter(node => node.blockingOutDegree == 0); //nodes with no outgoing edges
+    let unvisitedNodes2 = unvisitedNodes.filter(
+      node => node.blockingOutDegree != 0
+    );
+    let n2 = null; //node to process
+    let influencer = null; //a working variable
+
+    while (S2.length) {
+      // remove a node n from S and append to tail of L
+      n2 = S2.shift();
+      L2.push(n2);
+      n2.blockingInfluencers.forEach(function(influencerId, index) {
+        influencer = unvisitedNodes.find(node => node.id == influencerId);
+        if (influencer) {
+          influencer.blockingOutDegree--;
+          if (influencer.blockingOutDegree == 0) {
+            S2.push(influencer);
+            //remove influencer from unvisited nodes
+            for (var i = 0; i < unvisitedNodes2.length; i++) {
+              if (unvisitedNodes2[i] === influencer) {
+                unvisitedNodes2.splice(i, 1);
+              }
+            }
+          }
+        }
+      });
+    }
+
+    const nodeNames = unvisitedNodes2.map(node => node.name).join(" | ");
     sim.errorOccurred = true;
-    throw {
-      name: "Circular dependency detected",
-      message: "Nodes: " + nodeNames
-    };
+    self.postMessage({
+      errorType: "Circular dependency",
+      errorMessage: "Nodes: " + nodeNames
+    });
   }
 
   sim.calcTimeLog.push({ stage: "topoSort", endTime: new Date() });
@@ -1453,7 +1446,9 @@ function prepNodesForSort(sim) {
         typeof outerNode.blockingInfluencers !== "undefined"
           ? outerNode.blockingInfluencers.length
           : 0,
+      blockingOutDegree: blockedInfluencees.length,
       blockedInfluencees: blockedInfluencees,
+      blockingInfluencers: outerNode.blockingInfluencers,
       sysFormula:
         typeof outerNode.sysFormula !== "undefined" ? outerNode.sysFormula : "",
       unit: typeof outerNode.unit !== "undefined" ? outerNode.unit : "",
@@ -1524,14 +1519,6 @@ function delay(args, math, scope) {
   const nodeId = $nodeId.substr(1);
 
   const t0 = performance.now();
-  /*
-  const arg1String = args[1].toString();
-  const arg1String = JSON.stringify(args[1]);
-  if (!scope.compiledDelayArg1s.hasOwnProperty(arg1String)) {
-    scope.compiledDelayArg1s[arg1String] = args[1].compile();
-  }
-  const delayTime = scope.compiledDelayArg1s[arg1String].evaluate(scope);
-  */
 
   // Ted: The following statement is actually faster than caching the
   // compiled args[1], because toString() and stringify() are slow.
