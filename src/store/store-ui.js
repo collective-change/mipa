@@ -6,7 +6,8 @@ const state = {
   selectedIssueId: null,
   selectedActionId: null,
   selectedSituationId: null,
-  expandedNodeGroups: null
+  expandedNodeGroups: null,
+  circularNodeIds: null
 };
 
 const mutations = {
@@ -41,6 +42,9 @@ const mutations = {
   },
   setSelectedSituationId(state, situationId) {
     state.selectedSituationId = situationId;
+  },
+  setCircularNodeIds(state, nodeIds) {
+    state.circularNodeIds = nodeIds;
   }
 };
 const actions = {
@@ -55,6 +59,9 @@ const actions = {
   },
   setSelectedSituationId({ commit }, situationId) {
     commit("setSelectedSituationId", situationId);
+  },
+  setCircularNodeIds({ commit }, nodeIds) {
+    commit("setCircularNodeIds", nodeIds);
   }
 };
 

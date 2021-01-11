@@ -80,6 +80,13 @@ const actions = {
         );
         calcWorker.terminate();
         commit("setCalculatorIsRunning", false);
+        if (data.errorType == "Circular dependency detected") {
+          dispatch(
+            "ui/setCircularNodeIds",
+            data.errorData.map(node => node.id),
+            { root: true }
+          );
+        }
       } else if ("resultsType" in e.data) {
         switch (e.data.resultsType) {
           case "baseline":

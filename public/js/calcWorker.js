@@ -1412,7 +1412,7 @@ function topoSortNodes(sim) {
     const nodeNames = unvisitedNodes2.map(node => node.name).join(" | ");
     sim.errorOccurred = true;
     self.postMessage({
-      errorType: "Circular dependency detected",
+      errorType: "Circular dependency detected", //Don't change the type string; store-calculator looks for it
       errorMessage: nodeNames,
       errorData: unvisitedNodes2
     });
