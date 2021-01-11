@@ -48,9 +48,25 @@ function coordinateScenarioSimulations(data) {
     firebaseAuth = firebaseApp.auth();
     firebaseDb = firebaseApp.firestore();
   }
+  try {
+    let sim = prepSim(data);
+  } catch (error) {
+    self.postMessage({
+      errorType: "Error preparing simulation: " + error.name,
+      errorMessage: error.message
+    });
+  }
 
-  let sim = prepSim(data);
-  if (sim.errorOccurred) return;
+  /*if (sim.errorOccurred) {
+    self.postMessage({
+      errorType: "Error preparing simulation"
+      //errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`
+    });
+    return;
+  }*/
+
+  if (sim.errorOcurred) return;
+
   currentUserId = data.currentUserId;
   orgId = data.orgId;
 
@@ -754,71 +770,86 @@ function iterateThroughTime(sim, scenario) {
   let expectedUnit = null;*/
 
   timeSPoints.forEach(function(timeS, timeSIndex) {
-    sim.scope.timeS = timeS;
-    //prepare dt
-    if (timeSIndex == 0) {
-      sim.scope.dt = sim.initialDt; //delta time
-    } else {
-      //we're not on the first timeSPoint
-      sim.scope.dt = math.unit(timeS - timeSPoints[timeSIndex - 1], "seconds");
-    }
+    if (!sim.errorOccurred) {
+      sim.scope.timeS = timeS;
+      //prepare dt
+      if (timeSIndex == 0) {
+        sim.scope.dt = sim.initialDt; //delta time
+      } else {
+        //we're not on the first timeSPoint
+        sim.scope.dt = math.unit(
+          timeS - timeSPoints[timeSIndex - 1],
+          "seconds"
+        );
+      }
 
-    // evaluate the expressions for each node
-    sim.compiledExpressions.forEach(function(code, nodeIndex) {
-      if (!sim.errorOccurred) {
-        //TODO: if simulating an action, set a changedFromBaseline
-        //flag for each node. If influencer nodes of the current node
-        //haven't changed for this iteration, then use the baseline's
-        //value instead of evaluating.
-        try {
-          const t0 = performance.now();
-          code.evaluate(sim.scope);
-          const t1 = performance.now();
-          perf.evalCount += 1;
-          perf.evalTime += t1 - t0;
-        } catch (err) {
-          sim.errorOccurred = true;
-          self.postMessage({
-            errorType: "evaluation error",
-            errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`
-          });
-        }
+      // evaluate the expressions for each node
+      sim.compiledExpressions.forEach(function(code, nodeIndex) {
+        if (!sim.errorOccurred) {
+          //TODO: if simulating an action, set a changedFromBaseline
+          //flag for each node. If influencer nodes of the current node
+          //haven't changed for this iteration, then use the baseline's
+          //value instead of evaluating.
 
-        if (sim.errorOccurred) return;
+          sim.scope.currentNodeIndex = nodeIndex;
+          sim.scope.currentNodeId = sim.sortedNodes[nodeIndex].id;
+          sim.scope.currentNodeName = sim.sortedNodes[nodeIndex].name;
 
-        if (scenario.type == "action") {
-          //adjust the node value by action's impacts
-          //loop through each of action's impacts to see if it impacts the node just calculated
-          //TODO: sort impacts by order of impact.operation (=, *, / , +, -)
-          scenario.impactsToSimulate.forEach(function(impact) {
-            if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
-              if (impact.impactType == scenario.impactType)
-                try {
-                  doImpactIfItAffectsCurrentTime(sim, timeS, nodeIndex, impact);
-                } catch (err) {
-                  sim.errorOccurred = true;
-                  self.postMessage({
-                    errorType: "adjustment by impact error",
-                    errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}", impact operation "${impact.operation}" <br/> ${err} <br/> ${nodeIndex}`
-                  });
-                }
-            }
-          });
-        }
-        //on first 2 loops, check result of evaluation against units expected by user.
-        if (timeSIndex < 2)
           try {
-            checkUnits(sim, nodeIndex);
+            const t0 = performance.now();
+            code.evaluate(sim.scope);
+            const t1 = performance.now();
+            perf.evalCount += 1;
+            perf.evalTime += t1 - t0;
           } catch (err) {
             sim.errorOccurred = true;
             self.postMessage({
-              errorType: "Unit mismatch",
-              errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}" ${err}`
+              errorType: "evaluation error",
+              errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`
             });
           }
-      }
-    });
-    if (!sim.errorOccurred) composeTimeSeries(sim);
+
+          if (sim.errorOccurred) return;
+
+          if (scenario.type == "action") {
+            //adjust the node value by action's impacts
+            //loop through each of action's impacts to see if it impacts the node just calculated
+            //TODO: sort impacts by order of impact.operation (=, *, / , +, -)
+            scenario.impactsToSimulate.forEach(function(impact) {
+              if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
+                if (impact.impactType == scenario.impactType)
+                  try {
+                    doImpactIfItAffectsCurrentTime(
+                      sim,
+                      timeS,
+                      nodeIndex,
+                      impact
+                    );
+                  } catch (err) {
+                    sim.errorOccurred = true;
+                    self.postMessage({
+                      errorType: "adjustment by impact error",
+                      errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}", impact operation "${impact.operation}" <br/> ${err} <br/> ${nodeIndex}`
+                    });
+                  }
+              }
+            });
+          }
+          //on first 2 loops, check result of evaluation against units expected by user.
+          if (timeSIndex < 2)
+            try {
+              checkUnits(sim, nodeIndex);
+            } catch (err) {
+              sim.errorOccurred = true;
+              self.postMessage({
+                errorType: "Unit mismatch",
+                errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}" ${err}`
+              });
+            }
+        }
+      });
+      if (!sim.errorOccurred) composeTimeSeries(sim);
+    }
   });
 
   if (scenario.type == "baseline")
@@ -1383,17 +1414,20 @@ function topoSortNodes(sim) {
   }
   //now try to sort out unvisited nodes (ones in or blocked by a cycle)
 
-  try {
-    //if there are unvisited nodes, then graph has at least one cycle
-    if (unvisitedNodes.length) {
-      const nodeNames = unvisitedNodes.map(node => node.name).join(", ");
-      console.log("unvisitedNodes: ", nodeNames);
-      throw "Circular dependency detected in nodes: " + nodeNames;
-    }
-  } catch (err) {
+  //try {
+  //if there are unvisited nodes, then graph has at least one cycle
+  if (unvisitedNodes.length) {
+    const nodeNames = unvisitedNodes.map(node => node.name).join(" | ");
+    sim.errorOccurred = true;
+    throw {
+      name: "Circular dependency detected",
+      message: "Nodes: " + nodeNames
+    };
+  }
+  /*} catch (err) {
     console.log(err);
     self.postMessage(err);
-  }
+  }*/
   sim.calcTimeLog.push({ stage: "topoSort", endTime: new Date() });
   return L;
 }
