@@ -95,6 +95,9 @@ const actions = {
           dispatch("ui/setCircularNodeIds", [], { root: true });
           //select affected node
           if (data.errorData && data.errorData.nodeId) {
+            await dispatch("ui/setSelectedNodeId", null, {
+              root: true
+            });
             dispatch("ui/setSelectedNodeId", data.errorData.nodeId, {
               root: true
             });

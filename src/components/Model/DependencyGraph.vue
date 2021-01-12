@@ -1097,7 +1097,6 @@ export default {
               {
                 label: "Collapse group",
                 handler: async function() {
-                  console.log("collapse group: " + that.selectedNodeGroup.id);
                   let expandedNodeGroups = [...that.expandedNodeGroups];
                   const index = that.expandedNodeGroups.indexOf(
                     that.selectedNodeGroup.id
