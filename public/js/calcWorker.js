@@ -813,20 +813,19 @@ function iterateThroughTime(sim, scenario) {
               }
             });
           }
-          //on first 2 loops, check result of evaluation against units expected by user.
-          if (timeSIndex < 2)
-            try {
-              checkUnits(sim, nodeIndex);
-            } catch (err) {
-              sim.errorOccurred = true;
-              self.postMessage({
-                errorType: "Unit mismatch",
-                errorMessage: `For node "${
-                  sim.sortedNodes[nodeIndex].name
-                }" ${err} <br/> (node ${nodeIndex + 1} of ${totalNodeCount})`,
-                errorData: { nodeId: sim.sortedNodes[nodeIndex].id }
-              });
-            }
+          //check result of evaluation against units expected by user.
+          try {
+            checkUnits(sim, nodeIndex);
+          } catch (err) {
+            sim.errorOccurred = true;
+            self.postMessage({
+              errorType: "Unit mismatch",
+              errorMessage: `For node "${
+                sim.sortedNodes[nodeIndex].name
+              }" ${err} <br/> (node ${nodeIndex + 1} of ${totalNodeCount})`,
+              errorData: { nodeId: sim.sortedNodes[nodeIndex].id }
+            });
+          }
         }
       });
       if (!sim.errorOccurred) composeTimeSeries(sim);
@@ -1543,8 +1542,7 @@ function delay(args, math, scope) {
   let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
 
   //quick case: if the last value in the time series is for the target time, then return it
-  if (timeSPoints[timeSPoints.length - 1] == targetTimeS) {
-    //console.log("match");
+  if (timeSPoints[timeSPoints.length - 1] == targetTimeS && values) {
     return values[values.length - 1];
   }
 
@@ -1598,32 +1596,39 @@ function interpolate(
   nodeId,
   scope
 ) {
+  if (!rawTimeSPoints)
+    throw `Missing values for node. Did you get symbols correct in the formula?`;
+
   //quick case: if the last value in the time series is for the target time, then return it
-  if (rawTimeSPoints[rawTimeSPoints.length - 1] == targetTimeS) {
+  if (
+    rawTimeSPoints &&
+    rawTimeSPoints[rawTimeSPoints.length - 1] == targetTimeS
+  ) {
     //console.log("match");
     return rawValues[rawValues.length - 1];
   }
+
   let timeSPoints = [];
   let values = [];
-  //extract only available data points
-  //TODO: only extract data points surrounding targetTimeS
-  for (var i = 0; i < rawTimeSPoints.length; i++) {
-    //if (typeof rawValuesWithUnits[i] == "number") {
-    timeSPoints.push(rawTimeSPoints[i]);
-    values.push(rawValues[i]);
-    //}
+
+  if (rawTimeSPoints) {
+    //extract only available data points
+    //TODO: only extract data points surrounding targetTimeS
+    for (var i = 0; i < rawTimeSPoints.length; i++) {
+      timeSPoints.push(rawTimeSPoints[i]);
+      values.push(rawValues[i]);
+    }
   }
-  //console.log(timeSPoints[0], timeSPoints[timeSPoints.length - 1], targetTimeS);
-  //if symbol has no history, then return default value
+
+  //if symbol has no history, then return initial value
   if (values.length == 0) {
-    //console.log("No history; using default value.");
-    //if (typeof initialValue == "number") return initialValue;
-    if (valueIsANumber(initialValue))
+    //console.log("No history; using initial value.");
+    if (valueIsANumber(initialValue)) {
       return getValueWithUnitIfAvailable(
         Number(initialValue),
         scope["$" + nodeId + "_unit"]
       );
-    else if (initialValue == "best_guess") {
+    } else if (initialValue == "best_guess") {
       //if latestValue is available then return latest value
       if (latestValue !== "") return latestValue;
       else {
