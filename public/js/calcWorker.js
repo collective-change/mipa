@@ -817,7 +817,8 @@ function iterateThroughTime(sim, scenario) {
               sim.errorOccurred = true;
               self.postMessage({
                 errorType: "Unit mismatch",
-                errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}" ${err}`
+                errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}" ${err}`,
+                errorData: { nodeId: sim.sortedNodes[nodeIndex].id }
               });
             }
         }

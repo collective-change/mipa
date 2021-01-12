@@ -816,6 +816,7 @@ export default {
 
       // stop the previous simulation
       if (restartForceSimulation && this.simulation) this.simulation.stop();
+      if (!this.d3Data) return;
       this.simulation.nodes(this.d3Data.nodes);
       this.simulation.force("link").links(this.d3Data.links);
 
@@ -1593,6 +1594,18 @@ export default {
         this.updateForces();
       },
       deep: true
+    },
+
+    selectedNodeId: {
+      // This is for responding to store-calculator setting the selectedNodeId
+      // when reporting an error.
+      handler() {
+        const circles = this.selections.graph.selectAll("circle");
+        circles.classed("selected", false);
+        circles
+          .filter(circle => circle.id == this.selectedNodeId)
+          .classed("selected", true);
+      }
     },
 
     selectedNodeGroup: {

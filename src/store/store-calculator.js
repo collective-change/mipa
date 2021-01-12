@@ -94,7 +94,7 @@ const actions = {
           //clear circularNodeIds
           dispatch("ui/setCircularNodeIds", [], { root: true });
           //select affected node
-          if (data.errorData.nodeId) {
+          if (data.errorData && data.errorData.nodeId) {
             dispatch("ui/setSelectedNodeId", data.errorData.nodeId, {
               root: true
             });
