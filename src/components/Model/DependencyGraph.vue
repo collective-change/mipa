@@ -1078,9 +1078,7 @@ export default {
               {
                 label: "Expand group",
                 handler: async function() {
-                  let expandedNodeGroups = [...that.expandedNodeGroups];
-                  expandedNodeGroups.push(that.selectedNodeId);
-                  that.expandedNodeGroups = expandedNodeGroups;
+                  that.expandGroup(that.selectedNodeId);
                 }
               }
             ];
@@ -1099,6 +1097,7 @@ export default {
               {
                 label: "Collapse group",
                 handler: async function() {
+                  console.log("collapse group: " + that.selectedNodeGroup.id);
                   let expandedNodeGroups = [...that.expandedNodeGroups];
                   const index = that.expandedNodeGroups.indexOf(
                     that.selectedNodeGroup.id
@@ -1585,6 +1584,13 @@ export default {
         modelId: this.$route.params.modelId
       });
       this.$emit("close");
+    },
+    async expandGroup(groupId) {
+      if (!this.expandedNodeGroups.includes(groupId)) {
+        let expandedNodeGroups = [...this.expandedNodeGroups];
+        expandedNodeGroups.push(groupId);
+        this.expandedNodeGroups = expandedNodeGroups;
+      }
     }
   },
 
@@ -1599,7 +1605,15 @@ export default {
     selectedNodeId: {
       // This is for responding to store-calculator setting the selectedNodeId
       // when reporting an error.
-      handler() {
+      async handler() {
+        // expand the group that the node is in
+        const foundNodeGroup = this.currentModel.nodeGroups.find(group =>
+          group.nodeIds.includes(this.selectedNodeId)
+        );
+        if (foundNodeGroup) {
+          await this.expandGroup(foundNodeGroup.id);
+        }
+        // highlight the selected node
         const circles = this.selections.graph.selectAll("circle");
         circles.classed("selected", false);
         circles
