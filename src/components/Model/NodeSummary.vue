@@ -49,7 +49,17 @@
             </tr>
           </thead>
           <tr v-for="influencer in influencerNodesInfo" :key="influencer.id">
-            <td>{{ influencer.name }}</td>
+            <td>
+              <q-btn
+                flat
+                no-caps
+                padding="none"
+                color="white"
+                text-color="black"
+                :label="influencer.name"
+                @click="setSelectedNodeId(influencer.id)"
+              />
+            </td>
             <td>{{ influencer.symbol }}</td>
             <td>{{ influencer.unit }}</td>
           </tr>
@@ -239,6 +249,8 @@ export default {
 
   methods: {
     ...mapActions("model", ["updateNode"]),
+    ...mapActions("ui", ["setSelectedNodeId"]),
+
     isAlphanumeric(str) {
       return str.match(/^[a-z0-9_]+$/i) !== null;
     },
