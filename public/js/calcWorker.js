@@ -778,7 +778,8 @@ function iterateThroughTime(sim, scenario) {
             sim.errorOccurred = true;
             self.postMessage({
               errorType: "evaluation error",
-              errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`
+              errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`,
+              errorData: { nodeId: sim.sortedNodes[nodeIndex].id }
             });
           }
 
