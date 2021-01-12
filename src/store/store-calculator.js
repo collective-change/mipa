@@ -93,6 +93,12 @@ const actions = {
         } else {
           //clear circularNodeIds
           dispatch("ui/setCircularNodeIds", [], { root: true });
+          //select affected node
+          if (data.errorData.nodeId) {
+            dispatch("ui/setSelectedNodeId", data.errorData.nodeId, {
+              root: true
+            });
+          }
         }
       } else if ("resultsType" in e.data) {
         //clear circularNodeIds

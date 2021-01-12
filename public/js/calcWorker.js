@@ -1289,7 +1289,8 @@ function prepExpectedUnits(sim) {
       } catch (err) {
         self.postMessage({
           errorType: "unit loading error",
-          errorMessage: `For node "${node.name}", unit "${node.unit}" <br/> ${err}`
+          errorMessage: `For node "${node.name}", unit "${node.unit}" <br/> ${err}`,
+          errorData: { nodeId: node.id }
         });
         sim.errorOccurred = true;
       }
