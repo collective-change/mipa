@@ -1110,8 +1110,16 @@ export default {
               {
                 label: "Disband group",
                 handler: async function() {
-                  //TODO: ask for user to confirm
-                  await that.disbandNodeGroup(that.selectedNodeGroup.id);
+                  that.$q
+                    .dialog({
+                      title: "Really disband group?",
+                      message: "This cannot be undone.",
+                      cancel: true,
+                      persistent: true
+                    })
+                    .onOk(() => {
+                      that.disbandNodeGroup(that.selectedNodeGroup.id);
+                    });
                 }
               }
             ];
