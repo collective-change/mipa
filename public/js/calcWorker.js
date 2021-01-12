@@ -1413,7 +1413,8 @@ function topoSortNodes(sim) {
     sim.errorOccurred = true;
     self.postMessage({
       errorType: "Circular dependency detected", //Don't change the type string; store-calculator looks for it
-      errorMessage: nodeNames,
+      errorMessage:
+        "Please check affected parts marked in orange, and add a delay at an appropriate place.",
       errorData: unvisitedNodes2
     });
   }

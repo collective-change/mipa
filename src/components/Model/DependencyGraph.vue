@@ -36,6 +36,7 @@
         @close="showAddLink = false"
       />
     </q-dialog>
+    <pre>{{circularNodeIds}}</pre>
   </div>
 </template>
 
@@ -131,7 +132,8 @@ export default {
       "selectedNodeId",
       "selectedNodeGroup",
       "uiNodeChanged",
-      "uiNodeChangedFields"
+      "uiNodeChangedFields",
+      "circularNodeIds"
     ]),
     ...mapGetters("model", ["nodes", "links"]),
     ...mapState("model", ["currentModel"]),
@@ -264,6 +266,21 @@ export default {
       .attr("markerWidth", 15)
       .attr("markerHeight", 15)
       .attr("fill", "#fdd")
+      .attr("orient", "auto")
+      .append("svg:path")
+      .attr("d", "M0,-5L10,0L0,5");
+    // Define the arrow marker for inCircularDependency links
+    svg
+      .select("defs")
+      .append("svg:marker") // This section adds in the arrows
+      .attr("id", "end-circularDependency")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 5) //Prevents arrowhead from being covered by circle
+      .attr("refY", 0)
+      .attr("markerUnits", "userSpaceOnUse")
+      .attr("markerWidth", 15)
+      .attr("markerHeight", 15)
+      .attr("fill", "#e73")
       .attr("orient", "auto")
       .append("svg:path")
       .attr("d", "M0,-5L10,0L0,5");
@@ -412,6 +429,29 @@ export default {
       let nodes = [...this.storeData.nodes];
       let links = [...this.storeData.links];
 
+      //update "isInCircularDependency" attribute
+      nodes.forEach(function(node) {
+        delete node.isInCircularDependency;
+      });
+      links.forEach(function(link) {
+        delete link.isInCircularDependency;
+      });
+      if (that.circularNodeIds) {
+        nodes.forEach(function(node) {
+          if (that.circularNodeIds.includes(node.id))
+            node.isInCircularDependency = true;
+          else delete node.isInCircularDependency;
+        });
+        links.forEach(function(link) {
+          if (
+            that.circularNodeIds.includes(link.source) &&
+            that.circularNodeIds.includes(link.target)
+          )
+            link.isInCircularDependency = true;
+          else delete link.isInCircularDependency;
+        });
+      }
+
       //remove newlyEntered from d3Data nodes and inks
       this.d3Data.nodes.forEach(n => (n.newlyEntered = false));
       this.d3Data.links.forEach(l => (l.newlyEntered = false));
@@ -448,6 +488,7 @@ export default {
             isNodeGroup: true,
             class: "group",
             isNew: false,
+            isInCircularDependency: false,
             isSelfBlocking: false,
             symbolFormula: "exist"
           };
@@ -457,6 +498,8 @@ export default {
           );
           nodesInCollapsedGroup.forEach(function(node) {
             if (node.isNew) nodeForCollapsedGroup.isNew = true;
+            if (node.isInCircularDependency)
+              nodeForCollapsedGroup.isInCircularDependency = true;
             if (node.isSelfBlocking)
               nodeForCollapsedGroup.isSelfBlocking = true;
             if (node.symbolFormula == "")
@@ -495,7 +538,7 @@ export default {
           });
 
           //redirect links w/ one end in group to group node
-          //TODO: do not allow delete on these links
+          //TODO: do not show "delete" in context menu for these links
           links.forEach(function(link, index, linksArray) {
             if (
               collapsedGroup.nodeIds.includes(link.source) &&
@@ -668,6 +711,15 @@ export default {
             matchedD3Node.isNew = visibleNode.isNew;
             graphTextChange = true;
           }
+          if (
+            matchedD3Node.isInCircularDependency !=
+            visibleNode.isInCircularDependency
+          ) {
+            matchedD3Node.isInCircularDependency =
+              visibleNode.isInCircularDependency;
+            graphTextChange = true;
+            dataChanged = true;
+          }
           if (matchedD3Node.symbolFormula != visibleNode.symbolFormula) {
             matchedD3Node.symbolFormula = visibleNode.symbolFormula;
             graphTextChange = true;
@@ -697,6 +749,7 @@ export default {
         });
       }
       let matchedD3Link = null;
+
       //for each in visibleLinks,
       visibleLinks.forEach(function(visibleLink) {
         if (
@@ -708,6 +761,8 @@ export default {
               d3Link.hasReciprocal == visibleLink.hasReciprocal &&
               d3Link.isBlocking == visibleLink.isBlocking &&
               d3Link.isUnused == visibleLink.isUnused &&
+              d3Link.isInCircularDependency ==
+                visibleLink.isInCircularDependency &&
               d3Link.strengthFactor == visibleLink.strengthFactor
           )[0])
         ) {
@@ -735,6 +790,14 @@ export default {
         //To draw relaxed links first (so they do not cover other links),
         //sort links so relaxed links come first.
         that.d3Data.links.sort((a, b) => a.strengthFactor - b.strengthFactor);
+        //draw links in circular dependency last
+        that.d3Data.links.sort((a, b) =>
+          a.isInCircularDependency && !b.isInCircularDependency
+            ? 1
+            : !a.isInCircularDependency && b.isInCircularDependency
+            ? -1
+            : 0
+        );
         this.updateData({ modifyingExistingGraph });
       }
       if (graphTextChange && !dataChanged) {
@@ -792,6 +855,7 @@ export default {
             "link " +
             (d.isBlocking ? "" : "nonBlocking ") +
             (d.isUnused ? "unused " : "") +
+            (d.isInCircularDependency ? "inCircularDependency " : "") +
             (d.strengthFactor < 1 ? "relaxed " : "")
         )
         .on("contextmenu", function(event, d) {
@@ -1104,6 +1168,10 @@ export default {
         .selectAll("g")
         .selectAll("path.link.unused.relaxed")
         .attr("marker-end", "url(#end-unused-relaxed)");
+      svg
+        .selectAll("g")
+        .selectAll("path.link.inCircularDependency")
+        .attr("marker-end", "url(#end-circularDependency)");
 
       if (restartForceSimulation) {
         this.simulation.on("end", this.savePositions);
@@ -1125,6 +1193,7 @@ export default {
           d.class.concat(
             d.isSelfBlocking ? " selfBlocking" : "",
             d.isNew ? " new" : "",
+            d.isInCircularDependency ? " inCircularDependency" : "",
             d.symbolFormula && d.symbolFormula ? "" : " noFormula",
             nodeIdsInNodeGroup.includes(d.id) ? " nodeGroupSelected" : "",
             d.isNodeGroup &&
@@ -1567,6 +1636,15 @@ export default {
       }
     },
 
+    // watcher for circularNodeIds
+    circularNodeIds: {
+      immediate: true,
+      deep: true,
+      handler() {
+        this.prepD3DataAndUpdate();
+      }
+    },
+
     expandedNodeGroups: {
       immediate: true,
       deep: true,
@@ -1634,6 +1712,9 @@ path.link.relaxed {
 path.link.unused.relaxed {
   stroke: #fdd;
 }
+path.link.inCircularDependency {
+  stroke: #e73;
+}
 
 circle {
   stroke-width: 0px;
@@ -1661,8 +1742,13 @@ circle.group {
 circle.new,
 circle.noFormula,
 circle.selfBlocking {
-  stroke-width: 1px;
+  stroke-width: 2px;
   stroke: #e77;
+}
+
+circle.inCircularDependency {
+  stroke-width: 2px;
+  stroke: #e73;
 }
 
 circle.selected {
