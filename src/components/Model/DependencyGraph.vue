@@ -1611,6 +1611,7 @@ export default {
         );
         if (foundNodeGroup) {
           await this.expandGroup(foundNodeGroup.id);
+          this.$store.commit("ui/setSelectedNodeGroup", foundNodeGroup);
         }
         // highlight the selected node
         const circles = this.selections.graph.selectAll("circle");
