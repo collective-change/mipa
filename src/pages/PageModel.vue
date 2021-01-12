@@ -87,7 +87,11 @@
         <dependency-graph :initialCirclePositions="initialCirclePositions"></dependency-graph>
       </div>
       <div class="col-12 col-md-3">
-        <node-summary />
+        <div class="column full-height">
+          <q-scroll-area class="col q-pa-sm" visible>
+            <node-summary />
+          </q-scroll-area>
+        </div>
       </div>
     </div>
     <q-dialog v-model="showConfigOrgModel">
