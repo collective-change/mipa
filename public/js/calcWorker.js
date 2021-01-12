@@ -777,7 +777,7 @@ function iterateThroughTime(sim, scenario) {
           } catch (err) {
             sim.errorOccurred = true;
             self.postMessage({
-              errorType: "evaluation error",
+              errorType: "Evaluation error",
               errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`,
               errorData: { nodeId: sim.sortedNodes[nodeIndex].id }
             });
@@ -802,7 +802,7 @@ function iterateThroughTime(sim, scenario) {
                   } catch (err) {
                     sim.errorOccurred = true;
                     self.postMessage({
-                      errorType: "adjustment by impact error",
+                      errorType: "Adjustment by impact error",
                       errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}", impact operation "${impact.operation}" <br/> ${err} <br/> ${nodeIndex}`
                     });
                   }
@@ -1180,7 +1180,7 @@ function loadLatestValues(sim) {
         }
       } catch (err) {
         self.postMessage({
-          errorType: "latest value loading error",
+          errorType: "Latest value loading error",
           errorMessage: `For node "${node.name}", latest value "${node.latestValue}", unit "${node.unit}" <br/> ${err}`
         });
         sim.errorOccurred = true;
@@ -1223,7 +1223,7 @@ function prepExpressionsArray(sim) {
       } catch (err) {
         console.log(err);
         self.postMessage({
-          errorType: "expression array error",
+          errorType: "Expression array error",
           errorMessage: `For node "${node.name}" <br/> ${err}`
         });
         sim.errorOccurred = true;
@@ -1252,7 +1252,7 @@ function parseExpressions(sim) {
           //data.modelNodes
         );
         self.postMessage({
-          errorType: "parse error",
+          errorType: "Parse error",
           errorMessage: `For node "${nodeName}"<br/>Expression: ${replacedExpression} <br/> ${err}`
         });
         sim.errorOccurred = true;
@@ -1290,7 +1290,7 @@ function prepExpectedUnits(sim) {
         expectedUnits.push(math.unit(node.unit));
       } catch (err) {
         self.postMessage({
-          errorType: "unit loading error",
+          errorType: "Unit loading error",
           errorMessage: `For node "${node.name}", unit "${node.unit}" <br/> ${err}`,
           errorData: { nodeId: node.id }
         });
@@ -1320,7 +1320,7 @@ function extractTimeSeriesNodesValues(sim, onlyNodeIds = null) {
       } catch (err) {
         //console.log(err);
         self.postMessage({
-          errorType: "results number extraction error",
+          errorType: "Results extraction error",
           errorMessage: `For node "${node.name}", timeSeries [${
             sim.scope.timeSeries.nodes[node.id]
           }] <br/> ${err}`
