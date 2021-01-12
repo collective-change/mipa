@@ -36,7 +36,6 @@
         @close="showAddLink = false"
       />
     </q-dialog>
-    <pre>{{circularNodeIds}}</pre>
   </div>
 </template>
 

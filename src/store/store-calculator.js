@@ -71,6 +71,10 @@ const actions = {
       //console.log(e.data);
       if (typeof e.data == "string") {
         showErrorMessage("Calculation error", e.data);
+        //clear circularNodeIds
+        dispatch("ui/setCircularNodeIds", [], {
+          root: true
+        });
       } else if ("errorType" in e.data) {
         let data = e.data;
         showErrorMessage(
@@ -86,8 +90,13 @@ const actions = {
             data.errorData.map(node => node.id),
             { root: true }
           );
+        } else {
+          //clear circularNodeIds
+          dispatch("ui/setCircularNodeIds", [], { root: true });
         }
       } else if ("resultsType" in e.data) {
+        //clear circularNodeIds
+        dispatch("ui/setCircularNodeIds", [], { root: true });
         switch (e.data.resultsType) {
           case "baseline":
             await dispatch("calcResults/saveBaseline", e.data, { root: true });
@@ -128,6 +137,8 @@ const actions = {
       } else if ("progressValue" in e.data) {
         commit("setCalculationProgress", e.data.progressValue);
       } else {
+        //clear circularNodeIds
+        dispatch("ui/setCircularNodeIds", [], { root: true });
         console.log("Error message received from worker: ", e.data);
         showErrorMessage(
           "Error message received from worker. Please see console log.",
