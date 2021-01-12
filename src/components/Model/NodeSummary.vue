@@ -120,6 +120,7 @@
                 { label: 'log', value: 'mirrorLog' }
               ]"
             />
+            <q-btn size="xs" label="go to node" @click="setSelectedNodeId(chart.nodeId)" />
           </div>
         </div>
       </q-form>
