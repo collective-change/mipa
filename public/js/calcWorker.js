@@ -741,6 +741,7 @@ function iterateThroughTime(sim, scenario) {
 
   /*let completedLoops = 0;
   let expectedUnit = null;*/
+  const totalNodeCount = sim.sortedNodes.length;
 
   timeSPoints.forEach(function(timeS, timeSIndex) {
     if (!sim.errorOccurred) {
@@ -778,7 +779,10 @@ function iterateThroughTime(sim, scenario) {
             sim.errorOccurred = true;
             self.postMessage({
               errorType: "Evaluation error",
-              errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`,
+              errorMessage: `For node "${
+                sim.sortedNodes[nodeIndex].name
+              }",  <br/> ${err} <br/> (node ${nodeIndex +
+                1} of ${totalNodeCount})`,
               errorData: { nodeId: sim.sortedNodes[nodeIndex].id }
             });
           }
@@ -817,7 +821,9 @@ function iterateThroughTime(sim, scenario) {
               sim.errorOccurred = true;
               self.postMessage({
                 errorType: "Unit mismatch",
-                errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}" ${err}`,
+                errorMessage: `For node "${
+                  sim.sortedNodes[nodeIndex].name
+                }" ${err} <br/> (node ${nodeIndex + 1} of ${totalNodeCount})`,
                 errorData: { nodeId: sim.sortedNodes[nodeIndex].id }
               });
             }
