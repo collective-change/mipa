@@ -367,6 +367,15 @@ export default {
             v => v.label.toLowerCase().indexOf(needle) > -1
           );
         }
+        this.filteredNodeOptions.sort((a, b) => {
+          if (a.label.toLowerCase() < b.label.toLowerCase()) {
+            return -1;
+          }
+          if (a.label.toLowerCase() > b.label.toLowerCase()) {
+            return 1;
+          }
+          return 0;
+        });
       });
     },
     abortFilterFn() {
