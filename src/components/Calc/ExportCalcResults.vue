@@ -98,6 +98,7 @@ function prepBaselineArray(calcResults, nodes) {
     "Symbol",
     "Unit",
     "Node ID",
+    "Latest value",
     "Result type",
     ...calcResults.timeSPoints.map(s => {
       let date = new Date(1970, 0, 1);
@@ -114,6 +115,7 @@ function prepBaselineArray(calcResults, nodes) {
       node.symbol,
       node.unit,
       node.id,
+      node.latestValue,
       "baseline",
       ...calcResults.nodesValues[node.id]
     ];
@@ -135,6 +137,7 @@ function prepResultsOfActionArray(calcResults, nodes) {
     "Symbol",
     "Unit",
     "Node ID",
+    "Latest value",
     "Result type",
     ...calcResults.timeSPoints.map(s => {
       let date = new Date(1970, 0, 1);
@@ -181,6 +184,7 @@ function composeActionResultsValueRow(
       node.symbol,
       node.unit,
       node.id,
+      node.latestValue,
       nodesValuesType,
       ...nodesValues[node.id]
     ]);
