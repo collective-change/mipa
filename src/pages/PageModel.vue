@@ -5,16 +5,16 @@
     </div>
 
     <div class="row">
-      <div class="col-12 col-md-2 q-gutter-sm print-hide">
+      <div class="col-12 col-md-2 print-hide">
         <div class="column full-height">
-          <q-scroll-area class="col q-pa-sm" visible>
+          <q-scroll-area class="col" visible>
             <div class="row">
               {{ currentModel ? currentModel.name : "" }}
               {{
               currentModel ? (currentModel.isOrgMainModel ? " (main)" : "") : ""
               }}
             </div>
-            <div class="row">
+            <div class="row q-py-xs">
               <q-btn
                 @click="showConfigOrgModel = true"
                 class="all-pointer-events print-hide"
@@ -22,12 +22,13 @@
                 label="Configure model"
               />
             </div>
-            <div class="row">
+            <div class="row q-py-xs">
               <calculator-ui calculationType="baseline" buttonLabel="Calculate baseline" />
             </div>
-            <div class="row">
+            <div class="row q-py-xs">
               <export-calc-results data-source="baseline" buttonLabel="Export baseline TSV" />
             </div>
+
             <div class="q-pa-xs">
               <div class="row text-h6">Node groups</div>
               <div class="q-py-sm q-gutter-xs">
