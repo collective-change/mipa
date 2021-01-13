@@ -10,6 +10,23 @@
       color="primary"
       label="Add node"
     />
+    <q-select
+      label="Search"
+      v-model="nodeToSearch"
+      @filter="filterFn"
+      @filter-abort="abortFilterFn"
+      :options="filteredNodeOptions"
+      @input="nodeId => { searchNodeId(nodeId) }"
+      emit-value
+      map-options
+      outlined
+      use-input
+      hide-selected
+      fill-input
+      dense
+      style="position: absolute; top: 10px; left: 120px; z-index: 2"
+      bg-color="white"
+    />
 
     <svg
       id="dependencyGraph"
@@ -73,6 +90,8 @@ export default {
       showAddNode: false,
       showDeleteNode: false,
       showAddLink: false,
+      nodeToSearch: null,
+      filteredNodeOptions: [],
       linkTargetType: "",
       svgWidth: svgWidth,
       svgHeight: svgHeight,
@@ -141,6 +160,11 @@ export default {
         return { source: link.source.id, target: link.target.id };
       });
     },*/
+    nodeOptions() {
+      return this.nodes.map(node => {
+        return { label: node.name, value: node.id };
+      });
+    },
     expandedNodeGroups: {
       get() {
         return this.$store.state.ui.expandedNodeGroups;
@@ -188,6 +212,11 @@ export default {
       .on("tick", this.tick);
     // Call first time to setup default values
     this.updateForces();
+
+    //compose option values first, so we don't need to wait
+    //for filteredNodeOptions to compute, which results in q-select
+    //displaying option value instead of option label.
+    this.filteredNodeOptions = this.nodeOptions;
   },
 
   mounted() {
@@ -327,6 +356,25 @@ export default {
       "disbandNodeGroup"
     ]),
     ...mapActions("ui", ["setSelectedNodeId"]),
+
+    filterFn(val, update, abort) {
+      update(() => {
+        if (val === "") {
+          this.filteredNodeOptions = this.nodeOptions;
+        } else {
+          const needle = val.toLowerCase();
+          this.filteredNodeOptions = this.nodeOptions.filter(
+            v => v.label.toLowerCase().indexOf(needle) > -1
+          );
+        }
+      });
+    },
+    abortFilterFn() {
+      // console.log('delayed filter aborted')
+    },
+    searchNodeId(nodeId) {
+      this.setSelectedNodeId(nodeId);
+    },
 
     tick() {
       let that = this;
@@ -1610,7 +1658,7 @@ export default {
     },
 
     selectedNodeId: {
-      // This is for responding to store-calculator setting the selectedNodeId
+      // This is for responding to search and also store-calculator setting the selectedNodeId
       // when reporting an error.
       async handler() {
         // expand the group that the node is in
