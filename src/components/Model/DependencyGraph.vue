@@ -24,7 +24,7 @@
       hide-selected
       fill-input
       dense
-      style="position: absolute; top: 10px; left: 120px; z-index: 2"
+      style="position: absolute; top: 8px; left: 120px; z-index: 2;"
       bg-color="white"
     />
 
