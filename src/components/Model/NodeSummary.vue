@@ -49,7 +49,17 @@
             </tr>
           </thead>
           <tr v-for="influencer in influencerNodesInfo" :key="influencer.id">
-            <td>{{ influencer.name }}</td>
+            <td>
+              <q-btn
+                flat
+                no-caps
+                padding="none"
+                color="white"
+                text-color="black"
+                :label="influencer.name"
+                @click="setSelectedNodeId(influencer.id)"
+              />
+            </td>
             <td>{{ influencer.symbol }}</td>
             <td>{{ influencer.unit }}</td>
           </tr>
@@ -110,6 +120,7 @@
                 { label: 'log', value: 'mirrorLog' }
               ]"
             />
+            <q-btn size="xs" label="go to node" @click="setSelectedNodeId(chart.nodeId)" />
           </div>
         </div>
       </q-form>
@@ -239,6 +250,8 @@ export default {
 
   methods: {
     ...mapActions("model", ["updateNode"]),
+    ...mapActions("ui", ["setSelectedNodeId"]),
+
     isAlphanumeric(str) {
       return str.match(/^[a-z0-9_]+$/i) !== null;
     },
@@ -441,7 +454,7 @@ export default {
           if (differences.length) {
             this.$store.commit("ui/setUiNodeChanged", true);
             this.$store.commit("ui/addUiNodeChangedFields", differences);
-            console.log({ differences });
+            //console.log({ differences });
           }
         } else {
           this.nodeToSubmitIsFreshlyAssigned = false;

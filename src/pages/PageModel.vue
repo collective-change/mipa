@@ -4,79 +4,85 @@
       <span v-if="currentOrg">{{ currentOrg.goal }}</span>
     </div>
 
-    <div class="row q-col-gutter-sm">
+    <div class="row">
       <div class="col-12 col-md-2 q-gutter-sm print-hide">
-        <div class="row">
-          {{ currentModel ? currentModel.name : "" }}
-          {{
-          currentModel ? (currentModel.isOrgMainModel ? " (main)" : "") : ""
-          }}
-        </div>
-        <div class="row">
-          <q-btn
-            @click="showConfigOrgModel = true"
-            class="all-pointer-events print-hide"
-            color="primary"
-            label="Configure model"
-          />
-        </div>
-        <div class="row">
-          <calculator-ui calculationType="baseline" buttonLabel="Calculate baseline" />
-        </div>
-        <div class="row">
-          <export-calc-results data-source="baseline" buttonLabel="Export baseline TSV" />
-        </div>
-        <div class="row text-h6">Node groups</div>
-        <div class="q-gutter-xs">
-          Expand
-          <q-btn label="menu tree" size="sm" @click="expandMenuTree" />
-          <q-btn label="all groups" size="sm" @click="expandAllGroups" />
-        </div>
-        <div class="q-gutter-xs">
-          Collapse
-          <q-btn label="menu tree" size="sm" @click="collapseMenuTree" />
-          <q-btn label="all groups" size="sm" @click="collapseAllGroups" />
-        </div>
-        <div>
-          <q-tree
-            :nodes="nodeGroupsForTree"
-            node-key="id"
-            ref="tree"
-            label-key="name"
-            selected-color="primary"
-            :selected.sync="selectedNodeGroupId"
-            tick-strategy="strict"
-            :ticked.sync="expandedNodeGroups"
-            :expanded.sync="expanded"
-            no-nodes-label="To organize nodes into groups, right click on a node and select 'Start node group', then you can add more nodes to it."
-          >
-            <template v-slot:default-header="{ node }">
-              <div class>{{ node.name }}</div>
-              <div class="row items-center" @click.stop>
-                <q-icon
-                  v-if="node.id == selectedNodeGroupId"
-                  :name="node.icon || 'edit'"
-                  class="q-mr-sm"
-                  color="primary"
-                  right
-                ></q-icon>
-                <q-popup-edit v-model="node.name">
-                  <q-input
-                    :value="node.name"
-                    dense
-                    autofocus
-                    @change="
+        <div class="column full-height">
+          <q-scroll-area class="col q-pa-sm" visible>
+            <div class="row">
+              {{ currentModel ? currentModel.name : "" }}
+              {{
+              currentModel ? (currentModel.isOrgMainModel ? " (main)" : "") : ""
+              }}
+            </div>
+            <div class="row">
+              <q-btn
+                @click="showConfigOrgModel = true"
+                class="all-pointer-events print-hide"
+                color="primary"
+                label="Configure model"
+              />
+            </div>
+            <div class="row">
+              <calculator-ui calculationType="baseline" buttonLabel="Calculate baseline" />
+            </div>
+            <div class="row">
+              <export-calc-results data-source="baseline" buttonLabel="Export baseline TSV" />
+            </div>
+            <div class="q-pa-xs">
+              <div class="row text-h6">Node groups</div>
+              <div class="q-py-sm q-gutter-xs">
+                Expand
+                <q-btn label="menu tree" size="sm" @click="expandMenuTree" />
+                <q-btn label="all groups" size="sm" @click="expandAllGroups" />
+              </div>
+              <div class="q-gutter-xs">
+                Collapse
+                <q-btn label="menu tree" size="sm" @click="collapseMenuTree" />
+                <q-btn label="all groups" size="sm" @click="collapseAllGroups" />
+              </div>
+            </div>
+
+            <q-tree
+              :nodes="nodeGroupsForTree"
+              node-key="id"
+              ref="tree"
+              label-key="name"
+              selected-color="primary"
+              :selected.sync="selectedNodeGroupId"
+              tick-strategy="strict"
+              :ticked.sync="expandedNodeGroups"
+              :expanded.sync="expanded"
+              no-nodes-label="To organize nodes into groups, right click on a node and select 'Start node group', then you can add more nodes to it."
+            >
+              <template v-slot:default-header="{ node }">
+                <div class>{{ node.name }}</div>
+                <div class="row items-center" @click.stop>
+                  <q-icon
+                    v-if="node.id == selectedNodeGroupId"
+                    :name="node.icon || 'edit'"
+                    class="q-mr-sm"
+                    color="primary"
+                    right
+                  ></q-icon>
+                  <q-popup-edit v-model="node.name">
+                    <q-input
+                      :value="node.name"
+                      dense
+                      autofocus
+                      @change="
                       v => {
                         node.name = v.target.value;
                         saveNodeGroupName(node.id, v.target.value);
                       }
                     "
-                  ></q-input>
-                </q-popup-edit>
-              </div>
-            </template>
-          </q-tree>
+                    ></q-input>
+                  </q-popup-edit>
+                </div>
+              </template>
+            </q-tree>
+          </q-scroll-area>
         </div>
+
         <!--<pre>{{nodeGroupsForTree}}</pre>
         <hr />
         <pre>{{currentModel ? currentModel.nodeGroups : 'no node groups'}}</pre>-->
@@ -87,7 +93,11 @@
         <dependency-graph :initialCirclePositions="initialCirclePositions"></dependency-graph>
       </div>
       <div class="col-12 col-md-3">
-        <node-summary />
+        <div class="column full-height">
+          <q-scroll-area class="col q-pa-sm" visible>
+            <node-summary />
+          </q-scroll-area>
+        </div>
       </div>
     </div>
     <q-dialog v-model="showConfigOrgModel">
