@@ -15,7 +15,13 @@ const routes = [
       },
       {
         path: "/org/:orgNameSlug/model/:orgId/:modelId",
+        name: "model",
         component: () => import("pages/PageModel.vue")
+      },
+      {
+        path: "/org/:orgNameSlug/update-model-values/:orgId/:modelId",
+        name: "updateModelValues",
+        component: () => import("pages/PageUpdateModelValues.vue")
       },
       {
         path: "/org/:orgNameSlug/actions/:orgId",
