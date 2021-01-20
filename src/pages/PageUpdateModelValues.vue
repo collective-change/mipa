@@ -27,11 +27,11 @@
           </div>
         </div>
         <div class="q-pa-md">
-          <p>Step 2. Make your changes in the spreadsheet. You may change fields in any column except Node ID.</p>
+          <p>Step 2. Make your changes in the spreadsheet. You may change fields in any column except Node ID. Be careful, as your changes will not be validated before they are saved.</p>
         </div>
 
         <div class="q-pa-md">
-          <p>Step 3. Copy and paste your edited data into the area below and submit.</p>
+          <p>Step 3. Copy and paste your edited version into the area below and submit.</p>
           <div>
             <q-input v-model="text" filled type="textarea" />
           </div>
@@ -51,6 +51,7 @@ import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 //import idb from "src/api/idb";
 import { copyToClipboard } from "quasar";
 import { showErrorMessage } from "src/utils/util-show-error-message";
+import { stripScriptTags } from "src/utils/util-stripTags";
 
 const parse = require("csv-parse/lib/sync");
 
@@ -115,22 +116,37 @@ export default {
       records.forEach((record, index) => {
         let foundNode = this.nodes.find(node => node.id == record["Node ID"]);
         if (foundNode) {
+          let originals = {};
           let changes = {};
+          let latestValueExistenceChanged = false;
+          let symbolChanged = false;
           //compare fields and add to updates array
           fieldsToCompare.forEach(field => {
             if (
-              foundNode[field.dbName] != record[field.tsvName] &&
+              foundNode[field.dbName] !=
+                stripScriptTags(record[field.tsvName]) &&
               !(
                 typeof foundNode[field.dbName] == "undefined" &&
                 record[field.tsvName] == ""
               )
             ) {
-              console.log(
-                `${foundNode.name}: ${field.dbName}: "${
-                  foundNode[field.dbName]
-                }" | "${record[field.tsvName]}"`
-              );
-              changes[field.dbName] = record[field.tsvName];
+              changes[field.dbName] = stripScriptTags(record[field.tsvName]);
+              originals[field.dbName] = foundNode[field.dbName];
+              if (field.dbName == "symbol") symbolChanged = true;
+              if (field.dbName == "latestValue") {
+                let oldLatestVal = foundNode.latestValue;
+                let newLatestVal = stripScriptTags(record["Latest value"]);
+                let oldLatestValIsANumber =
+                  typeof oldLatestVal != "undefined" &&
+                  oldLatestVal !== "" &&
+                  !isNaN(Number(oldLatestVal));
+                let newLatestValIsANumber =
+                  typeof newLatestVal != "undefined" &&
+                  newLatestVal !== "" &&
+                  !isNaN(Number(newLatestVal));
+                latestValueExistenceChanged =
+                  oldLatestValIsANumber != newLatestValIsANumber;
+              }
               numChangedFields++;
             }
           });
@@ -138,7 +154,10 @@ export default {
             changedNodes.push({
               id: foundNode.id,
               name: foundNode.name,
-              changes
+              originals,
+              changes,
+              latestValueExistenceChanged,
+              symbolChanged
             });
             numChangedNodes++;
           }
@@ -152,7 +171,7 @@ export default {
         }
       });
       if (errorOccurred) return;
-      console.log({ changedNodes });
+      //console.log({ changedNodes });
       if (changedNodes.length) {
         this.confirmToUpdate({
           changedNodes,
@@ -163,15 +182,15 @@ export default {
     },
 
     confirmToUpdate(payload) {
-      let message = `${payload.numChangedFields} change(s) found in ${payload.numChangedNodes} node(s):<br>`;
+      let message = `Compared to database, ${payload.numChangedFields} change(s) found in ${payload.numChangedNodes} node(s):<br>`;
       message +=
-        "<table>  <tr> <th>Node</th><th>Field</th><th>Will update to</th></tr>";
+        "<table> <tr> <th>Node</th> <th>Field</th> <th>Change</th> </tr>";
       payload.changedNodes.forEach(node => {
         for (const property in node.changes) {
           message += "<tr>";
           message += `<td class="text-nowrap">${node.name}</td>`;
           message += `<td>${property}</td>`;
-          message += `<td>${node.changes[property]}</td>`;
+          message += `<td>${node.originals[property]} → ${node.changes[property]}</td>`;
           message += "</tr>";
         }
       });
@@ -186,6 +205,11 @@ export default {
         })
         .onOk(() => {
           // console.log('>>>> OK')
+          let payloadToStore = {
+            modelId: this.currentModel.id,
+            changedNodes: payload.changedNodes
+          };
+          this.$store.dispatch("model/updateNodes", payloadToStore);
         })
         .onOk(() => {
           // console.log('>>>> second OK catcher')

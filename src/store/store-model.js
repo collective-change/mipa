@@ -305,7 +305,9 @@ const actions = {
       .set(payload.updates, { merge: true })
       .then(function() {
         //let keys = Object.keys(payload.updates);
-        Notify.create("Node updated!");
+        Notify.create(
+          payload.successNotice ? payload.successNotice : "Node updated!"
+        );
         //if existence of latestValue changed, then run
         //updateClassifiedInfluencersOf on the node's influencees
         if (
@@ -322,8 +324,14 @@ const actions = {
         }
       })
       .catch(function(error) {
-        console.error("Error updating node", error.message);
-        showErrorMessage("Error updating node", error.message);
+        console.error(
+          payload.errorTitle ? payload.errorTitle : "Error updating node",
+          error.message
+        );
+        showErrorMessage(
+          payload.errorTitle ? payload.errorTitle : "Error updating node",
+          error.message
+        );
       });
   },
 
@@ -586,7 +594,9 @@ const actions = {
             id: influenceeId,
             unusedInfluencers: classifiedInfluencers.unused,
             blockingInfluencers: classifiedInfluencers.blocking
-          }
+          },
+          successNotice: `Reclassified influencers of ${influenceeNode.name}`,
+          errorTitle: `Error updating reclassified influencers of ${influenceeNode.name}`
         });
       });
     //console.log("end updateClassifiedInfluencersOf");
@@ -677,6 +687,63 @@ const actions = {
       Notify.create("Failed disband group");
       console.log("disbandNodeGroup transaction failure:", e);
     }
+  },
+
+  updateNodes({ dispatch }, payload) {
+    var nodesRef = firebaseDb
+      .collection("models")
+      .doc(payload.modelId)
+      .collection("nodes");
+
+    const batchArray = [];
+    batchArray.push(firebaseDb.batch());
+    let operationCounter = 0;
+    let batchIndex = 0;
+
+    payload.changedNodes.forEach(changedNode => {
+      batchArray[batchIndex].update(nodesRef.doc(changedNode.id), {
+        ...changedNode.changes,
+        updateTime: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: firebaseAuth.currentUser.uid
+      });
+      operationCounter++;
+
+      if (operationCounter === 499) {
+        batchArray.push(firestore.batch());
+        batchIndex++;
+        operationCounter = 0;
+      }
+    });
+
+    batchArray.forEach(
+      async batch =>
+        await batch
+          .commit()
+          .then(function() {
+            Notify.create("Nodes updated!");
+          })
+          .catch(function(error) {
+            console.error("Error updating nodes", error.message);
+            showErrorMessage("Error updating nodes", error.message);
+          })
+    );
+
+    // run updateClassifiedInfluencersOf on influencees of nodes that
+    // have latestValueExistenceChanged or symbolChanged
+    payload.changedNodes.forEach(changedNode => {
+      if (
+        ("latestValueExistenceChanged" in changedNode &&
+          changedNode.latestValueExistenceChanged) ||
+        ("symbolChanged" in changedNode && changedNode.symbolChanged)
+      ) {
+        let node = state.nodes.find(node => node.id == changedNode.id);
+        let influenceeIds = node.influencees;
+        dispatch("updateClassifiedInfluencersOf", {
+          modelId: payload.modelId,
+          influenceeIds: influenceeIds
+        });
+      }
+    });
   }
 };
 
