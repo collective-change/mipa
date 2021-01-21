@@ -305,25 +305,31 @@ const actions = {
       .set(payload.updates, { merge: true })
       .then(function() {
         //let keys = Object.keys(payload.updates);
-        Notify.create("Node updated!");
-        //if existence of latestValue changed, then run
-        //updateClassifiedInfluencersOf on the node's influencees
+        Notify.create(
+          payload.successNotice ? payload.successNotice : "Node updated!"
+        );
+        //if existence of latestValue changed, then update this nodes'
+        //classification in its influencees
         if (
           ("latestValueExistenceChanged" in payload &&
             payload.latestValueExistenceChanged) ||
           ("symbolChanged" in payload && payload.symbolChanged)
         ) {
-          let node = state.nodes.find(node => node.id == nodeId);
-          let influenceeIds = node.influencees;
-          dispatch("updateClassifiedInfluencersOf", {
+          dispatch("updateNodeClassificationInInfluenceees", {
             modelId: payload.modelId,
-            influenceeIds: influenceeIds
+            nodeId: nodeId
           });
         }
       })
       .catch(function(error) {
-        console.error("Error updating node", error.message);
-        showErrorMessage("Error updating node", error.message);
+        console.error(
+          payload.errorTitle ? payload.errorTitle : "Error updating node",
+          error.message
+        );
+        showErrorMessage(
+          payload.errorTitle ? payload.errorTitle : "Error updating node",
+          error.message
+        );
       });
   },
 
@@ -564,6 +570,17 @@ const actions = {
       });
   },
 
+  updateNodeClassificationInInfluenceees({ dispatch }, payload) {
+    let node = state.nodes.find(node => node.id == payload.nodeId);
+    let influenceeIds = node.influencees;
+    dispatch("updateClassifiedInfluencersOf", {
+      modelId: payload.modelId,
+      influenceeIds: influenceeIds,
+      successNotice: `Reclassified "${node.name}" in its influencees.`,
+      errorTitle: `Error reclassifying "${node.name}" in its influencees.`
+    });
+  },
+
   /* Recalculate classifiedInfluencers (unused and blocking influencers)
   of the node in the payload. */
   updateClassifiedInfluencersOf({ dispatch }, payload) {
@@ -586,7 +603,13 @@ const actions = {
             id: influenceeId,
             unusedInfluencers: classifiedInfluencers.unused,
             blockingInfluencers: classifiedInfluencers.blocking
-          }
+          },
+          successNotice: payload.successNotice
+            ? payload.successNotice
+            : `Reclassified influencers of ${influenceeNode.name}`,
+          errorTitle: payload.errorTitle
+            ? payload.errorTitle
+            : `Error updating reclassified influencers of ${influenceeNode.name}`
         });
       });
     //console.log("end updateClassifiedInfluencersOf");
@@ -677,6 +700,61 @@ const actions = {
       Notify.create("Failed disband group");
       console.log("disbandNodeGroup transaction failure:", e);
     }
+  },
+
+  async updateNodes({ dispatch }, payload) {
+    var nodesRef = firebaseDb
+      .collection("models")
+      .doc(payload.modelId)
+      .collection("nodes");
+
+    const batchArray = [];
+    batchArray.push(firebaseDb.batch());
+    let operationCounter = 0;
+    let batchIndex = 0;
+
+    payload.changedNodes.forEach(changedNode => {
+      batchArray[batchIndex].update(nodesRef.doc(changedNode.id), {
+        ...changedNode.changes,
+        updateTime: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: firebaseAuth.currentUser.uid
+      });
+      operationCounter++;
+
+      if (operationCounter === 499) {
+        batchArray.push(firestore.batch());
+        batchIndex++;
+        operationCounter = 0;
+      }
+    });
+
+    await Promise.all(
+      batchArray.map(async batch => {
+        await batch.commit();
+      })
+    )
+      .then(function() {
+        Notify.create("Nodes updated!");
+      })
+      .catch(function(error) {
+        console.error("Error updating nodes", error.message);
+        showErrorMessage("Error updating nodes", error.message);
+      });
+
+    // run updateNodeClassificationInInfluenceees on nodes that
+    // have latestValueExistenceChanged or symbolChanged
+    payload.changedNodes.forEach(changedNode => {
+      if (
+        ("latestValueExistenceChanged" in changedNode &&
+          changedNode.latestValueExistenceChanged) ||
+        ("symbolChanged" in changedNode && changedNode.symbolChanged)
+      ) {
+        dispatch("updateNodeClassificationInInfluenceees", {
+          modelId: payload.modelId,
+          nodeId: changedNode.id
+        });
+      }
+    });
   }
 };
 

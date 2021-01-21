@@ -263,17 +263,17 @@ export default {
     },
     submitNode() {
       let oldLatestVal = this.selectedNode.latestValue;
-      let newCurrentVal = this.nodeToSubmit.latestValue;
+      let newLatestVal = this.nodeToSubmit.latestValue;
       let oldLatestValIsANumber =
         typeof oldLatestVal != "undefined" &&
         oldLatestVal !== "" &&
         !isNaN(Number(oldLatestVal));
-      let newCurrentValIsANumber =
-        typeof newCurrentVal != "undefined" &&
-        newCurrentVal !== "" &&
-        !isNaN(Number(newCurrentVal));
+      let newLatestValIsANumber =
+        typeof newLatestVal != "undefined" &&
+        newLatestVal !== "" &&
+        !isNaN(Number(newLatestVal));
       let latestValueExistenceChanged =
-        oldLatestValIsANumber != newCurrentValIsANumber;
+        oldLatestValIsANumber != newLatestValIsANumber;
 
       let oldSymbol = this.selectedNode.symbol;
       let newSymbol = this.nodeToSubmit.symbol;
