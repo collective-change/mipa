@@ -425,20 +425,20 @@ export default {
         .style("color", "black");
 
       // Create 3 functions to show / update (when mouse move but stay on same circle) / hide the tooltip
-      var showTooltip = function(d) {
+      var showTooltip = function(event, d) {
         tooltip.transition().duration(200);
         tooltip
           .style("opacity", 1)
           .html(d.title)
-          .style("left", d3.pointer(this)[0] + margin.left - 0 + "px")
-          .style("top", d3.pointer(this)[1] + margin.top + 20 + "px");
+          .style("left", d3.pointer(event)[0] + margin.left - 0 + "px")
+          .style("top", d3.pointer(event)[1] + margin.top + 20 + "px");
       };
-      var moveTooltip = function(d) {
+      var moveTooltip = function(event, d) {
         tooltip
-          .style("left", d3.pointer(this)[0] + margin.left - 0 + "px")
-          .style("top", d3.pointer(this)[1] + margin.top + 20 + "px");
+          .style("left", d3.pointer(event)[0] + margin.left - 0 + "px")
+          .style("top", d3.pointer(event)[1] + margin.top + 20 + "px");
       };
-      var hideTooltip = function(d) {
+      var hideTooltip = function(event, d) {
         tooltip
           //.transition()
           //.duration(200)
@@ -471,7 +471,7 @@ export default {
         .on("mouseover", showTooltip)
         .on("mousemove", moveTooltip)
         .on("mouseleave", hideTooltip)
-        .on("click", function(d, i) {
+        .on("click", function(event, d, i) {
           that.bubbleClick(d, i, "regularClick");
         });
 
