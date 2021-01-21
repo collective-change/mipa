@@ -71,6 +71,11 @@
           prefix="="
           autogrow
           debounce="800"
+          :rules="[
+            val =>
+              this.isAllowedInFormula(val) ||
+              'Disallowed character detected'
+          ]"
         />
         <div v-if="parserError == '' && latexFormula">
           <vue-mathjax :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"></vue-mathjax>
@@ -254,6 +259,9 @@ export default {
 
     isAlphanumeric(str) {
       return str.match(/^[a-z0-9_]+$/i) !== null;
+    },
+    isAllowedInFormula(str) {
+      return str.match(/^[a-z0-9 _,=<>/:%\-\(\)\+\^\.\?\*]+$/i) !== null;
     },
     submitForm() {
       this.$refs.nodeName.validate();
