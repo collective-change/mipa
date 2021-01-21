@@ -1,48 +1,47 @@
 <template>
-  <q-page padding>
-    <div class="text-h5">
+  <q-page>
+    <div class="q-mx-sm text-h5">
       <span v-if="currentOrg">{{ currentOrg.goal }}</span>
     </div>
 
     <div class="row">
-      <div class="col-12 col-md-2 print-hide">
+      <div class="col-12 col-md-2 print-hide q-pl-sm">
         <div class="column full-height">
+          <div class="row">
+            {{ currentModel ? currentModel.name : "" }}
+            {{
+            currentModel ? (currentModel.isOrgMainModel ? " (main)" : "") : ""
+            }}
+          </div>
+          <div class="row q-ma-xs">
+            <q-btn
+              @click="showConfigOrgModel = true"
+              class="all-pointer-events print-hide"
+              color="primary"
+              label="Configure model"
+            />
+          </div>
+          <div class="row q-ma-xs">
+            <calculator-ui calculationType="baseline" buttonLabel="Calculate baseline" />
+          </div>
+          <div class="row q-ma-xs">
+            <export-calc-results data-source="baseline" buttonLabel="Export baseline TSV" />
+          </div>
+
+          <div>
+            <div class="row text-h6">Node groups</div>
+            <div class="q-ma-xs q-gutter-xs">
+              Expand
+              <q-btn label="menu tree" size="sm" @click="expandMenuTree" />
+              <q-btn label="all groups" size="sm" @click="expandAllGroups" />
+            </div>
+            <div class="q-ma-xs q-gutter-xs">
+              Collapse
+              <q-btn label="menu tree" size="sm" @click="collapseMenuTree" />
+              <q-btn label="all groups" size="sm" @click="collapseAllGroups" />
+            </div>
+          </div>
           <q-scroll-area class="col" visible>
-            <div class="row">
-              {{ currentModel ? currentModel.name : "" }}
-              {{
-              currentModel ? (currentModel.isOrgMainModel ? " (main)" : "") : ""
-              }}
-            </div>
-            <div class="row q-py-xs">
-              <q-btn
-                @click="showConfigOrgModel = true"
-                class="all-pointer-events print-hide"
-                color="primary"
-                label="Configure model"
-              />
-            </div>
-            <div class="row q-py-xs">
-              <calculator-ui calculationType="baseline" buttonLabel="Calculate baseline" />
-            </div>
-            <div class="row q-py-xs">
-              <export-calc-results data-source="baseline" buttonLabel="Export baseline TSV" />
-            </div>
-
-            <div class="q-pa-xs">
-              <div class="row text-h6">Node groups</div>
-              <div class="q-py-sm q-gutter-xs">
-                Expand
-                <q-btn label="menu tree" size="sm" @click="expandMenuTree" />
-                <q-btn label="all groups" size="sm" @click="expandAllGroups" />
-              </div>
-              <div class="q-gutter-xs">
-                Collapse
-                <q-btn label="menu tree" size="sm" @click="collapseMenuTree" />
-                <q-btn label="all groups" size="sm" @click="collapseAllGroups" />
-              </div>
-            </div>
-
             <q-tree
               :nodes="nodeGroupsForTree"
               node-key="id"
