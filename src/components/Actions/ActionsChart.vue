@@ -197,9 +197,8 @@ export default {
     },
 
     getBlockingLinks(blockingRelationships) {
-      let links = [];
+      let chartableLinks = [];
       blockingRelationships.forEach(relationship => {
-        console.log(relationship);
         let blockerSouth = this.getPole(relationship.blockerId, "south");
         let blockeeNorth = this.getPole(relationship.blockeeId, "north");
         let source = blockerSouth
@@ -212,9 +211,9 @@ export default {
           : blockerSouth
           ? [blockerSouth[0], blockerSouth[1] + 30]
           : null;
-        if (source && target) links.push({ source, target });
+        if (source && target) chartableLinks.push({ source, target });
       });
-      return links;
+      return chartableLinks;
     },
 
     getPole(actionId, direction) {
