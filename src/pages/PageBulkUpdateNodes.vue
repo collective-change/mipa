@@ -114,60 +114,62 @@ export default {
         { dbName: "latestValue", tsvName: "Latest value" }
       ];
       records.forEach((record, index) => {
-        let foundNode = this.nodes.find(node => node.id == record["Node ID"]);
-        if (foundNode) {
-          let originals = {};
-          let changes = {};
-          let latestValueExistenceChanged = false;
-          let symbolChanged = false;
-          //compare fields and add to updates array
-          fieldsToCompare.forEach(field => {
-            if (
-              foundNode[field.dbName] !=
-                stripScriptTags(record[field.tsvName]) &&
-              !(
-                typeof foundNode[field.dbName] == "undefined" &&
-                record[field.tsvName] == ""
-              )
-            ) {
-              changes[field.dbName] = stripScriptTags(record[field.tsvName]);
-              originals[field.dbName] = foundNode[field.dbName];
-              if (field.dbName == "symbol") symbolChanged = true;
-              if (field.dbName == "latestValue") {
-                let oldLatestVal = foundNode.latestValue;
-                let newLatestVal = stripScriptTags(record["Latest value"]);
-                let oldLatestValIsANumber =
-                  typeof oldLatestVal != "undefined" &&
-                  oldLatestVal !== "" &&
-                  !isNaN(Number(oldLatestVal));
-                let newLatestValIsANumber =
-                  typeof newLatestVal != "undefined" &&
-                  newLatestVal !== "" &&
-                  !isNaN(Number(newLatestVal));
-                latestValueExistenceChanged =
-                  oldLatestValIsANumber != newLatestValIsANumber;
+        if (!errorOccurred) {
+          let foundNode = this.nodes.find(node => node.id == record["Node ID"]);
+          if (foundNode) {
+            let originals = {};
+            let changes = {};
+            let latestValueExistenceChanged = false;
+            let symbolChanged = false;
+            //compare fields and add to updates array
+            fieldsToCompare.forEach(field => {
+              if (
+                foundNode[field.dbName] !=
+                  stripScriptTags(record[field.tsvName]) &&
+                !(
+                  typeof foundNode[field.dbName] == "undefined" &&
+                  record[field.tsvName] == ""
+                )
+              ) {
+                changes[field.dbName] = stripScriptTags(record[field.tsvName]);
+                originals[field.dbName] = foundNode[field.dbName];
+                if (field.dbName == "symbol") symbolChanged = true;
+                if (field.dbName == "latestValue") {
+                  let oldLatestVal = foundNode.latestValue;
+                  let newLatestVal = stripScriptTags(record["Latest value"]);
+                  let oldLatestValIsANumber =
+                    typeof oldLatestVal != "undefined" &&
+                    oldLatestVal !== "" &&
+                    !isNaN(Number(oldLatestVal));
+                  let newLatestValIsANumber =
+                    typeof newLatestVal != "undefined" &&
+                    newLatestVal !== "" &&
+                    !isNaN(Number(newLatestVal));
+                  latestValueExistenceChanged =
+                    oldLatestValIsANumber != newLatestValIsANumber;
+                }
+                numChangedFields++;
               }
-              numChangedFields++;
-            }
-          });
-          if (Object.keys(changes).length > 0) {
-            changedNodes.push({
-              id: foundNode.id,
-              name: foundNode.name,
-              originals,
-              changes,
-              latestValueExistenceChanged,
-              symbolChanged
             });
-            numChangedNodes++;
+            if (Object.keys(changes).length > 0) {
+              changedNodes.push({
+                id: foundNode.id,
+                name: foundNode.name,
+                originals,
+                changes,
+                latestValueExistenceChanged,
+                symbolChanged
+              });
+              numChangedNodes++;
+            }
+            //dispatch store action to batch write to firestore
+          } else {
+            errorOccurred = true;
+            showErrorMessage(
+              "Error matching data",
+              `Node ID not found: "${record["Node ID"]}" on line "${index + 2}"`
+            );
           }
-          //dispatch store action to batch write to firestore
-        } else {
-          errorOccurred = true;
-          showErrorMessage(
-            "Error matching data",
-            `Node ID not found: "${record["Node ID"]}" on line "${index + 2}"`
-          );
         }
       });
       if (errorOccurred) return;

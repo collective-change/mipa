@@ -308,8 +308,8 @@ export default {
             },
             { text: this.$t("Units"), to: "/placeholder", disable: true },
             {
-              text: this.$t("Update values"),
-              to: `/org/${this.orgNameSlug}/update-model-values/${this.orgId}/${this.modelId}`
+              text: this.$t("Bulk update"),
+              to: `/org/${this.orgNameSlug}/model-bulk-update-nodes/${this.orgId}/${this.modelId}`
             },
             { text: this.$t("Analysis"), to: "/placeholder", disable: true },
             {

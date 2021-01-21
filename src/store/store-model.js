@@ -308,18 +308,16 @@ const actions = {
         Notify.create(
           payload.successNotice ? payload.successNotice : "Node updated!"
         );
-        //if existence of latestValue changed, then run
-        //updateClassifiedInfluencersOf on the node's influencees
+        //if existence of latestValue changed, then update this nodes'
+        //classification in its influencees
         if (
           ("latestValueExistenceChanged" in payload &&
             payload.latestValueExistenceChanged) ||
           ("symbolChanged" in payload && payload.symbolChanged)
         ) {
-          let node = state.nodes.find(node => node.id == nodeId);
-          let influenceeIds = node.influencees;
-          dispatch("updateClassifiedInfluencersOf", {
+          dispatch("updateNodeClassificationInInfluenceees", {
             modelId: payload.modelId,
-            influenceeIds: influenceeIds
+            nodeId: nodeId
           });
         }
       })
@@ -572,6 +570,17 @@ const actions = {
       });
   },
 
+  updateNodeClassificationInInfluenceees({ dispatch }, payload) {
+    let node = state.nodes.find(node => node.id == payload.nodeId);
+    let influenceeIds = node.influencees;
+    dispatch("updateClassifiedInfluencersOf", {
+      modelId: payload.modelId,
+      influenceeIds: influenceeIds,
+      successNotice: `Reclassified "${node.name}" in its influencees.`,
+      errorTitle: `Error reclassifying "${node.name}" in its influencees.`
+    });
+  },
+
   /* Recalculate classifiedInfluencers (unused and blocking influencers)
   of the node in the payload. */
   updateClassifiedInfluencersOf({ dispatch }, payload) {
@@ -595,8 +604,12 @@ const actions = {
             unusedInfluencers: classifiedInfluencers.unused,
             blockingInfluencers: classifiedInfluencers.blocking
           },
-          successNotice: `Reclassified influencers of ${influenceeNode.name}`,
-          errorTitle: `Error updating reclassified influencers of ${influenceeNode.name}`
+          successNotice: payload.successNotice
+            ? payload.successNotice
+            : `Reclassified influencers of ${influenceeNode.name}`,
+          errorTitle: payload.errorTitle
+            ? payload.errorTitle
+            : `Error updating reclassified influencers of ${influenceeNode.name}`
         });
       });
     //console.log("end updateClassifiedInfluencersOf");
@@ -689,7 +702,7 @@ const actions = {
     }
   },
 
-  updateNodes({ dispatch }, payload) {
+  async updateNodes({ dispatch }, payload) {
     var nodesRef = firebaseDb
       .collection("models")
       .doc(payload.modelId)
@@ -715,20 +728,20 @@ const actions = {
       }
     });
 
-    batchArray.forEach(
-      async batch =>
-        await batch
-          .commit()
-          .then(function() {
-            Notify.create("Nodes updated!");
-          })
-          .catch(function(error) {
-            console.error("Error updating nodes", error.message);
-            showErrorMessage("Error updating nodes", error.message);
-          })
-    );
+    await Promise.all(
+      batchArray.map(async batch => {
+        await batch.commit();
+      })
+    )
+      .then(function() {
+        Notify.create("Nodes updated!");
+      })
+      .catch(function(error) {
+        console.error("Error updating nodes", error.message);
+        showErrorMessage("Error updating nodes", error.message);
+      });
 
-    // run updateClassifiedInfluencersOf on influencees of nodes that
+    // run updateNodeClassificationInInfluenceees on nodes that
     // have latestValueExistenceChanged or symbolChanged
     payload.changedNodes.forEach(changedNode => {
       if (
@@ -736,11 +749,9 @@ const actions = {
           changedNode.latestValueExistenceChanged) ||
         ("symbolChanged" in changedNode && changedNode.symbolChanged)
       ) {
-        let node = state.nodes.find(node => node.id == changedNode.id);
-        let influenceeIds = node.influencees;
-        dispatch("updateClassifiedInfluencersOf", {
+        dispatch("updateNodeClassificationInInfluenceees", {
           modelId: payload.modelId,
-          influenceeIds: influenceeIds
+          nodeId: changedNode.id
         });
       }
     });

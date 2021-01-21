@@ -19,9 +19,9 @@ const routes = [
         component: () => import("pages/PageModel.vue")
       },
       {
-        path: "/org/:orgNameSlug/update-model-values/:orgId/:modelId",
-        name: "updateModelValues",
-        component: () => import("pages/PageUpdateModelValues.vue")
+        path: "/org/:orgNameSlug/model-bulk-update-nodes/:orgId/:modelId",
+        name: "bulkUpdateNodes",
+        component: () => import("pages/PageBulkUpdateNodes.vue")
       },
       {
         path: "/org/:orgNameSlug/actions/:orgId",

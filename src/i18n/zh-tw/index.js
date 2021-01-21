@@ -39,7 +39,7 @@ export default {
   ModelNoun: "模型",
   model: "發展模型",
   Units: "計量單位",
-  "Update values": "更新數值",
+  "Bulk update": "批量更新",
   Analysis: "分析",
   "Model templates": "模型模板",
 
