@@ -199,16 +199,20 @@ export default {
     getBlockingLinks(blockingRelationships) {
       let links = [];
       blockingRelationships.forEach(relationship => {
+        console.log(relationship);
         let blockerSouth = this.getPole(relationship.blockerId, "south");
         let blockeeNorth = this.getPole(relationship.blockeeId, "north");
         let source = blockerSouth
           ? blockerSouth
-          : [blockeeNorth[0], blockeeNorth[1] - 30];
+          : blockeeNorth
+          ? [blockeeNorth[0], blockeeNorth[1] - 30]
+          : null;
         let target = blockeeNorth
           ? blockeeNorth
-          : [blockerSouth[0], blockerSouth[1] + 30];
-
-        links.push({ source, target });
+          : blockerSouth
+          ? [blockerSouth[0], blockerSouth[1] + 30]
+          : null;
+        if (source && target) links.push({ source, target });
       });
       return links;
     },
