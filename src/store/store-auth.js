@@ -4,7 +4,8 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 
 const state = {
   loggedIn: false,
-  userId: null
+  userId: null,
+  user: null
 };
 
 const mutations = {
@@ -13,6 +14,9 @@ const mutations = {
   },
   setUserId(state, value) {
     state.userId = value;
+  },
+  setUser(state, value) {
+    state.user = value;
   }
 };
 
@@ -26,6 +30,7 @@ const actions = {
           .collection("users")
           .doc(cred.user.uid)
           .set({
+            email: payload.email,
             registrationTime: firebase.firestore.FieldValue.serverTimestamp()
           });
       })
@@ -68,6 +73,23 @@ const actions = {
         // User is signed in.
         commit("setLoggedIn", true);
         commit("setUserId", firebaseAuth.currentUser.uid);
+        let authUserInfo = {
+          displayName: user.displayName,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          photoURL: user.photoURL,
+          uid: user.uid,
+          phoneNumber: user.phoneNumber,
+          providerData: user.providerData
+        };
+        commit("setUser", authUserInfo);
+        delete authUserInfo.phoneNumber;
+        delete authUserInfo.providerData;
+        dispatch(
+          "users/updateUser",
+          { id: user.uid, updates: authUserInfo },
+          { root: true }
+        );
         LocalStorage.set("loggedIn", true);
         if (this.$router.currentRoute.path == "/auth") {
           this.$router.push("/");
@@ -75,6 +97,7 @@ const actions = {
       } else {
         commit("setLoggedIn", false);
         commit("setUserId", null);
+        commit("setUser", null);
         LocalStorage.set("loggedIn", false);
         this.$router.replace("/auth");
         //commit("tasks/clearTasks", null, { root: true });

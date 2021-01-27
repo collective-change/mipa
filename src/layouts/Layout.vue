@@ -159,9 +159,9 @@
               >{{ $t(button.text) }}</a>
             </div>
           </div>
-          <div v-if="loggedIn" class="q-py-md q-px-md text-grey-9">
+          <!-- <div v-if="loggedIn" class="q-py-md q-px-md text-grey-9">
             <div class="row items-center q-gutter-x-sm q-gutter-y-xs">User id: {{ userId }}</div>
-          </div>
+          </div>-->
         </q-list>
       </q-scroll-area>
     </q-drawer>
@@ -213,13 +213,10 @@ export default {
   },
   computed: {
     ...mapState("auth", ["loggedIn", "userId"]),
+    ...mapState("users", ['currentUser']),
     ...mapState("model", ["currentModel"]),
     ...mapState("orgs", ["orgs", "currentOrg"]),
     ...mapState("adHocDocs", ["exchangeRates", "appSummary"]),
-
-    currentUser() {
-      return firebaseAuth.currentUser;
-    },
 
     currentRoute() {
       return this.$route.path;
@@ -429,6 +426,17 @@ export default {
     if (orgId) {
       this.bindMinimalOrgRelatedData(orgId);
     }
+
+    (async () => {
+      while (
+        !firebaseAuth.currentUser // define the condition as you like
+      )
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+      this.$store.dispatch("users/bindCurrentUser")
+    })();
+
+
   },
   mounted() {
     if (this.$q.cookies.has("locale")) {
@@ -438,6 +446,7 @@ export default {
   beforeDestroy() {
     this.unbindAllOrgRelatedData();
     this.unbindPublicData();
+    this.$store.dispatch("users/unbindCurrentUser")
   },
   watch: {
     $route(newRoute, oldRoute) {
@@ -484,6 +493,12 @@ export default {
               }
             });
         }
+      }
+    },
+
+    currentOrg (newCurrentOrg, oldCurrentOrg){
+      if (newCurrentOrg && oldCurrentOrg==null || newCurrentOrg.users.length != oldCurrentOrg.users.length) {
+        this.$store.dispatch("users/bindCurrentOrgUsers", newCurrentOrg.users);
       }
     }
   }

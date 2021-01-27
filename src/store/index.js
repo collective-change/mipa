@@ -12,6 +12,7 @@ import calculator from "./store-calculator";
 import calcResults from "./store-calcResults";
 import ui from "./store-ui";
 import uiAction from "./store-uiAction";
+import users from "./store-users";
 
 Vue.use(Vuex);
 
@@ -36,7 +37,8 @@ export default function(/* { ssrContext } */) {
       calculator,
       calcResults,
       ui,
-      uiAction
+      uiAction,
+      users
     },
 
     // enable strict mode (adds overhead!)

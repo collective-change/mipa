@@ -90,45 +90,48 @@
           hint="Only used if a delay function with 'best_guess' as initial value references this node."
           debounce="300"
         />
+        <div style="height: 15px"></div>
+        <select-user label="Responsible person" v-model="nodeToSubmit.responsiblePerson" />
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
-        <div v-if="nodeChart.chartData.length > 0">
-          <gchart
-            v-if="nodeChart.chartData.length > 0"
-            type="LineChart"
-            :data="nodeChart.chartData"
-            :options="nodeChart.chartOptions"
-          />
-          <div class="row justify-center">
-            <q-btn-toggle
-              v-model="nodeChart.chartOptions.vAxis.scaleType"
-              toggle-color="primary"
-              size="xs"
-              :options="[
-                { label: 'linear', value: 'linear' },
-                { label: 'log', value: 'mirrorLog' }
-              ]"
-            />
-          </div>
-        </div>
-
-        <div v-if="influencerChartsArr.length" class="text-h6">Influencers</div>
-        <div v-for="chart in influencerChartsArr" :key="chart.nodeId" class="q-pa-md">
-          <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
-          <div class="row justify-center q-gutter-x-md">
-            <q-btn-toggle
-              v-model="chart.chartOptions.vAxis.scaleType"
-              action-color="primary"
-              size="xs"
-              :options="[
-                { label: 'linear', value: 'linear' },
-                { label: 'log', value: 'mirrorLog' }
-              ]"
-            />
-            <q-btn size="xs" label="go to node" @click="setSelectedNodeId(chart.nodeId)" />
-          </div>
-        </div>
       </q-form>
+
+      <div v-if="nodeChart.chartData.length > 0">
+        <gchart
+          v-if="nodeChart.chartData.length > 0"
+          type="LineChart"
+          :data="nodeChart.chartData"
+          :options="nodeChart.chartOptions"
+        />
+        <div class="row justify-center">
+          <q-btn-toggle
+            v-model="nodeChart.chartOptions.vAxis.scaleType"
+            toggle-color="primary"
+            size="xs"
+            :options="[
+                { label: 'linear', value: 'linear' },
+                { label: 'log', value: 'mirrorLog' }
+              ]"
+          />
+        </div>
+      </div>
+
+      <div v-if="influencerChartsArr.length" class="text-h6">Influencers</div>
+      <div v-for="chart in influencerChartsArr" :key="chart.nodeId" class="q-pa-md">
+        <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
+        <div class="row justify-center q-gutter-x-md">
+          <q-btn-toggle
+            v-model="chart.chartOptions.vAxis.scaleType"
+            action-color="primary"
+            size="xs"
+            :options="[
+                { label: 'linear', value: 'linear' },
+                { label: 'log', value: 'mirrorLog' }
+              ]"
+          />
+          <q-btn size="xs" label="go to node" @click="setSelectedNodeId(chart.nodeId)" />
+        </div>
+      </div>
 
       <p>Node ID: {{ nodeToSubmit.id }}</p>
       <!--
@@ -149,13 +152,15 @@ import { mapActions, mapGetters, mapState } from "vuex";
 import { parse, toTex } from "mathjs";
 import { VueMathjax } from "vue-mathjax";
 import { GChart } from "vue-google-charts";
-import { getAcronym } from "src/utils/util-getAcronym";
 import { showErrorMessage } from "src/utils/util-show-error-message";
 import { classifyInfluencers } from "src/utils/util-node-operations";
+import SelectUser from '../Users/SelectUser.vue';
 
 export default {
   components: {
     "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
+      .default,
+      "select-user": require("components/Users/SelectUser.vue")
       .default,
     gchart: GChart,
     "vue-mathjax": VueMathjax
@@ -168,7 +173,6 @@ export default {
       nodeToSubmitIsFreshlyAssigned: false,
       model: null,
       parserError: "",
-
       nodeChart: {
         chartData: [],
         chartOptions: {
@@ -187,6 +191,7 @@ export default {
       "uiNodeChangedFields"
     ]),
     ...mapState("calcResults", ["baseline"]),
+    ...mapState("orgs", ["currentOrg"]),
     ...mapGetters("model", ["nodes", "links"]),
 
     selectedNode() {
@@ -250,7 +255,7 @@ export default {
           })
         : "";
       console.log("LaTeX expression:", latex);
-    }
+    },
   },
 
   methods: {
@@ -414,7 +419,7 @@ export default {
       const found = this.nodes.find(node => node.id == nodeId);
       if (found) return found.unit;
       else return "";
-    }
+    },
   },
 
   mounted() {
