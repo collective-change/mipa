@@ -35,7 +35,7 @@
       style="border: black; border-style: solid; border-width: 0px"
     />
 
-    <p class="print-hide">Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.</p>
+    <p class="print-hide">Right-click on node or link to show menu.</p>
     <q-dialog v-model="showAddNode">
       <add-node
         :sourceNodeId="addNodeProps.sourceNodeId"
@@ -324,11 +324,6 @@ export default {
     function myDelta(event) {
       return (-event.deltaY * (event.deltaMode ? 120 : 1)) / 1500;
     }
-
-    //require ctrlKey in addition to mouse
-    this.zoom.filter(function(event, d) {
-      return event.ctrlKey;
-    });
 
     this.selections.graph = svg.append("g");
     const graph = this.selections.graph;
