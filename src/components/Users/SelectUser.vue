@@ -11,7 +11,6 @@
       v-bind:value="value"
       v-on:input="value => $emit('input', value)"
     />
-    <pre>{{currentOrgUsers}}</pre>
   </div>
 </template>
 

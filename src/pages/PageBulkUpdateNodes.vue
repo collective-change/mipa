@@ -63,12 +63,13 @@ export default {
   computed: {
     ...mapState("orgs", ["currentOrg"]),
     ...mapState("model", ["currentModel"]),
-    ...mapGetters("model", ["nodes"])
+    ...mapGetters("model", ["nodes"]),
+    ...mapGetters("users", ["currentOrgUsers"])
   },
 
   methods: {
     copyUpdateTemplateToClipboard() {
-      let tsvContent = prepUpdateTemplate(this.nodes)
+      let tsvContent = this.prepUpdateTemplate(this.nodes)
         .map(e => e.join("\t"))
         .join("\n");
       copyToClipboard(tsvContent)
@@ -111,7 +112,8 @@ export default {
         { dbName: "symbol", tsvName: "Symbol" },
         { dbName: "unit", tsvName: "Unit" },
         { dbName: "symbolFormula", tsvName: "Formula" },
-        { dbName: "latestValue", tsvName: "Latest value" }
+        { dbName: "latestValue", tsvName: "Latest value" },
+        { dbName: "responsiblePerson", tsvName: "Responsible person" },
       ];
       records.forEach((record, index) => {
         if (!errorOccurred) {
@@ -119,20 +121,54 @@ export default {
           if (foundNode) {
             let originals = {};
             let changes = {};
+            let originalsForConfirmationDialog = {};
+            let changesForConfirmationDialog = {};
             let latestValueExistenceChanged = false;
             let symbolChanged = false;
             //compare fields and add to updates array
             fieldsToCompare.forEach(field => {
-              if (
-                foundNode[field.dbName] !=
-                  stripScriptTags(record[field.tsvName]) &&
+              let newValue = "";
+              let newValueForConfirmationDialog = "";
+              let originalValueForConfirmationDialog = "";
+              switch (field.tsvName) {
+                  case "Responsible person":
+                    if (record["Responsible person"]) {
+                      let foundUser = null;
+                      let foundOriginalUser = null;
+                      foundUser = this.currentOrgUsers.find(u => u.email == record["Responsible person"]);
+                      if (foundUser) {
+                        newValue = foundUser.id;
+                        newValueForConfirmationDialog = foundUser.email;
+                      } else {errorOccurred = true;
+                        showErrorMessage(
+                          "Error matching responsible person",
+                          `Email not found: "${record["Responsible person"]}" on line "${index + 2}"`
+                        );
+                      }
+                      if (foundNode["responsiblePerson"]) {
+                        foundOriginalUser = this.currentOrgUsers.find(u => u.id == foundNode["responsiblePerson"]);
+                        if (foundOriginalUser) {
+                          originalValueForConfirmationDialog = foundOriginalUser.email;
+                        }
+                      }
+                    } 
+                    break;
+                  default:
+                    newValue = stripScriptTags(record[field.tsvName]);
+                    newValueForConfirmationDialog = newValue;
+                    originalValueForConfirmationDialog = foundNode[field.dbName];
+                    //originals[field.dbName] = foundNode[field.dbName];
+              }
+              if ( foundNode[field.dbName] != newValue &&
                 !(
                   typeof foundNode[field.dbName] == "undefined" &&
-                  record[field.tsvName] == ""
+                  newValue == ""
                 )
               ) {
-                changes[field.dbName] = stripScriptTags(record[field.tsvName]);
+                changes[field.dbName] = newValue;
+                changesForConfirmationDialog[field.dbName] = newValueForConfirmationDialog;
                 originals[field.dbName] = foundNode[field.dbName];
+                originalsForConfirmationDialog[field.dbName] = originalValueForConfirmationDialog;
                 if (field.dbName == "symbol") symbolChanged = true;
                 if (field.dbName == "latestValue") {
                   let oldLatestVal = foundNode.latestValue;
@@ -157,6 +193,8 @@ export default {
                 name: foundNode.name,
                 originals,
                 changes,
+                originalsForConfirmationDialog,
+                changesForConfirmationDialog,
                 latestValueExistenceChanged,
                 symbolChanged
               });
@@ -178,7 +216,7 @@ export default {
         this.confirmToUpdate({
           changedNodes,
           numChangedFields,
-          numChangedNodes
+          numChangedNodes,
         });
       } else showErrorMessage("No changes found", "The data has not changed.");
     },
@@ -192,7 +230,7 @@ export default {
           message += "<tr>";
           message += `<td class="text-nowrap">${node.name}</td>`;
           message += `<td>${property}</td>`;
-          message += `<td>${node.originals[property]} → ${node.changes[property]}</td>`;
+          message += `<td>${node.originalsForConfirmationDialog[property]} → ${node.changesForConfirmationDialog[property]}</td>`;
           message += "</tr>";
         }
       });
@@ -222,7 +260,42 @@ export default {
         .onDismiss(() => {
           // console.log('I am triggered on both OK and Cancel')
         });
+    },
+
+    prepUpdateTemplate(nodes) {
+
+      let that = this;
+      let tempRow = [];
+      let rows = [];
+      let sortedNodes = JSON.parse(JSON.stringify(nodes)).sort(sortByName);
+
+      //compose header row
+      tempRow = ["Name", "Symbol", "Unit", "Formula", "Node ID", "Latest value", "Responsible person"];
+      rows.push(tempRow);
+
+      //compose values rows
+      sortedNodes.forEach(function(node) {
+        let responsiblePersonEmail = null;
+        let foundUser = null;
+        if (node.responsiblePerson) {
+          foundUser = that.currentOrgUsers.find(u => u.id == node.responsiblePerson);
+        }
+        if (foundUser) responsiblePersonEmail = foundUser.email;
+        tempRow = [
+          node.name,
+          node.symbol,
+          node.unit,
+          node.symbolFormula,
+          node.id,
+          node.latestValue,
+          responsiblePersonEmail
+        ];
+        rows.push(tempRow);
+      });
+
+      return rows;
     }
+    
   },
 
   watch: {},
@@ -246,31 +319,6 @@ export default {
   },
   mounted() {}
 };
-
-function prepUpdateTemplate(nodes) {
-  let tempRow = [];
-  let rows = [];
-  let sortedNodes = JSON.parse(JSON.stringify(nodes)).sort(sortByName);
-
-  //compose header row
-  tempRow = ["Name", "Symbol", "Unit", "Formula", "Node ID", "Latest value"];
-  rows.push(tempRow);
-
-  //compose values rows
-  sortedNodes.forEach(function(node) {
-    tempRow = [
-      node.name,
-      node.symbol,
-      node.unit,
-      node.symbolFormula,
-      node.id,
-      node.latestValue
-    ];
-    rows.push(tempRow);
-  });
-
-  return rows;
-}
 
 function sortByName(a, b) {
   if (a.name < b.name) {
