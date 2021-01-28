@@ -246,12 +246,12 @@ export default {
 };
 </script>
 
-<style>
-.q-table tbody td {
+<style scoped>
+div >>> .q-table tbody td {
   white-space: normal;
 }
-.q-data-table th {
-  /* don't shorten cell contents */
+div >>> .q-table--no-wrap th {
+  /* override table header wrapping */
   white-space: normal !important;
 }
 </style>

@@ -327,7 +327,7 @@ function changedSignificantly(newObj, oldObj, propertyName) {
 }
 
 function resultsNumbersChangedSignificantly(newObj, oldObj) {
-  if (typeof oldObj.actionLeverage == "undefined") return true;
+  if (!oldObj || typeof oldObj.actionLeverage == "undefined") return true;
 
   if (changedSignificantly(newObj, oldObj, "actionLeverage")) return true;
   if (changedSignificantly(newObj, oldObj, "marginalNetTotalBenefitNpv"))
