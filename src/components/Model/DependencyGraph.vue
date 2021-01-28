@@ -35,7 +35,7 @@
       style="border: black; border-style: solid; border-width: 0px"
     />
 
-    <div class="print-hide">Right-click on node or link to show menu.</div>
+    <div class="q-px-sm print-hide">Right-click on node or link to show menu.</div>
     <q-dialog v-model="showAddNode">
       <add-node
         :sourceNodeId="addNodeProps.sourceNodeId"
@@ -74,7 +74,7 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 
 var nodeRadius = 30;
 const svgWidth = 800;
-const svgHeight = 580;
+const svgHeight = 590;
 var dragStartTime, dragEndTime;
 
 export default {
