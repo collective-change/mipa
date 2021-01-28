@@ -250,4 +250,8 @@ export default {
 .q-table tbody td {
   white-space: normal;
 }
+.q-data-table th {
+  /* don't shorten cell contents */
+  white-space: normal !important;
+}
 </style>
