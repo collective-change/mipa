@@ -35,7 +35,7 @@
       style="border: black; border-style: solid; border-width: 0px"
     />
 
-    <p class="print-hide">Right-click on node or link to show menu.</p>
+    <div class="print-hide">Right-click on node or link to show menu.</div>
     <q-dialog v-model="showAddNode">
       <add-node
         :sourceNodeId="addNodeProps.sourceNodeId"
