@@ -251,74 +251,88 @@
             <div class="q-pa-sm q-gutter-sm">
               <action-relationships></action-relationships>
             </div>
-            <simpleCostsAndImpacts
-              :costsAndImpacts="
+            <q-list bordered class="rounded-borders">
+              <q-expansion-item label="Other effective impacts">
+                <simpleCostsAndImpacts
+                  :costsAndImpacts="
                 uiAction.effectiveChainedCostsAndImpactsExcludingSelf
               "
-            >
-              <template v-slot:header>Other effective impacts</template>
-            </simpleCostsAndImpacts>
+                >
+                  <template v-slot:header>Other effective impacts</template>
+                </simpleCostsAndImpacts>
+              </q-expansion-item>
+              <q-expansion-item label="Aggregated results">
+                <q-markup-table flat bordered>
+                  <thead>
+                    <tr>
+                      <th class="text-left">Aggregated results</th>
+                      <th class="text-right">NPV ({{ currentOrg ? currentOrg.currency : "" }})</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Outstanding direct costs</td>
+                      <td class="text-right">{{ formatNumber(uiAction.outstandingDirectCosts, 3) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Raw benefit to organization</td>
+                      <td
+                        class="text-right"
+                      >{{ formatNumber(uiAction.rawMarginalOrgBenefitNpv, 3) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Raw cost to organization</td>
+                      <td class="text-right">{{ formatNumber(uiAction.rawMarginalOrgCostNpv, 3) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Adjusted benefit to organization</td>
+                      <td class="text-right">{{ formatNumber(uiAction.marginalOrgBenefitNpv, 3) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Adjusted cost to organization</td>
+                      <td class="text-right">{{ formatNumber(uiAction.marginalOrgCostNpv, 3) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Raw benefit to world</td>
+                      <td
+                        class="text-right"
+                      >{{ formatNumber(uiAction.rawMarginalWorldBenefitNpv, 3) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Raw cost to world</td>
+                      <td class="text-right">{{ formatNumber(uiAction.rawMarginalWorldCostNpv, 3) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Adjusted benefit to world</td>
+                      <td class="text-right">{{ formatNumber(uiAction.marginalWorldBenefitNpv, 3) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Adjusted cost to world</td>
+                      <td class="text-right">{{ formatNumber(uiAction.marginalWorldCostNpv, 3) }}</td>
+                    </tr>
+
+                    <tr>
+                      <td>Total benefit</td>
+                      <td class="text-right">{{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Total cost</td>
+                      <td class="text-right">{{ formatNumber(uiAction.marginalTotalCostNpv, 3) }}</td>
+                    </tr>
+                    <tr>
+                      <td>Net total benefit</td>
+                      <td
+                        class="text-right"
+                      >{{ formatNumber(uiAction.marginalNetTotalBenefitNpv, 3) }}</td>
+                    </tr>
+                  </tbody>
+                </q-markup-table>
+              </q-expansion-item>
+            </q-list>
           </div>
           <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
-            <q-markup-table flat bordered>
-              <thead>
-                <tr>
-                  <th class="text-left">Aggregated results</th>
-                  <th class="text-right">NPV ({{ currentOrg ? currentOrg.currency : "" }})</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Outstanding direct costs</td>
-                  <td class="text-right">{{ formatNumber(uiAction.outstandingDirectCosts, 3) }}</td>
-                </tr>
-                <tr>
-                  <td>Raw benefit to organization</td>
-                  <td class="text-right">{{ formatNumber(uiAction.rawMarginalOrgBenefitNpv, 3) }}</td>
-                </tr>
-                <tr>
-                  <td>Raw cost to organization</td>
-                  <td class="text-right">{{ formatNumber(uiAction.rawMarginalOrgCostNpv, 3) }}</td>
-                </tr>
-                <tr>
-                  <td>Adjusted benefit to organization</td>
-                  <td class="text-right">{{ formatNumber(uiAction.marginalOrgBenefitNpv, 3) }}</td>
-                </tr>
-                <tr>
-                  <td>Adjusted cost to organization</td>
-                  <td class="text-right">{{ formatNumber(uiAction.marginalOrgCostNpv, 3) }}</td>
-                </tr>
-                <tr>
-                  <td>Raw benefit to world</td>
-                  <td class="text-right">{{ formatNumber(uiAction.rawMarginalWorldBenefitNpv, 3) }}</td>
-                </tr>
-                <tr>
-                  <td>Raw cost to world</td>
-                  <td class="text-right">{{ formatNumber(uiAction.rawMarginalWorldCostNpv, 3) }}</td>
-                </tr>
-                <tr>
-                  <td>Adjusted benefit to world</td>
-                  <td class="text-right">{{ formatNumber(uiAction.marginalWorldBenefitNpv, 3) }}</td>
-                </tr>
-                <tr>
-                  <td>Adjusted cost to world</td>
-                  <td class="text-right">{{ formatNumber(uiAction.marginalWorldCostNpv, 3) }}</td>
-                </tr>
-
-                <tr>
-                  <td>Total benefit</td>
-                  <td class="text-right">{{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }}</td>
-                </tr>
-                <tr>
-                  <td>Total cost</td>
-                  <td class="text-right">{{ formatNumber(uiAction.marginalTotalCostNpv, 3) }}</td>
-                </tr>
-                <tr>
-                  <td>Net total benefit</td>
-                  <td class="text-right">{{ formatNumber(uiAction.marginalNetTotalBenefitNpv, 3) }}</td>
-                </tr>
-              </tbody>
-            </q-markup-table>
+            <select-user label="Responsible" v-model="uiAction.responsiblePerson" />
+            <select-user label="Accountable" v-model="uiAction.accountablePerson" />
           </div>
         </div>
         <div v-if="!embedded" class="row q-gutter-y-lg">
@@ -384,6 +398,8 @@ export default {
       .default,
     "action-relationships": require("components/Actions/Relationships/ActionRelationships.vue")
       .default,
+    "select-user": require("components/Users/SelectUser.vue")
+      .default,
     gchart: GChart
   },
 
@@ -448,7 +464,9 @@ export default {
       "uiAction.outstandingSpending",
       "uiAction.dueDate",
       "uiAction.notes",
-      "uiAction.saveFullResults"
+      "uiAction.saveFullResults",
+      "uiAction.responsiblePerson",
+      "uiAction.accountablePerson"
     ]),
     ...mapMultiRowFields(["uiAction.impacts"]),
 
