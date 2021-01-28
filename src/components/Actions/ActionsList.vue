@@ -98,7 +98,7 @@ export default {
           align: "center",
           label: this.$t("State"),
           field: "actionMchState",
-          format: ams => `${ams.value}`,
+          format: ams => `${this.$t(ams.value)}`,
           sortable: true,
           sort: (a, b) => ("" + a.value).localeCompare(b.value)
         },
