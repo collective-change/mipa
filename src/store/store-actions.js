@@ -65,7 +65,7 @@ const actions = {
         action => action.id == actionResults.id
       );
       if (
-        true || //TODO: get rid of this line when done with development
+        //true || //TODO: get rid of this line when done with development
         resultsNumbersChangedSignificantly(
           actionResults.effectiveResultsNumbers,
           matchedStoreAction.effectiveResultsNumbers
@@ -327,7 +327,7 @@ function changedSignificantly(newObj, oldObj, propertyName) {
 }
 
 function resultsNumbersChangedSignificantly(newObj, oldObj) {
-  if (typeof oldObj.actionLeverage == "undefined") return true;
+  if (!oldObj || typeof oldObj.actionLeverage == "undefined") return true;
 
   if (changedSignificantly(newObj, oldObj, "actionLeverage")) return true;
   if (changedSignificantly(newObj, oldObj, "marginalNetTotalBenefitNpv"))

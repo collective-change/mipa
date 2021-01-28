@@ -20,10 +20,10 @@ export default {
   props: ["currency"],
   computed: {
     ...mapState("adHocDocs", ["exchangeRates"]),
-    currencies: function () {
-      return Object.keys(this.exchangeRates.rates);
-    },
-  },
+    currencies: function() {
+      return Object.keys(this.exchangeRates.rates).sort();
+    }
+  }
   /*directives: {
     selectAll,
   },*/

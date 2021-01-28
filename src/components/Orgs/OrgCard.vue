@@ -53,7 +53,7 @@
         </q-btn>
         <q-btn
           @click.stop="promptToDelete(id)"
-          disable
+          :disabled="!org.superAdmins.includes(userId)"
           flat
           round
           dense
@@ -78,11 +78,12 @@ export default {
   props: ["org", "id"],
   data() {
     return {
-      showEditOrg: false,
+      showEditOrg: false
     };
   },
   computed: {
     ...mapGetters("settings", ["settings"]),
+    ...mapState("auth", ["userId"])
   },
   methods: {
     ...mapActions("orgs", ["updateOrg", "deleteOrg"]),
@@ -95,16 +96,16 @@ export default {
           title: "Confirm",
           message: "Really delete?",
           cancel: true,
-          persistent: true,
+          persistent: true
         })
         .onOk(() => {
           this.deleteOrg(orgId);
         });
-    },
+    }
   },
   components: {
-    "edit-org": require("components/Orgs/Modals/EditOrg.vue").default,
-  },
+    "edit-org": require("components/Orgs/Modals/EditOrg.vue").default
+  }
 };
 </script>
 

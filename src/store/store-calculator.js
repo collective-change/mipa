@@ -66,11 +66,15 @@ const actions = {
     });
     //console.log("Message posted to worker");
 
-    calcWorker.onmessage = function(e) {
+    calcWorker.onmessage = async function(e) {
       let payload2;
       //console.log(e.data);
       if (typeof e.data == "string") {
         showErrorMessage("Calculation error", e.data);
+        //clear circularNodeIds
+        dispatch("ui/setCircularNodeIds", [], {
+          root: true
+        });
       } else if ("errorType" in e.data) {
         let data = e.data;
         showErrorMessage(
@@ -80,10 +84,31 @@ const actions = {
         );
         calcWorker.terminate();
         commit("setCalculatorIsRunning", false);
+        if (data.errorType == "Circular dependency detected") {
+          dispatch(
+            "ui/setCircularNodeIds",
+            data.errorData.map(node => node.id),
+            { root: true }
+          );
+        } else {
+          //clear circularNodeIds
+          dispatch("ui/setCircularNodeIds", [], { root: true });
+          //select affected node
+          if (data.errorData && data.errorData.nodeId) {
+            await dispatch("ui/setSelectedNodeId", null, {
+              root: true
+            });
+            dispatch("ui/setSelectedNodeId", data.errorData.nodeId, {
+              root: true
+            });
+          }
+        }
       } else if ("resultsType" in e.data) {
+        //clear circularNodeIds
+        dispatch("ui/setCircularNodeIds", [], { root: true });
         switch (e.data.resultsType) {
           case "baseline":
-            dispatch("calcResults/saveBaseline", e.data, { root: true });
+            await dispatch("calcResults/saveBaseline", e.data, { root: true });
             if (payload.calculationType == "baseline") {
               dispatch("calcResults/loadBaseline", payload.modelId, {
                 root: true
@@ -92,7 +117,7 @@ const actions = {
             }
             break;
           case "actions":
-            dispatch("actions/updateActionsResults", e.data, {
+            await dispatch("actions/updateActionsResults", e.data, {
               root: true
             });
             //console.log(e.data);
@@ -110,7 +135,7 @@ const actions = {
         }
 
         if (done) {
-          //calcWorker.terminate();
+          calcWorker.terminate();
           commit("setCalculatorIsRunning", false);
           commit("setCalculationProgress", 0);
           Notify.create(
@@ -121,6 +146,8 @@ const actions = {
       } else if ("progressValue" in e.data) {
         commit("setCalculationProgress", e.data.progressValue);
       } else {
+        //clear circularNodeIds
+        dispatch("ui/setCircularNodeIds", [], { root: true });
         console.log("Error message received from worker: ", e.data);
         showErrorMessage(
           "Error message received from worker. Please see console log.",

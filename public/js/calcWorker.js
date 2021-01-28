@@ -3,11 +3,9 @@ importScripts("https://www.gstatic.com/firebasejs/7.18.0/firebase-auth.js");
 importScripts(
   "https://www.gstatic.com/firebasejs/7.18.0/firebase-firestore.js"
 );
-
-//importScripts("https://cdn.jsdelivr.net/npm/comlinkjs/comlink.global.min.js");
-
-//import { parse, format, toTex } from "mathjs";
-importScripts("https://unpkg.com/mathjs@7.2.0/dist/math.min.js");
+importScripts(
+  "https://cdnjs.cloudflare.com/ajax/libs/mathjs/8.1.1/math.min.js"
+);
 
 //var idb = {}; //placeholder for IndexedDB
 
@@ -18,6 +16,14 @@ var modelNodes = [];
 var workerGlobalActions = [];
 var currentUserId;
 var orgId;
+
+//variables for performance profiling
+var perf = {
+  evalCount: 0,
+  evalTime: 0,
+  delayFuncTime: 0,
+  compileEvalTimeInDelayFunc: 0
+};
 
 onmessage = function(e) {
   switch (e.data.calculationType) {
@@ -35,6 +41,7 @@ onmessage = function(e) {
 };
 
 function coordinateScenarioSimulations(data) {
+  let sim;
   //prep environment, scope, etc
   // Initialize Firebase
   if (!firebaseApp) {
@@ -43,14 +50,23 @@ function coordinateScenarioSimulations(data) {
     firebaseDb = firebaseApp.firestore();
   }
 
-  let sim = prepSim(data);
-  if (sim.errorOccurred) return;
+  sim = prepSim(data);
+  if (sim.errorOccurred) {
+    self.postMessage({
+      errorType: "Error preparing simulation"
+      //errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`
+    });
+    return;
+  }
+
+  if (sim.errorOcurred) return;
+
   currentUserId = data.currentUserId;
   orgId = data.orgId;
 
   testInitializeIdb();
 
-  let defaultBaseline = calculateBaseline(sim);
+  const defaultBaseline = calculateBaseline(sim);
 
   if (data.calculationType == "baseline") return;
 
@@ -423,15 +439,15 @@ function simulateCostsAndImpacts(
       onlyNodeIds.push(node.id);
     });
   } else {
+    impactsToSimulate.forEach(function(impact) {
+      onlyNodeIds.push(impact.nodeId);
+    });
     onlyNodeIds.push(sim.roleNodes.orgBenefit);
     onlyNodeIds.push(sim.roleNodes.orgCost);
     onlyNodeIds.push(sim.roleNodes.worldBenefit);
     onlyNodeIds.push(sim.roleNodes.worldCost);
-    onlyNodeIds.push(sim.roleNodes.effort);
-    onlyNodeIds.push(sim.roleNodes.spending);
-    impactsToSimulate.forEach(function(impact) {
-      onlyNodeIds.push(impact.nodeId);
-    });
+    //onlyNodeIds.push(sim.roleNodes.effort);
+    //onlyNodeIds.push(sim.roleNodes.spending);
   }
 
   //extract relevant baselineNodesValues
@@ -443,22 +459,29 @@ function simulateCostsAndImpacts(
   //TODO: if extra timepoints are required then build customTimeSPoints
   //TODO: simulate using either default or customTimeSPoints
   //TODO: also simulate baseline using customTimeSPoints, if any
+  let hasIfDoneImpacts = false;
   let hasIfNotDoneImpacts = false;
   impactsToSimulate.forEach(function(impact) {
+    if (impact.impactType == "if_done") hasIfDoneImpacts = true;
     if (impact.impactType == "if_not_done") hasIfNotDoneImpacts = true;
   });
-
-  scenario = {
-    type: "action",
-    impactType: "if_done",
-    impactsToSimulate
-  };
-  resetScope(sim);
-  iterateThroughTime(sim, scenario);
-  if (sim.errorOccurred) return;
-  //only extract the basic few nodes for calculation and display
   let ifDoneNodesValues, ifNotDoneNodesValues;
-  ifDoneNodesValues = extractTimeSeriesNodesValues(sim, onlyNodeIds);
+
+  if (hasIfDoneImpacts) {
+    scenario = {
+      type: "action",
+      impactType: "if_done",
+      impactsToSimulate
+    };
+    resetScope(sim);
+    iterateThroughTime(sim, scenario);
+    if (sim.errorOccurred) return;
+    //only extract the basic few nodes for calculation and display
+    ifDoneNodesValues = extractTimeSeriesNodesValues(sim, onlyNodeIds);
+  } else {
+    //use baseline values as ifNotDone values
+    ifDoneNodesValues = baselineNodesValues;
+  }
 
   if (hasIfNotDoneImpacts) {
     scenario = {
@@ -560,27 +583,6 @@ async function getActionsFromFirestore(actionIds) {
   return actions;
 }
 
-/*
-async function updateActionInFirestore(originalPayload) {
-  //Clone the original payload so we don't modify it (it's
-  //passed by reference) when setting the serverTimestamp.
-  console.log("in updateActionInFirestore");
-  let payload = JSON.parse(JSON.stringify(originalPayload));
-  payload.updates.calculationTime = firebase.firestore.FieldValue.serverTimestamp();
-  payload.updates.calculatedBy = currentUserId; // firebaseAuth.currentUser.uid;
-
-  firebaseDb
-    .collection("actions")
-    .doc(payload.id)
-    .set(payload.updates, { merge: true })
-    .then(function() {
-      console.log("updated action ", payload.id);
-    })
-    .catch(function(error) {
-      console.error("Error updating action", error.message);
-    });
-} */
-
 function calcActionResultsFromTimeSeries(
   outstandingDirectCosts,
   ifDoneTimeSeriesNodesValues,
@@ -588,100 +590,88 @@ function calcActionResultsFromTimeSeries(
   timeSPoints,
   sim
 ) {
-  let roleNodes = sim.roleNodes;
-  let yearlyDiscountRate = sim.yearlyDiscountRate;
+  const roleNodes = sim.roleNodes;
+  const yearlyDiscountRate = sim.yearlyDiscountRate;
 
   //prepare inputs for calculating NPVs
-  let ifDoneOrgBenefitSeries =
+  const ifDoneOrgBenefitSeries =
     ifDoneTimeSeriesNodesValues[roleNodes.orgBenefit];
-  let ifNotDoneOrgBenefitSeries =
+  const ifNotDoneOrgBenefitSeries =
     ifNotDoneTimeSeriesNodesValues[roleNodes.orgBenefit];
-  let ifDoneOrgCostSeries = ifDoneTimeSeriesNodesValues[roleNodes.orgCost];
-  let ifNotDoneOrgCostSeries =
+  const ifDoneOrgCostSeries = ifDoneTimeSeriesNodesValues[roleNodes.orgCost];
+  const ifNotDoneOrgCostSeries =
     ifNotDoneTimeSeriesNodesValues[roleNodes.orgCost];
 
-  let ifDoneWorldBenefitSeries =
+  const ifDoneWorldBenefitSeries =
     ifDoneTimeSeriesNodesValues[roleNodes.worldBenefit];
-  let ifNotDoneWorldBenefitSeries =
+  const ifNotDoneWorldBenefitSeries =
     ifNotDoneTimeSeriesNodesValues[roleNodes.worldBenefit];
-  let ifDoneWorldCostSeries = ifDoneTimeSeriesNodesValues[roleNodes.worldCost];
-  let ifNotDoneWorldCostSeries =
+  const ifDoneWorldCostSeries =
+    ifDoneTimeSeriesNodesValues[roleNodes.worldCost];
+  const ifNotDoneWorldCostSeries =
     ifNotDoneTimeSeriesNodesValues[roleNodes.worldCost];
 
-  /*let ifDoneTotalBenefitSeries =
-    ifDoneTimeSeriesNodesValues[roleNodes.combinedBenefit];
-  let ifNotDoneTotalBenefitSeries =
-    ifNotDoneTimeSeriesNodesValues[roleNodes.combinedBenefit];
-  let ifDoneTotalCostSeries =
-    ifDoneTimeSeriesNodesValues[roleNodes.combinedCost];
-  let ifNotDoneTotalCostSeries =
-    ifNotDoneTimeSeriesNodesValues[roleNodes.combinedCost];*/
-
-  /* console.log(
-    "org",
-    ifDoneOrgBenefitSeries.length,
-    ifNotDoneOrgBenefitSeries.length,
-    ifDoneOrgCostSeries.length,
-    ifNotDoneOrgCostSeries.length
-  );*/
-
-  //calculate NPVs
-  let marginalOrgBenefitNpv = getMarginalNpv(
+  //calculate org benefit and cost net present values
+  const rawMarginalOrgBenefitNpv = getMarginalNpv(
     ifDoneOrgBenefitSeries,
     ifNotDoneOrgBenefitSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  let marginalOrgCostNpv = getMarginalNpv(
+  const rawMarginalOrgCostNpv = getMarginalNpv(
     ifDoneOrgCostSeries,
     ifNotDoneOrgCostSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  let marginalWorldBenefitNpv = getMarginalNpv(
+  //treat negative benefit as cost, negative cost as benefit
+  const marginalOrgBenefitNpv =
+    (rawMarginalOrgBenefitNpv > 0 ? rawMarginalOrgBenefitNpv : 0) +
+    (rawMarginalOrgCostNpv < 0 ? -rawMarginalOrgCostNpv : 0);
+
+  const marginalOrgCostNpv =
+    (rawMarginalOrgCostNpv > 0 ? rawMarginalOrgCostNpv : 0) +
+    (rawMarginalOrgBenefitNpv < 0 ? -rawMarginalOrgBenefitNpv : 0);
+
+  //calculate world benefit and cost net present values
+  const rawMarginalWorldBenefitNpv = getMarginalNpv(
     ifDoneWorldBenefitSeries,
     ifNotDoneWorldBenefitSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  let marginalWorldCostNpv = getMarginalNpv(
+  const rawMarginalWorldCostNpv = getMarginalNpv(
     ifDoneWorldCostSeries,
     ifNotDoneWorldCostSeries,
     timeSPoints,
     yearlyDiscountRate
   );
 
-  //TODO: use benevolence ratio (sim.)
-  let worldWeightingFactor = sim.params.worldWeightingFactor;
-  let orgWeightingFactor = sim.params.orgWeightingFactor;
-  let marginalTotalBenefitNpv =
+  //treat negative benefit as cost, negative cost as benefit
+  const marginalWorldBenefitNpv =
+    (rawMarginalWorldBenefitNpv > 0 ? rawMarginalWorldBenefitNpv : 0) +
+    (rawMarginalWorldCostNpv < 0 ? -rawMarginalWorldCostNpv : 0);
+
+  const marginalWorldCostNpv =
+    (rawMarginalWorldCostNpv > 0 ? rawMarginalWorldCostNpv : 0) +
+    (rawMarginalWorldBenefitNpv < 0 ? -rawMarginalWorldBenefitNpv : 0);
+
+  const worldWeightingFactor = sim.params.worldWeightingFactor;
+  const orgWeightingFactor = sim.params.orgWeightingFactor;
+  const marginalTotalBenefitNpv =
     marginalOrgBenefitNpv * orgWeightingFactor +
     marginalWorldBenefitNpv * worldWeightingFactor;
-  let marginalTotalCostNpv =
+  const marginalTotalCostNpv =
     marginalOrgCostNpv * orgWeightingFactor +
     marginalWorldCostNpv * worldWeightingFactor;
 
-  /*let marginalTotalBenefitNpv = getMarginalNpv(
-    ifDoneTotalBenefitSeries,
-    ifNotDoneTotalBenefitSeries,
-    timeSPoints,
-    yearlyDiscountRate
-  );
-
-  let marginalTotalCostNpv = getMarginalNpv(
-    ifDoneTotalCostSeries,
-    ifNotDoneTotalCostSeries,
-    timeSPoints,
-    yearlyDiscountRate
-  );*/
-
   //calculate actionLeverage and prepare results
-  let marginalNetTotalBenefitNpv =
+  const marginalNetTotalBenefitNpv =
     marginalTotalBenefitNpv - marginalTotalCostNpv;
-  let marginalTotalCostExcludingAction =
+  const marginalTotalCostExcludingAction =
     marginalTotalCostNpv - outstandingDirectCosts;
   let totalRoi =
     marginalNetTotalBenefitNpv /
@@ -693,13 +683,21 @@ function calcActionResultsFromTimeSeries(
   if (isNaN(totalRoi)) totalRoi = null;
   if (isNaN(actionLeverage)) actionLeverage = null;
 
-  let roiResults = {
+  const roiResults = {
+    outstandingDirectCosts,
+    rawMarginalOrgBenefitNpv,
+    rawMarginalOrgCostNpv,
+    rawMarginalWorldBenefitNpv,
+    rawMarginalWorldCostNpv,
+    marginalOrgBenefitNpv,
+    marginalOrgCostNpv,
+    marginalWorldBenefitNpv,
+    marginalWorldCostNpv,
     marginalTotalBenefitNpv,
     marginalNetTotalBenefitNpv,
     marginalTotalCostNpv,
     totalRoi,
     actionLeverage
-    //actionRoi //TODO: delete actionRoi
   };
   //console.log({ roiResults });
   return roiResults;
@@ -743,77 +741,95 @@ function iterateThroughTime(sim, scenario) {
 
   /*let completedLoops = 0;
   let expectedUnit = null;*/
+  const totalNodeCount = sim.sortedNodes.length;
 
   timeSPoints.forEach(function(timeS, timeSIndex) {
-    sim.scope.timeS = timeS;
-    //prepare dt
-    if (timeSIndex == 0) {
-      sim.scope.dt = sim.initialDt; //delta time
-    } else {
-      //we're not on the first timeSPoint
-      sim.scope.dt = math.unit(timeS - timeSPoints[timeSIndex - 1], "seconds");
-    }
-    // evaluate the expressions for each node
-    sim.compiledExpressions.forEach(function(code, nodeIndex) {
-      if (!sim.errorOccurred) {
-        /*if (sim.sortedNodes[nodeIndex].id == "JjPn4UTYMcsaoUCeYRyn") {
-          console.log(code.evaluate);
-        }*/
+    if (!sim.errorOccurred) {
+      sim.scope.timeS = timeS;
+      //prepare dt
+      if (timeSIndex == 0) {
+        sim.scope.dt = sim.initialDt; //delta time
+      } else {
+        //we're not on the first timeSPoint
+        sim.scope.dt = math.unit(
+          timeS - timeSPoints[timeSIndex - 1],
+          "seconds"
+        );
+      }
 
-        //TODO: if timeS == initialTimeS then evaluate latest value
-        //TODO: if simulating an action, set a changedFromBaseline
-        //flag for each node. If influencer nodes of the current node
-        //haven't changed for this iteration, then use the baseline's
-        //value instead of evaluating.
-        try {
-          code.evaluate(sim.scope);
-          /*if (sim.sortedNodes[nodeIndex].id == "JjPn4UTYMcsaoUCeYRyn") {
-          console.log("done evaluation for JjPn4UTYMcsaoUCeYRyn");
-        }*/
-        } catch (err) {
-          sim.errorOccurred = true;
-          self.postMessage({
-            errorType: "evaluation error",
-            errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`
-          });
-        }
+      // evaluate the expressions for each node
+      sim.compiledExpressions.forEach(function(code, nodeIndex) {
+        if (!sim.errorOccurred) {
+          //TODO: if simulating an action, set a changedFromBaseline
+          //flag for each node. If influencer nodes of the current node
+          //haven't changed for this iteration, then use the baseline's
+          //value instead of evaluating.
 
-        if (sim.errorOccurred) return;
+          sim.scope.currentNodeIndex = nodeIndex;
+          sim.scope.currentNodeId = sim.sortedNodes[nodeIndex].id;
+          sim.scope.currentNodeName = sim.sortedNodes[nodeIndex].name;
 
-        if (scenario.type == "action") {
-          //adjust the node value by action's impacts
-          //loop through each of action's impacts to see if it impacts the node just calculated
-          //TODO: sort impacts by order of impact.operation (=, *, / , +, -)
-          scenario.impactsToSimulate.forEach(function(impact) {
-            if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
-              if (impact.impactType == scenario.impactType)
-                try {
-                  doImpactIfItAffectsCurrentTime(sim, timeS, nodeIndex, impact);
-                } catch (err) {
-                  sim.errorOccurred = true;
-                  self.postMessage({
-                    errorType: "adjustment by impact error",
-                    errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}", impact operation "${impact.operation}" <br/> ${err} <br/> ${nodeIndex}`
-                  });
-                }
-            }
-          });
-        }
-        //on first 2 loops, check result of evaluation against units expected by user.
-        if (timeSIndex < 2)
+          try {
+            const t0 = performance.now();
+            code.evaluate(sim.scope);
+            const t1 = performance.now();
+            perf.evalCount += 1;
+            perf.evalTime += t1 - t0;
+          } catch (err) {
+            sim.errorOccurred = true;
+            self.postMessage({
+              errorType: "Evaluation error",
+              errorMessage: `For node "${
+                sim.sortedNodes[nodeIndex].name
+              }",  <br/> ${err} <br/> (node ${nodeIndex +
+                1} of ${totalNodeCount})`,
+              errorData: { nodeId: sim.sortedNodes[nodeIndex].id }
+            });
+          }
+
+          if (sim.errorOccurred) return;
+
+          if (scenario.type == "action") {
+            //adjust the node value by action's impacts
+            //loop through each of action's impacts to see if it impacts the node just calculated
+            //TODO: sort impacts by order of impact.operation (=, *, / , +, -)
+            scenario.impactsToSimulate.forEach(function(impact) {
+              if (impact.nodeId == sim.sortedNodes[nodeIndex].id) {
+                if (impact.impactType == scenario.impactType)
+                  try {
+                    doImpactIfItAffectsCurrentTime(
+                      sim,
+                      timeS,
+                      nodeIndex,
+                      impact
+                    );
+                  } catch (err) {
+                    sim.errorOccurred = true;
+                    self.postMessage({
+                      errorType: "Adjustment by impact error",
+                      errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}", impact operation "${impact.operation}" <br/> ${err} <br/> ${nodeIndex}`
+                    });
+                  }
+              }
+            });
+          }
+          //check result of evaluation against units expected by user.
           try {
             checkUnits(sim, nodeIndex);
           } catch (err) {
             sim.errorOccurred = true;
             self.postMessage({
               errorType: "Unit mismatch",
-              errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}" ${err}`
+              errorMessage: `For node "${
+                sim.sortedNodes[nodeIndex].name
+              }" ${err} <br/> (node ${nodeIndex + 1} of ${totalNodeCount})`,
+              errorData: { nodeId: sim.sortedNodes[nodeIndex].id }
             });
           }
-      }
-      //if (sim.errorOccurred) return;
-    });
-    if (!sim.errorOccurred) composeTimeSeries(sim);
+        }
+      });
+      if (!sim.errorOccurred) composeTimeSeries(sim);
+    }
   });
 
   if (scenario.type == "baseline")
@@ -908,15 +924,6 @@ function doImpactWithHalfLife(sim, nodeIndex, impact) {
 
 function checkUnits(sim, nodeIndex) {
   expectedUnit = sim.expectedUnits[nodeIndex];
-  /*if (sim.sortedNodes[nodeIndex].id == "4Y160pX7YePRYFzYlyV5") {
-    console.log("problem node");
-    let expectedUnitSnapshot = JSON.parse(JSON.stringify(expectedUnit));
-    let calculated = JSON.parse(
-      JSON.stringify(sim.scope["$" + sim.sortedNodes[nodeIndex].id])
-    );
-    console.log("expectedUnit", expectedUnitSnapshot);
-    console.log("calculated", calculated);
-  }*/
   if (
     // calculation result is a unitless number and the expected isn't
     (typeof sim.scope["$" + sim.sortedNodes[nodeIndex].id] == "number" &&
@@ -930,8 +937,6 @@ function checkUnits(sim, nodeIndex) {
       !sim.scope["$" + sim.sortedNodes[nodeIndex].id].equalBase(
         sim.expectedUnits[nodeIndex]
       ))
-    /*sim.expectedUnits[nodeIndex].unit !=
-      sim.scope["$" + sim.sortedNodes[nodeIndex].id].unit*/
   )
     throw `dimensions of expected units and calculated units do not match.
               <br/> Expected unit: "${expectedUnit.toString()}"
@@ -981,6 +986,7 @@ function calculateBaseline(sim) {
   //save to IndexedDb
   //putBaselineResultsInIdb(results, sim.data.modelId);
 
+  console.table(perf);
   console.log("baseline calcTime:", calcTimeMs, "ms");
 
   postMessage(results);
@@ -1036,8 +1042,6 @@ function prepEnvironment(data) {
       data.simulationParams.timeStepUnit
     ) //delta time
   };
-
-  //console.log("roleNodes", sim.roleNodes);
 
   sim.calcTimeLog.push({ stage: "start", endTime: new Date() });
   self.postMessage({ progressValue: 0 });
@@ -1100,6 +1104,10 @@ function prepEnvironment(data) {
     sku: {
       baseName: "sku",
       aliases: ["skus"]
+    },
+    count: {
+      baseName: "count",
+      aliases: ["counts"]
     }
   });
 
@@ -1114,7 +1122,8 @@ function prepScope(sim) {
     calcDate: calcDate,
     initialTimeS: Math.floor(calcDate / 1000), //this will remain constant throughout the simulation
     //timeS: initialTimeS, //timeS will increment with each iteration
-    timeSeries: { timeSPoints: [], nodes: {} }
+    timeSeries: { timeSPoints: [], nodes: {} },
+    compiledDelayArg1s: {}
   }; //TODO: load timeSeries with current or historical values
 
   sim.sortedNodes.forEach(function(node) {
@@ -1152,7 +1161,9 @@ function resetScope(sim) {
   sim.scope.timeSeries = { timeSPoints: [], nodes: {} };
   sim.sortedNodes.forEach(function(node) {
     sim.scope.timeSeries.nodes[node.id] = [];
+    delete sim.scope["$" + node.id];
   });
+  loadLatestValues(sim);
 }
 
 function loadLatestValues(sim) {
@@ -1162,15 +1173,19 @@ function loadLatestValues(sim) {
     if (!sim.errorOccurred)
       try {
         sim.scope["$" + node.id + "_unit"] = node.unit;
-        if ("latestValue" in node && node.latestValue != "") {
-          sim.scope["$" + node.id] = math.unit(
-            Number(node.latestValue),
-            node.unit
-          );
+        if ("latestValue" in node && node.latestValue !== "") {
+          if (node.unit) {
+            sim.scope["$" + node.id] = math.unit(
+              Number(node.latestValue),
+              node.unit
+            );
+          } else {
+            sim.scope["$" + node.id] = Number(node.latestValue);
+          }
         }
       } catch (err) {
         self.postMessage({
-          errorType: "latest value loading error",
+          errorType: "Latest value loading error",
           errorMessage: `For node "${node.name}", latest value "${node.latestValue}", unit "${node.unit}" <br/> ${err}`
         });
         sim.errorOccurred = true;
@@ -1213,7 +1228,7 @@ function prepExpressionsArray(sim) {
       } catch (err) {
         console.log(err);
         self.postMessage({
-          errorType: "expression array error",
+          errorType: "Expression array error",
           errorMessage: `For node "${node.name}" <br/> ${err}`
         });
         sim.errorOccurred = true;
@@ -1242,7 +1257,7 @@ function parseExpressions(sim) {
           //data.modelNodes
         );
         self.postMessage({
-          errorType: "parse error",
+          errorType: "Parse error",
           errorMessage: `For node "${nodeName}"<br/>Expression: ${replacedExpression} <br/> ${err}`
         });
         sim.errorOccurred = true;
@@ -1280,8 +1295,9 @@ function prepExpectedUnits(sim) {
         expectedUnits.push(math.unit(node.unit));
       } catch (err) {
         self.postMessage({
-          errorType: "unit loading error",
-          errorMessage: `For node "${node.name}", unit "${node.unit}" <br/> ${err}`
+          errorType: "Unit loading error",
+          errorMessage: `For node "${node.name}", unit "${node.unit}" <br/> ${err}`,
+          errorData: { nodeId: node.id }
         });
         sim.errorOccurred = true;
       }
@@ -1309,7 +1325,7 @@ function extractTimeSeriesNodesValues(sim, onlyNodeIds = null) {
       } catch (err) {
         //console.log(err);
         self.postMessage({
-          errorType: "results number extraction error",
+          errorType: "Results extraction error",
           errorMessage: `For node "${node.name}", timeSeries [${
             sim.scope.timeSeries.nodes[node.id]
           }] <br/> ${err}`
@@ -1324,7 +1340,6 @@ function extractTimeSeriesNodesValues(sim, onlyNodeIds = null) {
 
 function getCalcTimeStages(log) {
   let calcTimeStages = [];
-  //let prevStage = null;
   log.forEach(function(item, index) {
     if (index > 0) {
       calcTimeStages.push({
@@ -1338,7 +1353,6 @@ function getCalcTimeStages(log) {
 }
 
 function topoSortNodes(sim) {
-  //let nodes = sim.nodes;
   let L = []; //for storing sorted elements
   let S = sim.nodes.filter(node => node.blockingInDegree == 0); //nodes with no incoming edges
   let unvisitedNodes = sim.nodes.filter(node => node.blockingInDegree != 0);
@@ -1349,34 +1363,70 @@ function topoSortNodes(sim) {
     // remove a node n from S and append to tail of L
     n = S.shift();
     L.push(n);
-    //console.log("n: ", n);
     n.blockedInfluencees.forEach(function(influenceeId, index) {
       influencee = unvisitedNodes.find(node => node.id == influenceeId);
-      influencee.blockingInDegree--;
-      if (influencee.blockingInDegree == 0) {
-        S.push(influencee);
-        //remove influencee from unvisited nodes
-        for (var i = 0; i < unvisitedNodes.length; i++) {
-          if (unvisitedNodes[i] === influencee) {
-            unvisitedNodes.splice(i, 1);
+      if (influencee) {
+        influencee.blockingInDegree--;
+        if (influencee.blockingInDegree == 0) {
+          S.push(influencee);
+          //remove influencee from unvisited nodes
+          for (var i = 0; i < unvisitedNodes.length; i++) {
+            if (unvisitedNodes[i] === influencee) {
+              unvisitedNodes.splice(i, 1);
+            }
           }
         }
       }
     });
   }
+
   //now try to sort out unvisited nodes (ones in or blocked by a cycle)
 
-  try {
-    //if there are unvisited nodes, then graph has at least one cycle
-    if (unvisitedNodes.length) {
-      const nodeNames = unvisitedNodes.map(node => node.name).join(", ");
-      console.log("unvisitedNodes: ", nodeNames);
-      throw "Circular dependency detected in nodes: " + nodeNames;
+  //If there are unvisited nodes, then graph has at least one cycle,
+  //but there may be nodes that come after the circle that are unvisited,
+  //so let's remove them first before notifying the user.
+  if (unvisitedNodes.length) {
+    //topoSort the unvisited nodes using reverse direction of the links
+    //to get nodes remaining in circular dependency
+    let L2 = []; //for storing sorted elements
+    let S2 = unvisitedNodes.filter(node => node.blockingOutDegree == 0); //nodes with no outgoing edges
+    let unvisitedNodes2 = unvisitedNodes.filter(
+      node => node.blockingOutDegree != 0
+    );
+    let n2 = null; //node to process
+    let influencer = null; //a working variable
+
+    while (S2.length) {
+      // remove a node n from S and append to tail of L
+      n2 = S2.shift();
+      L2.push(n2);
+      n2.blockingInfluencers.forEach(function(influencerId, index) {
+        influencer = unvisitedNodes.find(node => node.id == influencerId);
+        if (influencer) {
+          influencer.blockingOutDegree--;
+          if (influencer.blockingOutDegree == 0) {
+            S2.push(influencer);
+            //remove influencer from unvisited nodes
+            for (var i = 0; i < unvisitedNodes2.length; i++) {
+              if (unvisitedNodes2[i] === influencer) {
+                unvisitedNodes2.splice(i, 1);
+              }
+            }
+          }
+        }
+      });
     }
-  } catch (err) {
-    console.log(err);
-    self.postMessage(err);
+
+    const nodeNames = unvisitedNodes2.map(node => node.name).join(" | ");
+    sim.errorOccurred = true;
+    self.postMessage({
+      errorType: "Circular dependency detected", //Don't change the type string; store-calculator looks for it
+      errorMessage:
+        "Please check affected parts marked in orange, and add a delay at an appropriate place. Tip: start with fixing small loops first.",
+      errorData: unvisitedNodes2
+    });
   }
+
   sim.calcTimeLog.push({ stage: "topoSort", endTime: new Date() });
   return L;
 }
@@ -1406,7 +1456,9 @@ function prepNodesForSort(sim) {
         typeof outerNode.blockingInfluencers !== "undefined"
           ? outerNode.blockingInfluencers.length
           : 0,
+      blockingOutDegree: blockedInfluencees.length,
       blockedInfluencees: blockedInfluencees,
+      blockingInfluencers: outerNode.blockingInfluencers,
       sysFormula:
         typeof outerNode.sysFormula !== "undefined" ? outerNode.sysFormula : "",
       unit: typeof outerNode.unit !== "undefined" ? outerNode.unit : "",
@@ -1472,19 +1524,25 @@ function getAdjustedDate(args, math, scope, caller) {
 }
 
 function delay(args, math, scope) {
-  let $nodeId = args[0].name;
-  let nodeId = $nodeId.substr(1);
-  let delayTime = valueIsANumber(args[1])
-    ? args[1]
-    : args[1].compile().evaluate(scope);
-  let values = scope.timeSeries.nodes[nodeId];
-  let timeSPoints = scope.timeSeries.timeSPoints;
+  const delayT0 = performance.now();
+  const $nodeId = args[0].name;
+  const nodeId = $nodeId.substr(1);
+
+  const t0 = performance.now();
+
+  // Ted: The following statement is actually faster than caching the
+  // compiled args[1], because toString() and stringify() are slow.
+  const delayTime = args[1].compile().evaluate(scope);
+  const t1 = performance.now();
+  perf.compileEvalTimeInDelayFunc += t1 - t0;
+
+  const values = scope.timeSeries.nodes[nodeId];
+  const timeSPoints = scope.timeSeries.timeSPoints;
   //let defaultValue = scope[$nodeId];
   let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
 
   //quick case: if the last value in the time series is for the target time, then return it
-  if (timeSPoints[timeSPoints.length - 1] == targetTimeS) {
-    //console.log("match");
+  if (timeSPoints[timeSPoints.length - 1] == targetTimeS && values) {
     return values[values.length - 1];
   }
 
@@ -1515,7 +1573,7 @@ function delay(args, math, scope) {
   }
 
   //interpolate value at targetTimeS
-  return interpolate(
+  const interpolated = interpolate(
     timeSPoints,
     values,
     targetTimeS,
@@ -1524,6 +1582,9 @@ function delay(args, math, scope) {
     nodeId,
     scope
   );
+  const delayT1 = performance.now();
+  perf.delayFuncTime += delayT1 - delayT0;
+  return interpolated;
 }
 
 function interpolate(
@@ -1535,31 +1596,41 @@ function interpolate(
   nodeId,
   scope
 ) {
+  if (!rawTimeSPoints)
+    throw `Missing values for node. Did you get symbols correct in the formula?`;
+
   //quick case: if the last value in the time series is for the target time, then return it
-  if (rawTimeSPoints[rawTimeSPoints.length - 1] == targetTimeS) {
+  if (
+    rawTimeSPoints &&
+    rawTimeSPoints[rawTimeSPoints.length - 1] == targetTimeS
+  ) {
     //console.log("match");
     return rawValues[rawValues.length - 1];
   }
+
   let timeSPoints = [];
   let values = [];
-  //extract only available data points
-  //TODO: only extract data points surrounding targetTimeS
-  for (var i = 0; i < rawTimeSPoints.length; i++) {
-    //if (typeof rawValuesWithUnits[i] == "number") {
-    timeSPoints.push(rawTimeSPoints[i]);
-    values.push(rawValues[i]);
-    //}
+
+  if (rawTimeSPoints) {
+    //extract only available data points
+    //TODO: only extract data points surrounding targetTimeS
+    for (var i = 0; i < rawTimeSPoints.length; i++) {
+      timeSPoints.push(rawTimeSPoints[i]);
+      values.push(rawValues[i]);
+    }
   }
-  //console.log(timeSPoints[0], timeSPoints[timeSPoints.length - 1], targetTimeS);
-  //if symbol has no history, then return default value
+
+  //if symbol has no history, then return initial value
   if (values.length == 0) {
-    //console.log("No history; using default value.");
-    //if (typeof initialValue == "number") return initialValue;
-    if (valueIsANumber(initialValue))
-      return math.unit(Number(initialValue), scope["$" + nodeId + "_unit"]);
-    else if (initialValue == "best_guess") {
+    //console.log("No history; using initial value.");
+    if (valueIsANumber(initialValue)) {
+      return getValueWithUnitIfAvailable(
+        Number(initialValue),
+        scope["$" + nodeId + "_unit"]
+      );
+    } else if (initialValue == "best_guess") {
       //if latestValue is available then return latest value
-      if (latestValue != "") return latestValue;
+      if (latestValue !== "") return latestValue;
       else {
         console.error(
           `No history, no initial value, and no latest value available for best guess for node "${replaceNodeIdsWithName(
@@ -1585,14 +1656,20 @@ function interpolate(
   else if (timeSPoints[0] > targetTimeS) {
     //console.log("History starts after target time; using default value if available, else first value in history.");
     if (valueIsANumber(initialValue))
-      return math.unit(Number(initialValue), scope["$" + nodeId + "_unit"]);
+      return getValueWithUnitIfAvailable(
+        Number(initialValue),
+        scope["$" + nodeId + "_unit"]
+      );
     else if (initialValue == "best_guess") return values[0];
   }
   //else if history ends before target time, then return last value in history
   else if (timeSPoints[timeSPoints.length - 1] < targetTimeS) {
     //console.log("History ends before target time; using initialValue or best_guess.");
     if (valueIsANumber(initialValue))
-      return math.unit(Number(initialValue), scope["$" + nodeId + "_unit"]);
+      return getValueWithUnitIfAvailable(
+        Number(initialValue),
+        scope["$" + nodeId + "_unit"]
+      );
     else if (initialValue == "best_guess") return values[values.length - 1];
   }
   //else if history is only one point (should be at targetTimeS) then return its value
@@ -1605,6 +1682,11 @@ function interpolate(
     //console.log("Going to interpolate.");
     return interpolateFromLookup(timeSPoints, values, targetTimeS);
   }
+}
+
+function getValueWithUnitIfAvailable(value, unit) {
+  if (unit) return math.unit(Number(value), unit);
+  else return value;
 }
 
 function interpolateFromLookup(timeSPoints, values, targetTimeS) {
@@ -1692,7 +1774,7 @@ function putDataInIdb(payload) {
 }
 
 function valueIsANumber(val) {
-  //console.log(val, typeof val != "undefined", val != "", !isNaN(Number(val)));
+  //console.log(val, typeof val != "undefined", val !== "", !isNaN(Number(val)));
   return typeof val != "undefined" && val !== "" && !isNaN(Number(val));
 }
 

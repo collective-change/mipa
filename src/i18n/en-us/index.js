@@ -39,7 +39,7 @@ export default {
   ModelNoun: "Model",
   model: "model",
   Units: "Units",
-  "Update values": "Update values",
+  "Bulk update": "Bulk update",
   Analysis: "Analysis",
   "Model templates": "Templates",
 

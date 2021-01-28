@@ -10,6 +10,23 @@
       color="primary"
       label="Add node"
     />
+    <q-select
+      label="Search"
+      v-model="nodeToSearch"
+      @filter="filterFn"
+      @filter-abort="abortFilterFn"
+      :options="filteredNodeOptions"
+      @input="nodeId => { searchNodeId(nodeId) }"
+      emit-value
+      map-options
+      outlined
+      use-input
+      hide-selected
+      fill-input
+      dense
+      style="position: absolute; top: 8px; left: 120px; z-index: 2;"
+      bg-color="white"
+    />
 
     <svg
       id="dependencyGraph"
@@ -18,7 +35,7 @@
       style="border: black; border-style: solid; border-width: 0px"
     />
 
-    <p class="print-hide">Right-click on node or link to show menu. Ctrl+mouse to pan and zoom.</p>
+    <div class="q-px-sm print-hide">Right-click on node or link to show menu.</div>
     <q-dialog v-model="showAddNode">
       <add-node
         :sourceNodeId="addNodeProps.sourceNodeId"
@@ -42,7 +59,6 @@
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 import * as d3 from "d3";
-import "d3-selection-multi"; //TODO: check if this import is needed
 import * as sizeof from "object-sizeof";
 import idb from "src/api/idb";
 import { responsify } from "src/utils/util-responsify-svg";
@@ -74,6 +90,8 @@ export default {
       showAddNode: false,
       showDeleteNode: false,
       showAddLink: false,
+      nodeToSearch: null,
+      filteredNodeOptions: [],
       linkTargetType: "",
       svgWidth: svgWidth,
       svgHeight: svgHeight,
@@ -132,7 +150,8 @@ export default {
       "selectedNodeId",
       "selectedNodeGroup",
       "uiNodeChanged",
-      "uiNodeChangedFields"
+      "uiNodeChangedFields",
+      "circularNodeIds"
     ]),
     ...mapGetters("model", ["nodes", "links"]),
     ...mapState("model", ["currentModel"]),
@@ -141,6 +160,11 @@ export default {
         return { source: link.source.id, target: link.target.id };
       });
     },*/
+    nodeOptions() {
+      return this.nodes.map(node => {
+        return { label: node.name, value: node.id };
+      });
+    },
     expandedNodeGroups: {
       get() {
         return this.$store.state.ui.expandedNodeGroups;
@@ -188,6 +212,11 @@ export default {
       .on("tick", this.tick);
     // Call first time to setup default values
     this.updateForces();
+
+    //compose option values first, so we don't need to wait
+    //for filteredNodeOptions to compute, which results in q-select
+    //displaying option value instead of option label.
+    this.filteredNodeOptions = this.nodeOptions;
   },
 
   mounted() {
@@ -268,18 +297,33 @@ export default {
       .attr("orient", "auto")
       .append("svg:path")
       .attr("d", "M0,-5L10,0L0,5");
+    // Define the arrow marker for inCircularDependency links
+    svg
+      .select("defs")
+      .append("svg:marker") // This section adds in the arrows
+      .attr("id", "end-circularDependency")
+      .attr("viewBox", "0 -5 10 10")
+      .attr("refX", 5) //Prevents arrowhead from being covered by circle
+      .attr("refY", 0)
+      .attr("markerUnits", "userSpaceOnUse")
+      .attr("markerWidth", 15)
+      .attr("markerHeight", 15)
+      .attr("fill", "#e73")
+      .attr("orient", "auto")
+      .append("svg:path")
+      .attr("d", "M0,-5L10,0L0,5");
 
     // Add zoom and panning triggers
     this.zoom = d3
       .zoom()
       .scaleExtent([1 / 4, 2])
+      .wheelDelta(myDelta)
       .on("zoom", this.zoomed);
     svg.call(this.zoom);
 
-    //require ctrlKey in addition to mouse
-    this.zoom.filter(function() {
-      return d3.event.ctrlKey;
-    });
+    function myDelta(event) {
+      return (-event.deltaY * (event.deltaMode ? 120 : 1)) / 1500;
+    }
 
     this.selections.graph = svg.append("g");
     const graph = this.selections.graph;
@@ -308,6 +352,34 @@ export default {
     ]),
     ...mapActions("ui", ["setSelectedNodeId"]),
 
+    filterFn(val, update, abort) {
+      update(() => {
+        if (val === "") {
+          this.filteredNodeOptions = this.nodeOptions;
+        } else {
+          const needle = val.toLowerCase();
+          this.filteredNodeOptions = this.nodeOptions.filter(
+            v => v.label.toLowerCase().indexOf(needle) > -1
+          );
+        }
+        this.filteredNodeOptions.sort((a, b) => {
+          if (a.label.toLowerCase() < b.label.toLowerCase()) {
+            return -1;
+          }
+          if (a.label.toLowerCase() > b.label.toLowerCase()) {
+            return 1;
+          }
+          return 0;
+        });
+      });
+    },
+    abortFilterFn() {
+      // console.log('delayed filter aborted')
+    },
+    searchNodeId(nodeId) {
+      this.setSelectedNodeId(nodeId);
+    },
+
     tick() {
       let that = this;
       // If no data is ready, do nothing
@@ -321,7 +393,7 @@ export default {
         .strength(that.forceProperties.collide.strength)
         .radius(function(node) {
           if (node.toRemove) return 0;
-          else return nodeRadius * 1 - that.simulation.alpha();
+          else return nodeRadius * 1.3; // * (1 - that.simulation.alpha());
         })
         .iterations(that.forceProperties.collide.iterations);
 
@@ -408,6 +480,29 @@ export default {
       let nodes = [...this.storeData.nodes];
       let links = [...this.storeData.links];
 
+      //update "isInCircularDependency" attribute
+      nodes.forEach(function(node) {
+        delete node.isInCircularDependency;
+      });
+      links.forEach(function(link) {
+        delete link.isInCircularDependency;
+      });
+      if (that.circularNodeIds) {
+        nodes.forEach(function(node) {
+          if (that.circularNodeIds.includes(node.id))
+            node.isInCircularDependency = true;
+          else delete node.isInCircularDependency;
+        });
+        links.forEach(function(link) {
+          if (
+            that.circularNodeIds.includes(link.source) &&
+            that.circularNodeIds.includes(link.target)
+          )
+            link.isInCircularDependency = true;
+          else delete link.isInCircularDependency;
+        });
+      }
+
       //remove newlyEntered from d3Data nodes and inks
       this.d3Data.nodes.forEach(n => (n.newlyEntered = false));
       this.d3Data.links.forEach(l => (l.newlyEntered = false));
@@ -444,6 +539,7 @@ export default {
             isNodeGroup: true,
             class: "group",
             isNew: false,
+            isInCircularDependency: false,
             isSelfBlocking: false,
             symbolFormula: "exist"
           };
@@ -453,6 +549,8 @@ export default {
           );
           nodesInCollapsedGroup.forEach(function(node) {
             if (node.isNew) nodeForCollapsedGroup.isNew = true;
+            if (node.isInCircularDependency)
+              nodeForCollapsedGroup.isInCircularDependency = true;
             if (node.isSelfBlocking)
               nodeForCollapsedGroup.isSelfBlocking = true;
             if (node.symbolFormula == "")
@@ -491,7 +589,7 @@ export default {
           });
 
           //redirect links w/ one end in group to group node
-          //TODO: do not allow delete on these links
+          //TODO: do not show "delete" in context menu for these links
           links.forEach(function(link, index, linksArray) {
             if (
               collapsedGroup.nodeIds.includes(link.source) &&
@@ -664,6 +762,15 @@ export default {
             matchedD3Node.isNew = visibleNode.isNew;
             graphTextChange = true;
           }
+          if (
+            matchedD3Node.isInCircularDependency !=
+            visibleNode.isInCircularDependency
+          ) {
+            matchedD3Node.isInCircularDependency =
+              visibleNode.isInCircularDependency;
+            graphTextChange = true;
+            dataChanged = true;
+          }
           if (matchedD3Node.symbolFormula != visibleNode.symbolFormula) {
             matchedD3Node.symbolFormula = visibleNode.symbolFormula;
             graphTextChange = true;
@@ -693,6 +800,7 @@ export default {
         });
       }
       let matchedD3Link = null;
+
       //for each in visibleLinks,
       visibleLinks.forEach(function(visibleLink) {
         if (
@@ -704,6 +812,8 @@ export default {
               d3Link.hasReciprocal == visibleLink.hasReciprocal &&
               d3Link.isBlocking == visibleLink.isBlocking &&
               d3Link.isUnused == visibleLink.isUnused &&
+              d3Link.isInCircularDependency ==
+                visibleLink.isInCircularDependency &&
               d3Link.strengthFactor == visibleLink.strengthFactor
           )[0])
         ) {
@@ -731,6 +841,14 @@ export default {
         //To draw relaxed links first (so they do not cover other links),
         //sort links so relaxed links come first.
         that.d3Data.links.sort((a, b) => a.strengthFactor - b.strengthFactor);
+        //draw links in circular dependency last
+        that.d3Data.links.sort((a, b) =>
+          a.isInCircularDependency && !b.isInCircularDependency
+            ? 1
+            : !a.isInCircularDependency && b.isInCircularDependency
+            ? -1
+            : 0
+        );
         this.updateData({ modifyingExistingGraph });
       }
       if (graphTextChange && !dataChanged) {
@@ -750,6 +868,7 @@ export default {
 
       // stop the previous simulation
       if (restartForceSimulation && this.simulation) this.simulation.stop();
+      if (!this.d3Data) return;
       this.simulation.nodes(this.d3Data.nodes);
       this.simulation.force("link").links(this.d3Data.links);
 
@@ -788,10 +907,11 @@ export default {
             "link " +
             (d.isBlocking ? "" : "nonBlocking ") +
             (d.isUnused ? "unused " : "") +
+            (d.isInCircularDependency ? "inCircularDependency " : "") +
             (d.strengthFactor < 1 ? "relaxed " : "")
         )
-        .on("contextmenu", function(d) {
-          d3.event.preventDefault();
+        .on("contextmenu", function(event, d) {
+          event.preventDefault();
           function composeLinkContextMenuItems(d) {
             let linkIsRelaxed = d.strengthFactor < 1;
             const baseLinkContextMenuItems = [
@@ -863,7 +983,11 @@ export default {
           let linkContextMenu = that
             .contextMenu()
             .items(...linkContextMenuItems);
-          linkContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
+          linkContextMenu(
+            d3.pointer(event, svg.node())[0],
+            d3.pointer(event, svg.node())[1],
+            d
+          );
         });
 
       // Nodes should always be redrawn to avoid lines above them
@@ -893,9 +1017,9 @@ export default {
         )
         .on("mouseover", this.nodeMouseOver)
         .on("mouseout", this.nodeMouseOut)
-        .on("contextmenu", function(d) {
-          d3.event.preventDefault();
-          that.nodeClick(d, null, "contextMenuClick");
+        .on("contextmenu", function(event, d) {
+          event.preventDefault();
+          that.nodeClick(event, d, "contextMenuClick");
 
           function composeNodeContextMenuItems() {
             //add additional items to menu if applicable
@@ -1006,9 +1130,7 @@ export default {
               {
                 label: "Expand group",
                 handler: async function() {
-                  let expandedNodeGroups = [...that.expandedNodeGroups];
-                  expandedNodeGroups.push(that.selectedNodeId);
-                  that.expandedNodeGroups = expandedNodeGroups;
+                  that.expandGroup(that.selectedNodeId);
                 }
               }
             ];
@@ -1040,8 +1162,16 @@ export default {
               {
                 label: "Disband group",
                 handler: async function() {
-                  //TODO: ask for user to confirm
-                  await that.disbandNodeGroup(that.selectedNodeGroup.id);
+                  that.$q
+                    .dialog({
+                      title: "Really disband group?",
+                      message: "This cannot be undone.",
+                      cancel: true,
+                      persistent: true
+                    })
+                    .onOk(() => {
+                      that.disbandNodeGroup(that.selectedNodeGroup.id);
+                    });
                 }
               }
             ];
@@ -1067,11 +1197,15 @@ export default {
           let nodeContextMenu = that
             .contextMenu()
             .items(...nodeContextMenuItems);
-          nodeContextMenu(d3.mouse(svg.node())[0], d3.mouse(svg.node())[1], d);
+          nodeContextMenu(
+            d3.pointer(event, svg.node())[0],
+            d3.pointer(event, svg.node())[1],
+            d
+          );
         })
         //.on("click", this.nodeClick);
-        .on("click", function(d, i) {
-          that.nodeClick(d, i, "regularClick");
+        .on("click", function(event, d) {
+          that.nodeClick(event, d, "regularClick");
         });
       this.updateNodeClassAndText(false);
 
@@ -1092,6 +1226,10 @@ export default {
         .selectAll("g")
         .selectAll("path.link.unused.relaxed")
         .attr("marker-end", "url(#end-unused-relaxed)");
+      svg
+        .selectAll("g")
+        .selectAll("path.link.inCircularDependency")
+        .attr("marker-end", "url(#end-circularDependency)");
 
       if (restartForceSimulation) {
         this.simulation.on("end", this.savePositions);
@@ -1113,6 +1251,7 @@ export default {
           d.class.concat(
             d.isSelfBlocking ? " selfBlocking" : "",
             d.isNew ? " new" : "",
+            d.isInCircularDependency ? " inCircularDependency" : "",
             d.symbolFormula && d.symbolFormula ? "" : " noFormula",
             nodeIdsInNodeGroup.includes(d.id) ? " nodeGroupSelected" : "",
             d.isNodeGroup &&
@@ -1197,25 +1336,25 @@ export default {
       // restarts the simulation (important if simulation has already slowed down)
       simulation.alpha(1).restart();
     },
-    zoomed() {
-      const transform = d3.event.transform;
+    zoomed(event, d) {
+      const transform = event.transform;
       this.selections.graph.attr("transform", transform);
     },
-    nodeDragStarted(d) {
-      if (!d3.event.active) {
+    nodeDragStarted(event, d) {
+      if (!event.active) {
         dragStartTime = new Date();
         this.simulation.alphaTarget(0.3).restart();
       }
       d.fx = d.x;
       d.fy = d.y;
     },
-    nodeDragged(d) {
-      d.fx = d3.event.x;
-      d.fy = d3.event.y;
+    nodeDragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
       this.simulation.alphaTarget(0.3).restart();
     },
-    nodeDragEnded(d) {
-      if (!d3.event.active) {
+    nodeDragEnded(event, d) {
+      if (!event.active) {
         //if dragged for more than 300ms, then save the final position
         dragEndTime = new Date();
         if (dragEndTime - dragStartTime > 300)
@@ -1225,7 +1364,7 @@ export default {
       d.fx = null;
       d.fy = null;
     },
-    nodeMouseOver(d) {
+    nodeMouseOver(event, d) {
       const graph = this.selections.graph;
       const circles = graph.selectAll("circle");
       const paths = graph.selectAll("path");
@@ -1257,7 +1396,7 @@ export default {
       texts.classed("faded", true);
       texts.filter(df => related.indexOf(df) > -1).classed("highlight", true);
     },
-    nodeMouseOut(d) {
+    nodeMouseOut(event, d) {
       const graph = this.selections.graph;
       const circles = graph.selectAll("circle");
       const paths = graph.selectAll("path");
@@ -1270,7 +1409,7 @@ export default {
       texts.classed("faded", false);
       texts.classed("highlight", false);
     },
-    nodeClick(d, i, clickType) {
+    nodeClick(event, d, clickType) {
       const circles = this.selections.graph.selectAll("circle");
 
       circles.classed("selected", false);
@@ -1329,23 +1468,7 @@ export default {
         width,
         margin = 0.1, // fraction of width
         items = [],
-        rescale = false,
-        style = {
-          rect: {
-            mouseout: {
-              fill: "rgb(244,244,244)",
-              stroke: "white",
-              "stroke-width": "1px"
-            },
-            mouseover: {
-              fill: "rgb(200,200,200)"
-            }
-          },
-          text: {
-            fill: "steelblue",
-            "font-size": "15"
-          }
-        };
+        rescale = false;
 
       function menu(x, y, hostD) {
         d3.select(".context-menu").remove();
@@ -1365,39 +1488,48 @@ export default {
           .on("mouseover", function() {
             d3.select(this)
               .select("rect")
-              .styles(style.rect.mouseover);
+              .style("fill", "rgb(200,200,200)");
           })
           .on("mouseout", function() {
             d3.select(this)
               .select("rect")
-              .styles(style.rect.mouseout);
+              .style("fill", "rgb(244,244,244)")
+              .style("stroke", "white")
+              .style("stroke-width", "1px");
           });
 
-        d3.selectAll(".menu-entry")
-          .append("rect")
+        let rects = d3.selectAll(".menu-entry").append("rect");
+        rects
           .attr("x", x)
-          .attr("y", function(d, i) {
+          .attr("y", function(event, d) {
+            const e = rects.nodes();
+            const i = e.indexOf(this);
             return y + i * height;
           })
           .attr("width", width)
           .attr("height", height)
-          .styles(style.rect.mouseout)
-          .on("click", function(d) {
+          .style("fill", "rgb(244,244,244)")
+          .style("stroke", "white")
+          .style("stroke-width", "1px")
+          .on("click", function(event, d) {
             d.handler.call(hostD);
           });
 
-        d3.selectAll(".menu-entry")
-          .append("text")
+        let texts = d3.selectAll(".menu-entry").append("text");
+        texts
           .text(function(d) {
             return d.label;
           })
           .attr("x", x)
-          .attr("y", function(d, i) {
+          .attr("y", function(event, d) {
+            const e = texts.nodes();
+            const i = e.indexOf(this);
             return y + i * height;
           })
           .attr("dy", height - margin / 2)
           .attr("dx", margin)
-          .styles(style.text);
+          .style("fill", "steelblue")
+          .style("font-size", "15");
 
         // Other interactions
         d3.select("body").on("click", function() {
@@ -1424,7 +1556,8 @@ export default {
             .text(function(d) {
               return d.label;
             })
-            .styles(style.text)
+            .style("fill", "steelblue")
+            .style("font-size", "15")
             .attr("x", -1000)
             .attr("y", -1000)
             .attr("class", "tmp");
@@ -1510,6 +1643,13 @@ export default {
         modelId: this.$route.params.modelId
       });
       this.$emit("close");
+    },
+    async expandGroup(groupId) {
+      if (!this.expandedNodeGroups.includes(groupId)) {
+        let expandedNodeGroups = [...this.expandedNodeGroups];
+        expandedNodeGroups.push(groupId);
+        this.expandedNodeGroups = expandedNodeGroups;
+      }
     }
   },
 
@@ -1519,6 +1659,27 @@ export default {
         this.updateForces();
       },
       deep: true
+    },
+
+    selectedNodeId: {
+      // This is for responding to search and also store-calculator setting the selectedNodeId
+      // when reporting an error.
+      async handler() {
+        // expand the group that the node is in
+        const foundNodeGroup = this.currentModel.nodeGroups.find(group =>
+          group.nodeIds.includes(this.selectedNodeId)
+        );
+        if (foundNodeGroup) {
+          await this.expandGroup(foundNodeGroup.id);
+          this.$store.commit("ui/setSelectedNodeGroup", foundNodeGroup);
+        }
+        // highlight the selected node
+        const circles = this.selections.graph.selectAll("circle");
+        circles.classed("selected", false);
+        circles
+          .filter(circle => circle.id == this.selectedNodeId)
+          .classed("selected", true);
+      }
     },
 
     selectedNodeGroup: {
@@ -1557,6 +1718,15 @@ export default {
       immediate: true,
       deep: true,
       handler(newLinks, oldLinks) {
+        this.prepD3DataAndUpdate();
+      }
+    },
+
+    // watcher for circularNodeIds
+    circularNodeIds: {
+      immediate: true,
+      deep: true,
+      handler() {
         this.prepD3DataAndUpdate();
       }
     },
@@ -1628,6 +1798,9 @@ path.link.relaxed {
 path.link.unused.relaxed {
   stroke: #fdd;
 }
+path.link.inCircularDependency {
+  stroke: #e73;
+}
 
 circle {
   stroke-width: 0px;
@@ -1655,8 +1828,13 @@ circle.group {
 circle.new,
 circle.noFormula,
 circle.selfBlocking {
-  stroke-width: 1px;
+  stroke-width: 2px;
   stroke: #e77;
+}
+
+circle.inCircularDependency {
+  stroke-width: 2px;
+  stroke: #e73;
 }
 
 circle.selected {

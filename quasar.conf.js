@@ -62,6 +62,12 @@ module.exports = function(ctx) {
     pwa: {
       // workboxPluginMode: 'InjectManifest',
       // workboxOptions: {}, // only for NON InjectManifest
+      workboxPluginMode: "GenerateSW",
+      workboxOptions: {
+        skipWaiting: true,
+        clientsClaim: true
+      },
+
       manifest: {
         // name: 'mipa',
         // short_name: 'mipa',

@@ -6,7 +6,7 @@ function classifyInfluencers(payload) {
   let thisNode = payload.thisNode;
 
   let formulaExists =
-    typeof thisNode.sysFormula != "undefined" && thisNode.sysFormula != "";
+    typeof thisNode.sysFormula != "undefined" && thisNode.sysFormula !== "";
 
   let used = [];
   let blocking = [];

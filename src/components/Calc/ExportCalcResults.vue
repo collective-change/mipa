@@ -94,11 +94,13 @@ function prepBaselineArray(calcResults, nodes) {
 
   //compose header row
   tempRow = [
-    "Result type",
-    "Node ID",
+    "Name",
     "Symbol",
     "Unit",
-    "Name",
+    "Formula",
+    "Node ID",
+    "Latest value",
+    "Result type",
     ...calcResults.timeSPoints.map(s => {
       let date = new Date(1970, 0, 1);
       date.setSeconds(s);
@@ -110,11 +112,13 @@ function prepBaselineArray(calcResults, nodes) {
   //compose values rows
   sortedNodes.forEach(function(node) {
     tempRow = [
-      "baseline",
-      node.id,
+      node.name,
       node.symbol,
       node.unit,
-      node.name,
+      node.symbolFormula,
+      node.id,
+      node.latestValue,
+      "baseline",
       ...calcResults.nodesValues[node.id]
     ];
     rows.push(tempRow);
@@ -131,11 +135,13 @@ function prepResultsOfActionArray(calcResults, nodes) {
 
   //compose header row
   tempRow = [
-    "Result type",
-    "Node ID",
+    "Name",
     "Symbol",
     "Unit",
-    "Name",
+    "Formula",
+    "Node ID",
+    "Latest value",
+    "Result type",
     ...calcResults.timeSPoints.map(s => {
       let date = new Date(1970, 0, 1);
       date.setSeconds(s);
@@ -177,11 +183,13 @@ function composeActionResultsValueRow(
 ) {
   if (node.id in nodesValues) {
     rows.push([
-      nodesValuesType,
-      node.id,
+      node.name,
       node.symbol,
       node.unit,
-      node.name,
+      node.symbolFormula,
+      node.id,
+      node.latestValue,
+      nodesValuesType,
       ...nodesValues[node.id]
     ]);
   }
