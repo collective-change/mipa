@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div class="text-h6">Direct impacts</div>
     <q-list bordered>
       <q-item v-for="impact in impacts" v-bind:key="impact.id" tag="label" v-ripple>
         <q-item-section>

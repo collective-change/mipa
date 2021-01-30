@@ -1,8 +1,8 @@
 <template>
   <div v-if="costsAndImpacts">
-    <div class="text-h6">
+    <!--<div class="text-h6">
       <slot name="header"></slot>
-    </div>
+    </div>-->
     <div>
       <q-chip
         square
@@ -10,7 +10,7 @@
         :key="actionId"
       >{{ getActionTitle(actionId) }}</q-chip>
     </div>
-    <q-list bordered>
+    <q-list>
       <q-item v-for="impact in costsAndImpacts.impacts" v-bind:key="impact.id" tag="label">
         <q-item-section>
           <!-- <q-item-label overline>{{ impact.id }}</q-item-label> -->
@@ -40,7 +40,7 @@
         </q-item-section>
       </q-item>
     </q-list>
-    <q-list bordered>
+    <q-list>
       <q-item>
         Outstanding effort:
         {{ formatNumber(costsAndImpacts.outstandingDirectEffortHrs, 3) }} /

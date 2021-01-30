@@ -151,7 +151,7 @@
         <div class="row q-col-gutter-md">
           <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
             <q-input v-model="notes" :label="$t('Notes')" filled autogrow />
-
+            <div class="text-h6">Direct impacts</div>
             <impacts />
 
             <div class="row q-gutter-md q-mt-md items-start">
@@ -248,24 +248,26 @@
 
           <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
             <!-- middle column -->
+            <div class="text-h6">Relationships</div>
             <div class="q-pa-sm q-gutter-sm">
               <action-relationships></action-relationships>
             </div>
-            <q-list bordered class="rounded-borders">
-              <q-expansion-item label="Other effective impacts">
+            <div class="text-h6">Computed</div>
+            <q-list bordered separator class="rounded-borders">
+              <q-expansion-item label="Direct costs" header-class="text-weight-medium">
                 <simpleCostsAndImpacts
                   :costsAndImpacts="
                 uiAction.effectiveChainedCostsAndImpactsExcludingSelf
               "
                 >
-                  <template v-slot:header>Other effective impacts</template>
+                  <!-- <template v-slot:header>Direct costs</template> -->
                 </simpleCostsAndImpacts>
               </q-expansion-item>
-              <q-expansion-item label="Aggregated results">
-                <q-markup-table flat bordered>
+              <q-expansion-item label="Aggregated results" header-class="text-weight-medium">
+                <q-markup-table flat separator="none">
                   <thead>
                     <tr>
-                      <th class="text-left">Aggregated results</th>
+                      <th class="text-left">Item</th>
                       <th class="text-right">NPV ({{ currentOrg ? currentOrg.currency : "" }})</th>
                     </tr>
                   </thead>
