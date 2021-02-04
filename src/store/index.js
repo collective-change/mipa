@@ -2,14 +2,15 @@ import Vue from "vue";
 import Vuex from "vuex";
 import { vuexfireMutations } from "vuexfire";
 
-import auth from "./store-auth";
-import settings from "./store-settings";
-import orgs from "./store-orgs";
-import model from "./store-model";
 import actions from "./store-actions";
 import adHocDocs from "./store-adHocDocs";
+import auth from "./store-auth";
 import calculator from "./store-calculator";
 import calcResults from "./store-calcResults";
+import chats from "./store-chats";
+import model from "./store-model";
+import orgs from "./store-orgs";
+import settings from "./store-settings";
 import ui from "./store-ui";
 import uiAction from "./store-uiAction";
 import users from "./store-users";
@@ -28,14 +29,15 @@ export default function(/* { ssrContext } */) {
       ...vuexfireMutations
     },
     modules: {
-      auth,
-      settings,
-      orgs,
-      model,
       actions,
       adHocDocs,
+      auth,
       calculator,
       calcResults,
+      chats,
+      model,
+      orgs,
+      settings,
       ui,
       uiAction,
       users

@@ -31,6 +31,7 @@ const actions = {
           .doc(cred.user.uid)
           .set({
             email: payload.email,
+            displayName: payload.email.split("@")[0],
             registrationTime: firebase.firestore.FieldValue.serverTimestamp()
           });
       })
