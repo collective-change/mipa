@@ -42,6 +42,13 @@ service cloud.firestore {
       allow read, create: if request.auth.uid != null;
     }
 
+    match /chats/{chatId} {
+      allow create: if userInOrg(request.resource.data.orgId);
+      allow read, update;
+      allow update, read: if resource.data.membersOnly == false && userInOrg(resource.data.orgId);
+      allow update, read: if request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members;
+    }
+
     function userInOrg(orgId) {
       return request.auth.uid in get(/databases/$(database)/documents/orgs/$(orgId)).data.users;
     }

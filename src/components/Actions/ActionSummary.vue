@@ -335,6 +335,13 @@
           <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
             <select-user label="Responsible" v-model="uiAction.responsiblePerson" />
             <select-user label="Accountable" v-model="uiAction.accountablePerson" />
+            <div class="text-h6">Chat</div>
+            <chat
+              :chatId="uiAction.chatId"
+              subjectDocType="action"
+              :subjectDocLineage="{actionId: uiAction.id}"
+              :subjectDocTitle="uiAction.title"
+            />
           </div>
         </div>
         <div v-if="!embedded" class="row q-gutter-y-lg">
@@ -402,6 +409,8 @@ export default {
       .default,
     "select-user": require("components/Users/SelectUser.vue")
       .default,
+    "chat": require("components/Chats/Chat.vue")
+      .default,
     gchart: GChart
   },
 
@@ -468,7 +477,8 @@ export default {
       "uiAction.notes",
       "uiAction.saveFullResults",
       "uiAction.responsiblePerson",
-      "uiAction.accountablePerson"
+      "uiAction.accountablePerson",
+      "uiAction.chatId"
     ]),
     ...mapMultiRowFields(["uiAction.impacts"]),
 

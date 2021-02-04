@@ -95,8 +95,14 @@
         <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
         <modal-buttons />
       </q-form>
-
-      <div v-if="nodeChart.chartData.length > 0">
+      <div class="text-h6">Chat</div>
+      <chat
+        :chatId="nodeToSubmit.chatId"
+        subjectDocType="node"
+        :subjectDocLineage="{modelId: currentModel.id, nodeId: selectedNode.id}"
+        :subjectDocTitle="nodeToSubmit.name"
+      />
+      <div v-if="nodeChart.chartData.length > 0" class="q-mt-md">
         <gchart
           v-if="nodeChart.chartData.length > 0"
           type="LineChart"
@@ -162,6 +168,8 @@ export default {
       .default,
       "select-user": require("components/Users/SelectUser.vue")
       .default,
+      "chat": require("components/Chats/Chat.vue")
+      .default,
     gchart: GChart,
     "vue-mathjax": VueMathjax
   },
@@ -191,7 +199,7 @@ export default {
       "uiNodeChangedFields"
     ]),
     ...mapState("calcResults", ["baseline"]),
-    ...mapState("orgs", ["currentOrg"]),
+    ...mapState("model", ["currentModel"]),
     ...mapGetters("model", ["nodes", "links"]),
 
     selectedNode() {
