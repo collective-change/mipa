@@ -56,11 +56,12 @@
         <q-space />
 
         <div class="q-gutter-sm row items-center no-wrap">
-          <q-btn v-if="loggedIn" round dense flat color="grey-8" icon="message">
+          <q-btn v-if="loggedIn" round dense flat color="grey-8" icon="chat">
+            <q-badge color="blue-grey" text-color="white" floating>2</q-badge>
             <q-tooltip>{{ $t("Messages") }}</q-tooltip>
           </q-btn>
           <q-btn v-if="loggedIn" round dense flat color="grey-8" icon="notifications">
-            <q-badge color="red" text-color="white" floating>2</q-badge>
+            <q-badge color="red" text-color="white" floating>0</q-badge>
             <q-tooltip>{{ $t("Notifications") }}</q-tooltip>
           </q-btn>
 

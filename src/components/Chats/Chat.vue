@@ -1,17 +1,24 @@
 <template>
   <div
-    ref="chatComponent"
     class="component-chat flex column"
     style="border-style: solid; border-color: #bbb; border-width: 1px;"
   >
+    <q-toolbar class="bg-grey-3">
+      <q-btn flat dense no-caps label="members"></q-btn>
+      <q-space />
+      <q-btn flat round dense>
+        <q-icon name="notifications" color="grey-8" />
+      </q-btn>
+    </q-toolbar>
+
     <div
       :class="{ 'invisible' : !showMessages }"
-      class="q-pa-md column col justify-end"
+      class="column col justify-end"
       style="min-height: 300px; max-height:300px;"
     >
-      <div v-if="currentChat">
+      <div v-if="currentChat" ref="chatComponent" style="overflow-x: hidden; overflow-y: auto;">
         <q-chat-message
-          v-for="(message, key) in currentChat.newestMessages"
+          v-for="(message, key) in messagesForDisplay"
           :key="key"
           :name="message.from == currentUser.id ? '' : getUserDisplayNameOrEmail(message.from)"
           :avatar="message.from == currentUser.id ? undefined : getUserPhotoURL(message.from)"
@@ -21,6 +28,7 @@
           :bg-color="message.from == currentUser.id ? 'light-green-2' : 'grey-4'"
           name-sanitize
           text-sanitize
+          class="q-pr-md"
         />
       </div>
     </div>
@@ -67,11 +75,22 @@
       ...mapState('chats', ['currentChat']),
       ...mapState("orgs", ["currentOrg"]),
       ...mapGetters("users", ["currentOrgUsers"]),
+      messagesForDisplay(){
+        console.log('messagesForDisplay compute', this.currentChat.newestMessages)
+        if (this.currentChat){
+          this.scrollToBottom();
+          return this.currentChat.newestMessages;
+         } 
+        else return []
+      },
+      messageCount() { return this.messagesForDisplay.length}
 	  },
 	  methods: {
       ...mapActions('chats', ['addChat', 'addMessage', 'bindCurrentChat', 'unbindCurrentChat']),
       
 	  	async sendMessage() {
+        if(!(this.newMessage)) return; 
+
         let chatIdToUse = this.chatId;
 
         if (!this.chatId) {
@@ -104,9 +123,10 @@
       },
       
 	  	scrollToBottom() {
-	  		let chatComponent = this.$refs.chatComponent
 	  		setTimeout(() => {
-		  		window.scrollTo(0, chatComponent.scrollHeight)
+          let chatComponent = this.$refs.chatComponent
+          if (chatComponent)
+		  		chatComponent.scrollTop = chatComponent.scrollHeight
 	  		}, 20);
       },
       
@@ -118,9 +138,9 @@
         //include the year if it's not this year
         if (date.getFullYear() != now.getFullYear()) outputString += isoString.slice(0,5) + '-';
         //include the month and date if it's not today
-        if (date.getMonth() != now.getMonth() && date.getDate() != now.getDate()) outputString += isoString.slice(5,5) + ' ';
+        if (date.getFullYear() != now.getFullYear() || date.getMonth() != now.getMonth() || date.getDate() != now.getDate()) outputString += isoString.slice(5,10) + ' ';
         //always include the time
-        outputString += isoString.split("T")[1].slice(0,5);
+        outputString += isoString.slice(11,16);
         return outputString;
       },
 
@@ -138,19 +158,9 @@
       chatId: function(chatId) {
         this.unbindCurrentChat();
         if (this.chatId) this.bindCurrentChat(this.chatId);
-        this.newMessage = ''
-      },
-
-	  	newestMessages: function(val) {
-	  		if (Object.keys(val).length || true) {
-	  			this.scrollToBottom()
-	  			setTimeout(() => {
-	  				this.showMessages = true
-	  			}, 200)
-        }
-        //TODO: clear user's unread messages for this chat
+        this.newMessage = '';
         //TODO: set chat.members[userId].unreadCount = 0
-	  	}
+      },
 	  },
 	  mounted() {
       if (this.chatId) this.bindCurrentChat(this.chatId);
