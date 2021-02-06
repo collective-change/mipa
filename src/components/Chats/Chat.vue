@@ -32,7 +32,7 @@
           :bg-color="message.from == currentUser.id ? 'light-green-2' : 'grey-4'"
           name-sanitize
           text-sanitize
-          class="q-pr-md"
+          class="q-px-md"
         />
       </div>
     </div>
