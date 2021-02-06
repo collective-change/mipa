@@ -10,6 +10,7 @@
         :subjectDocLineage="subjectDocLineage"
         :subjectDocTitle="subjectDocTitle"
       />
+      <q-space />
       <q-btn flat round dense>
         <q-icon name="visibility" color="grey-8" />
         <q-tooltip>Visible to everyone in your organization. Press to allow chat members only. (Not working yet)</q-tooltip>
