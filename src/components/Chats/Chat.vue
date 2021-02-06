@@ -170,8 +170,10 @@
       chatId: function(chatId) {
         this.unbindCurrentChat();
         this.newMessage = '';
-        if (this.chatId) {this.bindCurrentChat(this.chatId);
-        this.fsResetReadCount({chatId, userId: this.currentUser.id});
+        if (this.chatId) {
+          console.log('switching to chatId', chatId)
+          this.bindCurrentChat(this.chatId);
+          this.fsResetReadCount({chatId, userId: this.currentUser.id});
         }
       },
 	  },

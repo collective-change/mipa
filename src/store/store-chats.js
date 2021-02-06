@@ -4,7 +4,8 @@ import { Notify } from "quasar";
 import { showErrorMessage } from "src/utils/util-show-error-message";
 
 const state = {
-  currentChat: null
+  currentChat: null,
+  unreadChats: null
 };
 
 const mutations = {};
@@ -60,7 +61,8 @@ const actions = {
       .doc(payload.chatId)
       .update({
         members: firebase.firestore.FieldValue.arrayUnion(payload.memberId),
-        [`unreadCounts.${payload.memberId}`]: 0
+        [`unreadCounts.${payload.memberId}`]: 0,
+        [`unreadBy.${payload.memberId}`]: false
       })
       .then(function() {
         Notify.create("Member added!");
@@ -76,7 +78,8 @@ const actions = {
       .doc(payload.chatId)
       .update({
         members: firebase.firestore.FieldValue.arrayRemove(payload.memberId),
-        [`unreadCounts.${payload.memberId}`]: firebase.firestore.FieldValue.delete()
+        [`unreadCounts.${payload.memberId}`]: firebase.firestore.FieldValue.delete(),
+        [`unreadBy.${payload.memberId}`]: firebase.firestore.FieldValue.delete()
       })
       .then(function() {
         Notify.create("Member removed!");
@@ -89,16 +92,21 @@ const actions = {
   fsAddMessage({ dispatch }, payload) {
     //TODO: if newestMessages is too large, then move old messages to log
 
-    //TODO: increment each members' unread count
     let unreadCounts;
+    let unreadBy;
     if (state.currentChat) {
       if (state.currentChat.unreadCounts)
         unreadCounts = Object.assign({}, state.currentChat.unreadCounts);
       else unreadCounts = {};
+      if (state.currentChat.unreadBy)
+        unreadBy = Object.assign({}, state.currentChat.unreadBy);
+      else unreadBy = {};
       state.currentChat.members.forEach(memberId => {
-        if (true || memberId != firebaseAuth.currentUser.uid)
+        if (memberId != firebaseAuth.currentUser.uid) {
+          unreadBy[memberId] = true;
           if (unreadCounts.hasOwnProperty(memberId)) unreadCounts[memberId]++;
           else unreadCounts[memberId] = 1;
+        }
       });
     } else unreadCounts = {};
     firebaseDb
@@ -109,18 +117,42 @@ const actions = {
           payload.message
         ),
         unreadCounts,
+        unreadBy,
         updateTime: firebase.firestore.FieldValue.serverTimestamp()
       });
   },
 
   fsResetReadCount({}, payload) {
+    console.log("resetting in chat", payload.chatId);
     firebaseDb
       .collection("chats")
       .doc(payload.chatId)
       .update({
-        [`unreadCounts.${payload.userId}`]: 0
+        [`unreadCounts.${payload.userId}`]: 0,
+        [`unreadBy.${payload.userId}`]: false
       });
   },
+
+  bindUnreadChats: firestoreAction(({ bindFirestoreRef }, userId) => {
+    // return the promise returned by `bindFirestoreRef`
+    return bindFirestoreRef(
+      "unreadChats",
+      //firebaseDb.collection("chats").where("members", "array-contains", userId),
+      firebaseDb
+        .collection("chats")
+        .where("members", "array-contains", userId)
+        //.where("membersWithUnread", "array-contains", userId)
+        .where(`unreadBy.${userId}`, "==", true),
+      {
+        maxRefDepth: 1,
+        wait: true //this also forces reset: false
+      }
+    );
+  }),
+
+  unbindUnreadChats: firestoreAction(({ unbindFirestoreRef }) => {
+    unbindFirestoreRef("unreadChats", true);
+  }),
 
   bindCurrentChat: firestoreAction(({ bindFirestoreRef }, chatId) => {
     // return the promise returned by `bindFirestoreRef`
