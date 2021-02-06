@@ -33,7 +33,29 @@
             dense
             hide-dropdown-icon
             label="Members"
-          />
+          >
+            <template v-slot:selected-item="member">
+              <q-chip
+                removable
+                dense
+                @remove="removeChatMember"
+                color="white"
+                text-color="secondary"
+                class="q-ml-none"
+              >
+                {{ member.opt.label }}
+                <q-tooltip>{{member.opt.email}}</q-tooltip>
+              </q-chip>
+            </template>
+
+            <template v-slot:option="scope">
+              <q-item v-bind="scope.itemProps" v-on="scope.itemEvents">
+                <q-item-section>
+                  <q-item-label v-html="scope.opt.email" />
+                </q-item-section>
+              </q-item>
+            </template>
+          </q-select>
         </div>
       </div>
     </div>
@@ -66,7 +88,7 @@ import { mapActions, mapGetters, mapState } from "vuex";
       userOptions() {
         return this.currentOrg.users.map((userId) => {
             let foundUser = this.currentOrgUsers.find(u => u.id == userId);
-          return { label: foundUser ? foundUser.email : userId, value: userId };
+          return { label: foundUser ? foundUser.email.split('@')[0] : userId, value: userId, email: foundUser ? foundUser.email : userId };
         });
       },
     },
@@ -113,7 +135,7 @@ import { mapActions, mapGetters, mapState } from "vuex";
         }
         this.fsAddChatMember({chatId: chatIdToUse, memberId: details.value});
       },
-      
+
       removeChatMember(details){
         this.fsRemoveChatMember({chatId: this.currentChat.id, memberId: details.value});
       }

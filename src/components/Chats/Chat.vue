@@ -24,7 +24,7 @@
         <q-chat-message
           v-for="(message, key) in messagesForDisplay"
           :key="key"
-          :name="message.from == currentUser.id ? '' : getUserDisplayNameOrEmail(message.from)"
+          :name="message.from == currentUser.id ? '' : getUserDisplayNameOrTruncatedEmail(message.from)"
           :avatar="message.from == currentUser.id ? undefined : getUserPhotoURL(message.from) ? getUserPhotoURL(message.from) : undefined"
           :text="[message.text]"
           :sent="message.from == currentUser.id ? true : false"
@@ -150,9 +150,9 @@
         return outputString;
       },
 
-      getUserDisplayNameOrEmail(userId) {
+      getUserDisplayNameOrTruncatedEmail(userId) {
         let foundUser = this.currentOrgUsers.find(u => u.id = userId);
-        return foundUser.displayName ? foundUser.displayName : foundUser.email;
+        return foundUser.displayName ? foundUser.displayName : foundUser.email.split('@')[0];
       },
 
       getUserPhotoURL(userId) {
