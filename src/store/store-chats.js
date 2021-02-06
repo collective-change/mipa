@@ -108,7 +108,8 @@ const actions = {
         newestMessages: firebase.firestore.FieldValue.arrayUnion(
           payload.message
         ),
-        unreadCounts
+        unreadCounts,
+        updateTime: firebase.firestore.FieldValue.serverTimestamp()
       });
   },
 
