@@ -18,7 +18,6 @@
 
           <q-select
             use-input
-            filled
             v-model="members"
             multiple
             @filter="filterFn"
@@ -32,7 +31,9 @@
             stack-label
             dense
             hide-dropdown-icon
-            label="Members"
+            :placeholder="members.length ? '' : 'Add members'"
+            borderless
+            class="q-pl-xs border-style:none;"
           >
             <template v-slot:selected-item="scope">
               <q-chip
@@ -66,7 +67,7 @@
 import { mapActions, mapGetters, mapState } from "vuex";
 
   export default {
-    props:['chatId'],
+    props: ['chatId', 'subjectDocType', 'subjectDocLineage', 'subjectDocTitle'],
     data() {
       return {
         members: [],

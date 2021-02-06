@@ -3,15 +3,20 @@
     class="component-chat flex column"
     style="border-style: solid; border-color: #bbb; border-width: 1px;"
   >
-    <q-toolbar class="q-pa-xs bg-grey-3">
-      <chat-members :chatId="chatId" />
+    <q-toolbar class="q-pa-none bg-grey-3">
+      <chat-members
+        :chatId="chatId"
+        :subjectDocType="subjectDocType"
+        :subjectDocLineage="subjectDocLineage"
+        :subjectDocTitle="subjectDocTitle"
+      />
       <q-btn flat round dense>
         <q-icon name="visibility" color="grey-8" />
-        <q-tooltip>Visible to everyone in your organization. Press to allow chat members only.</q-tooltip>
+        <q-tooltip>Visible to everyone in your organization. Press to allow chat members only. (Not working yet)</q-tooltip>
       </q-btn>
       <q-btn flat round dense>
         <q-icon name="notifications_off" color="grey-8" />
-        <q-tooltip>You are not notified of new messages. Press to enable.</q-tooltip>
+        <q-tooltip>You are not notified of new messages. Press to enable. (Not working yet)</q-tooltip>
       </q-btn>
     </q-toolbar>
 
