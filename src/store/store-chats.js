@@ -10,7 +10,7 @@ const state = {
 const mutations = {};
 
 const actions = {
-  async addChat({ dispatch }, payload) {
+  async fsAddChat({ dispatch }, payload) {
     let chat = {
       orgId: payload.orgId,
       members: payload.members,
@@ -54,20 +54,71 @@ const actions = {
     return newChatRef.id;
   },
 
-  addMessage({ dispatch }, payload) {
+  fsAddChatMember({ dispatch }, payload) {
+    firebaseDb
+      .collection("chats")
+      .doc(payload.chatId)
+      .update({
+        members: firebase.firestore.FieldValue.arrayUnion(payload.memberId),
+        [`unreadCounts.${payload.memberId}`]: 0
+      })
+      .then(function() {
+        Notify.create("Member added!");
+      })
+      .catch(function(error) {
+        showErrorMessage("Error adding member", error.message);
+      });
+  },
+
+  fsRemoveChatMember({ dispatch }, payload) {
+    firebaseDb
+      .collection("chats")
+      .doc(payload.chatId)
+      .update({
+        members: firebase.firestore.FieldValue.arrayRemove(payload.memberId),
+        [`unreadCounts.${payload.memberId}`]: firebase.firestore.FieldValue.delete()
+      })
+      .then(function() {
+        Notify.create("Member removed!");
+      })
+      .catch(function(error) {
+        showErrorMessage("Error removing member", error.message);
+      });
+  },
+
+  fsAddMessage({ dispatch }, payload) {
     //TODO: if newestMessages is too large, then move old messages to log
 
+    //TODO: increment each members' unread count
+    let unreadCounts;
+    if (state.currentChat) {
+      if (state.currentChat.unreadCounts)
+        unreadCounts = Object.assign({}, state.currentChat.unreadCounts);
+      else unreadCounts = {};
+      state.currentChat.members.forEach(memberId => {
+        if (true || memberId != firebaseAuth.currentUser.uid)
+          if (unreadCounts.hasOwnProperty(memberId)) unreadCounts[memberId]++;
+          else unreadCounts[memberId] = 1;
+      });
+    } else unreadCounts = {};
     firebaseDb
       .collection("chats")
       .doc(payload.chatId)
       .update({
         newestMessages: firebase.firestore.FieldValue.arrayUnion(
           payload.message
-        )
+        ),
+        unreadCounts
       });
-    //TODO: increment count in chat.members[userId].unreadCount
-    //TODO: notify chat members by adding message to user's unreadMessages subcollection
-    //and/or pushing notification to user's device
+  },
+
+  fsResetReadCount({}, payload) {
+    firebaseDb
+      .collection("chats")
+      .doc(payload.chatId)
+      .update({
+        [`unreadCounts.${payload.userId}`]: 0
+      });
   },
 
   bindCurrentChat: firestoreAction(({ bindFirestoreRef }, chatId) => {

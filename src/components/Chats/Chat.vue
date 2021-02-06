@@ -3,11 +3,15 @@
     class="component-chat flex column"
     style="border-style: solid; border-color: #bbb; border-width: 1px;"
   >
-    <q-toolbar class="bg-grey-3">
-      <q-btn flat dense no-caps label="members"></q-btn>
-      <q-space />
+    <q-toolbar class="q-pa-xs bg-grey-3">
+      <chat-members :chatId="chatId" />
       <q-btn flat round dense>
-        <q-icon name="notifications" color="grey-8" />
+        <q-icon name="visibility" color="grey-8" />
+        <q-tooltip>Visible to everyone in your organization. Press to allow chat members only.</q-tooltip>
+      </q-btn>
+      <q-btn flat round dense>
+        <q-icon name="notifications_off" color="grey-8" />
+        <q-tooltip>You are not notified of new messages. Press to enable.</q-tooltip>
       </q-btn>
     </q-toolbar>
 
@@ -21,7 +25,7 @@
           v-for="(message, key) in messagesForDisplay"
           :key="key"
           :name="message.from == currentUser.id ? '' : getUserDisplayNameOrEmail(message.from)"
-          :avatar="message.from == currentUser.id ? undefined : getUserPhotoURL(message.from)"
+          :avatar="message.from == currentUser.id ? undefined : getUserPhotoURL(message.from) ? getUserPhotoURL(message.from) : undefined"
           :text="[message.text]"
           :sent="message.from == currentUser.id ? true : false"
           :stamp="formatFirestoreTimestamp(message.timestamp)"
@@ -36,7 +40,6 @@
       <q-form class="full-width">
         <q-input
           v-model="newMessage"
-          @blur="scrollToBottom"
           ref="newMessage"
           bg-color="white"
           rounded
@@ -59,6 +62,10 @@
 	//import mixinOtherUserDetails from 'src/mixins/mixin-other-user-details.js'
 
 	export default {
+    components: {
+    "chat-members": require("components/Chats/ChatMembers.vue")
+      .default,
+    },
         //mixins: [mixinOtherUserDetails],
         props: ['title', 'chatId', 'subjectDocType', 'subjectDocLineage', 'subjectDocTitle'],
 	  data() {
@@ -76,7 +83,6 @@
       ...mapState("orgs", ["currentOrg"]),
       ...mapGetters("users", ["currentOrgUsers"]),
       messagesForDisplay(){
-        console.log('messagesForDisplay compute', this.currentChat.newestMessages)
         if (this.currentChat){
           this.scrollToBottom();
           return this.currentChat.newestMessages;
@@ -86,7 +92,7 @@
       messageCount() { return this.messagesForDisplay.length}
 	  },
 	  methods: {
-      ...mapActions('chats', ['addChat', 'addMessage', 'bindCurrentChat', 'unbindCurrentChat']),
+      ...mapActions('chats', ['fsAddChat', 'fsAddMessage', 'fsResetReadCount', 'bindCurrentChat', 'unbindCurrentChat']),
       
 	  	async sendMessage() {
         if(!(this.newMessage)) return; 
@@ -94,7 +100,7 @@
         let chatIdToUse = this.chatId;
 
         if (!this.chatId) {
-          chatIdToUse = await this.addChat({
+          chatIdToUse = await this.fsAddChat({
             orgId: this.currentOrg.id,
             members: [],
             membersOnly: false,
@@ -105,7 +111,7 @@
         });
         }
 
-	  		this.addMessage({
+	  		this.fsAddMessage({
           chatId: chatIdToUse,
 	  			message: {
 		  			text: this.newMessage,
@@ -157,9 +163,10 @@
 	  watch: {
       chatId: function(chatId) {
         this.unbindCurrentChat();
-        if (this.chatId) this.bindCurrentChat(this.chatId);
         this.newMessage = '';
-        //TODO: set chat.members[userId].unreadCount = 0
+        if (this.chatId) {this.bindCurrentChat(this.chatId);
+        this.fsResetReadCount({chatId, userId: this.currentUser.id});
+        }
       },
 	  },
 	  mounted() {
