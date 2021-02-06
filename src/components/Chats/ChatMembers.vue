@@ -34,17 +34,17 @@
             hide-dropdown-icon
             label="Members"
           >
-            <template v-slot:selected-item="member">
+            <template v-slot:selected-item="scope">
               <q-chip
                 removable
                 dense
-                @remove="removeChatMember"
+                @remove="scope.removeAtIndex(scope.index)"
                 color="white"
                 text-color="secondary"
                 class="q-ml-none"
               >
-                {{ member.opt.label }}
-                <q-tooltip>{{member.opt.email}}</q-tooltip>
+                {{ scope.opt.label }}
+                <q-tooltip>{{scope.opt.email}}</q-tooltip>
               </q-chip>
             </template>
 
