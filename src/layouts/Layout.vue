@@ -56,11 +56,9 @@
         <q-space />
 
         <div class="q-gutter-sm row items-center no-wrap">
-          <q-btn v-if="loggedIn" round dense flat color="grey-8" icon="message">
-            <q-tooltip>{{ $t("Messages") }}</q-tooltip>
-          </q-btn>
+          <unread-messages v-if="loggedIn" />
           <q-btn v-if="loggedIn" round dense flat color="grey-8" icon="notifications">
-            <q-badge color="red" text-color="white" floating>2</q-badge>
+            <q-badge color="red" text-color="white" floating>0</q-badge>
             <q-tooltip>{{ $t("Notifications") }}</q-tooltip>
           </q-btn>
 
@@ -180,6 +178,10 @@ import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 
 export default {
   name: "MyLayout",
+      components: {
+    "unread-messages": require("components/Chats/UnreadMessages.vue")
+      .default,
+    },
   data() {
     return {
       //packageJsonBuildNumber: buildNumber,

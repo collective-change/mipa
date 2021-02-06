@@ -1,26 +1,44 @@
 <template>
   <div
-    ref="chatComponent"
     class="component-chat flex column"
     style="border-style: solid; border-color: #bbb; border-width: 1px;"
   >
+    <q-toolbar class="q-pa-none bg-grey-3">
+      <chat-members
+        :chatId="chatId"
+        :subjectDocType="subjectDocType"
+        :subjectDocLineage="subjectDocLineage"
+        :subjectDocTitle="subjectDocTitle"
+      />
+      <q-space />
+      <q-btn flat round dense>
+        <q-icon name="visibility" color="grey-8" />
+        <q-tooltip>Visible to everyone in your organization. Press to allow chat members only. (Not working yet)</q-tooltip>
+      </q-btn>
+      <q-btn flat round dense>
+        <q-icon name="notifications_off" color="grey-8" />
+        <q-tooltip>You are not notified of new messages. Press to enable. (Not working yet)</q-tooltip>
+      </q-btn>
+    </q-toolbar>
+
     <div
       :class="{ 'invisible' : !showMessages }"
-      class="q-pa-md column col justify-end"
+      class="column col justify-end"
       style="min-height: 300px; max-height:300px;"
     >
-      <div v-if="currentChat">
+      <div v-if="currentChat" ref="chatComponent" style="overflow-x: hidden; overflow-y: auto;">
         <q-chat-message
-          v-for="(message, key) in currentChat.newestMessages"
+          v-for="(message, key) in messagesForDisplay"
           :key="key"
-          :name="message.from == currentUser.id ? '' : getUserDisplayNameOrEmail(message.from)"
-          :avatar="message.from == currentUser.id ? undefined : getUserPhotoURL(message.from)"
+          :name="message.from == currentUser.id ? '' : getUserDisplayNameOrTruncatedEmail(message.from)"
+          :avatar="message.from == currentUser.id ? undefined : getUserPhotoURL(message.from) ? getUserPhotoURL(message.from) : undefined"
           :text="[message.text]"
           :sent="message.from == currentUser.id ? true : false"
           :stamp="formatFirestoreTimestamp(message.timestamp)"
           :bg-color="message.from == currentUser.id ? 'light-green-2' : 'grey-4'"
           name-sanitize
           text-sanitize
+          class="q-px-md"
         />
       </div>
     </div>
@@ -28,7 +46,6 @@
       <q-form class="full-width">
         <q-input
           v-model="newMessage"
-          @blur="scrollToBottom"
           ref="newMessage"
           bg-color="white"
           rounded
@@ -51,6 +68,10 @@
 	//import mixinOtherUserDetails from 'src/mixins/mixin-other-user-details.js'
 
 	export default {
+    components: {
+    "chat-members": require("components/Chats/ChatMembers.vue")
+      .default,
+    },
         //mixins: [mixinOtherUserDetails],
         props: ['title', 'chatId', 'subjectDocType', 'subjectDocLineage', 'subjectDocTitle'],
 	  data() {
@@ -67,15 +88,25 @@
       ...mapState('chats', ['currentChat']),
       ...mapState("orgs", ["currentOrg"]),
       ...mapGetters("users", ["currentOrgUsers"]),
+      messagesForDisplay(){
+        if (this.currentChat){
+          this.scrollToBottom();
+          return this.currentChat.newestMessages;
+         } 
+        else return []
+      },
+      messageCount() { return this.messagesForDisplay.length}
 	  },
 	  methods: {
-      ...mapActions('chats', ['addChat', 'addMessage', 'bindCurrentChat', 'unbindCurrentChat']),
+      ...mapActions('chats', ['fsAddChat', 'fsAddMessage', 'fsResetReadCount', 'bindCurrentChat', 'unbindCurrentChat']),
       
 	  	async sendMessage() {
+        if(!(this.newMessage)) return; 
+
         let chatIdToUse = this.chatId;
 
         if (!this.chatId) {
-          chatIdToUse = await this.addChat({
+          chatIdToUse = await this.fsAddChat({
             orgId: this.currentOrg.id,
             members: [],
             membersOnly: false,
@@ -86,7 +117,7 @@
         });
         }
 
-	  		this.addMessage({
+	  		this.fsAddMessage({
           chatId: chatIdToUse,
 	  			message: {
 		  			text: this.newMessage,
@@ -104,9 +135,10 @@
       },
       
 	  	scrollToBottom() {
-	  		let chatComponent = this.$refs.chatComponent
 	  		setTimeout(() => {
-		  		window.scrollTo(0, chatComponent.scrollHeight)
+          let chatComponent = this.$refs.chatComponent
+          if (chatComponent)
+		  		chatComponent.scrollTop = chatComponent.scrollHeight
 	  		}, 20);
       },
       
@@ -118,15 +150,15 @@
         //include the year if it's not this year
         if (date.getFullYear() != now.getFullYear()) outputString += isoString.slice(0,5) + '-';
         //include the month and date if it's not today
-        if (date.getMonth() != now.getMonth() && date.getDate() != now.getDate()) outputString += isoString.slice(5,5) + ' ';
+        if (date.getFullYear() != now.getFullYear() || date.getMonth() != now.getMonth() || date.getDate() != now.getDate()) outputString += isoString.slice(5,10) + ' ';
         //always include the time
-        outputString += isoString.split("T")[1].slice(0,5);
+        outputString += isoString.slice(11,16);
         return outputString;
       },
 
-      getUserDisplayNameOrEmail(userId) {
+      getUserDisplayNameOrTruncatedEmail(userId) {
         let foundUser = this.currentOrgUsers.find(u => u.id = userId);
-        return foundUser.displayName ? foundUser.displayName : foundUser.email;
+        return foundUser.displayName ? foundUser.displayName : foundUser.email.split('@')[0];
       },
 
       getUserPhotoURL(userId) {
@@ -135,22 +167,18 @@
       }
 	  },
 	  watch: {
-      chatId: function(chatId) {
+      chatId(newChatId, oldChatId) {
         this.unbindCurrentChat();
-        if (this.chatId) this.bindCurrentChat(this.chatId);
-        this.newMessage = ''
-      },
-
-	  	newestMessages: function(val) {
-	  		if (Object.keys(val).length || true) {
-	  			this.scrollToBottom()
-	  			setTimeout(() => {
-	  				this.showMessages = true
-	  			}, 200)
+        this.newMessage = '';
+        if (newChatId) {
+          this.bindCurrentChat(newChatId);
         }
-        //TODO: clear user's unread messages for this chat
-        //TODO: set chat.members[userId].unreadCount = 0
-	  	}
+      },
+      currentChat(newChat, oldChat) {
+        if (newChat) {
+          this.fsResetReadCount({chatId: newChat.id, userId: this.currentUser.id});
+        }
+      }
 	  },
 	  mounted() {
       if (this.chatId) this.bindCurrentChat(this.chatId);
