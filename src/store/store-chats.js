@@ -123,7 +123,6 @@ const actions = {
   },
 
   fsResetReadCount({}, payload) {
-    console.log("resetting in chat", payload.chatId);
     firebaseDb
       .collection("chats")
       .doc(payload.chatId)
@@ -141,7 +140,6 @@ const actions = {
       firebaseDb
         .collection("chats")
         .where("members", "array-contains", userId)
-        //.where("membersWithUnread", "array-contains", userId)
         .where(`unreadBy.${userId}`, "==", true),
       {
         maxRefDepth: 1,

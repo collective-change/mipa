@@ -167,15 +167,18 @@
       }
 	  },
 	  watch: {
-      chatId: function(chatId) {
+      chatId(newChatId, oldChatId) {
         this.unbindCurrentChat();
         this.newMessage = '';
-        if (this.chatId) {
-          console.log('switching to chatId', chatId)
-          this.bindCurrentChat(this.chatId);
-          this.fsResetReadCount({chatId, userId: this.currentUser.id});
+        if (newChatId) {
+          this.bindCurrentChat(newChatId);
         }
       },
+      currentChat(newChat, oldChat) {
+        if (newChat) {
+          this.fsResetReadCount({chatId: newChat.id, userId: this.currentUser.id});
+        }
+      }
 	  },
 	  mounted() {
       if (this.chatId) this.bindCurrentChat(this.chatId);
