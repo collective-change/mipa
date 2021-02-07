@@ -3,16 +3,35 @@
     <q-header elevated class="bg-white text-grey-8 q-py-none print-hide">
       <q-toolbar>
         <div class="text-h6">{{ orgName }}</div>
-        <q-btn flat no-caps no-wrap class="q-ml-xs" v-if="$q.screen.gt.xs" clickable to="/">
-          <q-toolbar-title shrink class="text-weight-bold text-primary">mipa</q-toolbar-title>
+        <q-btn
+          flat
+          no-caps
+          no-wrap
+          class="q-ml-xs"
+          v-if="$q.screen.gt.xs"
+          clickable
+          to="/"
+        >
+          <q-toolbar-title shrink class="text-weight-bold text-primary"
+            >mipa</q-toolbar-title
+          >
         </q-btn>
-        <q-btn-dropdown v-if="currentOrg" dense flat :label="$t(currentLinkGroup)">
+        <q-btn-dropdown
+          v-if="currentOrg"
+          dense
+          flat
+          :label="$t(currentLinkGroup)"
+        >
           <q-list>
             <div v-for="(linkGroup, key) in linkGroups" v-bind:key="key">
               <q-separator class="q-my-xs" />
               <q-item class="q-py-none">
                 <q-item-section avatar class="q-py-none">
-                  <q-icon color="grey" :name="linkGroup.icon" :class="linkGroup.icon_class" />
+                  <q-icon
+                    color="grey"
+                    :name="linkGroup.icon"
+                    :class="linkGroup.icon_class"
+                  />
                 </q-item-section>
                 <q-item-section class="q-py-none">
                   <q-item-label>{{ linkGroup.text }}</q-item-label>
@@ -31,7 +50,11 @@
                 >
                   <q-item-section>
                     <q-item-section avatar>
-                      <q-icon color="grey" :name="link.icon" :class="link.icon_class" />
+                      <q-icon
+                        color="grey"
+                        :name="link.icon"
+                        :class="link.icon_class"
+                      />
                     </q-item-section>
                     <q-item-section>
                       <q-item-label>{{ link.text }}</q-item-label>
@@ -57,12 +80,25 @@
 
         <div class="q-gutter-sm row items-center no-wrap">
           <unread-messages v-if="loggedIn" />
-          <q-btn v-if="loggedIn" round dense flat color="grey-8" icon="notifications">
+          <q-btn
+            v-if="loggedIn"
+            round
+            dense
+            flat
+            color="grey-8"
+            icon="notifications"
+          >
             <q-badge color="red" text-color="white" floating>0</q-badge>
             <q-tooltip>{{ $t("Notifications") }}</q-tooltip>
           </q-btn>
 
-          <q-btn v-if="!loggedIn" to="/auth" flat icon-right="account_circle" :label="$t('Login')" />
+          <q-btn
+            v-if="!loggedIn"
+            to="/auth"
+            flat
+            icon-right="account_circle"
+            :label="$t('Login')"
+          />
           <q-btn
             v-else
             flat
@@ -100,7 +136,14 @@
     >
       <q-scroll-area class="fit">
         <q-list padding>
-          <q-item v-for="link in links1" :key="link.text" v-ripple clickable :to="link.to" exact>
+          <q-item
+            v-for="link in links1"
+            :key="link.text"
+            v-ripple
+            clickable
+            :to="link.to"
+            exact
+          >
             <q-item-section avatar>
               <q-icon color="grey" :name="link.icon" :class="link.icon_class" />
             </q-item-section>
@@ -111,7 +154,14 @@
 
           <q-separator class="q-my-md" />
 
-          <q-item v-for="link in links2" :key="link.text" v-ripple clickable :to="link.to" exact>
+          <q-item
+            v-for="link in links2"
+            :key="link.text"
+            v-ripple
+            clickable
+            :to="link.to"
+            exact
+          >
             <q-item-section avatar>
               <q-icon color="grey" :name="link.icon" />
             </q-item-section>
@@ -144,7 +194,8 @@
                 :key="button.text"
                 class="drawer-footer-link"
                 href="javascript:void(0)"
-              >{{ $t(button.text) }}</a>
+                >{{ $t(button.text) }}</a
+              >
             </div>
           </div>
           <div class="q-py-md q-px-md text-grey-9">
@@ -154,7 +205,8 @@
                 :key="button.text"
                 class="drawer-footer-link"
                 href="javascript:void(0)"
-              >{{ $t(button.text) }}</a>
+                >{{ $t(button.text) }}</a
+              >
             </div>
           </div>
           <!-- <div v-if="loggedIn" class="q-py-md q-px-md text-grey-9">
@@ -178,10 +230,9 @@ import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 
 export default {
   name: "MyLayout",
-      components: {
-    "unread-messages": require("components/Chats/UnreadMessages.vue")
-      .default,
-    },
+  components: {
+    "unread-messages": require("components/Chats/UnreadMessages.vue").default,
+  },
   data() {
     return {
       //packageJsonBuildNumber: buildNumber,
@@ -189,7 +240,7 @@ export default {
       lang: this.$i18n.locale,
       langOptions: [
         { value: "en-us", label: "English" },
-        { value: "zh-tw", label: "中文" }
+        { value: "zh-tw", label: "中文" },
       ],
 
       rightDrawerOpen: false, //this.$q.platform.is.desktop,
@@ -198,24 +249,24 @@ export default {
       links2: [
         { icon: "settings", text: "Settings", to: "/settings" },
         { icon: "help", text: "Help", to: "/settings/help" },
-        { icon: "feedback", text: "SendFeedback" }
+        { icon: "feedback", text: "SendFeedback" },
       ],
       links3: [{ icon: "exit_to_app", text: "Logout", onclick: "logoutUser" }],
       buttons1: [
         { text: "About" },
         { text: "Copyright" },
-        { text: "Contact us" }
+        { text: "Contact us" },
       ],
       buttons2: [
         { text: "Terms" },
         { text: "Privacy" },
-        { text: "Policy & Safety" }
-      ]
+        { text: "Policy & Safety" },
+      ],
     };
   },
   computed: {
     ...mapState("auth", ["loggedIn", "userId"]),
-    ...mapState("users", ['currentUser']),
+    ...mapState("users", ["currentUser"]),
     ...mapState("model", ["currentModel"]),
     ...mapState("orgs", ["orgs", "currentOrg"]),
     ...mapState("adHocDocs", ["exchangeRates", "appSummary"]),
@@ -251,8 +302,8 @@ export default {
           icon: "home",
           links: [
             { text: this.$t("My dashboard"), to: "/", disable: false },
-            { text: this.$t("To do"), to: "/todo", disable: true }
-          ]
+            { text: this.$t("To do"), to: "/todo", disable: true },
+          ],
         },
         organization: {
           text: this.$t("Organization"),
@@ -261,39 +312,39 @@ export default {
             {
               text: this.$t("Basic information"),
               to: "/organization/basic-info",
-              disable: true
+              disable: true,
             },
             {
               text: this.$t("Users"),
               to: "/organization/users",
-              disable: true
+              disable: true,
             },
             {
               text: this.$t("Structure"),
               to: "/organizations/structure",
-              disable: true
+              disable: true,
             },
             {
               text: this.$t("Suppliers"),
               to: "/organization/suppliers",
-              disable: true
+              disable: true,
             },
             {
               text: this.$t("Purchases"),
               to: "/organization/purchases",
-              disable: true
+              disable: true,
             },
             {
               text: this.$t("Metrics"),
               to: "/organization/metrics",
-              disable: true
+              disable: true,
             },
             {
               text: this.$t("Frameworks"),
               to: "/organization/frameworks",
-              disable: true
-            }
-          ]
+              disable: true,
+            },
+          ],
         },
         model: {
           text: this.$t("ModelVerb"),
@@ -303,20 +354,20 @@ export default {
             {
               text: this.$t("ModelNoun"),
               to: `/org/${this.orgNameSlug}/model/${this.orgId}/${this.modelId}`,
-              disable: false
+              disable: false,
             },
             { text: this.$t("Units"), to: "/placeholder", disable: true },
             {
               text: this.$t("Bulk update"),
-              to: `/org/${this.orgNameSlug}/model-bulk-update-nodes/${this.orgId}/${this.modelId}`
+              to: `/org/${this.orgNameSlug}/model-bulk-update-nodes/${this.orgId}/${this.modelId}`,
             },
             { text: this.$t("Analysis"), to: "/placeholder", disable: true },
             {
               text: this.$t("Model templates"),
               to: "/placeholder",
-              disable: true
-            }
-          ]
+              disable: true,
+            },
+          ],
         },
         ideate: {
           text: this.$t("Ideate"),
@@ -326,23 +377,23 @@ export default {
             {
               text: this.$t("Strategic analysis"),
               to: "/placeholder",
-              disable: true
+              disable: true,
             },
             {
               text: this.$t("Actions"),
               //to: `/org/${this.orgNameSlug}/actions/${this.orgId}`
               to: {
                 name: "actions",
-                params: { orgNameSlug: this.orgNameSlug, orgId: this.orgId }
+                params: { orgNameSlug: this.orgNameSlug, orgId: this.orgId },
               },
-              disable: false
+              disable: false,
             },
             {
               text: this.$t("Action templates"),
               to: "/placeholder",
-              disable: true
-            }
-          ]
+              disable: true,
+            },
+          ],
         },
         prioritize: {
           text: this.$t("Prioritize"),
@@ -352,10 +403,10 @@ export default {
             {
               text: this.$t("Resource allocation"),
               to: "/placeholder",
-              disable: true
+              disable: true,
             },
-            { text: this.$t("Roadmap"), to: "/placeholder", disable: true }
-          ]
+            { text: this.$t("Roadmap"), to: "/placeholder", disable: true },
+          ],
         },
         achieve: {
           text: this.$t("Achieve"),
@@ -364,17 +415,17 @@ export default {
             {
               text: this.$t("My current focus"),
               to: "/placeholder",
-              disable: true
+              disable: true,
             },
             { text: this.$t("To do"), to: "/placeholder", disable: true },
             { text: this.$t("Time log"), to: "/placeholder", disable: true },
             {
               text: this.$t("My team's work"),
               to: "/placeholder",
-              disable: true
-            }
-          ]
-        }
+              disable: true,
+            },
+          ],
+        },
       };
     },
 
@@ -394,7 +445,7 @@ export default {
       } else {
         return "home";
       }
-    }
+    },
   },
   methods: {
     ...mapActions("auth", ["logoutUser"]),
@@ -420,7 +471,7 @@ export default {
       this.$store.dispatch("model/unbindCurrentModel");
       this.$store.dispatch("model/unbindNodes");
       //this.$store.dispatch("calcResults/unbindBaseline");
-    }
+    },
   },
   created() {
     this.bindPublicData();
@@ -433,12 +484,10 @@ export default {
       while (
         !firebaseAuth.currentUser // define the condition as you like
       )
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
 
-      this.$store.dispatch("users/bindCurrentUser")
+      this.$store.dispatch("users/bindCurrentUser");
     })();
-
-
   },
   mounted() {
     if (this.$q.cookies.has("locale")) {
@@ -448,7 +497,7 @@ export default {
   beforeDestroy() {
     this.unbindAllOrgRelatedData();
     this.unbindPublicData();
-    this.$store.dispatch("users/unbindCurrentUser")
+    this.$store.dispatch("users/unbindCurrentUser");
   },
   watch: {
     $route(newRoute, oldRoute) {
@@ -468,12 +517,12 @@ export default {
       this.$q.cookies.set("locale", lang, {
         sameSite: "None",
         secure: true,
-        expires: 36525
+        expires: 36525,
       });
       document.title = this.$t("appTitle");
     },
 
-    appSummary: function(newSummary, oldSummary) {
+    appSummary: function (newSummary, oldSummary) {
       //"promptToReloadNumber" is read from .env file; if it's smaller than the one from appSummary
       //in Firestore, then the running code is old and the page should be refreshed.
       /*console.log(
@@ -489,7 +538,7 @@ export default {
         if ("serviceWorker" in navigator) {
           navigator.serviceWorker
             .getRegistrations()
-            .then(function(registrations) {
+            .then(function (registrations) {
               for (let registration of registrations) {
                 registration.update();
               }
@@ -498,15 +547,20 @@ export default {
       }
     },
 
-    currentOrg (newCurrentOrg, oldCurrentOrg){
+    currentOrg(newCurrentOrg, oldCurrentOrg) {
       if (newCurrentOrg) {
-        if (oldCurrentOrg==null || newCurrentOrg.users.length != oldCurrentOrg.users.length) {
-          this.$store.dispatch("users/bindCurrentOrgUsers", newCurrentOrg.users);
-        }        
+        if (
+          oldCurrentOrg == null ||
+          newCurrentOrg.users.length != oldCurrentOrg.users.length
+        ) {
+          this.$store.dispatch(
+            "users/bindCurrentOrgUsers",
+            newCurrentOrg.users
+          );
+        }
       }
-
-    }
-  }
+    },
+  },
 };
 </script>
 

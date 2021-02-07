@@ -46,7 +46,7 @@
                 class="q-ml-none"
               >
                 {{ scope.opt.label }}
-                <q-tooltip>{{scope.opt.email}}</q-tooltip>
+                <q-tooltip>{{ scope.opt.email }}</q-tooltip>
               </q-chip>
             </template>
 
@@ -67,86 +67,96 @@
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 
-  export default {
-    props: ['chatId', 'subjectDocType', 'subjectDocLineage', 'subjectDocTitle'],
-    data() {
-      return {
-        members: [],
-        filteredUserOptions: [],
-        userOptions: [],
-        showMemberSelect: false,
-      }
-    },
+export default {
+  props: ["chatId", "subjectDocType", "subjectDocLineage", "subjectDocTitle"],
+  data() {
+    return {
+      members: [],
+      filteredUserOptions: [],
+      userOptions: [],
+      showMemberSelect: false,
+    };
+  },
 
-    computed: {    
-      ...mapState("orgs", ["currentOrg"]),
-      ...mapState('chats', ['currentChat']),
-      ...mapGetters("users", ["currentOrgUsers"]),
-    },
+  computed: {
+    ...mapState("orgs", ["currentOrg"]),
+    ...mapState("chats", ["currentChat"]),
+    ...mapGetters("users", ["currentOrgUsers"]),
+  },
 
-    methods: {
-      ...mapActions('chats', ['fsAddChat', 'fsAddChatMember', 'fsRemoveChatMember']),
-      filterFn(val, update, abort) {
+  methods: {
+    ...mapActions("chats", [
+      "fsAddChat",
+      "fsAddChatMember",
+      "fsRemoveChatMember",
+    ]),
+    filterFn(val, update, abort) {
       update(() => {
-          if (val === "") {
+        if (val === "") {
           this.filteredUserOptions = this.userOptions;
-          } else {
+        } else {
           const needle = val.toLowerCase();
           this.filteredUserOptions = this.userOptions.filter(
-              v => v.label.toLowerCase().indexOf(needle) > -1
+            (v) => v.label.toLowerCase().indexOf(needle) > -1
           );
-          }
-          this.filteredUserOptions.sort((a, b) => {
+        }
+        this.filteredUserOptions.sort((a, b) => {
           if (a.label.toLowerCase() < b.label.toLowerCase()) {
-              return -1;
+            return -1;
           }
           if (a.label.toLowerCase() > b.label.toLowerCase()) {
-              return 1;
+            return 1;
           }
           return 0;
-          });
+        });
       });
-      },
-      abortFilterFn() {
-      // console.log('delayed filter aborted')
-      },
-      async addChatMember(details){
-        let chatIdToUse = this.chatId;
-
-        if (!this.chatId) {
-          chatIdToUse = await this.fsAddChat({
-            orgId: this.currentOrg.id,
-            orgNameCached: this.currentOrg.name,
-            orgNameSlug: this.currentOrg.nameSlug,
-            members: [],
-            membersOnly: false,
-            subjectDocType: this.subjectDocType,
-            subjectDocLineage: this.subjectDocLineage,
-            subjectDocTitle: this.subjectDocTitle,
-            newestMessages: []
-        });
-        }
-        this.fsAddChatMember({chatId: chatIdToUse, memberId: details.value});
-      },
-
-      removeChatMember(details){
-        this.fsRemoveChatMember({chatId: this.currentChat.id, memberId: details.value});
-      }
     },
-    watch: {
-      currentChat(){
-        if (this.currentChat)
-        this.members = this.currentChat.members;
-        else this.members = [];
-      },
+    abortFilterFn() {
+      // console.log('delayed filter aborted')
+    },
+    async addChatMember(details) {
+      let chatIdToUse = this.chatId;
 
-      currentOrgUsers(){        
-        this.userOptions = this.currentOrg.users.map((userId) => {
-            let foundUser = this.currentOrgUsers.find(u => u.id == userId);
-            return { label: foundUser ? foundUser.email.split('@')[0] : userId, value: userId, email: foundUser ? foundUser.email : userId };
+      if (!this.chatId) {
+        chatIdToUse = await this.fsAddChat({
+          orgId: this.currentOrg.id,
+          orgNameCached: this.currentOrg.name,
+          orgNameSlug: this.currentOrg.nameSlug,
+          members: [],
+          membersOnly: false,
+          subjectDocType: this.subjectDocType,
+          subjectDocLineage: this.subjectDocLineage,
+          subjectDocTitle: this.subjectDocTitle,
+          newestMessages: [],
         });
-        this.filteredUserOptions = this.userOptions;
       }
-    }
-  }
+      this.fsAddChatMember({ chatId: chatIdToUse, memberId: details.value });
+    },
+
+    removeChatMember(details) {
+      this.fsRemoveChatMember({
+        chatId: this.currentChat.id,
+        memberId: details.value,
+      });
+    },
+  },
+  watch: {
+    currentChat() {
+      if (this.currentChat) this.members = this.currentChat.members;
+      else this.members = [];
+    },
+
+    currentOrgUsers() {
+      this.userOptions = this.currentOrg.users.map((userId) => {
+        let foundUser = this.currentOrgUsers.find((u) => u.id == userId);
+        return {
+          label: foundUser ? foundUser.email.split("@")[0] : userId,
+          value: userId,
+          email: foundUser ? foundUser.email : userId,
+        };
+      });
+      this.filteredUserOptions = this.userOptions;
+    },
+  },
+};
 </script>
