@@ -160,7 +160,6 @@ export default {
     },
 
     currentOrgUsers() {
-      console.log("currentOrgUsers watcher", this.currentOrgUsers);
       this.regenerateUserOptions();
     },
   },

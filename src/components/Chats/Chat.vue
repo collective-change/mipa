@@ -234,7 +234,11 @@ export default {
       }
     },
     "$q.appVisible"(isVisible) {
-      if (isVisible && this.currentChat.unreadCounts[this.currentUser.id] > 0)
+      if (
+        isVisible &&
+        this.currentChat &&
+        this.currentChat.unreadCounts[this.currentUser.id] > 0
+      )
         this.fsResetReadCount({
           chatId: this.currentChat.id,
           userId: this.currentUser.id,
