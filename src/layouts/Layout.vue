@@ -88,7 +88,7 @@
             color="grey-8"
             icon="notifications"
           >
-            <q-badge color="red" text-color="white" floating>0</q-badge>
+            <!-- <q-badge color="red" text-color="white" floating>0</q-badge> -->
             <q-tooltip>{{ $t("Notifications") }}</q-tooltip>
           </q-btn>
 
