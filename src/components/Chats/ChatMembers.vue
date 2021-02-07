@@ -17,6 +17,7 @@
           <!-- <q-badge color="secondary" class="q-mb-md">Model: {{ members || '[]' }}</q-badge> -->
 
           <q-select
+            ref="selectRef"
             use-input
             v-model="members"
             multiple
@@ -72,26 +73,15 @@ import { mapActions, mapGetters, mapState } from "vuex";
       return {
         members: [],
         filteredUserOptions: [],
+        userOptions: [],
+        showMemberSelect: false,
       }
     },
-      created: function () {
-    //compose option values first, so we don't need to wait
-    //for filteredUserOptions to compute, which results in q-select
-    //displaying option value instead of option label.
-    this.filteredUserOptions = this.userOptions;
-  },
 
     computed: {    
       ...mapState("orgs", ["currentOrg"]),
       ...mapState('chats', ['currentChat']),
       ...mapGetters("users", ["currentOrgUsers"]),
-
-      userOptions() {
-        return this.currentOrg.users.map((userId) => {
-            let foundUser = this.currentOrgUsers.find(u => u.id == userId);
-          return { label: foundUser ? foundUser.email.split('@')[0] : userId, value: userId, email: foundUser ? foundUser.email : userId };
-        });
-      },
     },
 
     methods: {
@@ -126,6 +116,8 @@ import { mapActions, mapGetters, mapState } from "vuex";
         if (!this.chatId) {
           chatIdToUse = await this.fsAddChat({
             orgId: this.currentOrg.id,
+            orgNameCached: this.currentOrg.name,
+            orgNameSlug: this.currentOrg.nameSlug,
             members: [],
             membersOnly: false,
             subjectDocType: this.subjectDocType,
@@ -146,6 +138,14 @@ import { mapActions, mapGetters, mapState } from "vuex";
         if (this.currentChat)
         this.members = this.currentChat.members;
         else this.members = [];
+      },
+
+      currentOrgUsers(){        
+        this.userOptions = this.currentOrg.users.map((userId) => {
+            let foundUser = this.currentOrgUsers.find(u => u.id == userId);
+            return { label: foundUser ? foundUser.email.split('@')[0] : userId, value: userId, email: foundUser ? foundUser.email : userId };
+        });
+        this.filteredUserOptions = this.userOptions;
       }
     }
   }

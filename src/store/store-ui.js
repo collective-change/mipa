@@ -48,7 +48,18 @@ const mutations = {
   }
 };
 const actions = {
-  setSelectedNodeId({ commit }, nodeId) {
+  setSelectedNodeId({ commit, rootState }, nodeId) {
+    if (
+      state.selectedNodeId != null &&
+      this.$router.currentRoute.params.nodeId != nodeId &&
+      state.selectedNodeId != nodeId
+    )
+      this.$router.replace({
+        name: "model-node",
+        params: {
+          nodeId: nodeId
+        }
+      });
     commit("setSelectedNodeId", nodeId);
   },
   setSelectedIssueId({ commit }, issueId) {

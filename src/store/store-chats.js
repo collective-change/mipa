@@ -14,6 +14,8 @@ const actions = {
   async fsAddChat({ dispatch }, payload) {
     let chat = {
       orgId: payload.orgId,
+      orgNameCached: payload.orgName,
+      orgNameSlugCached: payload.orgNameSlug,
       members: payload.members,
       membersOnly: payload.membersOnly ? true : false,
       subjectDocType: payload.subjectDocType,
@@ -65,10 +67,10 @@ const actions = {
         [`unreadBy.${payload.memberId}`]: false
       })
       .then(function() {
-        Notify.create("Member added!");
+        Notify.create("Chat member added!");
       })
       .catch(function(error) {
-        showErrorMessage("Error adding member", error.message);
+        showErrorMessage("Error adding chat member", error.message);
       });
   },
 
@@ -82,10 +84,10 @@ const actions = {
         [`unreadBy.${payload.memberId}`]: firebase.firestore.FieldValue.delete()
       })
       .then(function() {
-        Notify.create("Member removed!");
+        Notify.create("Chat member removed!");
       })
       .catch(function(error) {
-        showErrorMessage("Error removing member", error.message);
+        showErrorMessage("Error removing chat member", error.message);
       });
   },
 
@@ -169,7 +171,14 @@ const actions = {
   })
 };
 
-const getters = {};
+const getters = {
+  unreadChats: state => {
+    if (state.unreadChats) {
+      let tempChats = [...state.unreadChats];
+      return tempChats.sort((a, b) => b.updateTime - a.updateTime);
+    } else return null;
+  }
+};
 
 export default {
   namespaced: true,

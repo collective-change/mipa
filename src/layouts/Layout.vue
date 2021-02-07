@@ -499,9 +499,12 @@ export default {
     },
 
     currentOrg (newCurrentOrg, oldCurrentOrg){
-      if (newCurrentOrg && oldCurrentOrg==null || newCurrentOrg.users.length != oldCurrentOrg.users.length) {
-        this.$store.dispatch("users/bindCurrentOrgUsers", newCurrentOrg.users);
+      if (newCurrentOrg) {
+        if (oldCurrentOrg==null || newCurrentOrg.users.length != oldCurrentOrg.users.length) {
+          this.$store.dispatch("users/bindCurrentOrgUsers", newCurrentOrg.users);
+        }        
       }
+
     }
   }
 };

@@ -107,7 +107,7 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { mapGetters, mapState, mapActions } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import idb from "src/api/idb";
 //import ExportCalcResults from "../components/Calc/ExportCalcResults.vue";
@@ -131,6 +131,7 @@ export default {
     "dependency-graph": require("components/Model/DependencyGraph.vue").default,
     "node-summary": require("components/Model/NodeSummary.vue").default
   },
+
   data() {
     return {
       //dependencyGraphSavefile: null,
@@ -147,7 +148,8 @@ export default {
     ...mapState("ui", [
       "uiNodeChanged",
       "uiNodeChangedFields",
-      "selectedNodeGroup"
+      "selectedNodeGroup",
+      "selectedNodeId"
     ]),
     expandedNodeGroups: {
       get() {
@@ -175,6 +177,8 @@ export default {
   },
 
   methods: {
+    ...mapActions("ui", ["setSelectedNodeId"]),
+
     saveNodeGroupName(groupId, name) {
       let clonedNodeGroups = JSON.parse(
         JSON.stringify(this.currentModel.nodeGroups)
@@ -271,7 +275,19 @@ export default {
     })();
     //console.log("above code doesn't block main function stack");
   },
-  mounted() {},
+  mounted() {
+
+  },
+
+  watch: { 
+     '$route.params.nodeId': {
+        handler: function(nodeId) {
+          if (this.selectedNodeId != nodeId)
+           this.setSelectedNodeId(nodeId);
+        },
+        immediate: true
+      }
+  },
 
   beforeRouteLeave(to, from, next) {
     if (this.uiNodeChanged) {

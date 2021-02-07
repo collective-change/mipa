@@ -315,9 +315,10 @@ export default {
     updateChartData() {
       // if baseline.nodes contains the selected node then load baseline for this nde
       if (
-        this.selectedNodeId !== "null" &&
-        typeof this.baseline !== "undefined" &&
-        typeof this.baseline.nodesValues != "undefined" &&
+        this.selectedNodeId !== null &&
+        this.selectedNode !== undefined &&
+        this.baseline !== undefined &&
+        this.baseline.nodesValues != undefined &&
         this.selectedNodeId in this.baseline.nodesValues
       ) {
         let timeSPoints = this.baseline.timeSPoints;
