@@ -79,7 +79,6 @@
         <q-space />
 
         <div class="q-gutter-sm row items-center no-wrap">
-          {{ currentOrg ? currentOrg.id : "none" }}
           <unread-messages v-if="loggedIn" />
           <q-btn
             v-if="loggedIn"
