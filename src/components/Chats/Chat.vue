@@ -144,7 +144,7 @@ export default {
       if (!this.chatId) {
         chatIdToUse = await this.fsAddChat({
           orgId: this.currentOrg.id,
-          orgNameCached: this.currentOrg.name,
+          orgName: this.currentOrg.name,
           orgNameSlug: this.currentOrg.nameSlug,
           members: [],
           membersOnly: false,
