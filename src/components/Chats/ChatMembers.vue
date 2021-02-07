@@ -14,8 +14,6 @@
     <div>
       <div class="row items-center">
         <div style="min-width: 250px; max-width: 300px">
-          <!-- <q-badge color="secondary" class="q-mb-md">Model: {{ members || '[]' }}</q-badge> -->
-
           <q-select
             ref="selectRef"
             use-input
@@ -100,15 +98,6 @@ export default {
             (v) => v.label.toLowerCase().indexOf(needle) > -1
           );
         }
-        this.filteredUserOptions.sort((a, b) => {
-          if (a.label.toLowerCase() < b.label.toLowerCase()) {
-            return -1;
-          }
-          if (a.label.toLowerCase() > b.label.toLowerCase()) {
-            return 1;
-          }
-          return 0;
-        });
       });
     },
     abortFilterFn() {
@@ -139,14 +128,8 @@ export default {
         memberId: details.value,
       });
     },
-  },
-  watch: {
-    currentChat() {
-      if (this.currentChat) this.members = this.currentChat.members;
-      else this.members = [];
-    },
 
-    currentOrgUsers() {
+    regenerateUserOptions() {
       this.userOptions = this.currentOrg.users.map((userId) => {
         let foundUser = this.currentOrgUsers.find((u) => u.id == userId);
         return {
@@ -155,7 +138,30 @@ export default {
           email: foundUser ? foundUser.email : userId,
         };
       });
+      this.userOptions.sort((a, b) => {
+        if (a.label.toLowerCase() < b.label.toLowerCase()) {
+          return -1;
+        }
+        if (a.label.toLowerCase() > b.label.toLowerCase()) {
+          return 1;
+        }
+        return 0;
+      });
       this.filteredUserOptions = this.userOptions;
+    },
+  },
+  created() {
+    this.regenerateUserOptions();
+  },
+  watch: {
+    currentChat() {
+      if (this.currentChat) this.members = this.currentChat.members;
+      else this.members = [];
+    },
+
+    currentOrgUsers() {
+      console.log("currentOrgUsers watcher");
+      this.regenerateUserOptions();
     },
   },
 };
