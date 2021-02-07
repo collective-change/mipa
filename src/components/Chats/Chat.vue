@@ -175,9 +175,14 @@
         }
       },
       currentChat(newChat, oldChat) {
-        if (newChat) {
-          this.fsResetReadCount({chatId: newChat.id, userId: this.currentUser.id});
+        if (newChat && newChat.unreadCounts[this.currentUser.id] > 0) {
+          if (this.$q.appVisible)
+            this.fsResetReadCount({chatId: newChat.id, userId: this.currentUser.id});
         }
+      },
+      '$q.appVisible' (isVisible) {
+        if (isVisible && this.currentChat.unreadCounts[this.currentUser.id] > 0) 
+          this.fsResetReadCount({chatId: this.currentChat.id, userId: this.currentUser.id});
       }
 	  },
 	  mounted() {
