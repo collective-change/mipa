@@ -5,7 +5,8 @@ export default {
   people: "人",
 
   //for Layout.vue
-  Messages: "訊息",
+  "Unread messages": "未讀訊息",
+  "No unread messages": "沒有未讀訊息",
   Notifications: "通知",
   Login: "登入",
   Account: "帳戶",

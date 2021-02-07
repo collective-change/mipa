@@ -1666,9 +1666,9 @@ export default {
       // when reporting an error.
       async handler() {
         // expand the group that the node is in
-        const foundNodeGroup = this.currentModel.nodeGroups.find(group =>
+        const foundNodeGroup = this.currentModel.nodeGroups !== undefined ? this.currentModel.nodeGroups.find(group =>
           group.nodeIds.includes(this.selectedNodeId)
-        );
+        ) : null;
         if (foundNodeGroup) {
           await this.expandGroup(foundNodeGroup.id);
           this.$store.commit("ui/setSelectedNodeGroup", foundNodeGroup);

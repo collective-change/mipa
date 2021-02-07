@@ -65,20 +65,15 @@
 <script>
   import { mapState, mapActions, mapGetters } from 'vuex'
   import { firebase, firebaseAuth } from "boot/firebase";
-	//import mixinOtherUserDetails from 'src/mixins/mixin-other-user-details.js'
 
 	export default {
     components: {
     "chat-members": require("components/Chats/ChatMembers.vue")
       .default,
     },
-        //mixins: [mixinOtherUserDetails],
         props: ['title', 'chatId', 'subjectDocType', 'subjectDocLineage', 'subjectDocTitle'],
 	  data() {
 	  	return {
-            //newestMessages: [{id: 0, from:"me", "text": ['test from Ted'], stamp:"5:15 PM"}, {id: 1, from:"Joe", "text": ['test from Joe'], stamp:"6:28 PM"}],
-            //newestMessages: [],
-            /* the above temporarily added by Ted for development */
 	  		newMessage: '',
 	  		showMessages: true
 	  	}
@@ -90,7 +85,6 @@
       ...mapGetters("users", ["currentOrgUsers"]),
       messagesForDisplay(){
         if (this.currentChat){
-          this.scrollToBottom();
           return this.currentChat.newestMessages;
          } 
         else return []
@@ -108,6 +102,8 @@
         if (!this.chatId) {
           chatIdToUse = await this.fsAddChat({
             orgId: this.currentOrg.id,
+            orgNameCached: this.currentOrg.name,
+            orgNameSlug: this.currentOrg.nameSlug,
             members: [],
             membersOnly: false,
             subjectDocType: this.subjectDocType,
@@ -122,7 +118,7 @@
 	  			message: {
 		  			text: this.newMessage,
             from: firebaseAuth.currentUser.uid,
-            //timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            fromNameCached: this.getUserDisplayNameOrTruncatedEmail(firebaseAuth.currentUser.uid),
             timestamp: firebase.firestore.Timestamp.now()
 	  			},
 	  		})
@@ -135,11 +131,9 @@
       },
       
 	  	scrollToBottom() {
-	  		setTimeout(() => {
-          let chatComponent = this.$refs.chatComponent
-          if (chatComponent)
+        let chatComponent = this.$refs.chatComponent
+        if (chatComponent)
 		  		chatComponent.scrollTop = chatComponent.scrollHeight
-	  		}, 20);
       },
       
       formatFirestoreTimestamp(ts) {
@@ -157,13 +151,17 @@
       },
 
       getUserDisplayNameOrTruncatedEmail(userId) {
-        let foundUser = this.currentOrgUsers.find(u => u.id = userId);
-        return foundUser.displayName ? foundUser.displayName : foundUser.email.split('@')[0];
+        let foundUser = this.currentOrgUsers.find(u => u.id == userId);
+        if (foundUser)
+          return foundUser.displayName ? foundUser.displayName : foundUser.email.split('@')[0];
+        else return userId;
       },
 
       getUserPhotoURL(userId) {
-        let foundUser = this.currentOrgUsers.find(u => u.id = userId);
-        return foundUser.photoURL ? foundUser.photoURL : undefined;
+        let foundUser = this.currentOrgUsers.find(u => u.id == userId);
+        if (foundUser)
+          return foundUser.photoURL ? foundUser.photoURL : undefined;
+        else return null;
       }
 	  },
 	  watch: {
@@ -183,6 +181,13 @@
       '$q.appVisible' (isVisible) {
         if (isVisible && this.currentChat.unreadCounts[this.currentUser.id] > 0) 
           this.fsResetReadCount({chatId: this.currentChat.id, userId: this.currentUser.id});
+      },
+      messagesForDisplay(){
+        this.$nextTick(function () {
+          // Code that will run only after the
+          // entire view has been re-rendered
+          this.scrollToBottom();
+        })
       }
 	  },
 	  mounted() {

@@ -5,7 +5,8 @@ export default {
   people: "people",
 
   //for Layout.vue
-  Messages: "Messages",
+  "Unread messages": "Unread messages",
+  "No unread messages": "No unread messages",
   Notifications: "Notifications",
   Login: "Log in",
   Account: "Account",
