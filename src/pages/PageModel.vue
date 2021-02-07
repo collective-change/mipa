@@ -10,7 +10,7 @@
           <div class="row">
             {{ currentModel ? currentModel.name : "" }}
             {{
-            currentModel ? (currentModel.isOrgMainModel ? " (main)" : "") : ""
+              currentModel ? (currentModel.isOrgMainModel ? " (main)" : "") : ""
             }}
           </div>
           <div class="row q-ma-xs">
@@ -22,10 +22,16 @@
             />
           </div>
           <div class="row q-ma-xs">
-            <calculator-ui calculationType="baseline" buttonLabel="Calculate baseline" />
+            <calculator-ui
+              calculationType="baseline"
+              buttonLabel="Calculate baseline"
+            />
           </div>
           <div class="row q-ma-xs">
-            <export-calc-results data-source="baseline" buttonLabel="Export baseline TSV" />
+            <export-calc-results
+              data-source="baseline"
+              buttonLabel="Export baseline TSV"
+            />
           </div>
 
           <div>
@@ -70,11 +76,11 @@
                       dense
                       autofocus
                       @change="
-                      v => {
-                        node.name = v.target.value;
-                        saveNodeGroupName(node.id, v.target.value);
-                      }
-                    "
+                        (v) => {
+                          node.name = v.target.value;
+                          saveNodeGroupName(node.id, v.target.value);
+                        }
+                      "
                     ></q-input>
                   </q-popup-edit>
                 </div>
@@ -90,7 +96,9 @@
       </div>
 
       <div class="col-12 col-md-7">
-        <dependency-graph :initialCirclePositions="initialCirclePositions"></dependency-graph>
+        <dependency-graph
+          :initialCirclePositions="initialCirclePositions"
+        ></dependency-graph>
       </div>
       <div class="col-12 col-md-3">
         <div class="column full-height">
@@ -114,10 +122,10 @@ import idb from "src/api/idb";
 
 const nest = (items, id = null, link = "parentId") => {
   return items
-    .filter(item => item[link] == id)
-    .map(item => ({
+    .filter((item) => item[link] == id)
+    .map((item) => ({
       ...item,
-      children: nest(items, item.id)
+      children: nest(items, item.id),
     }));
 };
 
@@ -129,7 +137,7 @@ export default {
     "export-calc-results": require("components/Calc/ExportCalcResults.vue")
       .default,
     "dependency-graph": require("components/Model/DependencyGraph.vue").default,
-    "node-summary": require("components/Model/NodeSummary.vue").default
+    "node-summary": require("components/Model/NodeSummary.vue").default,
   },
 
   data() {
@@ -139,7 +147,7 @@ export default {
       models: null,
       selectedNodeGroupId: null,
       expanded: [],
-      initialCirclePositions: null
+      initialCirclePositions: null,
     };
   },
   computed: {
@@ -149,7 +157,7 @@ export default {
       "uiNodeChanged",
       "uiNodeChangedFields",
       "selectedNodeGroup",
-      "selectedNodeId"
+      "selectedNodeId",
     ]),
     expandedNodeGroups: {
       get() {
@@ -159,7 +167,7 @@ export default {
       },
       set(value) {
         this.$store.commit("ui/setExpandedNodeGroups", value);
-      }
+      },
     },
 
     nodeGroupsForTree() {
@@ -173,7 +181,7 @@ export default {
       let nodeGroups = [...this.currentModel.nodeGroups];
       let nodeGroupsList = JSON.parse(JSON.stringify(nodeGroups.sort(compare)));
       return nest(nodeGroupsList);
-    }
+    },
   },
 
   methods: {
@@ -184,13 +192,13 @@ export default {
         JSON.stringify(this.currentModel.nodeGroups)
       );
       let nodeGroup = clonedNodeGroups.find(
-        nodeGroup => nodeGroup.id == groupId
+        (nodeGroup) => nodeGroup.id == groupId
       );
       nodeGroup.name = name;
       //save name to model
       let payload = {
         modelId: this.currentModel.id,
-        updates: { nodeGroups: clonedNodeGroups }
+        updates: { nodeGroups: clonedNodeGroups },
       };
       this.$store.dispatch("model/updateModel", payload);
     },
@@ -209,13 +217,13 @@ export default {
 
     expandAllGroups() {
       let temp = [];
-      this.currentModel.nodeGroups.forEach(group => temp.push(group.id));
+      this.currentModel.nodeGroups.forEach((group) => temp.push(group.id));
       this.expandedNodeGroups = temp;
     },
 
     collapseAllGroups() {
       this.expandedNodeGroups = [];
-    }
+    },
   },
 
   watch: {
@@ -226,7 +234,7 @@ export default {
         this.selectedNodeGroup.id != this.selectedNodeGroupId
       ) {
         let nodeGroup = this.currentModel.nodeGroups.find(
-          nodeGroup => nodeGroup.id == this.selectedNodeGroupId
+          (nodeGroup) => nodeGroup.id == this.selectedNodeGroupId
         );
         this.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
       }
@@ -236,7 +244,7 @@ export default {
       if (this.selectedNodeGroup)
         this.selectedNodeGroupId = this.selectedNodeGroup.id;
       else this.selectedNodeGroupId = null;
-    }
+    },
   },
   created() {
     (async () => {
@@ -244,7 +252,7 @@ export default {
       while (
         !firebaseAuth.currentUser // define the condition as you like
       )
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
       //bind to list of models the org-user can view
       //(user is in model's owners, editors, or viewers)
       //this.$store.dispatch("orgs/bindReadableModels", this.$route.params.orgId);
@@ -275,18 +283,15 @@ export default {
     })();
     //console.log("above code doesn't block main function stack");
   },
-  mounted() {
+  mounted() {},
 
-  },
-
-  watch: { 
-     '$route.params.nodeId': {
-        handler: function(nodeId) {
-          if (this.selectedNodeId != nodeId)
-           this.setSelectedNodeId(nodeId);
-        },
-        immediate: true
-      }
+  watch: {
+    "$route.params.nodeId": {
+      handler: function (nodeId) {
+        if (this.selectedNodeId != nodeId) this.setSelectedNodeId(nodeId);
+      },
+      immediate: true,
+    },
   },
 
   beforeRouteLeave(to, from, next) {
@@ -301,7 +306,7 @@ export default {
 
           cancel: true,
           persistent: true,
-          html: true
+          html: true,
         })
         .onOk(() => {
           next();
@@ -311,6 +316,6 @@ export default {
 
   beforeDestroy() {
     // don't unbind firestore refs here; leave it until org change in Layout.vue
-  }
+  },
 };
 </script>
