@@ -32,7 +32,14 @@ module.exports = function(ctx) {
       directives: ["Ripple", "ClosePopup", "TouchHold"],
 
       // Quasar plugins
-      plugins: ["Notify", "Dialog", "LocalStorage", "SessionStorage", "Cookies"]
+      plugins: [
+        "Notify",
+        "Dialog",
+        "LocalStorage",
+        "SessionStorage",
+        "Cookies",
+        "AppVisibility"
+      ]
     },
 
     build: {
