@@ -129,7 +129,7 @@ export default {
       });
     },
 
-    regenerateUserOptions() {
+    regenerateOptionsForMemberSelection() {
       this.userOptions = this.currentOrg.users.map((userId) => {
         let foundUser = this.currentOrgUsers.find((u) => u.id == userId);
         return {
@@ -151,7 +151,7 @@ export default {
     },
   },
   created() {
-    this.regenerateUserOptions();
+    this.regenerateOptionsForMemberSelection();
   },
   watch: {
     currentChat() {
@@ -160,7 +160,7 @@ export default {
     },
 
     currentOrgUsers() {
-      this.regenerateUserOptions();
+      this.regenerateOptionsForMemberSelection();
     },
   },
 };

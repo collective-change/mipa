@@ -1,6 +1,7 @@
 <template>
   <div>
     <q-select
+      ref="selectRef"
       :label="label"
       @filter="filterFn"
       @filter-abort="abortFilterFn"
@@ -68,6 +69,12 @@ export default {
     },
     abortFilterFn() {
       // console.log('delayed filter aborted')
+    },
+  },
+
+  watch: {
+    userOptions() {
+      this.$refs.selectRef.__updateMenu(true);
     },
   },
 };
