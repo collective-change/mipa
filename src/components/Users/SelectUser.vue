@@ -26,7 +26,7 @@ export default {
       selectedUser: "",
     };
   },
-  created: function () {
+  mounted: function () {
     //compose option values first, so we don't need to wait
     //for filteredUserOptions to compute, which results in q-select
     //displaying option value instead of option label.
@@ -38,6 +38,7 @@ export default {
     ...mapGetters("users", ["currentOrgUsers"]),
 
     userOptions() {
+      console.log("userOptions");
       return this.currentOrg.users.map((userId) => {
         let foundUser = this.currentOrgUsers.find((u) => u.id == userId);
         return { label: foundUser ? foundUser.email : userId, value: userId };
@@ -69,12 +70,6 @@ export default {
     },
     abortFilterFn() {
       // console.log('delayed filter aborted')
-    },
-  },
-
-  watch: {
-    userOptions() {
-      this.$refs.selectRef.__updateMenu(true);
     },
   },
 };
