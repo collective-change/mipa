@@ -1,12 +1,6 @@
 <template>
-  <q-card v-ripple class="org-card">
-    <q-card-section
-      clickable
-      to="/settings"
-      v-ripple
-      v-touch-hold:1000.mouse="showEditOrgModal"
-      class="bg-primary text-white text-h4"
-    >
+  <q-card class="org-card">
+    <q-card-section class="bg-primary text-white text-h4">
       <div class="text-h5">{{ org.name }}</div>
       <div class="text-h4">{{ org.goal }}</div>
     </q-card-section>
@@ -15,15 +9,6 @@
 
     <q-card-actions align="right">
       <div class="row">
-        <q-btn
-          :to="`/org/${org.nameSlug}/details/${id}`"
-          flat
-          round
-          dense
-          icon="people"
-        >
-          <q-tooltip>Organization details</q-tooltip>
-        </q-btn>
         <q-btn
           :to="`/org/${org.nameSlug}/model/${id}/${id}`"
           flat
@@ -53,6 +38,15 @@
         </q-btn>
         <q-btn to="/model/model" flat round dense icon="whatshot">
           <q-tooltip>Achieve</q-tooltip>
+        </q-btn>
+        <q-btn
+          :to="`/org/${org.nameSlug}/details/${id}`"
+          flat
+          round
+          dense
+          icon="people"
+        >
+          <q-tooltip>Organization details</q-tooltip>
         </q-btn>
         <q-btn
           @click.stop="showEditOrgModal"
