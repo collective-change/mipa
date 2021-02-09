@@ -38,7 +38,6 @@ export default {
     ...mapGetters("users", ["currentOrgUsers"]),
 
     userOptions() {
-      console.log("userOptions");
       return this.currentOrg.users.map((userId) => {
         let foundUser = this.currentOrgUsers.find((u) => u.id == userId);
         return { label: foundUser ? foundUser.email : userId, value: userId };
