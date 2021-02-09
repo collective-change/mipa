@@ -31,7 +31,8 @@
       style="position: absolute; top: 8px; left: 120px; z-index: 2"
       bg-color="white"
     />
-    <text-body1
+    <div
+      class="text-body1"
       style="
         background-color: rgba(255, 255, 255, 0.5);
         position: absolute;
@@ -41,7 +42,7 @@
       "
     >
       Right-click on node or link to show menu.
-    </text-body1>
+    </div>
 
     <svg
       id="dependencyGraph"
