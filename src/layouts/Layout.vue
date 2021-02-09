@@ -305,47 +305,6 @@ export default {
             { text: this.$t("To do"), to: "/todo", disable: true },
           ],
         },
-        organization: {
-          text: this.$t("Organization"),
-          icon: "people",
-          links: [
-            {
-              text: this.$t("Basic information"),
-              to: "/organization/basic-info",
-              disable: true,
-            },
-            {
-              text: this.$t("Users"),
-              to: "/organization/users",
-              disable: true,
-            },
-            {
-              text: this.$t("Structure"),
-              to: "/organizations/structure",
-              disable: true,
-            },
-            {
-              text: this.$t("Suppliers"),
-              to: "/organization/suppliers",
-              disable: true,
-            },
-            {
-              text: this.$t("Purchases"),
-              to: "/organization/purchases",
-              disable: true,
-            },
-            {
-              text: this.$t("Metrics"),
-              to: "/organization/metrics",
-              disable: true,
-            },
-            {
-              text: this.$t("Frameworks"),
-              to: "/organization/frameworks",
-              disable: true,
-            },
-          ],
-        },
         model: {
           text: this.$t("ModelVerb"),
           icon: "share",
@@ -422,6 +381,47 @@ export default {
             {
               text: this.$t("My team's work"),
               to: "/placeholder",
+              disable: true,
+            },
+          ],
+        },
+        organization: {
+          text: this.$t("Organization"),
+          icon: "people",
+          links: [
+            {
+              text: this.$t("Basic information"),
+              to: "/organization/basic-info",
+              disable: true,
+            },
+            {
+              text: this.$t("Users"),
+              to: "/organization/users",
+              disable: true,
+            },
+            {
+              text: this.$t("Structure"),
+              to: "/organizations/structure",
+              disable: true,
+            },
+            {
+              text: this.$t("Suppliers"),
+              to: "/organization/suppliers",
+              disable: true,
+            },
+            {
+              text: this.$t("Purchases"),
+              to: "/organization/purchases",
+              disable: true,
+            },
+            {
+              text: this.$t("Metrics"),
+              to: "/organization/metrics",
+              disable: true,
+            },
+            {
+              text: this.$t("Frameworks"),
+              to: "/organization/frameworks",
               disable: true,
             },
           ],
