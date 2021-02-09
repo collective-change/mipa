@@ -71,5 +71,10 @@ export default {
       // console.log('delayed filter aborted')
     },
   },
+  watch: {
+    userOptions() {
+      this.filteredUserOptions = this.userOptions;
+    },
+  },
 };
 </script>
