@@ -349,7 +349,7 @@ export default {
         model: {
           text: this.$t("ModelVerb"),
           icon: "share",
-          icon_class: "flip-horizontal",
+          icon_class: "rotate-90",
           links: [
             {
               text: this.$t("ModelNoun"),
