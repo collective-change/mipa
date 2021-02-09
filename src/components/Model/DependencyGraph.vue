@@ -87,7 +87,7 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 
 var nodeRadius = 30;
 const svgWidth = 800;
-const svgHeight = 590;
+const svgHeight = 600;
 var dragStartTime, dragEndTime;
 
 export default {
