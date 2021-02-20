@@ -1,6 +1,7 @@
 <template>
   <div>
     <q-select
+      ref="selectRef"
       :label="label"
       @filter="filterFn"
       @filter-abort="abortFilterFn"
@@ -25,7 +26,7 @@ export default {
       selectedUser: "",
     };
   },
-  created: function () {
+  mounted: function () {
     //compose option values first, so we don't need to wait
     //for filteredUserOptions to compute, which results in q-select
     //displaying option value instead of option label.
@@ -68,6 +69,11 @@ export default {
     },
     abortFilterFn() {
       // console.log('delayed filter aborted')
+    },
+  },
+  watch: {
+    userOptions() {
+      this.filteredUserOptions = this.userOptions;
     },
   },
 };

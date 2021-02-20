@@ -109,7 +109,7 @@ export default {
       if (!this.chatId) {
         chatIdToUse = await this.fsAddChat({
           orgId: this.currentOrg.id,
-          orgNameCached: this.currentOrg.name,
+          orgName: this.currentOrg.name,
           orgNameSlug: this.currentOrg.nameSlug,
           members: [],
           membersOnly: false,
@@ -129,7 +129,7 @@ export default {
       });
     },
 
-    regenerateUserOptions() {
+    regenerateOptionsForMemberSelection() {
       this.userOptions = this.currentOrg.users.map((userId) => {
         let foundUser = this.currentOrgUsers.find((u) => u.id == userId);
         return {
@@ -151,7 +151,7 @@ export default {
     },
   },
   created() {
-    this.regenerateUserOptions();
+    this.regenerateOptionsForMemberSelection();
   },
   watch: {
     currentChat() {
@@ -160,8 +160,7 @@ export default {
     },
 
     currentOrgUsers() {
-      console.log("currentOrgUsers watcher");
-      this.regenerateUserOptions();
+      this.regenerateOptionsForMemberSelection();
     },
   },
 };

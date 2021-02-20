@@ -72,7 +72,7 @@ const getters = {
     if (!state.currentOrgUsers) {
       return [];
     }
-    let temp = state.currentOrgUsers.map(user => ({ ...user, id: user.uid }));
+    let temp = state.currentOrgUsers.map(user => ({ ...user, id: user.id }));
     return temp;
   }
 };

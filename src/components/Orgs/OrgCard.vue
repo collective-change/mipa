@@ -1,12 +1,6 @@
 <template>
-  <q-card v-ripple class="org-card">
-    <q-card-section
-      clickable
-      to="/settings"
-      v-ripple
-      v-touch-hold:1000.mouse="showEditOrgModal"
-      class="bg-primary text-white text-h4"
-    >
+  <q-card class="org-card">
+    <q-card-section class="bg-primary text-white text-h4">
       <div class="text-h5">{{ org.name }}</div>
       <div class="text-h4">{{ org.goal }}</div>
     </q-card-section>
@@ -15,16 +9,13 @@
 
     <q-card-actions align="right">
       <div class="row">
-        <q-btn :to="`/org/${org.nameSlug}/details/${id}`" flat round dense icon="people">
-          <q-tooltip>Organization details</q-tooltip>
-        </q-btn>
         <q-btn
           :to="`/org/${org.nameSlug}/model/${id}/${id}`"
           flat
           round
           dense
           icon="share"
-          class="flip-horizontal"
+          class="rotate-90"
         >
           <q-tooltip>Model</q-tooltip>
         </q-btn>
@@ -32,7 +23,7 @@
           :xto="`/org/${org.nameSlug}/ideate/${id}`"
           :to="{
             name: 'actions',
-            params: { orgNameSlug: org.nameSlug, orgId: id }
+            params: { orgNameSlug: org.nameSlug, orgId: id },
           }"
           flat
           round
@@ -48,7 +39,23 @@
         <q-btn to="/model/model" flat round dense icon="whatshot">
           <q-tooltip>Achieve</q-tooltip>
         </q-btn>
-        <q-btn @click.stop="showEditOrgModal" flat round dense color="primary" icon="edit">
+        <q-btn
+          :to="`/org/${org.nameSlug}/details/${id}`"
+          flat
+          round
+          dense
+          icon="people"
+        >
+          <q-tooltip>Organization details</q-tooltip>
+        </q-btn>
+        <q-btn
+          @click.stop="showEditOrgModal"
+          flat
+          round
+          dense
+          color="primary"
+          icon="edit"
+        >
           <q-tooltip>Edit organization</q-tooltip>
         </q-btn>
         <q-btn
@@ -78,12 +85,12 @@ export default {
   props: ["org", "id"],
   data() {
     return {
-      showEditOrg: false
+      showEditOrg: false,
     };
   },
   computed: {
     ...mapGetters("settings", ["settings"]),
-    ...mapState("auth", ["userId"])
+    ...mapState("auth", ["userId"]),
   },
   methods: {
     ...mapActions("orgs", ["updateOrg", "deleteOrg"]),
@@ -96,16 +103,16 @@ export default {
           title: "Confirm",
           message: "Really delete?",
           cancel: true,
-          persistent: true
+          persistent: true,
         })
         .onOk(() => {
           this.deleteOrg(orgId);
         });
-    }
+    },
   },
   components: {
-    "edit-org": require("components/Orgs/Modals/EditOrg.vue").default
-  }
+    "edit-org": require("components/Orgs/Modals/EditOrg.vue").default,
+  },
 };
 </script>
 

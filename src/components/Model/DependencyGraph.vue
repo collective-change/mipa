@@ -31,6 +31,18 @@
       style="position: absolute; top: 8px; left: 120px; z-index: 2"
       bg-color="white"
     />
+    <div
+      class="text-body1"
+      style="
+        background-color: rgba(255, 255, 255, 0.5);
+        position: absolute;
+        top: 48px;
+        left: 10px;
+        z-index: 2;
+      "
+    >
+      Right-click on node or link to show menu.
+    </div>
 
     <svg
       id="dependencyGraph"
@@ -38,10 +50,6 @@
       :height="svgHeight"
       style="border: black; border-style: solid; border-width: 0px"
     />
-
-    <div class="q-px-sm print-hide">
-      Right-click on node or link to show menu.
-    </div>
     <q-dialog v-model="showAddNode">
       <add-node
         :sourceNodeId="addNodeProps.sourceNodeId"
@@ -80,7 +88,7 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 
 var nodeRadius = 30;
 const svgWidth = 800;
-const svgHeight = 590;
+const svgHeight = 600;
 var dragStartTime, dragEndTime;
 
 export default {
