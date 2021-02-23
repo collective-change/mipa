@@ -94,8 +94,8 @@ const actions = {
   fsAddMessage({ dispatch }, payload) {
     //TODO: if newestMessages is too large, then move old messages to log
 
-    let unreadCounts;
-    let unreadBy;
+    let unreadCounts = {};
+    let unreadBy = {};
     if (state.currentChat) {
       if (state.currentChat.unreadCounts)
         unreadCounts = Object.assign({}, state.currentChat.unreadCounts);
@@ -115,6 +115,9 @@ const actions = {
       .collection("chats")
       .doc(payload.chatId)
       .update({
+        members: firebase.firestore.FieldValue.arrayUnion(
+          firebaseAuth.currentUser.uid
+        ),
         newestMessages: firebase.firestore.FieldValue.arrayUnion(
           payload.message
         ),
