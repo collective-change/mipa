@@ -1,6 +1,6 @@
 <template>
-  <div style="position: relative;">
-    <div id="actionsChart" style="position: relative;"></div>
+  <div style="position: relative">
+    <div id="actionsChart" style="position: relative"></div>
     <!--<q-dialog v-model="showAddAction">
       <add-action @close="showAddAction = false" />
     </q-dialog>-->
@@ -16,7 +16,7 @@ import { responsify } from "src/utils/util-responsify-svg";
 
 var svgWidth = 1000,
   svgHeight = 600,
-  margin = { top: 40, right: 90 /*150*/, bottom: 60, left: 35 },
+  margin = { top: 40, right: 90 /*150*/, bottom: 60, left: 40 },
   width = svgWidth - margin.left - margin.right,
   height = svgHeight - margin.top - margin.bottom,
   axisBuffer = 0.1;
@@ -29,7 +29,7 @@ var maxEstEffortHrs = null,
 export default {
   components: {
     "add-action": require("components/Actions/Modals/AddAction.vue").default,
-    "calculator-ui": require("components/Calc/CalculatorUi.vue").default
+    "calculator-ui": require("components/Calc/CalculatorUi.vue").default,
   },
   data() {
     return {
@@ -41,7 +41,7 @@ export default {
       svgHeight: svgHeight,
       maxRadius: 100,
       selections: {},
-      d3Data: {}
+      d3Data: {},
     };
   },
 
@@ -105,7 +105,7 @@ export default {
       .scaleLog()
       .domain([
         minEstEffortHrs / (1 + axisBuffer),
-        maxEstEffortHrs * (1 + axisBuffer)
+        maxEstEffortHrs * (1 + axisBuffer),
       ])
       .range([0, width]);
     this.svgInner
@@ -127,13 +127,10 @@ export default {
       .scaleLog()
       .domain([
         minActionLeverage / (1 + axisBuffer),
-        maxActionLeverage * (1 + axisBuffer)
+        maxActionLeverage * (1 + axisBuffer),
       ])
       .range([height, 0]);
-    this.svgInner
-      .append("g")
-      .attr("class", "y axis")
-      .call(d3.axisLeft(y));
+    this.svgInner.append("g").attr("class", "y axis").call(d3.axisLeft(y));
 
     // Add Y axis label:
     this.svgInner
@@ -156,16 +153,16 @@ export default {
       if (this.blockingRelationships)
         return this.actions
           .filter(
-            action =>
+            (action) =>
               action.actionLeverage > 0 &&
               isFinite(action.actionLeverage) &&
               action.estEffortHrs > 0
           )
-          .sort(function(a, b) {
+          .sort(function (a, b) {
             return b.ownDirectCost - a.ownDirectCost;
           });
       else return [];
-    }
+    },
   },
 
   methods: {
@@ -181,24 +178,24 @@ export default {
             message:
               "Any changes you made will be lost. Really switch to another action?",
             cancel: true,
-            persistent: true
+            persistent: true,
           })
 
           .onOk(() => {
             this.$store.dispatch("ui/setSelectedActionId", d.id);
             bubbles.classed("selected", false);
-            bubbles.filter(td => td === d).classed("selected", true);
+            bubbles.filter((td) => td === d).classed("selected", true);
           });
       } else {
         this.$store.dispatch("ui/setSelectedActionId", d.id);
         bubbles.classed("selected", false);
-        bubbles.filter(td => td === d).classed("selected", true);
+        bubbles.filter((td) => td === d).classed("selected", true);
       }
     },
 
     getBlockingLinks(blockingRelationships) {
       let chartableLinks = [];
-      blockingRelationships.forEach(relationship => {
+      blockingRelationships.forEach((relationship) => {
         let blockerSouth = this.getPole(relationship.blockerId, "south");
         let blockeeNorth = this.getPole(relationship.blockeeId, "north");
         let source = blockerSouth
@@ -228,13 +225,13 @@ export default {
         default:
           throw new error(`Direction "${direction}" not supported.`);
       }
-      let action = this.chartableActions.find(a => a.id == actionId);
+      let action = this.chartableActions.find((a) => a.id == actionId);
       if (action) {
         let xVal = d3
           .scaleLog()
           .domain([
             minEstEffortHrs / (1 + axisBuffer),
-            maxEstEffortHrs * (1 + axisBuffer)
+            maxEstEffortHrs * (1 + axisBuffer),
           ])
           .range([0, width])
           .call(this, action.estEffortHrs);
@@ -243,7 +240,7 @@ export default {
           .scaleLog()
           .domain([
             minActionLeverage / (1 + axisBuffer),
-            maxActionLeverage * (1 + axisBuffer)
+            maxActionLeverage * (1 + axisBuffer),
           ])
           .range([height, 0])
           .call(this, action.actionLeverage);
@@ -257,13 +254,10 @@ export default {
       } else return null;
     },
     wrap(texts /*, xwidth*/) {
-      texts.each(function() {
+      texts.each(function () {
         var text = d3.select(this),
           action = text.data(),
-          words = text
-            .text()
-            .split(/\s+/)
-            .reverse(),
+          words = text.text().split(/\s+/).reverse(),
           word,
           line = [],
           lineWordCount = 0,
@@ -318,42 +312,42 @@ export default {
             .text(line);
         }
       });
-    }
+    },
   },
 
   watch: {
-    chartableActions: function(newActions, oldActions) {
+    chartableActions: function (newActions, oldActions) {
       if (this.chartableActions.length == 0) return;
 
       let that = this;
 
       maxEstEffortHrs = Math.max.apply(
         Math,
-        newActions.map(function(a) {
+        newActions.map(function (a) {
           return a.estEffortHrs;
         })
       );
       minEstEffortHrs = Math.min.apply(
         Math,
-        newActions.map(function(a) {
+        newActions.map(function (a) {
           return a.estEffortHrs;
         })
       );
       maxActionLeverage = Math.max.apply(
         Math,
-        newActions.map(function(a) {
+        newActions.map(function (a) {
           return a.actionLeverage;
         })
       );
       minActionLeverage = Math.min.apply(
         Math,
-        newActions.map(function(a) {
+        newActions.map(function (a) {
           return a.actionLeverage;
         })
       );
       maxOwnDirectCost = Math.max.apply(
         Math,
-        newActions.map(function(a) {
+        newActions.map(function (a) {
           return a.ownDirectCost;
         })
       );
@@ -362,14 +356,14 @@ export default {
         .scaleLog()
         .domain([
           minEstEffortHrs / (1 + axisBuffer),
-          maxEstEffortHrs * (1 + axisBuffer)
+          maxEstEffortHrs * (1 + axisBuffer),
         ])
         .range([0, width]);
       var y = d3
         .scaleLog()
         .domain([
           minActionLeverage / (1 + axisBuffer),
-          maxActionLeverage * (1 + axisBuffer)
+          maxActionLeverage * (1 + axisBuffer),
         ])
         .range([height, 0]);
 
@@ -386,7 +380,7 @@ export default {
         .range([0, this.maxRadius]);
 
       //add links
-      var blockingLinkGen = function(d) {
+      var blockingLinkGen = function (d) {
         let x0 = d.source[0],
           y0 = d.source[1],
           x1 = d.source[0],
@@ -408,7 +402,8 @@ export default {
         .attr("d", blockingLinkGen)
         .attr(
           "class",
-          d => "blockingLink " + (d.isBlocking ? "isblocking " : "notBlocking ")
+          (d) =>
+            "blockingLink " + (d.isBlocking ? "isblocking " : "notBlocking ")
         )
         .attr("marker-end", "url(#end)");
 
@@ -425,7 +420,7 @@ export default {
         .style("color", "black");
 
       // Create 3 functions to show / update (when mouse move but stay on same circle) / hide the tooltip
-      var showTooltip = function(event, d) {
+      var showTooltip = function (event, d) {
         tooltip.transition().duration(200);
         tooltip
           .style("opacity", 1)
@@ -433,12 +428,12 @@ export default {
           .style("left", d3.pointer(event)[0] + margin.left - 0 + "px")
           .style("top", d3.pointer(event)[1] + margin.top + 20 + "px");
       };
-      var moveTooltip = function(event, d) {
+      var moveTooltip = function (event, d) {
         tooltip
           .style("left", d3.pointer(event)[0] + margin.left - 0 + "px")
           .style("top", d3.pointer(event)[1] + margin.top + 20 + "px");
       };
-      var hideTooltip = function(event, d) {
+      var hideTooltip = function (event, d) {
         tooltip
           //.transition()
           //.duration(200)
@@ -453,25 +448,25 @@ export default {
         .data(this.chartableActions)
         .enter()
         .append("circle")
-        .attr("id", function(d) {
+        .attr("id", function (d) {
           return d.id;
         })
-        .attr("class", function(d) {
+        .attr("class", function (d) {
           return "bubble "; /*+ d.continent*/
         })
-        .attr("cx", function(d) {
+        .attr("cx", function (d) {
           return x(d.estEffortHrs);
         })
-        .attr("cy", function(d) {
+        .attr("cy", function (d) {
           return y(d.actionLeverage);
         })
-        .attr("r", function(d) {
+        .attr("r", function (d) {
           return r(d.ownDirectCost);
         })
         .on("mouseover", showTooltip)
         .on("mousemove", moveTooltip)
         .on("mouseleave", hideTooltip)
-        .on("click", function(event, d, i) {
+        .on("click", function (event, d, i) {
           that.bubbleClick(d, i, "regularClick");
         });
 
@@ -486,7 +481,7 @@ export default {
         //.attr("y", "0.31em")
         .attr("text-anchor", "middle")
         .text(
-          d =>
+          (d) =>
             d.title /*.concat(
             d.isSelfBlocking ? " (self-blocking)" : "",
             d.isNew ? " (new)" : "",
@@ -497,19 +492,19 @@ export default {
         .attr("y", (d, i) => y(d.actionLeverage))
         .attr("cursor", "default")
         .call(this.wrap /*this.maxRadius*/)
-        .on("click", function(d, i) {
+        .on("click", function (d, i) {
           that.bubbleClick(d, i, "regularClick");
         });
     },
 
-    selectedActionId: function() {
+    selectedActionId: function () {
       const bubbles = this.svgInner.selectAll(".bubble");
       bubbles.classed("selected", false);
       bubbles
-        .filter(td => td.id == this.selectedActionId)
+        .filter((td) => td.id == this.selectedActionId)
         .classed("selected", true);
-    }
-  }
+    },
+  },
 };
 </script>
 
