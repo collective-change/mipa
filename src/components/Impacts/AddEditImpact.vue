@@ -1,11 +1,21 @@
 <template>
-  <q-card style="max-width:1500px; width:1000px">
+  <q-card style="max-width: 1500px; width: 1000px">
     <q-card-section>
       <modal-header>
         <template v-slot:header>{{ addOrEdit }} impact</template>
       </modal-header>
     </q-card-section>
-
+    <q-card-section
+      ><q-btn
+        type="a"
+        :href="`/org/${currentOrg.nameSlug}/model/${currentOrg.id}/${currentModel.id}`"
+        target="model"
+        label="see model"
+        icon-right="open_in_new"
+        flat
+        no-caps
+        color="primary"
+    /></q-card-section>
     <q-form @submit.prevent="submitImpact">
       <q-card-section class="q-gutter-sm q-pt-none">
         <div class="q-gutter-sm row items-center">
@@ -35,7 +45,7 @@
             placeholder="what's impacted and how? (optional)"
             filled
             autogrow
-            style="width: 30em;"
+            style="width: 30em"
           />
         </div>
         <div class="q-gutter-sm row items-center">
@@ -226,6 +236,9 @@ export default {
   mounted: function () {},
 
   computed: {
+    ...mapState("orgs", ["currentOrg"]),
+    ...mapState("model", ["currentModel"]),
+
     nodeOptions() {
       return this.nodes.map((node) => {
         return { label: node.name, value: node.id };
