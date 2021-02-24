@@ -29,12 +29,12 @@ const routes = [
         component: () => import("pages/PageBulkUpdateNodes.vue")
       },
       {
-        path: "/org/:orgNameSlug/actions/:orgId",
+        path: "/org/:orgNameSlug/ideate/actions/:orgId",
         name: "actions",
         component: () => import("pages/PageActions.vue")
       },
       {
-        path: "/org/:orgNameSlug/action/:orgId/:actionId",
+        path: "/org/:orgNameSlug/action-details/:orgId/:actionId",
         name: "actionDetails",
         component: () => import("pages/PageActionDetails.vue")
       }
