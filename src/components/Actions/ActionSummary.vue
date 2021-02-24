@@ -3,18 +3,18 @@
     <div v-if="selectedAction">
       <q-form @submit.prevent="submitForm">
         <div class="row items-center">
-          <div v-bind:class="{ 'col-12 col-md-4': !embedded, 'col-12': embedded }">
+          <div
+            v-bind:class="{ 'col-12 col-md-4': !embedded, 'col-12': embedded }"
+          >
             <q-input
               class="text-h6"
               v-model="title"
-              :rules="[val => !!val || 'Field is required']"
+              :rules="[(val) => !!val || 'Field is required']"
               ref="actionTitle"
             >
               <template v-slot:prepend>
                 <q-chip square color="primary" text-color="white">
-                  {{
-                  $t(uiAction.actionMchState.value)
-                  }}
+                  {{ $t(uiAction.actionMchState.value) }}
                 </q-chip>
               </template>
               <template v-slot:after v-if="embedded">
@@ -32,31 +32,39 @@
             </q-input>
           </div>
 
-          <div v-bind:class="{ 'col-12 col-md-2': !embedded, 'col-12': embedded }">
+          <div
+            v-bind:class="{ 'col-12 col-md-2': !embedded, 'col-12': embedded }"
+          >
             <div class="q-px-xs q-gutter-xs">
-              <q-chip
-                outline
-                color="primary"
-              >Leverage {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip>
-              <q-chip outline color="primary">Total ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip>
+              <q-chip outline color="primary"
+                >Leverage {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip
+              >
+              <q-chip outline color="primary"
+                >Total ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip
+              >
             </div>
           </div>
 
-          <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
+          <div
+            v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
+          >
             <div class="row q-pa-sm q-gutter-sm">
               <calculator-ui
                 calculationType="uiAction"
                 buttonLabel="Recalculate"
                 :uiAction="uiAction"
               />
-              <q-checkbox v-model="saveFullResults" label="Save full results for export" />
+              <q-checkbox
+                v-model="saveFullResults"
+                label="Save full results for export"
+              />
               <export-calc-results
                 data-source="resultsOfAction"
                 :actionId="uiAction.id"
                 :actionTitle="uiAction.title"
                 buttonLabel="Export results TSV"
               />
-              <q-btn-group v-if="uiAction.actionMchState.value=='initiating'">
+              <q-btn-group v-if="uiAction.actionMchState.value == 'initiating'">
                 <q-btn
                   :label="$t('Request approval')"
                   @click="actionService.send('REQUEST_APPROVAL')"
@@ -69,16 +77,20 @@
                 />
               </q-btn-group>
 
-              <q-btn-group v-if="uiAction.actionMchState.value=='to_approve'">
+              <q-btn-group v-if="uiAction.actionMchState.value == 'to_approve'">
                 <q-btn
                   :label="$t('Approve')"
                   @click="actionService.send('APPROVE')"
                   color="primary"
                 />
-                <q-btn :label="$t('Reject')" @click="actionService.send('REJECT')" color="primary" />
+                <q-btn
+                  :label="$t('Reject')"
+                  @click="actionService.send('REJECT')"
+                  color="primary"
+                />
               </q-btn-group>
 
-              <q-btn-group v-if="uiAction.actionMchState.value=='rejected'">
+              <q-btn-group v-if="uiAction.actionMchState.value == 'rejected'">
                 <q-btn
                   :label="$t('Request approval')"
                   @click="actionService.send('REQUEST_APPROVAL')"
@@ -86,13 +98,17 @@
                 />
               </q-btn-group>
 
-              <q-btn-group v-if="uiAction.actionMchState.value=='eligible'">
+              <q-btn-group v-if="uiAction.actionMchState.value == 'eligible'">
                 <q-btn
                   :label="$t('Approval needed')"
                   @click="actionService.send('APPROVAL_NEEDED')"
                   color="primary"
                 />
-                <q-btn :label="$t('Cancel')" @click="actionService.send('CANCEL')" color="primary" />
+                <q-btn
+                  :label="$t('Cancel')"
+                  @click="actionService.send('CANCEL')"
+                  color="primary"
+                />
                 <q-btn
                   :label="$t('Mark as done')"
                   @click="actionService.send('FINISH')"
@@ -100,7 +116,7 @@
                 />
               </q-btn-group>
 
-              <q-btn-group v-if="uiAction.actionMchState.value=='approved'">
+              <q-btn-group v-if="uiAction.actionMchState.value == 'approved'">
                 <q-btn
                   :label="$t('Re-approval needed')"
                   @click="actionService.send('APPROVAL_NEEDED')"
@@ -118,7 +134,7 @@
                 />
               </q-btn-group>
 
-              <q-btn-group v-if="uiAction.actionMchState.value=='done'">
+              <q-btn-group v-if="uiAction.actionMchState.value == 'done'">
                 <q-btn
                   :label="$t('Revert to eligible')"
                   @click="actionService.send('REVERT_FINISH')"
@@ -126,7 +142,9 @@
                 />
               </q-btn-group>
 
-              <q-btn-group v-if="uiAction.actionMchState.value=='cancellation_requested'">
+              <q-btn-group
+                v-if="uiAction.actionMchState.value == 'cancellation_requested'"
+              >
                 <q-btn
                   :label="$t('Reject cancellation')"
                   @click="actionService.send('REJECT_CANCELLATION')"
@@ -139,8 +157,12 @@
                 />
               </q-btn-group>
 
-              <q-btn-group v-if="uiAction.actionMchState.value=='canceled'">
-                <q-btn :label="$t('Revive')" @click="actionService.send('REVIVE')" color="primary" />
+              <q-btn-group v-if="uiAction.actionMchState.value == 'canceled'">
+                <q-btn
+                  :label="$t('Revive')"
+                  @click="actionService.send('REVIVE')"
+                  color="primary"
+                />
               </q-btn-group>
 
               <q-btn color="primary" label="Meet about this" />
@@ -149,8 +171,11 @@
         </div>
 
         <div class="row q-col-gutter-md">
-          <div v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }">
+          <div
+            v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
+          >
             <q-input v-model="notes" :label="$t('Notes')" filled autogrow />
+
             <div class="text-h6">Direct impacts</div>
             <impacts />
 
@@ -174,10 +199,10 @@
                     : ''
                 "
                 :rules="[
-                  val => val == null || val >= 0 || 'Should be at least 0'
+                  (val) => val == null || val >= 0 || 'Should be at least 0',
                 ]"
                 filled
-                style="max-width: 150px;"
+                style="max-width: 150px"
                 debounce="500"
               />
               <q-input
@@ -186,10 +211,10 @@
                 type="number"
                 suffix="hours"
                 :rules="[
-                  val => val == null || val >= 0 || 'Should be at least 0'
+                  (val) => val == null || val >= 0 || 'Should be at least 0',
                 ]"
                 filled
-                style="max-width: 150px;"
+                style="max-width: 150px"
                 debounce="500"
               />
               <q-input
@@ -197,17 +222,17 @@
                 type="number"
                 :suffix="$t('percentDone')"
                 :rules="[
-                  val => val == null || val >= 0 || 'Should be at least 0'
+                  (val) => val == null || val >= 0 || 'Should be at least 0',
                 ]"
                 filled
-                style="max-width: 150px;"
+                style="max-width: 150px"
                 debounce="500"
               />
 
               <q-slider
                 :value="effortCompletionPercentage"
                 @change="
-                  val => {
+                  (val) => {
                     effortCompletionPercentage = val;
                   }
                 "
@@ -224,10 +249,10 @@
                 type="number"
                 :suffix="currentOrg.currency"
                 :rules="[
-                  val => val == null || val >= 0 || 'Should be at least 0'
+                  (val) => val == null || val >= 0 || 'Should be at least 0',
                 ]"
                 filled
-                style="max-width: 150px;"
+                style="max-width: 150px"
                 debounce="500"
               />
               <q-input
@@ -236,17 +261,21 @@
                 type="number"
                 :suffix="currentOrg.currency"
                 :rules="[
-                  val => val == null || val >= 0 || 'Should be at least 0'
+                  (val) => val == null || val >= 0 || 'Should be at least 0',
                 ]"
                 filled
-                style="max-width: 150px;"
+                style="max-width: 150px"
                 debounce="500"
               />
             </div>
-            <modal-save-button />
+            <q-card-actions align="right">
+              <q-btn label="Save" color="primary" type="submit" />
+            </q-card-actions>
           </div>
 
-          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
+          <div
+            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
+          >
             <!-- middle column -->
             <div class="text-h6">Relationships</div>
             <div class="q-pa-sm q-gutter-sm">
@@ -254,114 +283,163 @@
             </div>
             <div class="text-h6">Computed</div>
             <q-list bordered separator class="rounded-borders">
-              <q-expansion-item label="Direct costs" header-class="text-weight-medium">
+              <q-expansion-item
+                label="Direct costs"
+                header-class="text-weight-medium"
+              >
                 <simpleCostsAndImpacts
                   :costsAndImpacts="
-                uiAction.effectiveChainedCostsAndImpactsExcludingSelf
-              "
+                    uiAction.effectiveChainedCostsAndImpactsExcludingSelf
+                  "
                 >
                   <!-- <template v-slot:header>Direct costs</template> -->
                 </simpleCostsAndImpacts>
               </q-expansion-item>
-              <q-expansion-item label="Aggregated results" header-class="text-weight-medium">
+              <q-expansion-item
+                label="Aggregated results"
+                header-class="text-weight-medium"
+              >
                 <q-markup-table flat separator="none">
                   <thead>
                     <tr>
                       <th class="text-left">Item</th>
-                      <th class="text-right">NPV ({{ currentOrg ? currentOrg.currency : "" }})</th>
+                      <th class="text-right">
+                        NPV ({{ currentOrg ? currentOrg.currency : "" }})
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
                       <td>Outstanding direct costs</td>
-                      <td class="text-right">{{ formatNumber(uiAction.outstandingDirectCosts, 3) }}</td>
+                      <td class="text-right">
+                        {{ formatNumber(uiAction.outstandingDirectCosts, 3) }}
+                      </td>
                     </tr>
                     <tr>
                       <td>Raw benefit to organization</td>
-                      <td
-                        class="text-right"
-                      >{{ formatNumber(uiAction.rawMarginalOrgBenefitNpv, 3) }}</td>
+                      <td class="text-right">
+                        {{ formatNumber(uiAction.rawMarginalOrgBenefitNpv, 3) }}
+                      </td>
                     </tr>
                     <tr>
                       <td>Raw cost to organization</td>
-                      <td class="text-right">{{ formatNumber(uiAction.rawMarginalOrgCostNpv, 3) }}</td>
+                      <td class="text-right">
+                        {{ formatNumber(uiAction.rawMarginalOrgCostNpv, 3) }}
+                      </td>
                     </tr>
                     <tr>
                       <td>Adjusted benefit to organization</td>
-                      <td class="text-right">{{ formatNumber(uiAction.marginalOrgBenefitNpv, 3) }}</td>
+                      <td class="text-right">
+                        {{ formatNumber(uiAction.marginalOrgBenefitNpv, 3) }}
+                      </td>
                     </tr>
                     <tr>
                       <td>Adjusted cost to organization</td>
-                      <td class="text-right">{{ formatNumber(uiAction.marginalOrgCostNpv, 3) }}</td>
+                      <td class="text-right">
+                        {{ formatNumber(uiAction.marginalOrgCostNpv, 3) }}
+                      </td>
                     </tr>
                     <tr>
                       <td>Raw benefit to world</td>
-                      <td
-                        class="text-right"
-                      >{{ formatNumber(uiAction.rawMarginalWorldBenefitNpv, 3) }}</td>
+                      <td class="text-right">
+                        {{
+                          formatNumber(uiAction.rawMarginalWorldBenefitNpv, 3)
+                        }}
+                      </td>
                     </tr>
                     <tr>
                       <td>Raw cost to world</td>
-                      <td class="text-right">{{ formatNumber(uiAction.rawMarginalWorldCostNpv, 3) }}</td>
+                      <td class="text-right">
+                        {{ formatNumber(uiAction.rawMarginalWorldCostNpv, 3) }}
+                      </td>
                     </tr>
                     <tr>
                       <td>Adjusted benefit to world</td>
-                      <td class="text-right">{{ formatNumber(uiAction.marginalWorldBenefitNpv, 3) }}</td>
+                      <td class="text-right">
+                        {{ formatNumber(uiAction.marginalWorldBenefitNpv, 3) }}
+                      </td>
                     </tr>
                     <tr>
                       <td>Adjusted cost to world</td>
-                      <td class="text-right">{{ formatNumber(uiAction.marginalWorldCostNpv, 3) }}</td>
+                      <td class="text-right">
+                        {{ formatNumber(uiAction.marginalWorldCostNpv, 3) }}
+                      </td>
                     </tr>
 
                     <tr>
                       <td>Total benefit</td>
-                      <td class="text-right">{{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }}</td>
+                      <td class="text-right">
+                        {{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }}
+                      </td>
                     </tr>
                     <tr>
                       <td>Total cost</td>
-                      <td class="text-right">{{ formatNumber(uiAction.marginalTotalCostNpv, 3) }}</td>
+                      <td class="text-right">
+                        {{ formatNumber(uiAction.marginalTotalCostNpv, 3) }}
+                      </td>
                     </tr>
                     <tr>
                       <td>Net total benefit</td>
-                      <td
-                        class="text-right"
-                      >{{ formatNumber(uiAction.marginalNetTotalBenefitNpv, 3) }}</td>
+                      <td class="text-right">
+                        {{
+                          formatNumber(uiAction.marginalNetTotalBenefitNpv, 3)
+                        }}
+                      </td>
                     </tr>
                   </tbody>
                 </q-markup-table>
               </q-expansion-item>
             </q-list>
           </div>
-          <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
-            <select-user label="Responsible" v-model="uiAction.responsiblePerson" />
-            <select-user label="Accountable" v-model="uiAction.accountablePerson" />
+          <div
+            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
+          >
+            <select-user
+              label="Responsible"
+              v-model="uiAction.responsiblePerson"
+            />
+            <select-user
+              label="Accountable"
+              v-model="uiAction.accountablePerson"
+            />
+            <q-card-actions align="right">
+              <q-btn label="Save" color="primary" type="submit" />
+            </q-card-actions>
             <div class="text-h6">Chat</div>
             <chat
               :chatId="uiAction.chatId"
               subjectDocType="action"
-              :subjectDocLineage="{actionId: uiAction.id}"
+              :subjectDocLineage="{ actionId: uiAction.id }"
               :subjectDocTitle="uiAction.title"
             />
           </div>
         </div>
         <div v-if="!embedded" class="row q-gutter-y-lg">
-          <div class="column q-gutter-md" v-for="chart in chartsArr" :key="chart.nodeId">
-            <gchart type="LineChart" :data="chart.chartData" :options="chart.chartOptions" />
+          <div
+            class="column q-gutter-md"
+            v-for="chart in chartsArr"
+            :key="chart.nodeId"
+          >
+            <gchart
+              type="LineChart"
+              :data="chart.chartData"
+              :options="chart.chartOptions"
+            />
             <div class="row justify-center q-gutter-x-md">
               <q-btn-toggle
                 v-model="chart.chartOptions.series"
                 action-color="primary"
                 size="xs"
                 :options="[
-                    {
-                      label: 'difference',
-                      value: showDifferenceConfig
-                    },
-                    {
-                      label: 'values',
-                      value: showValuesConfig
-                    }
-                  ]"
+                  {
+                    label: 'difference',
+                    value: showDifferenceConfig,
+                  },
+                  {
+                    label: 'values',
+                    value: showValuesConfig,
+                  },
+                ]"
               />
 
               <q-btn-toggle
@@ -369,9 +447,9 @@
                 action-color="primary"
                 size="xs"
                 :options="[
-                    { label: 'linear', value: 'linear' },
-                    { label: 'log', value: 'mirrorLog' }
-                  ]"
+                  { label: 'linear', value: 'linear' },
+                  { label: 'log', value: 'mirrorLog' },
+                ]"
               />
             </div>
           </div>
@@ -392,13 +470,13 @@ import { GChart } from "vue-google-charts";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
-  mutationType: "uiAction/updateUiActionField"
+  mutationType: "uiAction/updateUiActionField",
 });
 
 export default {
   components: {
-    "modal-save-button": require("components/Shared/ModalComponents/ModalSaveButton.vue")
-      .default,
+    /*"modal-save-button": require("components/Shared/ModalComponents/ModalSaveButton.vue")
+      .default,*/
     impacts: require("components/Impacts/Impacts.vue").default,
     simpleCostsAndImpacts: require("components/Impacts/SimpleCostsAndImpacts.vue")
       .default,
@@ -407,11 +485,9 @@ export default {
       .default,
     "action-relationships": require("components/Actions/Relationships/ActionRelationships.vue")
       .default,
-    "select-user": require("components/Users/SelectUser.vue")
-      .default,
-    "chat": require("components/Chats/Chat.vue")
-      .default,
-    gchart: GChart
+    "select-user": require("components/Users/SelectUser.vue").default,
+    chat: require("components/Chats/Chat.vue").default,
+    gchart: GChart,
   },
 
   data() {
@@ -422,28 +498,28 @@ export default {
       effortCostPerHrTypeOptions: [
         {
           label: "use average effort cost per hour",
-          value: "use_average"
+          value: "use_average",
         },
         {
           label: "use custom effort cost per hour",
-          value: "use_custom"
-        }
+          value: "use_custom",
+        },
       ],
       showValuesConfig: {
         0: { lineWidth: 5, visibleInLegend: true },
         1: { lineWidth: 2, visibleInLegend: true },
         2: { lineWidth: 2, visibleInLegend: true },
-        3: { lineWidth: 0, visibleInLegend: false }
+        3: { lineWidth: 0, visibleInLegend: false },
       },
       showDifferenceConfig: {
         0: { lineWidth: 0, visibleInLegend: false },
         1: { lineWidth: 0, visibleInLegend: false },
         2: { lineWidth: 0, visibleInLegend: false },
-        3: { lineWidth: 2, visibleInLegend: true }
+        3: { lineWidth: 2, visibleInLegend: true },
       },
       actionService: interpret(actionMachine),
 
-      actionStateContext: null
+      actionStateContext: null,
     };
   },
 
@@ -478,7 +554,7 @@ export default {
       "uiAction.saveFullResults",
       "uiAction.responsiblePerson",
       "uiAction.accountablePerson",
-      "uiAction.chatId"
+      "uiAction.chatId",
     ]),
     ...mapMultiRowFields(["uiAction.impacts"]),
 
@@ -495,7 +571,7 @@ export default {
 
       if (actionId) {
         //TODO: if embedded, get and return action from firestore
-        return this.actions.find(function(action) {
+        return this.actions.find(function (action) {
           return action.id == actionId;
         });
       } else {
@@ -505,14 +581,16 @@ export default {
 
     averageEffortCostPerHourNode() {
       return this.nodes.find(
-        node => node.id == this.currentModel.roleNodes.averageEffortCostPerHour
+        (node) =>
+          node.id == this.currentModel.roleNodes.averageEffortCostPerHour
       );
     },
 
     directCost() {
       if (this.currentModel == null || this.nodes.length == 0) return;
       let averageEffortCostPerHourNode = this.nodes.find(
-        node => node.id == this.currentModel.roleNodes.averageEffortCostPerHour
+        (node) =>
+          node.id == this.currentModel.roleNodes.averageEffortCostPerHour
       );
       let effortCostPerHour = averageEffortCostPerHourNode.symbolFormula;
       let directEffortCost =
@@ -539,10 +617,10 @@ export default {
         sunken: ownDirectCost - outstandingDirectCost,
         outstandingDirectEffortHrs,
         outstandingDirectEffortCost,
-        outstandingSpending
+        outstandingSpending,
       };
       return directCost;
-    }
+    },
   },
 
   methods: {
@@ -566,15 +644,17 @@ export default {
         "parentActionId",
         "effectiveChainedCostsAndImpacts",
         "effectiveChainedCostsAndImpactsExcludingSelf",
-        "saveFullResults"
+        "saveFullResults",
         //"impacts"
       ];
-      propertiesToDelete.forEach(propertyName => delete updates[propertyName]);
+      propertiesToDelete.forEach(
+        (propertyName) => delete updates[propertyName]
+      );
 
       console.log(updates);
       let payload = {
         id: this.actionId,
-        updates
+        updates,
       };
       this.$store.dispatch("actions/updateAction", payload);
       this.$store.commit("uiAction/setUiActionChanged", false);
@@ -594,7 +674,7 @@ export default {
         let ifNotDoneValues = this.resultsOfAction.ifNotDoneNodesValues[nodeId];
         let ifDoneValues = this.resultsOfAction.ifDoneNodesValues[nodeId];
         //if nodeId does not exist in chartsDataArr then create it
-        let chart = this.chartsArr.find(chart => chart.nodeId == nodeId);
+        let chart = this.chartsArr.find((chart) => chart.nodeId == nodeId);
         if (typeof chart == "undefined") {
           console.log("existing chart not found");
           let unit = (chart = {
@@ -605,14 +685,14 @@ export default {
               vAxis: {
                 title: this.getNodeUnit(nodeId),
                 scaleType: "linear",
-                format: "short"
+                format: "short",
               },
               legend: { position: "bottom" },
               series: this.showDifferenceConfig,
               width: 360,
-              height: 240
+              height: 240,
               //explorer: {}
-            }
+            },
           });
           this.chartsArr.push(chart);
         } else {
@@ -625,7 +705,7 @@ export default {
             "baseline",
             "if done",
             "if not done",
-            "done minus not done"
+            "done minus not done",
           ]);
           for (var i = 0; i < timeSPoints.length; i++) {
             chart.chartData.push([
@@ -633,7 +713,7 @@ export default {
               baselineValues[i],
               ifDoneValues[i],
               ifNotDoneValues[i],
-              ifDoneValues[i] - ifNotDoneValues[i]
+              ifDoneValues[i] - ifNotDoneValues[i],
             ]);
           }
         }
@@ -647,7 +727,7 @@ export default {
       console.log("updateDefaultChartsArr");
       let defaultNodesToChart = [];
       //add impacted nodes
-      this.uiAction.impacts.forEach(function(impact) {
+      this.uiAction.impacts.forEach(function (impact) {
         defaultNodesToChart.push(impact.nodeId);
       });
       //add combinedBenefit and combinedCost nodes
@@ -659,20 +739,20 @@ export default {
       //defaultNodesToChart.push(this.currentModel.roleNodes.spending);
 
       //load data into each node
-      defaultNodesToChart.forEach(nodeId =>
+      defaultNodesToChart.forEach((nodeId) =>
         this.updateChartDataForNode(nodeId)
       );
     },
     getNodeName(nodeId) {
-      const found = this.nodes.find(node => node.id == nodeId);
+      const found = this.nodes.find((node) => node.id == nodeId);
       if (found) return found.name;
       else return nodeId;
     },
     getNodeUnit(nodeId) {
-      const found = this.nodes.find(node => node.id == nodeId);
+      const found = this.nodes.find((node) => node.id == nodeId);
       if (found) return found.unit;
       else return "";
-    }
+    },
   },
 
   created() {
@@ -681,7 +761,7 @@ export default {
         !firebaseAuth.currentUser // define the condition as you like
       ) {
         //console.log("waiting for currentUser to be defined");
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
       let orgId = this.$route.params.orgId;
       let modelId = this.$route.params.orgId;
@@ -693,13 +773,13 @@ export default {
     this.actionService.stop();
   },
   watch: {
-    nodes: function() {
+    nodes: function () {
       /*if (this.embedded == false)*/ this.updateDefaultChartsArr();
     },
-    resultsOfAction: function() {
+    resultsOfAction: function () {
       /*if (this.embedded == false)*/ this.updateDefaultChartsArr();
     },
-    selectedAction: function(newAction, oldAction) {
+    selectedAction: function (newAction, oldAction) {
       if (newAction && oldAction && newAction.id == oldAction.id) return;
 
       // Start with the machine's initial context
@@ -707,7 +787,7 @@ export default {
 
       //start actionService
       this.actionService
-        .onTransition(state => {
+        .onTransition((state) => {
           // Update the current state component data property with the next state
           this.actionMchState = state;
           this.$store.commit("uiAction/setActionMchState", state);
@@ -740,7 +820,7 @@ export default {
       }
     },
 
-    directCost: function() {
+    directCost: function () {
       if (typeof this.directCost == "undefined") return;
       this.ownDirectCost = this.directCost.own;
       this.outstandingDirectCost = this.directCost.outstanding;
@@ -748,7 +828,7 @@ export default {
       this.outstandingDirectEffortHrs = this.directCost.outstandingDirectEffortHrs;
       this.outstandingDirectEffortCost = this.directCost.outstandingDirectEffortCost;
       this.outstandingSpending = this.directCost.outstandingSpending;
-    }
-  }
+    },
+  },
 };
 </script>
