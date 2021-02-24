@@ -175,6 +175,9 @@
             v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
           >
             <q-input v-model="notes" :label="$t('Notes')" filled autogrow />
+            <q-card-actions align="right">
+              <q-btn label="Save" color="primary" type="submit" />
+            </q-card-actions>
 
             <div class="text-h6">Direct impacts</div>
             <impacts />
