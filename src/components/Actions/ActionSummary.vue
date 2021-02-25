@@ -1,470 +1,460 @@
 <template>
-  <div>
-    <div v-if="uiAction && uiAction.actionMchState">
-      <q-form @submit.prevent="submitForm">
-        <div class="row items-center">
-          <div
-            v-bind:class="{ 'col-12 col-md-4': !embedded, 'col-12': embedded }"
+  <div v-if="uiAction && uiAction.actionMchState">
+    <q-form @submit.prevent="submitForm">
+      <div class="row items-center">
+        <div
+          v-bind:class="{ 'col-12 col-md-4': !embedded, 'col-12': embedded }"
+        >
+          <q-input
+            class="text-h6"
+            v-model="title"
+            :rules="[(val) => !!val || 'Field is required']"
+            ref="actionTitle"
           >
-            <q-input
-              class="text-h6"
-              v-model="title"
-              :rules="[(val) => !!val || 'Field is required']"
-              ref="actionTitle"
+            <template v-slot:prepend>
+              <q-chip square color="primary" text-color="white">
+                {{ $t(uiAction.actionMchState.value) }}
+              </q-chip>
+            </template>
+            <template v-slot:after v-if="embedded">
+              <q-btn
+                dense
+                label="details"
+                color="primary"
+                @click="
+                  $router.push(
+                    `/org/${currentOrg.name}/action-details/${currentOrg.id}/${uiAction.id}`
+                  )
+                "
+              />
+            </template>
+          </q-input>
+        </div>
+
+        <div
+          v-bind:class="{ 'col-12 col-md-2': !embedded, 'col-12': embedded }"
+        >
+          <div class="q-px-xs q-gutter-xs">
+            <q-chip outline color="primary"
+              >Leverage {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip
             >
-              <template v-slot:prepend>
-                <q-chip square color="primary" text-color="white">
-                  {{ $t(uiAction.actionMchState.value) }}
-                </q-chip>
-              </template>
-              <template v-slot:after v-if="embedded">
-                <q-btn
-                  dense
-                  label="details"
-                  color="primary"
-                  @click="
-                    $router.push(
-                      `/org/${currentOrg.name}/action-details/${currentOrg.id}/${uiAction.id}`
-                    )
-                  "
-                />
-              </template>
-            </q-input>
-          </div>
-
-          <div
-            v-bind:class="{ 'col-12 col-md-2': !embedded, 'col-12': embedded }"
-          >
-            <div class="q-px-xs q-gutter-xs">
-              <q-chip outline color="primary"
-                >Leverage {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip
-              >
-              <q-chip outline color="primary"
-                >Total ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip
-              >
-            </div>
-          </div>
-
-          <div
-            v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
-          >
-            <div class="row q-pa-sm q-gutter-sm">
-              <calculator-ui
-                calculationType="uiAction"
-                buttonLabel="Recalculate"
-                :uiAction="uiAction"
-              />
-              <q-checkbox
-                v-model="saveFullResults"
-                label="Save full results for export"
-              />
-              <export-calc-results
-                data-source="resultsOfAction"
-                :actionId="uiAction.id"
-                :actionTitle="uiAction.title"
-                buttonLabel="Export results TSV"
-              />
-              <q-btn-group v-if="uiAction.actionMchState.value == 'initiating'">
-                <q-btn
-                  :label="$t('Request approval')"
-                  @click="actionService.send('REQUEST_APPROVAL')"
-                  color="primary"
-                />
-                <q-btn
-                  :label="$t('Approval not needed')"
-                  @click="actionService.send('APPROVAL_NOT_NEEDED')"
-                  color="primary"
-                />
-              </q-btn-group>
-
-              <q-btn-group v-if="uiAction.actionMchState.value == 'to_approve'">
-                <q-btn
-                  :label="$t('Approve')"
-                  @click="actionService.send('APPROVE')"
-                  color="primary"
-                />
-                <q-btn
-                  :label="$t('Reject')"
-                  @click="actionService.send('REJECT')"
-                  color="primary"
-                />
-              </q-btn-group>
-
-              <q-btn-group v-if="uiAction.actionMchState.value == 'rejected'">
-                <q-btn
-                  :label="$t('Request approval')"
-                  @click="actionService.send('REQUEST_APPROVAL')"
-                  color="primary"
-                />
-              </q-btn-group>
-
-              <q-btn-group v-if="uiAction.actionMchState.value == 'eligible'">
-                <q-btn
-                  :label="$t('Approval needed')"
-                  @click="actionService.send('APPROVAL_NEEDED')"
-                  color="primary"
-                />
-                <q-btn
-                  :label="$t('Cancel')"
-                  @click="actionService.send('CANCEL')"
-                  color="primary"
-                />
-                <q-btn
-                  :label="$t('Mark as done')"
-                  @click="actionService.send('FINISH')"
-                  color="primary"
-                />
-              </q-btn-group>
-
-              <q-btn-group v-if="uiAction.actionMchState.value == 'approved'">
-                <q-btn
-                  :label="$t('Re-approval needed')"
-                  @click="actionService.send('APPROVAL_NEEDED')"
-                  color="primary"
-                />
-                <q-btn
-                  :label="$t('Request to cancel')"
-                  @click="actionService.send('REQUEST_CANCELLATION')"
-                  color="primary"
-                />
-                <q-btn
-                  :label="$t('Mark as done')"
-                  @click="actionService.send('FINISH')"
-                  color="primary"
-                />
-              </q-btn-group>
-
-              <q-btn-group v-if="uiAction.actionMchState.value == 'done'">
-                <q-btn
-                  :label="$t('Revert to eligible')"
-                  @click="actionService.send('REVERT_FINISH')"
-                  color="primary"
-                />
-              </q-btn-group>
-
-              <q-btn-group
-                v-if="uiAction.actionMchState.value == 'cancellation_requested'"
-              >
-                <q-btn
-                  :label="$t('Reject cancellation')"
-                  @click="actionService.send('REJECT_CANCELLATION')"
-                  color="primary"
-                />
-                <q-btn
-                  :label="$t('Approve cancellation')"
-                  @click="actionService.send('APPROVE_CANCELLATION')"
-                  color="primary"
-                />
-              </q-btn-group>
-
-              <q-btn-group v-if="uiAction.actionMchState.value == 'canceled'">
-                <q-btn
-                  :label="$t('Revive')"
-                  @click="actionService.send('REVIVE')"
-                  color="primary"
-                />
-              </q-btn-group>
-
-              <q-btn color="primary" label="Meet about this" />
-            </div>
+            <q-chip outline color="primary"
+              >Total ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip
+            >
           </div>
         </div>
 
-        <div class="row q-col-gutter-md">
-          <div
-            v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
-          >
-            <q-input v-model="notes" :label="$t('Notes')" filled autogrow />
-            <q-card-actions align="right">
-              <q-btn label="Save" color="primary" type="submit" />
-            </q-card-actions>
-
-            <div class="text-h6">Direct impacts</div>
-            <impacts />
-
-            <div class="row q-gutter-md q-mt-md items-start">
-              <q-select
-                v-model="effortCostPerHrType"
-                :label="$t('effortCostPerHour')"
-                :options="effortCostPerHrTypeOptions"
-                emit-value
-                map-options
-                filled
+        <div
+          v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
+        >
+          <div class="row q-pa-sm q-gutter-sm">
+            <calculator-ui
+              calculationType="uiAction"
+              buttonLabel="Recalculate"
+              :uiAction="uiAction"
+            />
+            <q-checkbox
+              v-model="saveFullResults"
+              label="Save full results for export"
+            />
+            <export-calc-results
+              data-source="resultsOfAction"
+              :actionId="uiAction.id"
+              :actionTitle="uiAction.title"
+              buttonLabel="Export results TSV"
+            />
+            <q-btn-group v-if="uiAction.actionMchState.value == 'initiating'">
+              <q-btn
+                :label="$t('Request approval')"
+                @click="actionService.send('REQUEST_APPROVAL')"
+                color="primary"
               />
-              <q-input
-                v-if="effortCostPerHrType == 'use_custom'"
-                v-model.number="customEffortCostPerHr"
-                :label="$t('customEffortCostPerHr')"
-                type="number"
-                :suffix="
-                  averageEffortCostPerHourNode
-                    ? averageEffortCostPerHourNode.unit
-                    : ''
+              <q-btn
+                :label="$t('Approval not needed')"
+                @click="actionService.send('APPROVAL_NOT_NEEDED')"
+                color="primary"
+              />
+            </q-btn-group>
+
+            <q-btn-group v-if="uiAction.actionMchState.value == 'to_approve'">
+              <q-btn
+                :label="$t('Approve')"
+                @click="actionService.send('APPROVE')"
+                color="primary"
+              />
+              <q-btn
+                :label="$t('Reject')"
+                @click="actionService.send('REJECT')"
+                color="primary"
+              />
+            </q-btn-group>
+
+            <q-btn-group v-if="uiAction.actionMchState.value == 'rejected'">
+              <q-btn
+                :label="$t('Request approval')"
+                @click="actionService.send('REQUEST_APPROVAL')"
+                color="primary"
+              />
+            </q-btn-group>
+
+            <q-btn-group v-if="uiAction.actionMchState.value == 'eligible'">
+              <q-btn
+                :label="$t('Approval needed')"
+                @click="actionService.send('APPROVAL_NEEDED')"
+                color="primary"
+              />
+              <q-btn
+                :label="$t('Cancel')"
+                @click="actionService.send('CANCEL')"
+                color="primary"
+              />
+              <q-btn
+                :label="$t('Mark as done')"
+                @click="actionService.send('FINISH')"
+                color="primary"
+              />
+            </q-btn-group>
+
+            <q-btn-group v-if="uiAction.actionMchState.value == 'approved'">
+              <q-btn
+                :label="$t('Re-approval needed')"
+                @click="actionService.send('APPROVAL_NEEDED')"
+                color="primary"
+              />
+              <q-btn
+                :label="$t('Request to cancel')"
+                @click="actionService.send('REQUEST_CANCELLATION')"
+                color="primary"
+              />
+              <q-btn
+                :label="$t('Mark as done')"
+                @click="actionService.send('FINISH')"
+                color="primary"
+              />
+            </q-btn-group>
+
+            <q-btn-group v-if="uiAction.actionMchState.value == 'done'">
+              <q-btn
+                :label="$t('Revert to eligible')"
+                @click="actionService.send('REVERT_FINISH')"
+                color="primary"
+              />
+            </q-btn-group>
+
+            <q-btn-group
+              v-if="uiAction.actionMchState.value == 'cancellation_requested'"
+            >
+              <q-btn
+                :label="$t('Reject cancellation')"
+                @click="actionService.send('REJECT_CANCELLATION')"
+                color="primary"
+              />
+              <q-btn
+                :label="$t('Approve cancellation')"
+                @click="actionService.send('APPROVE_CANCELLATION')"
+                color="primary"
+              />
+            </q-btn-group>
+
+            <q-btn-group v-if="uiAction.actionMchState.value == 'canceled'">
+              <q-btn
+                :label="$t('Revive')"
+                @click="actionService.send('REVIVE')"
+                color="primary"
+              />
+            </q-btn-group>
+
+            <q-btn color="primary" label="Meet about this" />
+          </div>
+        </div>
+      </div>
+
+      <div class="row q-col-gutter-md">
+        <div
+          v-bind:class="{ 'col-12 col-md-6': !embedded, 'col-12': embedded }"
+        >
+          <q-input v-model="notes" :label="$t('Notes')" filled autogrow />
+          <q-card-actions align="right">
+            <q-btn label="Save" color="primary" type="submit" />
+          </q-card-actions>
+
+          <div class="text-h6">Direct impacts</div>
+          <impacts />
+
+          <div class="row q-gutter-md q-mt-md items-start">
+            <q-select
+              v-model="effortCostPerHrType"
+              :label="$t('effortCostPerHour')"
+              :options="effortCostPerHrTypeOptions"
+              emit-value
+              map-options
+              filled
+            />
+            <q-input
+              v-if="effortCostPerHrType == 'use_custom'"
+              v-model.number="customEffortCostPerHr"
+              :label="$t('customEffortCostPerHr')"
+              type="number"
+              :suffix="
+                averageEffortCostPerHourNode
+                  ? averageEffortCostPerHourNode.unit
+                  : ''
+              "
+              :rules="[
+                (val) => val == null || val >= 0 || 'Should be at least 0',
+              ]"
+              filled
+              style="max-width: 150px"
+              debounce="500"
+            />
+            <q-input
+              v-model.number="estEffortHrs"
+              :label="$t('estEffortHrs')"
+              type="number"
+              suffix="hours"
+              :rules="[
+                (val) => val == null || val >= 0 || 'Should be at least 0',
+              ]"
+              filled
+              style="max-width: 150px"
+              debounce="500"
+            />
+            <q-input
+              v-model.number="effortCompletionPercentage"
+              type="number"
+              :suffix="$t('percentDone')"
+              :rules="[
+                (val) => val == null || val >= 0 || 'Should be at least 0',
+              ]"
+              filled
+              style="max-width: 150px"
+              debounce="500"
+            />
+
+            <q-slider
+              :value="effortCompletionPercentage"
+              @change="
+                (val) => {
+                  effortCompletionPercentage = val;
+                }
+              "
+              :min="0"
+              :max="100"
+              label
+            />
+          </div>
+
+          <div class="q-gutter-md q-mt-md row items-start">
+            <q-input
+              v-model.number="estSpending"
+              :label="$t('estSpending')"
+              type="number"
+              :suffix="currentOrg.currency"
+              :rules="[
+                (val) => val == null || val >= 0 || 'Should be at least 0',
+              ]"
+              filled
+              style="max-width: 150px"
+              debounce="500"
+            />
+            <q-input
+              v-model.number="spentAmount"
+              :label="$t('spentAmount')"
+              type="number"
+              :suffix="currentOrg.currency"
+              :rules="[
+                (val) => val == null || val >= 0 || 'Should be at least 0',
+              ]"
+              filled
+              style="max-width: 150px"
+              debounce="500"
+            />
+          </div>
+          <q-card-actions align="right">
+            <q-btn label="Save" color="primary" type="submit" />
+          </q-card-actions>
+        </div>
+
+        <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
+          <!-- middle column -->
+          <div class="text-h6">Relationships</div>
+          <div class="q-pa-sm q-gutter-sm">
+            <action-relationships></action-relationships>
+          </div>
+          <div class="text-h6">Computed</div>
+          <q-list bordered separator class="rounded-borders">
+            <q-expansion-item
+              label="Direct costs"
+              header-class="text-weight-medium"
+            >
+              <simpleCostsAndImpacts
+                :costsAndImpacts="
+                  uiAction.effectiveChainedCostsAndImpactsExcludingSelf
                 "
-                :rules="[
-                  (val) => val == null || val >= 0 || 'Should be at least 0',
-                ]"
-                filled
-                style="max-width: 150px"
-                debounce="500"
-              />
-              <q-input
-                v-model.number="estEffortHrs"
-                :label="$t('estEffortHrs')"
-                type="number"
-                suffix="hours"
-                :rules="[
-                  (val) => val == null || val >= 0 || 'Should be at least 0',
-                ]"
-                filled
-                style="max-width: 150px"
-                debounce="500"
-              />
-              <q-input
-                v-model.number="effortCompletionPercentage"
-                type="number"
-                :suffix="$t('percentDone')"
-                :rules="[
-                  (val) => val == null || val >= 0 || 'Should be at least 0',
-                ]"
-                filled
-                style="max-width: 150px"
-                debounce="500"
-              />
-
-              <q-slider
-                :value="effortCompletionPercentage"
-                @change="
-                  (val) => {
-                    effortCompletionPercentage = val;
-                  }
-                "
-                :min="0"
-                :max="100"
-                label
-              />
-            </div>
-
-            <div class="q-gutter-md q-mt-md row items-start">
-              <q-input
-                v-model.number="estSpending"
-                :label="$t('estSpending')"
-                type="number"
-                :suffix="currentOrg.currency"
-                :rules="[
-                  (val) => val == null || val >= 0 || 'Should be at least 0',
-                ]"
-                filled
-                style="max-width: 150px"
-                debounce="500"
-              />
-              <q-input
-                v-model.number="spentAmount"
-                :label="$t('spentAmount')"
-                type="number"
-                :suffix="currentOrg.currency"
-                :rules="[
-                  (val) => val == null || val >= 0 || 'Should be at least 0',
-                ]"
-                filled
-                style="max-width: 150px"
-                debounce="500"
-              />
-            </div>
-            <q-card-actions align="right">
-              <q-btn label="Save" color="primary" type="submit" />
-            </q-card-actions>
-          </div>
-
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
-          >
-            <!-- middle column -->
-            <div class="text-h6">Relationships</div>
-            <div class="q-pa-sm q-gutter-sm">
-              <action-relationships></action-relationships>
-            </div>
-            <div class="text-h6">Computed</div>
-            <q-list bordered separator class="rounded-borders">
-              <q-expansion-item
-                label="Direct costs"
-                header-class="text-weight-medium"
               >
-                <simpleCostsAndImpacts
-                  :costsAndImpacts="
-                    uiAction.effectiveChainedCostsAndImpactsExcludingSelf
-                  "
-                >
-                  <!-- <template v-slot:header>Direct costs</template> -->
-                </simpleCostsAndImpacts>
-              </q-expansion-item>
-              <q-expansion-item
-                label="Aggregated results"
-                header-class="text-weight-medium"
-              >
-                <q-markup-table flat separator="none">
-                  <thead>
-                    <tr>
-                      <th class="text-left">Item</th>
-                      <th class="text-right">
-                        NPV ({{ currentOrg ? currentOrg.currency : "" }})
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Outstanding direct costs</td>
-                      <td class="text-right">
-                        {{ formatNumber(uiAction.outstandingDirectCosts, 3) }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Raw benefit to organization</td>
-                      <td class="text-right">
-                        {{ formatNumber(uiAction.rawMarginalOrgBenefitNpv, 3) }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Raw cost to organization</td>
-                      <td class="text-right">
-                        {{ formatNumber(uiAction.rawMarginalOrgCostNpv, 3) }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Adjusted benefit to organization</td>
-                      <td class="text-right">
-                        {{ formatNumber(uiAction.marginalOrgBenefitNpv, 3) }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Adjusted cost to organization</td>
-                      <td class="text-right">
-                        {{ formatNumber(uiAction.marginalOrgCostNpv, 3) }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Raw benefit to world</td>
-                      <td class="text-right">
-                        {{
-                          formatNumber(uiAction.rawMarginalWorldBenefitNpv, 3)
-                        }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Raw cost to world</td>
-                      <td class="text-right">
-                        {{ formatNumber(uiAction.rawMarginalWorldCostNpv, 3) }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Adjusted benefit to world</td>
-                      <td class="text-right">
-                        {{ formatNumber(uiAction.marginalWorldBenefitNpv, 3) }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Adjusted cost to world</td>
-                      <td class="text-right">
-                        {{ formatNumber(uiAction.marginalWorldCostNpv, 3) }}
-                      </td>
-                    </tr>
+                <!-- <template v-slot:header>Direct costs</template> -->
+              </simpleCostsAndImpacts>
+            </q-expansion-item>
+            <q-expansion-item
+              label="Aggregated results"
+              header-class="text-weight-medium"
+            >
+              <q-markup-table flat separator="none">
+                <thead>
+                  <tr>
+                    <th class="text-left">Item</th>
+                    <th class="text-right">
+                      NPV ({{ currentOrg ? currentOrg.currency : "" }})
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Outstanding direct costs</td>
+                    <td class="text-right">
+                      {{ formatNumber(uiAction.outstandingDirectCosts, 3) }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Raw benefit to organization</td>
+                    <td class="text-right">
+                      {{ formatNumber(uiAction.rawMarginalOrgBenefitNpv, 3) }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Raw cost to organization</td>
+                    <td class="text-right">
+                      {{ formatNumber(uiAction.rawMarginalOrgCostNpv, 3) }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Adjusted benefit to organization</td>
+                    <td class="text-right">
+                      {{ formatNumber(uiAction.marginalOrgBenefitNpv, 3) }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Adjusted cost to organization</td>
+                    <td class="text-right">
+                      {{ formatNumber(uiAction.marginalOrgCostNpv, 3) }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Raw benefit to world</td>
+                    <td class="text-right">
+                      {{ formatNumber(uiAction.rawMarginalWorldBenefitNpv, 3) }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Raw cost to world</td>
+                    <td class="text-right">
+                      {{ formatNumber(uiAction.rawMarginalWorldCostNpv, 3) }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Adjusted benefit to world</td>
+                    <td class="text-right">
+                      {{ formatNumber(uiAction.marginalWorldBenefitNpv, 3) }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Adjusted cost to world</td>
+                    <td class="text-right">
+                      {{ formatNumber(uiAction.marginalWorldCostNpv, 3) }}
+                    </td>
+                  </tr>
 
-                    <tr>
-                      <td>Total benefit</td>
-                      <td class="text-right">
-                        {{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Total cost</td>
-                      <td class="text-right">
-                        {{ formatNumber(uiAction.marginalTotalCostNpv, 3) }}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Net total benefit</td>
-                      <td class="text-right">
-                        {{
-                          formatNumber(uiAction.marginalNetTotalBenefitNpv, 3)
-                        }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </q-markup-table>
-              </q-expansion-item>
-            </q-list>
-          </div>
-          <div
-            v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }"
-          >
-            <select-user
-              label="Responsible"
-              v-model="uiAction.responsiblePerson"
+                  <tr>
+                    <td>Total benefit</td>
+                    <td class="text-right">
+                      {{ formatNumber(uiAction.marginalTotalBenefitNpv, 3) }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Total cost</td>
+                    <td class="text-right">
+                      {{ formatNumber(uiAction.marginalTotalCostNpv, 3) }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Net total benefit</td>
+                    <td class="text-right">
+                      {{ formatNumber(uiAction.marginalNetTotalBenefitNpv, 3) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </q-markup-table>
+            </q-expansion-item>
+          </q-list>
+        </div>
+        <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
+          <select-user
+            label="Responsible"
+            v-model="uiAction.responsiblePerson"
+          />
+          <select-user
+            label="Accountable"
+            v-model="uiAction.accountablePerson"
+          />
+          <q-card-actions align="right">
+            <q-btn label="Save" color="primary" type="submit" />
+          </q-card-actions>
+          <div class="text-h6">Chat</div>
+          <chat
+            :chatId="uiAction.chatId"
+            subjectDocType="action"
+            :subjectDocLineage="{ actionId: uiAction.id }"
+            :subjectDocTitle="uiAction.title"
+          />
+        </div>
+      </div>
+      <div v-if="!embedded" class="row q-gutter-y-lg">
+        <div
+          class="column q-gutter-md"
+          v-for="chart in chartsArr"
+          :key="chart.nodeId"
+        >
+          <gchart
+            type="LineChart"
+            :data="chart.chartData"
+            :options="chart.chartOptions"
+          />
+          <div class="row justify-center q-gutter-x-md">
+            <q-btn-toggle
+              v-model="chart.chartOptions.series"
+              action-color="primary"
+              size="xs"
+              :options="[
+                {
+                  label: 'difference',
+                  value: showDifferenceConfig,
+                },
+                {
+                  label: 'values',
+                  value: showValuesConfig,
+                },
+              ]"
             />
-            <select-user
-              label="Accountable"
-              v-model="uiAction.accountablePerson"
-            />
-            <q-card-actions align="right">
-              <q-btn label="Save" color="primary" type="submit" />
-            </q-card-actions>
-            <div class="text-h6">Chat</div>
-            <chat
-              :chatId="uiAction.chatId"
-              subjectDocType="action"
-              :subjectDocLineage="{ actionId: uiAction.id }"
-              :subjectDocTitle="uiAction.title"
+
+            <q-btn-toggle
+              v-model="chart.chartOptions.vAxis.scaleType"
+              action-color="primary"
+              size="xs"
+              :options="[
+                { label: 'linear', value: 'linear' },
+                { label: 'log', value: 'mirrorLog' },
+              ]"
             />
           </div>
         </div>
-        <div v-if="!embedded" class="row q-gutter-y-lg">
-          <div
-            class="column q-gutter-md"
-            v-for="chart in chartsArr"
-            :key="chart.nodeId"
-          >
-            <gchart
-              type="LineChart"
-              :data="chart.chartData"
-              :options="chart.chartOptions"
-            />
-            <div class="row justify-center q-gutter-x-md">
-              <q-btn-toggle
-                v-model="chart.chartOptions.series"
-                action-color="primary"
-                size="xs"
-                :options="[
-                  {
-                    label: 'difference',
-                    value: showDifferenceConfig,
-                  },
-                  {
-                    label: 'values',
-                    value: showValuesConfig,
-                  },
-                ]"
-              />
-
-              <q-btn-toggle
-                v-model="chart.chartOptions.vAxis.scaleType"
-                action-color="primary"
-                size="xs"
-                :options="[
-                  { label: 'linear', value: 'linear' },
-                  { label: 'log', value: 'mirrorLog' },
-                ]"
-              />
-            </div>
-          </div>
-        </div>
-      </q-form>
-    </div>
+      </div>
+    </q-form>
   </div>
 </template>
 
 <script>
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-import { mapActions, mapGetters, mapState } from "vuex";
+import { mapActions, mapMutations, mapGetters, mapState } from "vuex";
 import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
 import { interpret } from "xstate";
 import { actionMachine } from "src/state-machines/machine-action";
@@ -538,7 +528,11 @@ export default {
     ...mapGetters("actions", ["actions"]),
     //fields calculated in the uiAction store, for display only
     //(do not modify their values in the component)
-    ...mapState("uiAction", ["uiAction", "uiActionChanged"]),
+    ...mapState("uiAction", [
+      "uiAction",
+      "uiActionChanged",
+      "uiActionChangedFields",
+    ]),
     //fields for 2-way sync between component and store
     ...mapFields([
       "uiAction.title",
@@ -572,26 +566,6 @@ export default {
         return true;
       }
     },
-    /*selectedAction() {
-      let that = this;
-      if (this.$route.params.actionId) {
-        this.actionId = this.$route.params.actionId;
-        this.embedded = false;
-      } else if (that.selectedActionId) {
-        this.actionId = that.selectedActionId;
-        this.embedded = true;
-      }
-      let actionId = this.actionId;
-
-      if (actionId) {
-        //TODO: if embedded, get and return action from firestore
-        return this.actions.find(function (action) {
-          return action.id == actionId;
-        });
-      } else {
-        return null;
-      }
-    },*/
 
     averageEffortCostPerHourNode() {
       return this.nodes.find(
@@ -639,6 +613,7 @@ export default {
 
   methods: {
     ...mapActions("model", ["updateAction"]),
+    ...mapMutations("uiAction", ["mergeNewActionToUiAction"]),
     formatNumber,
 
     loadAction(newAction) {
@@ -695,7 +670,6 @@ export default {
         (propertyName) => delete updates[propertyName]
       );
 
-      console.log(updates);
       let payload = {
         id: this.action.id,
         updates,
@@ -825,10 +799,10 @@ export default {
   },
   watch: {
     nodes: function () {
-      /*if (this.embedded == false)*/ this.updateDefaultChartsArr();
+      if (this.embedded == false) this.updateDefaultChartsArr();
     },
     resultsOfAction: function () {
-      /*if (this.embedded == false)*/ this.updateDefaultChartsArr();
+      if (this.embedded == false) this.updateDefaultChartsArr();
     },
     action: {
       deep: true,
@@ -841,7 +815,7 @@ export default {
           this.loadAction(newAction);
         } else if (newAction) {
           //same action, just refreshed
-          this.$store.dispatch("uiAction/setUiAction", newAction);
+          this.$store.commit("uiAction/mergeNewActionToUiAction", newAction);
         } else this.$store.dispatch("uiAction/setUiAction", null); //no new action
       },
     },
