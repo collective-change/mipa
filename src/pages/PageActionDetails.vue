@@ -1,7 +1,7 @@
 <template>
   <q-page padding>
     <div class="q-pa-xs">
-      <action-summary :action="currentAction" />
+      <action-summary v-if="currentAction" :action="currentAction" />
     </div>
   </q-page>
 </template>

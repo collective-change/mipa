@@ -18,7 +18,7 @@
           <!-- <pre>{{ actions}}</pre> -->
         </div>
         <div class="col-12 col-md-4">
-          <action-summary :action="selectedAction" />
+          <action-summary v-if="selectedAction" :action="selectedAction" />
         </div>
       </div>
     </div>

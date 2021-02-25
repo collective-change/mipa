@@ -29,13 +29,13 @@ const mutations = {
     state.uiActionChanged = false;
   },
   updateUiActionField(state, field) {
-    if (typeof state.uiAction.id == "undefined") return;
+    if (state.uiAction.id == undefined) return;
     let fieldName = field.path.replace("uiAction.", "");
     updateField(state, field);
-    console.log("updated ", fieldName, "to", state.uiAction[fieldName]);
+    //console.log("updated ", fieldName, "to", state.uiAction[fieldName]);
     if (!fieldsToIgnoreForUiActionChanged.includes(fieldName)) {
       state.uiActionChanged = true;
-      console.log("uiActionChanged due to ", fieldName);
+      //console.log("uiActionChanged due to ", fieldName);
     }
   },
   setUiActionChanged(state, value) {
@@ -64,7 +64,7 @@ const mutations = {
 
 const actions = {
   setUiAction({ commit }, action) {
-    action.saveFullResults = false; //add this non-persisted flag
+    if (action) action.saveFullResults = false; //add this non-persisted flag
     commit("setUiAction", action);
   }
 };

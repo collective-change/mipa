@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="action">
+    <div v-if="uiAction && uiAction.actionMchState">
       <q-form @submit.prevent="submitForm">
         <div class="row items-center">
           <div
@@ -24,7 +24,7 @@
                   color="primary"
                   @click="
                     $router.push(
-                      `/org/${currentOrg.name}/action-details/${currentOrg.id}/${action.id}`
+                      `/org/${currentOrg.name}/action-details/${currentOrg.id}/${uiAction.id}`
                     )
                   "
                 />
@@ -641,6 +641,39 @@ export default {
     ...mapActions("model", ["updateAction"]),
     formatNumber,
 
+    loadAction(newAction) {
+      // Start with the machine's initial context
+      this.actionStateContext = actionMachine.context;
+
+      //start actionService
+      this.actionService
+        .onTransition((state) => {
+          // Update the current state component data property with the next state
+          this.actionMchState = state;
+          this.$store.commit("uiAction/setActionMchState", state);
+          //console.log("set state: ", this.uiAction.actionMchState);
+
+          // Update the context component data property with the updated context
+          this.actionStateContext = state.context;
+        })
+        .start();
+
+      //let action = {};
+      //Object.assign(action, this.action);
+      this.$store.dispatch("uiAction/setUiAction", newAction);
+
+      // Start with saved state or the machine's initial state
+      //console.log(this.uiAction.actionMchState);
+      if (!this.uiAction.actionMchState.hasOwnProperty("value")) {
+        this.$store.commit(
+          "uiAction/setActionMchState",
+          actionMachine.initialState
+        );
+        //console.log("set to initial state: ", this.uiAction.actionMchState);
+      } else {
+        //console.log("existing state: ", this.uiAction.actionMchState);
+      }
+    },
     submitForm() {
       this.$refs.actionTitle.validate();
       if (!this.$refs.actionTitle.hasError) {
@@ -737,26 +770,28 @@ export default {
       }
     },
     updateDefaultChartsArr() {
-      if (!this.currentModel || typeof this.uiAction.impacts == "undefined")
-        return;
-      console.log("updateDefaultChartsArr");
-      let defaultNodesToChart = [];
-      //add impacted nodes
-      this.uiAction.impacts.forEach(function (impact) {
-        defaultNodesToChart.push(impact.nodeId);
-      });
-      //add combinedBenefit and combinedCost nodes
-      defaultNodesToChart.push(this.currentModel.roleNodes.orgBenefit);
-      defaultNodesToChart.push(this.currentModel.roleNodes.orgCost);
-      defaultNodesToChart.push(this.currentModel.roleNodes.worldBenefit);
-      defaultNodesToChart.push(this.currentModel.roleNodes.worldCost);
-      //defaultNodesToChart.push(this.currentModel.roleNodes.effort);
-      //defaultNodesToChart.push(this.currentModel.roleNodes.spending);
+      if (this.currentModel && this.uiAction && this.uiAction.impacts) {
+        /*if (!this.currentModel || typeof this.uiAction.impacts == "undefined")
+        return;*/
+        //console.log("updateDefaultChartsArr");
+        let defaultNodesToChart = [];
+        //add impacted nodes
+        this.uiAction.impacts.forEach(function (impact) {
+          defaultNodesToChart.push(impact.nodeId);
+        });
+        //add combinedBenefit and combinedCost nodes
+        defaultNodesToChart.push(this.currentModel.roleNodes.orgBenefit);
+        defaultNodesToChart.push(this.currentModel.roleNodes.orgCost);
+        defaultNodesToChart.push(this.currentModel.roleNodes.worldBenefit);
+        defaultNodesToChart.push(this.currentModel.roleNodes.worldCost);
+        //defaultNodesToChart.push(this.currentModel.roleNodes.effort);
+        //defaultNodesToChart.push(this.currentModel.roleNodes.spending);
 
-      //load data into each node
-      defaultNodesToChart.forEach((nodeId) =>
-        this.updateChartDataForNode(nodeId)
-      );
+        //load data into each node
+        defaultNodesToChart.forEach((nodeId) =>
+          this.updateChartDataForNode(nodeId)
+        );
+      }
     },
     getNodeName(nodeId) {
       const found = this.nodes.find((node) => node.id == nodeId);
@@ -784,6 +819,11 @@ export default {
       this.$store.dispatch("model/bindNodes", modelId);
     })();
   },
+
+  mounted() {
+    this.loadAction(this.action);
+  },
+
   destroyed() {
     this.actionService.stop();
   },
@@ -796,46 +836,18 @@ export default {
     },
     action: {
       deep: true,
-      handler: function (newAction, oldAction) {
-        console.log("action changed");
-        if (newAction && oldAction && newAction.id != oldAction.id) {
-          // Start with the machine's initial context
-          this.actionStateContext = actionMachine.context;
-
-          //start actionService
-          this.actionService
-            .onTransition((state) => {
-              // Update the current state component data property with the next state
-              this.actionMchState = state;
-              this.$store.commit("uiAction/setActionMchState", state);
-              //console.log("set state: ", this.uiAction.actionMchState);
-
-              // Update the context component data property with the updated context
-              this.actionStateContext = state.context;
-            })
-            .start();
-
-          let action = {};
-          Object.assign(action, this.action);
-          this.$store.dispatch("uiAction/setUiAction", this.action);
-
-          // Start with saved state or the machine's initial state
-          //console.log(this.uiAction.actionMchState);
-          if (!this.uiAction.actionMchState.hasOwnProperty("value")) {
-            this.$store.commit(
-              "uiAction/setActionMchState",
-              actionMachine.initialState
-            );
-            //console.log("set to initial state: ", this.uiAction.actionMchState);
-          } else {
-            //console.log("existing state: ", this.uiAction.actionMchState);
-          }
-        } else {
+      handler(newAction, oldAction) {
+        if (
+          (newAction && !oldAction) ||
+          (newAction && newAction.id != oldAction.id)
+        ) {
+          this.loadAction(newAction);
+        } else if (newAction) {
           //action id did not change
-          let action = {};
-          Object.assign(action, this.action);
-          this.$store.dispatch("uiAction/setUiAction", this.action);
-        }
+          //let action = {};
+          //Object.assign(action, this.action);
+          this.$store.dispatch("uiAction/setUiAction", newAction);
+        } else this.$store.dispatch("uiAction/setUiAction", null);
       },
     },
 
