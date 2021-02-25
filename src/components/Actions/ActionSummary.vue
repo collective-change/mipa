@@ -532,6 +532,7 @@ export default {
     ...mapState("model", ["currentModel"]),
     ...mapGetters("model", ["nodes"]),
     ...mapState("calcResults", ["resultsOfAction"]),
+    ...mapState("actions", ["currentAction"]),
     ...mapGetters("actions", ["actions"]),
     //fields calculated in the uiAction store, for display only
     //(do not modify their values in the component)

@@ -4,6 +4,7 @@ import { firestoreAction } from "vuexfire";
 import { showErrorMessage } from "src/utils/util-show-error-message";
 
 const state = {
+  currentAction: null,
   actions: [],
   search: "",
   sort: "name"
@@ -26,6 +27,24 @@ const mutations = {
 };
 
 const actions = {
+  bindCurrentAction: firestoreAction(({ bindFirestoreRef }, actionId) => {
+    let userId = firebaseAuth.currentUser.uid;
+    // return the promise returned by `bindFirestoreRef`
+    return bindFirestoreRef(
+      "currentAction",
+      firebaseDb.collection("actions").doc(actionId),
+      {
+        maxRefDepth: 1,
+        wait: false,
+        reset: true
+      }
+    );
+  }),
+
+  unbindCurrentModel: firestoreAction(({ unbindFirestoreRef }) => {
+    unbindFirestoreRef("currentAction", true);
+  }),
+
   //may be asynchronous or synchronous
   updateAction({ dispatch }, originalPayload) {
     //Clone the original payload so we don't modify it (it's

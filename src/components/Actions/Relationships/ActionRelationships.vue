@@ -5,7 +5,7 @@
         <div class="row items-center">
           Parent
           <q-select
-            v-if="!parentActionId"
+            v-if="!uiAction.parentActionId"
             filled
             use-input
             hide-selected
@@ -38,9 +38,9 @@
         square
         clickable
         removable
-        v-if="parentActionId"
-        @remove="promptToDelete(parentActionId, 'child-parent')"
-        >{{ getActionTitle(parentActionId) }}</q-chip
+        v-if="uiAction.parentActionId"
+        @remove="promptToDelete(uiAction.parentActionId, 'child-parent')"
+        >{{ getActionTitle(uiAction.parentActionId) }}</q-chip
       >
       <q-separator spaced />
       <q-item-label header class="q-py-xs">
