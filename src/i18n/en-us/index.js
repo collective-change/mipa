@@ -45,6 +45,7 @@ export default {
   "Model templates": "Templates",
 
   Ideate: "Ideate",
+  ideate: "ideate",
   "Strategic analysis": "Strategic analysis",
   Actions: "Actions",
   "Action templates": "Action templates",
@@ -70,7 +71,20 @@ export default {
   cancellation_requested: "cancellation requeted",
   canceled: "canceled",
 
-  //TODO: action triggers
+  //action trigger button labels
+  "Request approval": "Request approval",
+  "Approval needed": "Approval needed",
+  "Approval not needed": "Approval not needed",
+  Approve: "Approve",
+  Reject: "Reject",
+  Cancel: "Cancel",
+  "Mark as done": "Mark as done",
+  "Re-approval needed": "Re-approval needed",
+  "Request to cancel": "Request to cancel",
+  "Revert to eligible": "Revert to eligible",
+  "Reject cancellation": "Reject cancellation",
+  "Approve cancellation": "Approve cancellation",
+  Revive: "Revive",
 
   // for ActionsList.vue
   Add: "Add",

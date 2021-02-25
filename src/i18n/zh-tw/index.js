@@ -45,6 +45,7 @@ export default {
   "Model templates": "模型模板",
 
   Ideate: "醞釀計畫",
+  ideate: "醞釀計畫",
   "Strategic analysis": "策略性分析",
   Actions: "行動",
   "Action templates": "行動模板",
@@ -62,13 +63,28 @@ export default {
 
   // action states
   initiating: "發起中",
-  to_approve: "待核准",
+  to_approve: "待授權",
   rejected: "被退回",
   eligible: "可進行",
   approved: "已核准",
   done: "已完成",
-  cancellation_requested: "取消請求待核准",
+  cancellation_requested: "請求取消中",
   canceled: "已取消",
+
+  //action trigger button labels
+  "Request approval": "請求授權",
+  "Approval needed": "需要授權",
+  "Approval not needed": "不需授權",
+  Approve: "授權",
+  Reject: "退回",
+  Cancel: "取消",
+  "Mark as done": "標為已完成",
+  "Re-approval needed": "需重新授權",
+  "Request to cancel": "請求取消",
+  "Revert to eligible": "恢復為可進行",
+  "Reject cancellation": "不同意取消",
+  "Approve cancellation": "同意取消",
+  Revive: "恢復",
 
   // for ActionsList.vue
   Add: "新增",
