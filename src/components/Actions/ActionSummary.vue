@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="selectedAction">
+    <div v-if="action">
       <q-form @submit.prevent="submitForm">
         <div class="row items-center">
           <div
@@ -24,7 +24,7 @@
                   color="primary"
                   @click="
                     $router.push(
-                      `/org/${currentOrg.name}/action-details/${currentOrg.id}/${selectedActionId}`
+                      `/org/${currentOrg.name}/action-details/${currentOrg.id}/${action.id}`
                     )
                   "
                 />
@@ -493,9 +493,11 @@ export default {
     gchart: GChart,
   },
 
+  props: ["action"],
+
   data() {
     return {
-      embedded: false, //whether this component is embedded or a full page
+      //embedded: false, //whether this component is embedded or a full page
       actionId: null,
       chartsArr: [],
       effortCostPerHrTypeOptions: [
@@ -532,7 +534,7 @@ export default {
     ...mapState("model", ["currentModel"]),
     ...mapGetters("model", ["nodes"]),
     ...mapState("calcResults", ["resultsOfAction"]),
-    ...mapState("actions", ["currentAction"]),
+    //...mapState("actions", ["currentAction"]),
     ...mapGetters("actions", ["actions"]),
     //fields calculated in the uiAction store, for display only
     //(do not modify their values in the component)
@@ -562,7 +564,15 @@ export default {
     ]),
     ...mapMultiRowFields(["uiAction.impacts"]),
 
-    selectedAction() {
+    embedded() {
+      let that = this;
+      if (this.$route.params.actionId) {
+        return false;
+      } else if (this.selectedActionId) {
+        return true;
+      }
+    },
+    /*selectedAction() {
       let that = this;
       if (this.$route.params.actionId) {
         this.actionId = this.$route.params.actionId;
@@ -581,7 +591,7 @@ export default {
       } else {
         return null;
       }
-    },
+    },*/
 
     averageEffortCostPerHourNode() {
       return this.nodes.find(
@@ -642,6 +652,8 @@ export default {
       let updates = JSON.parse(JSON.stringify(this.uiAction));
       let propertiesToDelete = [
         "actionLeverage",
+        "actionRoi",
+        "totalRoi",
         "blockeeActionIds",
         "blockerActionIds",
         "childrenActionIds",
@@ -649,7 +661,6 @@ export default {
         "effectiveChainedCostsAndImpacts",
         "effectiveChainedCostsAndImpactsExcludingSelf",
         "saveFullResults",
-        //"impacts"
       ];
       propertiesToDelete.forEach(
         (propertyName) => delete updates[propertyName]
@@ -657,7 +668,7 @@ export default {
 
       console.log(updates);
       let payload = {
-        id: this.actionId,
+        id: this.action.id,
         updates,
       };
       this.$store.dispatch("actions/updateAction", payload);
@@ -783,45 +794,49 @@ export default {
     resultsOfAction: function () {
       /*if (this.embedded == false)*/ this.updateDefaultChartsArr();
     },
-    selectedAction: function (newAction, oldAction) {
-      if (newAction && oldAction && newAction.id == oldAction.id) return;
+    action: {
+      deep: true,
+      handler: function (newAction, oldAction) {
+        console.log("action changed");
+        if (newAction && oldAction && newAction.id != oldAction.id) {
+          // Start with the machine's initial context
+          this.actionStateContext = actionMachine.context;
 
-      // Start with the machine's initial context
-      this.actionStateContext = actionMachine.context;
+          //start actionService
+          this.actionService
+            .onTransition((state) => {
+              // Update the current state component data property with the next state
+              this.actionMchState = state;
+              this.$store.commit("uiAction/setActionMchState", state);
+              //console.log("set state: ", this.uiAction.actionMchState);
 
-      //start actionService
-      this.actionService
-        .onTransition((state) => {
-          // Update the current state component data property with the next state
-          this.actionMchState = state;
-          this.$store.commit("uiAction/setActionMchState", state);
-          //console.log("set state: ", this.uiAction.actionMchState);
+              // Update the context component data property with the updated context
+              this.actionStateContext = state.context;
+            })
+            .start();
 
-          // Update the context component data property with the updated context
-          this.actionStateContext = state.context;
-        })
-        .start();
+          let action = {};
+          Object.assign(action, this.action);
+          this.$store.dispatch("uiAction/setUiAction", this.action);
 
-      let action = {};
-      Object.assign(action, this.selectedAction);
-      this.$store.dispatch("uiAction/setUiAction", action);
-      if (this.embedded == false) {
-        this.$store.dispatch("calcResults/loadResultsOfAction", action.id);
-      } else {
-        this.$store.dispatch("calcResults/clearResultsOfAction");
-      }
-
-      // Start with saved state or the machine's initial state
-      //console.log(this.uiAction.actionMchState);
-      if (!this.uiAction.actionMchState.hasOwnProperty("value")) {
-        this.$store.commit(
-          "uiAction/setActionMchState",
-          actionMachine.initialState
-        );
-        //console.log("set to initial state: ", this.uiAction.actionMchState);
-      } else {
-        //console.log("existing state: ", this.uiAction.actionMchState);
-      }
+          // Start with saved state or the machine's initial state
+          //console.log(this.uiAction.actionMchState);
+          if (!this.uiAction.actionMchState.hasOwnProperty("value")) {
+            this.$store.commit(
+              "uiAction/setActionMchState",
+              actionMachine.initialState
+            );
+            //console.log("set to initial state: ", this.uiAction.actionMchState);
+          } else {
+            //console.log("existing state: ", this.uiAction.actionMchState);
+          }
+        } else {
+          //action id did not change
+          let action = {};
+          Object.assign(action, this.action);
+          this.$store.dispatch("uiAction/setUiAction", this.action);
+        }
+      },
     },
 
     directCost: function () {

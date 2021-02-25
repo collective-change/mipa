@@ -18,7 +18,7 @@
           <!-- <pre>{{ actions}}</pre> -->
         </div>
         <div class="col-12 col-md-4">
-          <action-summary />
+          <action-summary :action="selectedAction" />
         </div>
       </div>
     </div>
@@ -30,7 +30,7 @@ import { mapGetters, mapState } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 
 export default {
-  name: "app",
+  //name: "app",
   components: {
     //"no-actions": require("components/Actions/NoActions.vue").default,
     //"actions-todo": require("components/Actions/ActionsTodo.vue").default,
@@ -40,27 +40,58 @@ export default {
     "unprioritized-actions-list": require("components/Actions/UnprioritizedActionsList.vue")
       .default,
     //"add-action": require("components/Actions/Modals/AddAction.vue").default,
-    "action-summary": require("components/Actions/ActionSummary.vue").default
+    "action-summary": require("components/Actions/ActionSummary.vue").default,
     //search: require("components/Actions/Tools/Search.vue").default,
     //sort: require("components/Actions/Tools/Sort.vue").default
   },
   data() {
-    return {};
+    return { selectedAction: null };
   },
   computed: {
     ...mapState("actions", ["actions"]),
-    ...mapState("uiAction", ["uiActionChanged"])
+    ...mapState("ui", ["selectedActionId"]),
+    ...mapState("uiAction", ["uiActionChanged"]),
   },
   created() {
     (async () => {
       while (
         !firebaseAuth.currentUser // define the condition as you like
       )
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
 
       let orgId = this.$route.params.orgId;
       this.$store.dispatch("actions/bindActions", orgId);
     })();
+  },
+
+  /*computed: {
+    selectedAction: function () {
+      if (this.actions) {
+        let found = this.actions.find(function (action) {
+          return action.id == this.$store.state.ui.selectedActionId;
+        });
+        console.log("found", found);
+        return found;
+      }
+    },
+  },*/
+
+  methods: {
+    refreshSelectedAction() {
+      let that = this;
+      this.selectedAction = this.actions.find(function (action) {
+        return action.id == that.selectedActionId;
+      });
+    },
+  },
+
+  watch: {
+    selectedActionId() {
+      this.refreshSelectedAction();
+    },
+    actions() {
+      this.refreshSelectedAction();
+    },
   },
 
   beforeRouteLeave(to, from, next) {
@@ -70,7 +101,7 @@ export default {
           title: "Unsaved changes",
           message: "Any changes you made will be lost. Really leave?",
           cancel: true,
-          persistent: true
+          persistent: true,
         })
         .onOk(() => {
           next();
@@ -80,9 +111,9 @@ export default {
 
   beforeDestroy() {
     //if the new route does not need actions, then unbind
-    if (this.$route.name in ["actions", "actionDetails"]) {
+    if (!this.$route.name in ["actions", "actionDetails"]) {
       this.$store.dispatch("actions/unbindActions");
     }
-  }
+  },
 };
 </script>

@@ -1,7 +1,7 @@
 <template>
   <q-page padding>
     <div class="q-pa-xs">
-      <action-summary />
+      <action-summary :action="currentAction" />
     </div>
   </q-page>
 </template>
@@ -30,7 +30,7 @@ export default {
     };
   },
   computed: {
-    ...mapState("actions", ["actions"]),
+    ...mapState("actions", ["currentAction"]),
     ...mapState("uiAction", ["uiActionChanged"]),
   },
   created() {
@@ -40,8 +40,10 @@ export default {
       )
         await new Promise((resolve) => setTimeout(resolve, 200));
 
-      let orgId = this.$route.params.orgId;
-      await this.$store.dispatch("actions/bindActions", orgId);
+      //let orgId = this.$route.params.orgId;
+      let actionId = this.$route.params.actionId;
+      //await this.$store.dispatch("actions/bindActions", orgId);
+      await this.$store.dispatch("actions/bindCurrentAction", actionId);
     })();
   },
   mounted() {
@@ -65,8 +67,9 @@ export default {
 
   beforeDestroy() {
     //if the new route does not need actions, then unbind
-    if (this.$route.name in ["actions", "actionDetails"]) {
-      this.$store.dispatch("actions/unbindActions");
+    if (!this.$route.name in ["actionDetails"]) {
+      //this.$store.dispatch("actions/unbindActions");
+      this.$store.dispatch("actions/unbindCurrentAction");
     }
   },
 };

@@ -41,7 +41,7 @@ const actions = {
     );
   }),
 
-  unbindCurrentModel: firestoreAction(({ unbindFirestoreRef }) => {
+  unbindCurrentAction: firestoreAction(({ unbindFirestoreRef }) => {
     unbindFirestoreRef("currentAction", true);
   }),
 
