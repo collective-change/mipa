@@ -162,8 +162,9 @@ const actions = {
     firebaseDb
       .collection("actions")
       .add(action)
-      .then(function() {
+      .then(function(docRef) {
         Notify.create("Action added!");
+        dispatch("ui/setSelectedActionId", docRef.id, { root: true });
       })
       .catch(function(error) {
         showErrorMessage("Error adding action", error.message);
