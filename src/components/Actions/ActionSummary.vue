@@ -651,19 +651,15 @@ export default {
           // Update the current state component data property with the next state
           this.actionMchState = state;
           this.$store.commit("uiAction/setActionMchState", state);
-          //console.log("set state: ", this.uiAction.actionMchState);
 
           // Update the context component data property with the updated context
           this.actionStateContext = state.context;
         })
         .start();
 
-      //let action = {};
-      //Object.assign(action, this.action);
       this.$store.dispatch("uiAction/setUiAction", newAction);
 
       // Start with saved state or the machine's initial state
-      //console.log(this.uiAction.actionMchState);
       if (!this.uiAction.actionMchState.hasOwnProperty("value")) {
         this.$store.commit(
           "uiAction/setActionMchState",
@@ -681,7 +677,7 @@ export default {
       }
     },
     submitAction() {
-      //remove fields calculated elsewhere from updates
+      //remove fields not meant to be updated
       let updates = JSON.parse(JSON.stringify(this.uiAction));
       let propertiesToDelete = [
         "actionLeverage",
@@ -838,16 +834,15 @@ export default {
       deep: true,
       handler(newAction, oldAction) {
         if (
+          //action first loaded OR changed from another action
           (newAction && !oldAction) ||
           (newAction && newAction.id != oldAction.id)
         ) {
           this.loadAction(newAction);
         } else if (newAction) {
-          //action id did not change
-          //let action = {};
-          //Object.assign(action, this.action);
+          //same action, just refreshed
           this.$store.dispatch("uiAction/setUiAction", newAction);
-        } else this.$store.dispatch("uiAction/setUiAction", null);
+        } else this.$store.dispatch("uiAction/setUiAction", null); //no new action
       },
     },
 
