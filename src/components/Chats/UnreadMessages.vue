@@ -145,7 +145,16 @@ export default {
           };
           break;
         case "action":
-          routeObj = {};
+          routeObj = {
+            name: "actionDetails",
+            params: {
+              orgNameSlug: chat.orgNameSlugCached
+                ? chat.orgNameSlugCached
+                : "-",
+              orgId: chat.orgId,
+              actionId: chat.subjectDocLineage.actionId,
+            },
+          };
         default:
           console.error(
             `Document type does not exist in getRuteFromSubjectDoc`
