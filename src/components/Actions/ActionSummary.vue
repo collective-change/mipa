@@ -23,7 +23,7 @@
                 color="primary"
                 @click="
                   $router.push(
-                    `/org/${currentOrg.name}/action-details/${currentOrg.id}/${uiAction.id}`
+                    `/org/${currentOrg.nameSlug}/action-details/${currentOrg.id}/${uiAction.id}`
                   )
                 "
               />
