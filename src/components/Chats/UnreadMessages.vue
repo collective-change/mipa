@@ -13,8 +13,8 @@
           ? $t("Unread messages")
           : $t("No unread messages")
       }}</q-tooltip>
-      <q-menu>
-        <q-list style="min-width: 100px">
+      <q-menu style="min-width: 250px; max-width: 350px">
+        <q-list style="min-width: 250px; max-width: 350px">
           <div v-for="chat in unreadChats" :key="chat.id">
             <q-item
               clickable
@@ -24,11 +24,11 @@
               <q-item-section>
                 <q-item-label>
                   <q-badge color="green" text-color="white" class="q-mr-xs">
-                    {{ chat.orgNameCached.charAt(0).toUpperCase() }}
+                    {{ chat.orgNameCached }}
                     <q-tooltip>{{ chat.orgNameCached }}</q-tooltip>
                   </q-badge>
                   <q-badge color="orange" text-color="white" class="q-mr-xs">
-                    {{ chat.subjectDocType.charAt(0).toUpperCase() }}
+                    {{ chat.subjectDocType }}
                     <q-tooltip>{{ chat.subjectDocType }}</q-tooltip>
                   </q-badge>
                   {{ chat.subjectDocTitle }}
@@ -145,7 +145,16 @@ export default {
           };
           break;
         case "action":
-          routeObj = {};
+          routeObj = {
+            name: "actionDetails",
+            params: {
+              orgNameSlug: chat.orgNameSlugCached
+                ? chat.orgNameSlugCached
+                : "-",
+              orgId: chat.orgId,
+              actionId: chat.subjectDocLineage.actionId,
+            },
+          };
         default:
           console.error(
             `Document type does not exist in getRuteFromSubjectDoc`
