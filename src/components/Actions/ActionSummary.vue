@@ -51,8 +51,9 @@
             <calculator-ui
               calculationType="uiAction"
               buttonLabel="Recalculate"
-              :uiAction="uiAction"
+              :uiAction="{ ...uiAction, saveFullResults }"
             />
+            <div>{{ uiAction.saveFullResults }}</div>
             <q-checkbox
               v-model="saveFullResults"
               label="Save full results for export"
@@ -489,6 +490,7 @@ export default {
     return {
       //embedded: false, //whether this component is embedded or a full page
       actionId: null,
+      saveFullResults: false,
       chartsArr: [],
       effortCostPerHrTypeOptions: [
         {
@@ -551,7 +553,6 @@ export default {
       "uiAction.outstandingSpending",
       "uiAction.dueDate",
       "uiAction.notes",
-      "uiAction.saveFullResults",
       "uiAction.responsiblePerson",
       "uiAction.accountablePerson",
       "uiAction.chatId",
@@ -664,7 +665,6 @@ export default {
         "parentActionId",
         "effectiveChainedCostsAndImpacts",
         "effectiveChainedCostsAndImpactsExcludingSelf",
-        "saveFullResults",
       ];
       propertiesToDelete.forEach(
         (propertyName) => delete updates[propertyName]
@@ -813,6 +813,7 @@ export default {
           (newAction && newAction.id != oldAction.id)
         ) {
           this.loadAction(newAction);
+          this.saveFullResults = false;
         } else if (newAction) {
           //same action, just refreshed
           this.$store.commit("uiAction/mergeNewActionToUiAction", newAction);

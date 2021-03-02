@@ -9,7 +9,7 @@ const fieldsToTriggerRecalculation = [
 
 const fieldsToIgnoreForUiActionChanged = [
   "actionMchState",
-  "saveFullResults", //a temporary field that's not saved
+  //"saveFullResults", //a temporary field that's not saved
   "ownDirectCost", //a computed field
   "outstandingDirectCost", //a computed field
   "sunkenDirectCost", //a computed field
@@ -39,6 +39,8 @@ const mutations = {
         tempUiAction[property] = state.uiAction[property];
       } else tempUiAction[property] = newAction[property];
     }
+    //add in property that's not persisted
+    //tempUiAction.saveFullResults = state.uiAction.saveFullResults;
     state.uiAction = tempUiAction;
   },
   updateUiActionField(state, field) {
@@ -51,6 +53,7 @@ const mutations = {
         state.uiActionChangedFields.push(fieldName);
       //console.log("uiActionChanged due to field", fieldName);
     }
+    //console.log(state.uiAction.saveFullResults);
   },
 
   setUiActionChanged(state, value) {
@@ -85,7 +88,7 @@ const mutations = {
 
 const actions = {
   setUiAction({ commit }, action) {
-    if (action) action.saveFullResults = false; //add this non-persisted flag
+    //if (action) action.saveFullResults = false; //add this non-persisted flag
     commit("setUiAction", action);
   }
 };
