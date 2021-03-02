@@ -5,7 +5,7 @@
         <div class="row items-center">
           Parent
           <q-select
-            v-if="!parentActionId"
+            v-if="!uiAction.parentActionId"
             filled
             use-input
             hide-selected
@@ -29,7 +29,8 @@
                 addParent(parentToAdd);
                 parentToAdd = null;
               "
-            >add</q-btn>
+              >add</q-btn
+            >
           </div>
         </div>
       </q-item-label>
@@ -37,9 +38,10 @@
         square
         clickable
         removable
-        v-if="parentActionId"
-        @remove="promptToDelete(parentActionId, 'child-parent')"
-      >{{ getActionTitle(parentActionId) }}</q-chip>
+        v-if="uiAction.parentActionId"
+        @remove="promptToDelete(uiAction.parentActionId, 'child-parent')"
+        >{{ getActionTitle(uiAction.parentActionId) }}</q-chip
+      >
       <q-separator spaced />
       <q-item-label header class="q-py-xs">
         <div class="row items-center">
@@ -68,7 +70,8 @@
                 addChild(childToAdd);
                 childToAdd = null;
               "
-            >add</q-btn>
+              >add</q-btn
+            >
           </div>
         </div>
       </q-item-label>
@@ -79,7 +82,8 @@
         v-for="actionId in childrenActionIds"
         :key="actionId"
         @remove="promptToDelete(actionId, 'parent-child')"
-      >{{ getActionTitle(actionId) }}</q-chip>
+        >{{ getActionTitle(actionId) }}</q-chip
+      >
       <q-separator spaced />
       <q-item-label header class="q-py-xs">
         <div class="row items-center">
@@ -108,7 +112,8 @@
                 addBlocker(blockerToAdd);
                 blockerToAdd = null;
               "
-            >add</q-btn>
+              >add</q-btn
+            >
           </div>
         </div>
       </q-item-label>
@@ -119,7 +124,8 @@
         v-for="actionId in blockerActionIds"
         :key="actionId"
         @remove="promptToDelete(actionId, 'blockee-blocker')"
-      >{{ getActionTitle(actionId) }}</q-chip>
+        >{{ getActionTitle(actionId) }}</q-chip
+      >
       <q-separator spaced />
       <q-item-label header class="q-py-xs">
         <div class="row items-center">
@@ -148,7 +154,8 @@
                 addBlockee(blockeeToAdd);
                 blockeeToAdd = null;
               "
-            >add</q-btn>
+              >add</q-btn
+            >
           </div>
         </div>
       </q-item-label>
@@ -159,7 +166,8 @@
         v-for="actionId in blockeeActionIds"
         :key="actionId"
         @remove="promptToDelete(actionId, 'blocker-blockee')"
-      >{{ getActionTitle(actionId) }}</q-chip>
+        >{{ getActionTitle(actionId) }}</q-chip
+      >
       <q-separator spaced />
     </q-list>
   </div>
@@ -208,9 +216,11 @@ export default {
     ]),
     //...mapMultiRowFields(["uiAction.impacts"]),
     actionOptions() {
-      return this.actions.map((action) => {
-        return { label: action.title, value: action.id };
-      });
+      return this.actions
+        .filter((action) => action.id != this.selectedActionId)
+        .map((action) => {
+          return { label: action.title, value: action.id };
+        });
     },
   },
 

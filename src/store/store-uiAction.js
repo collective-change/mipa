@@ -9,7 +9,7 @@ const fieldsToTriggerRecalculation = [
 
 const fieldsToIgnoreForUiActionChanged = [
   "actionMchState",
-  "saveFullResults", //a temporary field that's not saved
+  //"saveFullResults", //a temporary field that's not saved
   "ownDirectCost", //a computed field
   "outstandingDirectCost", //a computed field
   "sunkenDirectCost", //a computed field
@@ -20,24 +20,42 @@ const fieldsToIgnoreForUiActionChanged = [
 
 const state = {
   uiAction: {},
-  uiActionChanged: false
+  uiActionChanged: false,
+  uiActionChangedFields: []
 };
 
 const mutations = {
   setUiAction(state, action) {
     state.uiAction = action;
     state.uiActionChanged = false;
+    state.uiActionChangedFields = [];
+  },
+  mergeNewActionToUiAction(state, newAction) {
+    let tempUiAction = {};
+    for (const property in newAction) {
+      //if property name is in changedFields, then keep user's changes
+      // else set uiAction's property to new value
+      if (state.uiActionChangedFields.includes(property)) {
+        tempUiAction[property] = state.uiAction[property];
+      } else tempUiAction[property] = newAction[property];
+    }
+    //add in property that's not persisted
+    //tempUiAction.saveFullResults = state.uiAction.saveFullResults;
+    state.uiAction = tempUiAction;
   },
   updateUiActionField(state, field) {
-    if (typeof state.uiAction.id == "undefined") return;
+    if (state.uiAction.id == undefined) return;
     let fieldName = field.path.replace("uiAction.", "");
     updateField(state, field);
-    console.log("updated ", fieldName, "to", state.uiAction[fieldName]);
     if (!fieldsToIgnoreForUiActionChanged.includes(fieldName)) {
       state.uiActionChanged = true;
-      console.log("uiActionChanged due to ", fieldName);
+      if (!state.uiActionChangedFields.includes(fieldName))
+        state.uiActionChangedFields.push(fieldName);
+      //console.log("uiActionChanged due to field", fieldName);
     }
+    //console.log(state.uiAction.saveFullResults);
   },
+
   setUiActionChanged(state, value) {
     state.uiActionChanged = value;
   },
@@ -47,24 +65,30 @@ const mutations = {
   },
   addImpact(state, impact) {
     state.uiAction.impacts.push(impact);
+    if (!state.uiActionChangedFields.includes("impacts"))
+      state.uiActionChangedFields.push("impacts");
     state.uiActionChanged = true;
   },
   updateImpact(state, impact) {
     let index = state.uiAction.impacts.map(imp => imp.id).indexOf(impact.id);
     state.uiAction.impacts[index] = impact;
+    if (!state.uiActionChangedFields.includes("impacts"))
+      state.uiActionChangedFields.push("impacts");
     state.uiActionChanged = true;
   },
   deleteImpact(state, impactId) {
     state.uiAction.impacts = state.uiAction.impacts.filter(impact => {
       return impact.id != impactId;
     });
+    if (!state.uiActionChangedFields.includes("impacts"))
+      state.uiActionChangedFields.push("impacts");
     state.uiActionChanged = true;
   }
 };
 
 const actions = {
   setUiAction({ commit }, action) {
-    action.saveFullResults = false; //add this non-persisted flag
+    //if (action) action.saveFullResults = false; //add this non-persisted flag
     commit("setUiAction", action);
   }
 };
