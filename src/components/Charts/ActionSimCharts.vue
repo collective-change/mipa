@@ -1,43 +1,53 @@
 <template>
   <div class="row q-gutter-y-lg">
-    <div
-      class="column q-gutter-md"
-      v-for="chart in chartsArr"
-      :key="chart.nodeId"
+    {{ drag }}
+    <draggable
+      v-model="chartsArr"
+      group="charts"
+      @start="drag = true"
+      @end="drag = false"
     >
-      <gchart
-        type="LineChart"
-        :data="chart.chartData"
-        :options="chart.chartOptions"
-      />
-      <div class="row justify-center q-gutter-x-md">
-        <q-btn-toggle
-          v-model="chart.chartOptions.series"
-          action-color="primary"
-          size="xs"
-          :options="[
-            {
-              label: 'difference',
-              value: showDifferenceConfig,
-            },
-            {
-              label: 'values',
-              value: showValuesConfig,
-            },
-          ]"
-        />
+      <transition-group name="charts-list" tag="ul" style="display: flex">
+        <li
+          class="column q-gutter-md"
+          v-for="chart in chartsArr"
+          :key="chart.nodeId"
+        >
+          <gchart
+            type="LineChart"
+            :data="chart.chartData"
+            :options="chart.chartOptions"
+          />
+          <div class="row justify-center q-gutter-x-md">
+            <q-btn-toggle
+              v-model="chart.chartOptions.series"
+              action-color="primary"
+              size="xs"
+              :options="[
+                {
+                  label: 'difference',
+                  value: showDifferenceConfig,
+                },
+                {
+                  label: 'values',
+                  value: showValuesConfig,
+                },
+              ]"
+            />
 
-        <q-btn-toggle
-          v-model="chart.chartOptions.vAxis.scaleType"
-          action-color="primary"
-          size="xs"
-          :options="[
-            { label: 'linear', value: 'linear' },
-            { label: 'log', value: 'mirrorLog' },
-          ]"
-        />
-      </div>
-    </div>
+            <q-btn-toggle
+              v-model="chart.chartOptions.vAxis.scaleType"
+              action-color="primary"
+              size="xs"
+              :options="[
+                { label: 'linear', value: 'linear' },
+                { label: 'log', value: 'mirrorLog' },
+              ]"
+            />
+          </div>
+        </li>
+      </transition-group>
+    </draggable>
     <div>{{ uiAction.nodeIdsToChart }}</div>
   </div>
 </template>
@@ -45,10 +55,12 @@
 <script>
 import { mapActions, mapMutations, mapGetters, mapState } from "vuex";
 import { GChart } from "vue-google-charts";
+import draggable from "vuedraggable";
 
 export default {
   components: {
     gchart: GChart,
+    draggable,
   },
 
   data() {
@@ -57,6 +69,7 @@ export default {
       //actionId: null,
       //saveFullResults: false,
       //nodeIdsToChart: [],
+      drag: false,
       chartsArr: [],
       showValuesConfig: {
         0: { lineWidth: 5, visibleInLegend: true },
@@ -164,7 +177,6 @@ export default {
         nodeIdsToAdd.push(this.currentModel.roleNodes.orgCost);
         nodeIdsToAdd.push(this.currentModel.roleNodes.worldBenefit);
         nodeIdsToAdd.push(this.currentModel.roleNodes.worldCost);
-        console.log(nodeIdsToAdd);
         this.$store.commit("uiAction/addNodeIdsToChart", nodeIdsToAdd);
         //TODO: save nodeIdsToChart to firestore
 
@@ -208,3 +220,9 @@ export default {
   },
 };
 </script>
+
+<style>
+.charts-list-move {
+  transition: transform 1s;
+}
+</style>
