@@ -88,7 +88,7 @@ export default {
     //(do not modify their values in the component)
     ...mapState("uiAction", ["uiAction"]),
     //fields for 2-way sync between component and store
-    ...mapFields(["uiAction.nodesToChart"]),
+    ...mapFields(["uiAction.nodeIdsToChart"]),
   },
 
   methods: {
@@ -161,21 +161,21 @@ export default {
         /*if (!this.currentModel || typeof this.uiAction.impacts == "undefined")
         return;*/
         //console.log("updateChartsArr");
-        let nodesToChart = [];
+        let nodeIdsToChart = [];
         //add impacted nodes
         this.uiAction.impacts.forEach(function (impact) {
-          nodesToChart.push(impact.nodeId);
+          nodeIdsToChart.push(impact.nodeId);
         });
         //add benefit and cost nodes
-        nodesToChart.push(this.currentModel.roleNodes.orgBenefit);
-        nodesToChart.push(this.currentModel.roleNodes.orgCost);
-        nodesToChart.push(this.currentModel.roleNodes.worldBenefit);
-        nodesToChart.push(this.currentModel.roleNodes.worldCost);
-        //nodesToChart.push(this.currentModel.roleNodes.effort);
-        //nodesToChart.push(this.currentModel.roleNodes.spending);
+        nodeIdsToChart.push(this.currentModel.roleNodes.orgBenefit);
+        nodeIdsToChart.push(this.currentModel.roleNodes.orgCost);
+        nodeIdsToChart.push(this.currentModel.roleNodes.worldBenefit);
+        nodeIdsToChart.push(this.currentModel.roleNodes.worldCost);
+        //nodeIdsToChart.push(this.currentModel.roleNodes.effort);
+        //nodeIdsToChart.push(this.currentModel.roleNodes.spending);
 
         //load data into each node
-        nodesToChart.forEach((nodeId) => this.updateChartDataForNode(nodeId));
+        nodeIdsToChart.forEach((nodeId) => this.updateChartDataForNode(nodeId));
       }
     },
     getNodeName(nodeId) {
