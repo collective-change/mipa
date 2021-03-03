@@ -83,12 +83,23 @@ const mutations = {
     if (!state.uiActionChangedFields.includes("impacts"))
       state.uiActionChangedFields.push("impacts");
     state.uiActionChanged = true;
+  },
+  addNodeIdToChart(state, nodeId) {
+    if (state.uiAction.nodeIdsToChart.indexOf(nodeId) === -1)
+      state.uiAction.nodeIdsToChart.push(nodeId);
+  },
+  addNodeIdsToChart(state, nodeIds) {
+    nodeIds.forEach(nodeId => {
+      if (state.uiAction.nodeIdsToChart.indexOf(nodeId) === -1)
+        state.uiAction.nodeIdsToChart.push(nodeId);
+    });
   }
 };
 
 const actions = {
   setUiAction({ commit }, action) {
     //if (action) action.saveFullResults = false; //add this non-persisted flag
+    if (action.nodeIdsToChart == undefined) action.nodeIdsToChart = [];
     commit("setUiAction", action);
   }
 };

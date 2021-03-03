@@ -38,19 +38,13 @@
         />
       </div>
     </div>
+    <div>{{ uiAction.nodeIdsToChart }}</div>
   </div>
 </template>
 
 <script>
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { mapActions, mapMutations, mapGetters, mapState } from "vuex";
-import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
 import { GChart } from "vue-google-charts";
-
-const { mapFields } = createHelpers({
-  getterType: "uiAction/getField",
-  mutationType: "uiAction/updateUiActionField",
-});
 
 export default {
   components: {
@@ -62,6 +56,7 @@ export default {
       //embedded: false, //whether this component is embedded or a full page
       //actionId: null,
       //saveFullResults: false,
+      //nodeIdsToChart: [],
       chartsArr: [],
       showValuesConfig: {
         0: { lineWidth: 5, visibleInLegend: true },
@@ -88,7 +83,7 @@ export default {
     //(do not modify their values in the component)
     ...mapState("uiAction", ["uiAction"]),
     //fields for 2-way sync between component and store
-    ...mapFields(["uiAction.nodeIdsToChart"]),
+    //...mapFields(["uiAction.nodeIdsToChart"]),
   },
 
   methods: {
@@ -111,8 +106,8 @@ export default {
         //if nodeId does not exist in chartsDataArr then create it
         let chart = this.chartsArr.find((chart) => chart.nodeId == nodeId);
         if (typeof chart == "undefined") {
-          console.log("existing chart not found");
-          let unit = (chart = {
+          //console.log("existing chart not found");
+          chart = {
             nodeId: nodeId,
             chartData: [],
             chartOptions: {
@@ -128,7 +123,7 @@ export default {
               height: 240,
               //explorer: {}
             },
-          });
+          };
           this.chartsArr.push(chart);
         } else {
           console.log("existing chart found");
@@ -156,27 +151,31 @@ export default {
         this.chartsArr = [];
       }
     },
-    updateChartsArr() {
+
+    async updateChartsArr() {
       if (this.currentModel && this.uiAction && this.uiAction.impacts) {
-        /*if (!this.currentModel || typeof this.uiAction.impacts == "undefined")
-        return;*/
-        //console.log("updateChartsArr");
-        let nodeIdsToChart = [];
+        let nodeIdsToAdd = [];
         //add impacted nodes
         this.uiAction.impacts.forEach(function (impact) {
-          nodeIdsToChart.push(impact.nodeId);
+          nodeIdsToAdd.push(impact.nodeId);
         });
         //add benefit and cost nodes
-        nodeIdsToChart.push(this.currentModel.roleNodes.orgBenefit);
-        nodeIdsToChart.push(this.currentModel.roleNodes.orgCost);
-        nodeIdsToChart.push(this.currentModel.roleNodes.worldBenefit);
-        nodeIdsToChart.push(this.currentModel.roleNodes.worldCost);
-        //nodeIdsToChart.push(this.currentModel.roleNodes.effort);
-        //nodeIdsToChart.push(this.currentModel.roleNodes.spending);
+        nodeIdsToAdd.push(this.currentModel.roleNodes.orgBenefit);
+        nodeIdsToAdd.push(this.currentModel.roleNodes.orgCost);
+        nodeIdsToAdd.push(this.currentModel.roleNodes.worldBenefit);
+        nodeIdsToAdd.push(this.currentModel.roleNodes.worldCost);
+        console.log(nodeIdsToAdd);
+        this.$store.commit("uiAction/addNodeIdsToChart", nodeIdsToAdd);
+        //TODO: save nodeIdsToChart to firestore
 
         //load data into each node
-        nodeIdsToChart.forEach((nodeId) => this.updateChartDataForNode(nodeId));
+        this.uiAction.nodeIdsToChart.forEach((nodeId) =>
+          this.updateChartDataForNode(nodeId)
+        );
       }
+    },
+    pushIfNotExist(array, newStringItem) {
+      array.indexOf(newStringItem) === -1 ? array.push(newStringItem) : {};
     },
     getNodeName(nodeId) {
       const found = this.nodes.find((node) => node.id == nodeId);
