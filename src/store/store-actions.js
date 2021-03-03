@@ -85,16 +85,14 @@ const actions = {
       );
       if (
         //true || //TODO: get rid of this line when done with development
+        matchedStoreAction == undefined ||
         resultsNumbersChangedSignificantly(
           actionResults.effectiveResultsNumbers,
           matchedStoreAction.effectiveResultsNumbers
         )
       ) {
         //add action to update list
-        console.log(
-          "action results changed significantly: ",
-          matchedStoreAction.id
-        );
+        console.log("action results changed significantly: ", actionResults.id);
 
         let actionUpdates = {
           //resultsNumbers: firebase.firestore.FieldValue.delete(), //delete this field
