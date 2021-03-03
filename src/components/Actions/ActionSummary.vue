@@ -739,28 +739,26 @@ export default {
         this.chartsArr = [];
       }
     },
-    updateDefaultChartsArr() {
+    updateChartsArr() {
       if (this.currentModel && this.uiAction && this.uiAction.impacts) {
         /*if (!this.currentModel || typeof this.uiAction.impacts == "undefined")
         return;*/
-        //console.log("updateDefaultChartsArr");
-        let defaultNodesToChart = [];
+        //console.log("updateChartsArr");
+        let nodesToChart = [];
         //add impacted nodes
         this.uiAction.impacts.forEach(function (impact) {
-          defaultNodesToChart.push(impact.nodeId);
+          nodesToChart.push(impact.nodeId);
         });
-        //add combinedBenefit and combinedCost nodes
-        defaultNodesToChart.push(this.currentModel.roleNodes.orgBenefit);
-        defaultNodesToChart.push(this.currentModel.roleNodes.orgCost);
-        defaultNodesToChart.push(this.currentModel.roleNodes.worldBenefit);
-        defaultNodesToChart.push(this.currentModel.roleNodes.worldCost);
-        //defaultNodesToChart.push(this.currentModel.roleNodes.effort);
-        //defaultNodesToChart.push(this.currentModel.roleNodes.spending);
+        //add benefit and cost nodes
+        nodesToChart.push(this.currentModel.roleNodes.orgBenefit);
+        nodesToChart.push(this.currentModel.roleNodes.orgCost);
+        nodesToChart.push(this.currentModel.roleNodes.worldBenefit);
+        nodesToChart.push(this.currentModel.roleNodes.worldCost);
+        //nodesToChart.push(this.currentModel.roleNodes.effort);
+        //nodesToChart.push(this.currentModel.roleNodes.spending);
 
         //load data into each node
-        defaultNodesToChart.forEach((nodeId) =>
-          this.updateChartDataForNode(nodeId)
-        );
+        nodesToChart.forEach((nodeId) => this.updateChartDataForNode(nodeId));
       }
     },
     getNodeName(nodeId) {
@@ -799,10 +797,10 @@ export default {
   },
   watch: {
     nodes: function () {
-      if (this.embedded == false) this.updateDefaultChartsArr();
+      if (this.embedded == false) this.updateChartsArr();
     },
     resultsOfAction: function () {
-      if (this.embedded == false) this.updateDefaultChartsArr();
+      if (this.embedded == false) this.updateChartsArr();
     },
     action: {
       deep: true,
