@@ -71,7 +71,6 @@ const actions = {
   updateActionsResults({ dispatch }, data) {
     //get actions from store
     //for each action in actionsResults, compare with action in store
-    console.log("data", data);
     let actionsResults = data.actionsResults;
 
     let matchedStoreAction;

@@ -231,7 +231,6 @@ async function calculateResultsOfActions(
     calcTimeStages,
     calcTimeMs
   };
-  console.log(workerResults);
 
   console.log("calcTime:", calcTimeMs, "ms");
 
@@ -268,7 +267,9 @@ async function simulateActionWithDependencies(
     testCostsAndImpacts,
     sim,
     defaultBaseline,
-    action.saveFullResults
+    action.saveFullResults,
+    action.saveResultsOnDevice,
+    action.nodeIdsToChart
   );
   let actionResults = testActionResults;
   actionResults.effectiveChainedCostsAndImpacts = testCostsAndImpacts;
@@ -302,7 +303,9 @@ async function simulateActionWithDependencies(
       testCostsAndImpacts,
       sim,
       defaultBaseline,
-      action.saveFullResults
+      action.saveFullResults,
+      action.saveResultsOnDevice,
+      action.nodeIdsToChart
     );
     if (
       testActionResults.actionResultsNumbers.actionLeverage >
@@ -397,7 +400,9 @@ function simulateCostsAndImpacts(
   testCostsAndImpacts,
   sim,
   defaultBaseline,
-  saveFullResults
+  saveFullResults,
+  saveResultsOnDevice,
+  nodeIdsToChart
 ) {
   let effortImpact = {
     nodeId: sim.roleNodes.effort,
@@ -438,8 +443,9 @@ function simulateCostsAndImpacts(
     sim.nodes.forEach(function(node) {
       onlyNodeIds.push(node.id);
     });
-  } else {
-    impactsToSimulate.forEach(function(impact) {
+  } else if (saveResultsOnDevice) {
+    onlyNodeIds = nodeIdsToChart;
+    /*impactsToSimulate.forEach(function(impact) {
       onlyNodeIds.push(impact.nodeId);
     });
     onlyNodeIds.push(sim.roleNodes.orgBenefit);
@@ -447,7 +453,7 @@ function simulateCostsAndImpacts(
     onlyNodeIds.push(sim.roleNodes.worldBenefit);
     onlyNodeIds.push(sim.roleNodes.worldCost);
     //onlyNodeIds.push(sim.roleNodes.effort);
-    //onlyNodeIds.push(sim.roleNodes.spending);
+    //onlyNodeIds.push(sim.roleNodes.spending);*/
   }
 
   //extract relevant baselineNodesValues
@@ -1720,7 +1726,7 @@ function interpolateFromLookup(timeSPoints, values, targetTimeS) {
 
 function testInitializeIdb() {
   let idb; //placeholder for IndexedDB
-  let request = indexedDB.open("mipa", 2);
+  let request = indexedDB.open("mipa", 3);
   request.onupgradeneeded = function(e) {
     idb = request.result;
     idb.createObjectStore("baselines");
@@ -1753,7 +1759,7 @@ function putActionResultsInIdb(actionResults, actionId) {
 }
 
 function putDataInIdb(payload) {
-  let request = indexedDB.open("mipa", 2);
+  let request = indexedDB.open("mipa", 3);
   request.onsuccess = function(event) {
     let idb = request.result;
     let requesttrans = idb
