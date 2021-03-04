@@ -93,6 +93,9 @@ const mutations = {
       if (state.uiAction.nodeIdsToChart.indexOf(nodeId) === -1)
         state.uiAction.nodeIdsToChart.push(nodeId);
     });
+  },
+  setNodeIdsToChart(state, nodeIds) {
+    if (Array.isArray(nodeIds)) state.uiAction.nodeIdsToChart = nodeIds;
   }
 };
 
@@ -101,6 +104,51 @@ const actions = {
     //if (action) action.saveFullResults = false; //add this non-persisted flag
     if (action.nodeIdsToChart == undefined) action.nodeIdsToChart = [];
     commit("setUiAction", action);
+  },
+  addNodeIdToChart({ commit, dispatch }, nodeId) {
+    if (state.uiAction.nodeIdsToChart.indexOf(nodeId) === -1) {
+      commit("addNodeIdToChart", nodeId);
+      dispatch(
+        "actions/updateAction",
+        {
+          id: state.uiAction.id,
+          updates: { nodeIdsToChart: state.uiAction.nodeIdsToChart }
+        },
+        { root: true }
+      );
+    }
+  },
+  addNodeIdsToChart({ commit, dispatch }, nodeIds) {
+    //check if nodeIds already exist in nodeIdsToChart
+    let needToAdd = false;
+    nodeIds.forEach(nodeId => {
+      if (state.uiAction.nodeIdsToChart.indexOf(nodeId) === -1)
+        needToAdd = true;
+    });
+    if (needToAdd) {
+      commit("addNodeIdsToChart", nodeIds);
+      dispatch(
+        "actions/updateAction",
+        {
+          id: state.uiAction.id,
+          updates: { nodeIdsToChart: state.uiAction.nodeIdsToChart }
+        },
+        { root: true }
+      );
+    }
+  },
+  setNodeIdsToChart({ commit, dispatch }, nodeIds) {
+    if (Array.isArray(nodeIds)) {
+      commit("setNodeIdsToChart", nodeIds);
+      dispatch(
+        "actions/updateAction",
+        {
+          id: state.uiAction.id,
+          updates: { nodeIdsToChart: state.uiAction.nodeIdsToChart }
+        },
+        { root: true }
+      );
+    }
   }
 };
 

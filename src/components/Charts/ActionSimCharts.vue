@@ -1,6 +1,5 @@
 <template>
   <div class="row q-gutter-y-lg">
-    {{ drag }}
     <draggable
       v-model="chartsArr"
       group="charts"
@@ -48,6 +47,7 @@
         </li>
       </transition-group>
     </draggable>
+    <li class="column q-gutter-md"></li>
     <div>{{ uiAction.nodeIdsToChart }}</div>
   </div>
 </template>
@@ -68,9 +68,9 @@ export default {
       //embedded: false, //whether this component is embedded or a full page
       //actionId: null,
       //saveFullResults: false,
-      //nodeIdsToChart: [],
       drag: false,
       chartsArr: [],
+      prevOrderedNodeIds: [],
       showValuesConfig: {
         0: { lineWidth: 5, visibleInLegend: true },
         1: { lineWidth: 2, visibleInLegend: true },
@@ -177,13 +177,15 @@ export default {
         nodeIdsToAdd.push(this.currentModel.roleNodes.orgCost);
         nodeIdsToAdd.push(this.currentModel.roleNodes.worldBenefit);
         nodeIdsToAdd.push(this.currentModel.roleNodes.worldCost);
-        this.$store.commit("uiAction/addNodeIdsToChart", nodeIdsToAdd);
+        this.$store.dispatch("uiAction/addNodeIdsToChart", nodeIdsToAdd);
         //TODO: save nodeIdsToChart to firestore
 
         //load data into each node
         this.uiAction.nodeIdsToChart.forEach((nodeId) =>
           this.updateChartDataForNode(nodeId)
         );
+
+        this.prevOrderedNodeIds = this.chartsArr.map((chart) => chart.nodeId);
       }
     },
     pushIfNotExist(array, newStringItem) {
@@ -216,6 +218,18 @@ export default {
     },
     "uiAction.id": function (newId) {
       this.$store.dispatch("calcResults/loadResultsOfAction", newId);
+    },
+    drag: function (newDragVal) {
+      if (newDragVal == false) {
+        const orderedNodeIds = this.chartsArr.map((chart) => chart.nodeId);
+        if (
+          JSON.stringify(orderedNodeIds) !==
+          JSON.stringify(this.prevOrderedNodeIds)
+        ) {
+          this.$store.dispatch("uiAction/setNodeIdsToChart", orderedNodeIds);
+          this.prevOrderedNodeIds = orderedNodeIds;
+        }
+      }
     },
   },
 };
