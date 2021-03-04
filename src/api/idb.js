@@ -1,5 +1,5 @@
 const DB_NAME = "mipa";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 let DB;
 
 export default {
@@ -21,16 +21,17 @@ export default {
         resolve(DB);
       };
 
-      request.onupgradeneeded = e => {
+      /*request.onupgradeneeded = e => {
         console.log("onupgradeneeded");
         let db = e.target.result;
         db.createObjectStore("baselines");
         db.createObjectStore("resultsOfActions");
         db.createObjectStore("dependencyGraphDisplay");
-      };
+      };*/
 
       request.onupgradeneeded = function(event) {
         //db = request.result;
+        console.log("event.oldVersion", event.oldVersion);
         let db = event.target.result;
 
         db.onerror = function(errorEvent) {
@@ -49,6 +50,11 @@ export default {
           db.createObjectStore("dependencyGraphDisplay", {
             keyPath: "modelId"
           });
+          /*var bookStore = request.transaction.objectStore("books");
+          var yearIndex = bookStore.createIndex("by_year", "year");*/
+        }
+        if (event.oldVersion < 3) {
+          db.createObjectStore("adHocDocs");
           /*var bookStore = request.transaction.objectStore("books");
           var yearIndex = bookStore.createIndex("by_year", "year");*/
         }
@@ -182,6 +188,63 @@ export default {
 
       store.get(key).onsuccess = e => {
         saveFile = e.target.result;
+      };
+    });
+  },
+
+  async setSaveResultsOnDeviceForAction(actionId, val) {
+    let db = await this.getDb();
+
+    return new Promise(resolve => {
+      let trans = db.transaction(["adHocDocs"], "readwrite");
+      trans.oncomplete = () => {
+        resolve();
+      };
+
+      let store = trans.objectStore("adHocDocs");
+      let actionIds = [];
+
+      store.get("SaveResultsOnDeviceForActions").onsuccess = e => {
+        actionIds = e.target.result;
+        if (val === true) {
+          // add actionId to array
+          if (actionIds == undefined)
+            store.put([actionId], "SaveResultsOnDeviceForActions");
+          else if (!actionIds.includes(actionId)) {
+            store.put(
+              [...actionIds, actionId],
+              "SaveResultsOnDeviceForActions"
+            );
+          }
+        } else {
+          //val is false, remove actionId from array
+          store.put(
+            actionIds.filter(id => id != actionId),
+            "SaveResultsOnDeviceForActions"
+          );
+        }
+      };
+    });
+  },
+
+  async getSaveResultsOnDeviceForAction(actionId) {
+    let db = await this.getDb();
+
+    return new Promise(resolve => {
+      let trans = db.transaction(["adHocDocs"], "readonly");
+      trans.oncomplete = () => {
+        if (actionIds != undefined) {
+          resolve(actionIds.includes(actionId));
+        } else {
+          resolve(false);
+        }
+      };
+
+      let store = trans.objectStore("adHocDocs");
+      let actionIds = [];
+
+      store.get("SaveResultsOnDeviceForActions").onsuccess = e => {
+        actionIds = e.target.result;
       };
     });
   }

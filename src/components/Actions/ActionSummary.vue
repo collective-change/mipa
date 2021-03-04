@@ -57,6 +57,9 @@
             <q-checkbox
               v-model="saveResultsOnDevice"
               label="Save results for charting on this device"
+              @input="
+                setSaveResultsOnDeviceForAction(action.id, saveResultsOnDevice)
+              "
             />
             <q-checkbox
               v-model="saveFullResults"
@@ -429,6 +432,7 @@ import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
 import { interpret } from "xstate";
 import { actionMachine } from "src/state-machines/machine-action";
 import { formatNumber } from "src/utils/util-formatNumber";
+import idb from "src/api/idb";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
@@ -573,7 +577,7 @@ export default {
     ...mapMutations("uiAction", ["mergeNewActionToUiAction"]),
     formatNumber,
 
-    loadAction(newAction) {
+    async loadAction(newAction) {
       // Start with the machine's initial context
       this.actionStateContext = actionMachine.context;
 
@@ -588,8 +592,13 @@ export default {
           this.actionStateContext = state.context;
         })
         .start();
-
-      this.$store.dispatch("uiAction/setUiAction", newAction);
+      this.$store.dispatch("uiAction/setUiAction", {
+        id: newAction.id,
+        ...newAction,
+      });
+      this.saveResultsOnDevice = await idb.getSaveResultsOnDeviceForAction(
+        newAction.id
+      );
 
       // Start with saved state or the machine's initial state
       if (!this.uiAction.actionMchState.hasOwnProperty("value")) {
@@ -632,6 +641,9 @@ export default {
       };
       this.$store.dispatch("actions/updateAction", payload);
       this.$store.commit("uiAction/setUiActionChanged", false);
+    },
+    setSaveResultsOnDeviceForAction(actionId, val) {
+      idb.setSaveResultsOnDeviceForAction(actionId, val);
     },
   },
 

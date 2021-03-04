@@ -334,7 +334,6 @@ export default {
   },
 
   mounted() {
-    this.$store.dispatch("calcResults/loadResultsOfAction", this.uiAction.id);
     //save default nodeIds to uiAction.nodeIdsToChart if missing
 
     (async () => {
@@ -346,6 +345,11 @@ export default {
       }
 
       if (this.currentModel && this.uiAction && this.uiAction.impacts) {
+        this.$store.dispatch(
+          "calcResults/loadResultsOfAction",
+          this.uiAction.id
+        );
+
         //add impacted nodes
         this.uiAction.impacts.forEach(function (impact) {
           this.defaultNodeIdsToChart.push(impact.nodeId);
