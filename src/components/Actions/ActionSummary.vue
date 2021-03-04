@@ -51,13 +51,18 @@
             <calculator-ui
               calculationType="uiAction"
               buttonLabel="Recalculate"
-              :uiAction="{ ...uiAction, saveFullResults }"
+              :uiAction="{ ...uiAction, saveFullResults, saveResultsOnDevice }"
             />
-            <div>{{ uiAction.saveFullResults }}</div>
+
+            <q-checkbox
+              v-model="saveResultsOnDevice"
+              label="Save results for charting on this device"
+            />
             <q-checkbox
               v-model="saveFullResults"
-              label="Save full results for export"
+              label="Save full results for export (next run only)"
             />
+
             <export-calc-results
               data-source="resultsOfAction"
               :actionId="uiAction.id"
@@ -409,7 +414,8 @@
           />
         </div>
       </div>
-      <div v-if="!embedded" class="row q-gutter-y-lg">
+      <div v-if="!embedded" class="text-h6">Simulation results</div>
+      <div v-if="!embedded">
         <action-sim-charts />
       </div>
     </q-form>
@@ -454,6 +460,7 @@ export default {
       //embedded: false, //whether this component is embedded or a full page
       actionId: null,
       saveFullResults: false,
+      saveResultsOnDevice: false,
       effortCostPerHrTypeOptions: [
         {
           label: "use average effort cost per hour",

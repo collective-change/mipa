@@ -1,53 +1,144 @@
 <template>
-  <div class="row q-gutter-y-lg">
+  <div class="row">
     <draggable
       v-model="chartsArr"
       group="charts"
       @start="drag = true"
       @end="drag = false"
     >
-      <transition-group name="charts-list" tag="ul" style="display: flex">
+      <transition-group
+        name="charts-list"
+        tag="ul"
+        class="row q-px-none q-mt-none"
+      >
         <li
           class="column q-gutter-md"
           v-for="chart in chartsArr"
           :key="chart.nodeId"
         >
-          <gchart
-            type="LineChart"
-            :data="chart.chartData"
-            :options="chart.chartOptions"
-          />
-          <div class="row justify-center q-gutter-x-md">
-            <q-btn-toggle
-              v-model="chart.chartOptions.series"
-              action-color="primary"
-              size="xs"
-              :options="[
-                {
-                  label: 'difference',
-                  value: showDifferenceConfig,
-                },
-                {
-                  label: 'values',
-                  value: showValuesConfig,
-                },
-              ]"
-            />
+          <q-card class="q-ma-md">
+            <div
+              class="row justify-center q-px-md q-pt-md"
+              style="width: 360px"
+            >
+              {{ chart.title }}
+            </div>
+            <div v-if="chart.chartData.length">
+              <gchart
+                type="LineChart"
+                :data="chart.chartData"
+                :options="chart.chartOptions"
+              />
+              <div class="row justify-center q-gutter-x-md q-mb-md">
+                <q-btn-toggle
+                  v-model="chart.chartOptions.series"
+                  action-color="primary"
+                  size="xs"
+                  :options="[
+                    {
+                      label: 'difference',
+                      value: showDifferenceConfig,
+                    },
+                    {
+                      label: 'values',
+                      value: showValuesConfig,
+                    },
+                  ]"
+                />
 
-            <q-btn-toggle
-              v-model="chart.chartOptions.vAxis.scaleType"
-              action-color="primary"
-              size="xs"
-              :options="[
-                { label: 'linear', value: 'linear' },
-                { label: 'log', value: 'mirrorLog' },
-              ]"
-            />
+                <q-btn-toggle
+                  v-model="chart.chartOptions.vAxis.scaleType"
+                  action-color="primary"
+                  size="xs"
+                  :options="[
+                    { label: 'linear', value: 'linear' },
+                    { label: 'log', value: 'mirrorLog' },
+                  ]"
+                />
+                <q-btn
+                  round
+                  size="xs"
+                  color="primary"
+                  icon="delete"
+                  @click="
+                    $store.dispatch(
+                      'uiAction/removeNodeIdToChart',
+                      chart.nodeId
+                    );
+                    removeFromCharts(chart.nodeId);
+                  "
+                />
+              </div>
+            </div>
+            <div
+              v-else
+              style="height: 277px; width: 360px"
+              class="column justify-center"
+            >
+              <div class="row justify-center">
+                <div class="column q-pa-xl">
+                  No simultion results saved yet for this node. Please make sure
+                  to turn on saving on this device then recalculate.
+                </div>
+                <q-btn
+                  round
+                  size="xs"
+                  color="primary"
+                  icon="delete"
+                  @click="
+                    $store.dispatch(
+                      'uiAction/removeNodeIdToChart',
+                      chart.nodeId
+                    );
+                    removeFromCharts(chart.nodeId);
+                  "
+                />
+              </div>
+            </div>
+          </q-card>
+        </li>
+        <li
+          class="column q-gutter-x-md justify-center"
+          style="width: 360px"
+          key="addChart"
+        >
+          <div class="row justify-center">
+            <div class="column">
+              <q-select
+                label="Add chart"
+                v-model="nodeIdToAdd"
+                @filter="filterFn"
+                @filter-abort="abortFilterFn"
+                :options="filteredNodeOptions"
+                @input="
+                  (nodeId) => {
+                    this.$store.dispatch('uiAction/addNodeIdToChart', nodeId);
+                    nodeIdToAdd = null;
+                  }
+                "
+                emit-value
+                map-options
+                outlined
+                use-input
+                hide-selected
+                fill-input
+                dense
+                bg-color="white"
+              >
+                <template v-slot:no-option>
+                  <q-item>
+                    <q-item-section class="text-grey">
+                      No results
+                    </q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
+            </div>
           </div>
         </li>
       </transition-group>
     </draggable>
-    <li class="column q-gutter-md"></li>
+
     <div>{{ uiAction.nodeIdsToChart }}</div>
   </div>
 </template>
@@ -71,6 +162,9 @@ export default {
       drag: false,
       chartsArr: [],
       prevOrderedNodeIds: [],
+      prevNodeIdsToChartLength: 0,
+      nodeIdToAdd: null,
+      filteredNodeOptions: [],
       showValuesConfig: {
         0: { lineWidth: 5, visibleInLegend: true },
         1: { lineWidth: 2, visibleInLegend: true },
@@ -86,6 +180,10 @@ export default {
     };
   },
 
+  created() {
+    this.filteredNodeOptions = this.nodeOptions;
+  },
+
   computed: {
     //...mapState("ui", ["selectedActionId"]),
     ...mapState("calcResults", ["resultsOfAction"]),
@@ -97,6 +195,12 @@ export default {
     ...mapState("uiAction", ["uiAction"]),
     //fields for 2-way sync between component and store
     //...mapFields(["uiAction.nodeIdsToChart"]),
+
+    nodeOptions() {
+      return this.nodes.map((node) => {
+        return { label: node.name, value: node.id };
+      });
+    },
   },
 
   methods: {
@@ -122,13 +226,20 @@ export default {
           //console.log("existing chart not found");
           chart = {
             nodeId: nodeId,
+            title: this.getNodeName(nodeId),
             chartData: [],
             chartOptions: {
-              title: this.getNodeName(nodeId),
+              //title: this.getNodeName(nodeId),
               vAxis: {
                 title: this.getNodeUnit(nodeId),
                 scaleType: "linear",
                 format: "short",
+              },
+              chartArea: {
+                top: 10,
+                left: 58,
+                height: "75%",
+                width: "80%",
               },
               legend: { position: "bottom" },
               series: this.showDifferenceConfig,
@@ -139,10 +250,10 @@ export default {
           };
           this.chartsArr.push(chart);
         } else {
-          console.log("existing chart found");
+          //console.log("existing chart found");
           chart.chartData = [];
         }
-        if (ifDoneValues.length > 0) {
+        if (ifDoneValues && ifDoneValues.length > 0) {
           chart.chartData.push([
             "time",
             "baseline",
@@ -178,7 +289,6 @@ export default {
         nodeIdsToAdd.push(this.currentModel.roleNodes.worldBenefit);
         nodeIdsToAdd.push(this.currentModel.roleNodes.worldCost);
         this.$store.dispatch("uiAction/addNodeIdsToChart", nodeIdsToAdd);
-        //TODO: save nodeIdsToChart to firestore
 
         //load data into each node
         this.uiAction.nodeIdsToChart.forEach((nodeId) =>
@@ -187,6 +297,12 @@ export default {
 
         this.prevOrderedNodeIds = this.chartsArr.map((chart) => chart.nodeId);
       }
+    },
+    removeFromCharts(nodeId) {
+      const index = this.chartsArr.findIndex(
+        (chart) => chart.nodeId === nodeId
+      );
+      this.chartsArr.splice(index, 1);
     },
     pushIfNotExist(array, newStringItem) {
       array.indexOf(newStringItem) === -1 ? array.push(newStringItem) : {};
@@ -201,6 +317,30 @@ export default {
       if (found) return found.unit;
       else return "";
     },
+    filterFn(val, update, abort) {
+      update(() => {
+        if (val === "") {
+          this.filteredNodeOptions = this.nodeOptions;
+        } else {
+          const needle = val.toLowerCase();
+          this.filteredNodeOptions = this.nodeOptions.filter(
+            (v) => v.label.toLowerCase().indexOf(needle) > -1
+          );
+        }
+        this.filteredNodeOptions.sort((a, b) => {
+          if (a.label.toLowerCase() < b.label.toLowerCase()) {
+            return -1;
+          }
+          if (a.label.toLowerCase() > b.label.toLowerCase()) {
+            return 1;
+          }
+          return 0;
+        });
+      });
+    },
+    abortFilterFn() {
+      // console.log('delayed filter aborted')
+    },
   },
 
   mounted() {
@@ -210,14 +350,20 @@ export default {
   destroyed() {},
 
   watch: {
+    "uiAction.id": function (newId) {
+      this.$store.dispatch("calcResults/loadResultsOfAction", newId);
+    },
     nodes: function () {
       this.updateChartsArr();
     },
     resultsOfAction: function () {
       this.updateChartsArr();
     },
-    "uiAction.id": function (newId) {
-      this.$store.dispatch("calcResults/loadResultsOfAction", newId);
+    "uiAction.nodeIdsToChart": function (newVal) {
+      if (newVal.length != this.prevNodeIdsToChartLength) {
+        this.updateChartsArr();
+        this.prevNodeIdsToChartLength = newVal.length;
+      }
     },
     drag: function (newDragVal) {
       if (newDragVal == false) {

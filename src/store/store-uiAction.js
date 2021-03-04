@@ -88,6 +88,10 @@ const mutations = {
     if (state.uiAction.nodeIdsToChart.indexOf(nodeId) === -1)
       state.uiAction.nodeIdsToChart.push(nodeId);
   },
+  removeNodeIdToChart(state, nodeId) {
+    const index = state.uiAction.nodeIdsToChart.indexOf(nodeId);
+    if (index > -1) state.uiAction.nodeIdsToChart.splice(index, 1);
+  },
   addNodeIdsToChart(state, nodeIds) {
     nodeIds.forEach(nodeId => {
       if (state.uiAction.nodeIdsToChart.indexOf(nodeId) === -1)
@@ -117,6 +121,17 @@ const actions = {
         { root: true }
       );
     }
+  },
+  removeNodeIdToChart({ commit, dispatch }, nodeId) {
+    commit("removeNodeIdToChart", nodeId);
+    dispatch(
+      "actions/updateAction",
+      {
+        id: state.uiAction.id,
+        updates: { nodeIdsToChart: state.uiAction.nodeIdsToChart }
+      },
+      { root: true }
+    );
   },
   addNodeIdsToChart({ commit, dispatch }, nodeIds) {
     //check if nodeIds already exist in nodeIdsToChart
