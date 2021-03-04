@@ -76,9 +76,9 @@
               class="column justify-center"
             >
               <div class="row justify-center">
-                <div class="column q-pa-xl">
-                  No simultion results saved yet for this node. Please make sure
-                  to turn on saving on this device then recalculate.
+                <div class="column q-px-xl q-pb-xl">
+                  Simultion results have not been saved for this node. Please
+                  make sure to enable saving on this device, then recalculate.
                 </div>
                 <q-btn
                   round
