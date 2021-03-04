@@ -97,49 +97,51 @@
             </div>
           </q-card>
         </li>
-        <li
-          class="column q-gutter-x-md justify-center"
-          style="width: 360px"
-          key="addChart"
-        >
-          <div class="row justify-center">
-            <div class="column">
-              <q-select
-                label="Add chart"
-                v-model="nodeIdToAdd"
-                @filter="filterFn"
-                @filter-abort="abortFilterFn"
-                :options="filteredNodeOptions"
-                @input="
-                  (nodeId) => {
-                    this.$store.dispatch('uiAction/addNodeIdToChart', nodeId);
-                    nodeIdToAdd = null;
-                  }
-                "
-                emit-value
-                map-options
-                outlined
-                use-input
-                hide-selected
-                fill-input
-                dense
-                bg-color="white"
-              >
-                <template v-slot:no-option>
-                  <q-item>
-                    <q-item-section class="text-grey">
-                      No results
-                    </q-item-section>
-                  </q-item>
-                </template>
-              </q-select>
+        <li class="column q-gutter-md" key="addChart">
+          <q-card class="q-ma-md">
+            <div class="row justify-center" style="height: 317px; width: 360px">
+              <div class="column justify-center">
+                <q-select
+                  label="Add chart"
+                  v-model="nodeIdToAdd"
+                  @filter="filterFn"
+                  @filter-abort="abortFilterFn"
+                  :options="filteredNodeOptions"
+                  @input="
+                    (nodeId) => {
+                      this.$store.dispatch('uiAction/addNodeIdToChart', nodeId);
+                      nodeIdToAdd = null;
+                    }
+                  "
+                  emit-value
+                  map-options
+                  outlined
+                  use-input
+                  hide-selected
+                  fill-input
+                  dense
+                  bg-color="white"
+                >
+                  <template v-slot:no-option>
+                    <q-item>
+                      <q-item-section class="text-grey">
+                        No results
+                      </q-item-section>
+                    </q-item>
+                  </template>
+                </q-select>
+                <div
+                  v-if="chartsArr.length > 1"
+                  class="row justify-center q-mt-xl"
+                >
+                  Drag to reorder
+                </div>
+              </div>
             </div>
-          </div>
+          </q-card>
         </li>
       </transition-group>
     </draggable>
-
-    <div>{{ uiAction.nodeIdsToChart }}</div>
   </div>
 </template>
 
@@ -160,6 +162,7 @@ export default {
       //actionId: null,
       //saveFullResults: false,
       drag: false,
+      defaultNodeIdsToChart: [],
       chartsArr: [],
       prevOrderedNodeIds: [],
       prevNodeIdsToChartLength: 0,
@@ -276,25 +279,12 @@ export default {
       }
     },
 
-    async updateChartsArr() {
+    updateChartsArr() {
       if (this.currentModel && this.uiAction && this.uiAction.impacts) {
-        let nodeIdsToAdd = [];
-        //add impacted nodes
-        this.uiAction.impacts.forEach(function (impact) {
-          nodeIdsToAdd.push(impact.nodeId);
-        });
-        //add benefit and cost nodes
-        nodeIdsToAdd.push(this.currentModel.roleNodes.orgBenefit);
-        nodeIdsToAdd.push(this.currentModel.roleNodes.orgCost);
-        nodeIdsToAdd.push(this.currentModel.roleNodes.worldBenefit);
-        nodeIdsToAdd.push(this.currentModel.roleNodes.worldCost);
-        this.$store.dispatch("uiAction/addNodeIdsToChart", nodeIdsToAdd);
-
         //load data into each node
         this.uiAction.nodeIdsToChart.forEach((nodeId) =>
           this.updateChartDataForNode(nodeId)
         );
-
         this.prevOrderedNodeIds = this.chartsArr.map((chart) => chart.nodeId);
       }
     },
@@ -345,6 +335,35 @@ export default {
 
   mounted() {
     this.$store.dispatch("calcResults/loadResultsOfAction", this.uiAction.id);
+    //save default nodeIds to uiAction.nodeIdsToChart if missing
+
+    (async () => {
+      while (
+        !this.currentModel ||
+        !this.uiAction // define the condition as you like
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      if (this.currentModel && this.uiAction && this.uiAction.impacts) {
+        //add impacted nodes
+        this.uiAction.impacts.forEach(function (impact) {
+          this.defaultNodeIdsToChart.push(impact.nodeId);
+        });
+        //add benefit and cost nodes
+        this.defaultNodeIdsToChart.push(this.currentModel.roleNodes.orgBenefit);
+        this.defaultNodeIdsToChart.push(this.currentModel.roleNodes.orgCost);
+        this.defaultNodeIdsToChart.push(
+          this.currentModel.roleNodes.worldBenefit
+        );
+        this.defaultNodeIdsToChart.push(this.currentModel.roleNodes.worldCost);
+
+        this.$store.dispatch(
+          "uiAction/addNodeIdsToChart",
+          this.defaultNodeIdsToChart
+        );
+      }
+    })();
   },
 
   destroyed() {},
