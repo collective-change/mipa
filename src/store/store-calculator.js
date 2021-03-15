@@ -120,7 +120,7 @@ const actions = {
             await dispatch("actions/updateActionsResults", e.data, {
               root: true
             });
-            //console.log(e.data);
+            console.log(e.data);
             if (payload.calculationType == "actions") {
               if (e.data.actionsResults.length == 1)
                 dispatch(

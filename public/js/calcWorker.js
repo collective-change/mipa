@@ -12,6 +12,8 @@ importScripts(
 var firebaseApp, firebaseAuth, firebaseDb;
 
 const parser = self.math.parser();
+const mipaIdbVersion = 3;
+
 var modelNodes = [];
 var workerGlobalActions = [];
 var currentUserId;
@@ -192,6 +194,12 @@ async function calculateResultsOfActions(
       actionResults.ifNotDoneNodesValues =
         branchAndBlockeesResults.ifNotDoneNodesValues;
       actionResults.calcTimeMs = new Date() - startTimeMs;
+      if (!action.saveResultsOnDevice) {
+        delete actionResults.timeSPoints;
+        delete actionResults.baselineNodesValues;
+        delete actionResults.ifDoneNodesValues;
+        delete actionResults.ifNotDoneNodesValues;
+      }
       putActionResultsInIdb(actionResults, action.id);
 
       if (sim.errorOccurred) return;
@@ -322,6 +330,12 @@ async function simulateActionWithDependencies(
     }
     blockees.shift();
   }
+
+  /*delete actionResults.timeSPoints;
+  delete actionResults.baselineNodesValues;
+  delete actionResults.ifDoneNodesValues;
+  delete actionResults.ifNotDoneNodesValues;*/
+
   return actionResults;
 }
 
@@ -443,17 +457,28 @@ function simulateCostsAndImpacts(
     sim.nodes.forEach(function(node) {
       onlyNodeIds.push(node.id);
     });
-  } else if (saveResultsOnDevice) {
-    onlyNodeIds = nodeIdsToChart;
-    /*impactsToSimulate.forEach(function(impact) {
-      onlyNodeIds.push(impact.nodeId);
+  } else {
+    if (saveResultsOnDevice) {
+      onlyNodeIds = nodeIdsToChart;
+    }
+
+    impactsToSimulate.forEach(function(impact) {
+      onlyNodeIds.indexOf(impact.nodeId) === -1
+        ? onlyNodeIds.push(impact.nodeId)
+        : {};
     });
-    onlyNodeIds.push(sim.roleNodes.orgBenefit);
-    onlyNodeIds.push(sim.roleNodes.orgCost);
-    onlyNodeIds.push(sim.roleNodes.worldBenefit);
-    onlyNodeIds.push(sim.roleNodes.worldCost);
-    //onlyNodeIds.push(sim.roleNodes.effort);
-    //onlyNodeIds.push(sim.roleNodes.spending);*/
+    onlyNodeIds.indexOf(sim.roleNodes.orgBenefit) === -1
+      ? onlyNodeIds.push(sim.roleNodes.orgBenefit)
+      : {};
+    onlyNodeIds.indexOf(sim.roleNodes.orgCost) === -1
+      ? onlyNodeIds.push(sim.roleNodes.orgCost)
+      : {};
+    onlyNodeIds.indexOf(sim.roleNodes.worldBenefit) === -1
+      ? onlyNodeIds.push(sim.roleNodes.worldBenefit)
+      : {};
+    onlyNodeIds.indexOf(sim.roleNodes.worldCost) === -1
+      ? onlyNodeIds.push(sim.roleNodes.worldCost)
+      : {};
   }
 
   //extract relevant baselineNodesValues
@@ -1726,13 +1751,13 @@ function interpolateFromLookup(timeSPoints, values, targetTimeS) {
 
 function testInitializeIdb() {
   let idb; //placeholder for IndexedDB
-  let request = indexedDB.open("mipa", 3);
-  request.onupgradeneeded = function(e) {
+  let request = indexedDB.open("mipa", mipaIdbVersion);
+  /*request.onupgradeneeded = function(e) {
     idb = request.result;
     idb.createObjectStore("baselines");
     idb.createObjectStore("resultsOfActions");
     console.log("Successfully upgraded idb");
-  };
+  }; */
   request.onsuccess = function(e) {
     //idb = request.result;
     //console.log("Initialized idb");
@@ -1759,7 +1784,7 @@ function putActionResultsInIdb(actionResults, actionId) {
 }
 
 function putDataInIdb(payload) {
-  let request = indexedDB.open("mipa", 3);
+  let request = indexedDB.open("mipa", mipaIdbVersion);
   request.onsuccess = function(event) {
     let idb = request.result;
     let requesttrans = idb
