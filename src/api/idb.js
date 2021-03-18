@@ -126,8 +126,12 @@ export default {
       let store = trans.objectStore("resultsOfActions");
       let resultsOfAction = {};
 
-      store.get(key).onsuccess = e => {
+      let entry = store.get(key);
+      entry.onsuccess = e => {
         resultsOfAction = e.target.result;
+      };
+      entry.onerror = e => {
+        resultOfAction = null;
       };
     });
   },
