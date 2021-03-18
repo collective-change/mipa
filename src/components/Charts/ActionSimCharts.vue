@@ -142,9 +142,6 @@
         </li>
       </transition-group>
     </draggable>
-    nodeIdsToChart: {{ uiAction.nodeIdsToChart }} <br />
-    chartsArr: {{ chartsArr }}
-    <br />
   </div>
 </template>
 
