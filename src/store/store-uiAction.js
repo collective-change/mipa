@@ -31,7 +31,7 @@ const mutations = {
     state.uiActionChangedFields = [];
   },
   mergeNewActionToUiAction(state, newAction) {
-    let tempUiAction = {};
+    let tempUiAction = { id: state.uiAction.id };
     for (const property in newAction) {
       //if property name is in changedFields, then keep user's changes
       // else set uiAction's property to new value

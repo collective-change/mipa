@@ -142,6 +142,9 @@
         </li>
       </transition-group>
     </draggable>
+    nodeIdsToChart: {{ uiAction.nodeIdsToChart }} <br />
+    chartsArr: {{ chartsArr }}
+    <br />
   </div>
 </template>
 
@@ -212,8 +215,38 @@ export default {
 
     updateChartDataForNode(nodeId) {
       //console.log(this.resultsOfAction.timeSPoints);
-
-      // if baseline.nodes contains the selected node then load baseline for this nde
+      let chart = this.chartsArr.find((chart) => chart.nodeId == nodeId);
+      if (typeof chart == "undefined") {
+        chart = {
+          nodeId: nodeId,
+          title: this.getNodeName(nodeId),
+          chartData: [],
+          chartOptions: {
+            //title: this.getNodeName(nodeId),
+            vAxis: {
+              title: this.getNodeUnit(nodeId),
+              scaleType: "linear",
+              format: "short",
+            },
+            chartArea: {
+              top: 10,
+              left: 58,
+              height: "75%",
+              width: "80%",
+            },
+            legend: { position: "bottom" },
+            series: this.showDifferenceConfig,
+            width: 360,
+            height: 240,
+            //explorer: {}
+          },
+        };
+        this.chartsArr.push(chart);
+      } else {
+        //console.log("existing chart found");
+        chart.chartData = [];
+      }
+      // if resultsOfAction is available then then load it for the node; otherwise set data for the node to empty
       if (
         this.resultsOfAction !== undefined &&
         this.resultsOfAction.timeSPoints !== undefined &&
@@ -224,38 +257,7 @@ export default {
         let ifNotDoneValues = this.resultsOfAction.ifNotDoneNodesValues[nodeId];
         let ifDoneValues = this.resultsOfAction.ifDoneNodesValues[nodeId];
         //if nodeId does not exist in chartsDataArr then create it
-        let chart = this.chartsArr.find((chart) => chart.nodeId == nodeId);
-        if (typeof chart == "undefined") {
-          //console.log("existing chart not found");
-          chart = {
-            nodeId: nodeId,
-            title: this.getNodeName(nodeId),
-            chartData: [],
-            chartOptions: {
-              //title: this.getNodeName(nodeId),
-              vAxis: {
-                title: this.getNodeUnit(nodeId),
-                scaleType: "linear",
-                format: "short",
-              },
-              chartArea: {
-                top: 10,
-                left: 58,
-                height: "75%",
-                width: "80%",
-              },
-              legend: { position: "bottom" },
-              series: this.showDifferenceConfig,
-              width: 360,
-              height: 240,
-              //explorer: {}
-            },
-          };
-          this.chartsArr.push(chart);
-        } else {
-          //console.log("existing chart found");
-          chart.chartData = [];
-        }
+
         if (ifDoneValues && ifDoneValues.length > 0) {
           chart.chartData.push([
             "time",
@@ -275,7 +277,7 @@ export default {
           }
         }
       } else {
-        this.chartsArr = [];
+        chart.chartData = [];
       }
     },
 
@@ -373,8 +375,16 @@ export default {
   destroyed() {},
 
   watch: {
-    "uiAction.id": function (newId) {
-      this.$store.dispatch("calcResults/loadResultsOfAction", newId);
+    "uiAction.id": function (newId, oldId) {
+      console.log(
+        "uiAction.id watcher",
+        this.uiAction.id,
+        newId,
+        oldId,
+        this.uiAction
+      );
+      this.$store.dispatch("calcResults/loadResultsOfAction", this.uiAction.id);
+      this.chartsArr = [];
     },
     nodes: function () {
       this.updateChartsArr();
