@@ -235,7 +235,7 @@ export default {
             series: this.showDifferenceConfig,
             width: 360,
             height: 240,
-            //explorer: {}
+            explorer: {}
           },
         };
         this.chartsArr.push(chart);
