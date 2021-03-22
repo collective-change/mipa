@@ -60,7 +60,7 @@ export default {
         await new Promise((resolve) => setTimeout(resolve, 200));
 
       let orgId = this.$route.params.orgId;
-      this.$store.dispatch("actions/bindActions", orgId);
+      //this.$store.dispatch("actions/bindActions", orgId);
     })();
   },
 
@@ -112,7 +112,7 @@ export default {
   beforeDestroy() {
     //if the new route does not need actions, then unbind
     if (!this.$route.name in ["actions", "actionDetails"]) {
-      this.$store.dispatch("actions/unbindActions");
+      this.$store.dispatch("actions/unbindMatchingActions");
     }
   },
 };
