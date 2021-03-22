@@ -6,7 +6,7 @@ export const actionMachine = Machine({
   context: {
     /* some data */
   },
-  initial: "eligible",
+  initial: "initiating",
   states: {
     initiating: {
       on: {
@@ -15,7 +15,11 @@ export const actionMachine = Machine({
       }
     },
     eligible: {
-      on: { CANCEL: "canceled", FINISH: "done", APPROVAL_NEEDED: "initiating" }
+      on: {
+        CANCEL: "canceled",
+        FINISH: "done",
+        APPROVAL_NEEDED: "initiating"
+      }
     },
     to_approve: { on: { REJECT: "rejected", APPROVE: "approved" } },
     rejected: { on: { REQUEST_APPROVAL: "to_approve" } },

@@ -4,7 +4,10 @@
 
     <q-form @submit.prevent="submitForm">
       <q-card-section>
-        <modal-action-title :title.sync="actionToSubmit.title" ref="modalActionTitle" />
+        <modal-action-title
+          :title.sync="actionToSubmit.title"
+          ref="modalActionTitle"
+        />
       </q-card-section>
       <modal-buttons />
     </q-form>
@@ -22,7 +25,7 @@ export default {
         title: "",
         isProject: false,
         notes: "",
-        actionMchState: { value: "eligible" },
+        actionMchState: { value: "initiating" },
         impacts: [],
         estEffortHrs: null,
         effortCompletionPercentage: null,
