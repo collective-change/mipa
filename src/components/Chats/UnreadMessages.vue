@@ -66,10 +66,6 @@
 
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
-import {
-  getUserDisplayNameOrTruncatedEmail,
-  getUserPhotoURL,
-} from "src/utils/util-getUserDetails";
 
 export default {
   data() {

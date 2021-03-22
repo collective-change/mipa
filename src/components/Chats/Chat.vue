@@ -208,21 +208,6 @@ export default {
       outputString += isoString.slice(11, 16);
       return outputString;
     },
-
-    /*getUserDisplayNameOrTruncatedEmail(userId) {
-      let foundUser = this.currentOrgUsers.find((u) => u.id == userId);
-      if (foundUser)
-        return foundUser.displayName
-          ? foundUser.displayName
-          : foundUser.email.split("@")[0];
-      else return userId; 
-    },*/
-
-    /*getUserPhotoURL(userId) {
-      let foundUser = this.currentOrgUsers.find((u) => u.id == userId);
-      if (foundUser) return foundUser.photoURL ? foundUser.photoURL : undefined;
-      else return null;
-    },*/
   },
   watch: {
     chatId(newChatId, oldChatId) {
