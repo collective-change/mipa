@@ -1,9 +1,6 @@
 <template>
   <div style="position: relative">
     <div id="actionsChart" style="position: relative"></div>
-    <!--<q-dialog v-model="showAddAction">
-      <add-action @close="showAddAction = false" />
-    </q-dialog>-->
   </div>
 </template>
 
@@ -140,18 +137,20 @@ export default {
       .attr("y", -20)
       .text("Leverage");
     // end initialize axis
+
+    this.updateActionsChart();
   },
 
   computed: {
     //...mapGetters("settings", ["settings"]),
-    ...mapState("actions", ["actions"]),
+    ...mapState("actions", ["matchingActions"]),
     ...mapState("uiAction", ["uiActionChanged"]),
     ...mapState("ui", ["selectedActionId"]),
     ...mapGetters("actions", ["blockingRelationships"]),
 
     chartableActions() {
       if (this.blockingRelationships)
-        return this.actions
+        return this.matchingActions
           .filter(
             (action) =>
               action.actionLeverage > 0 &&
@@ -313,41 +312,36 @@ export default {
         }
       });
     },
-  },
-
-  watch: {
-    chartableActions: function (newActions, oldActions) {
-      if (this.chartableActions.length == 0) return;
-
+    updateActionsChart() {
       let that = this;
 
       maxEstEffortHrs = Math.max.apply(
         Math,
-        newActions.map(function (a) {
+        that.chartableActions.map(function (a) {
           return a.estEffortHrs;
         })
       );
       minEstEffortHrs = Math.min.apply(
         Math,
-        newActions.map(function (a) {
+        that.chartableActions.map(function (a) {
           return a.estEffortHrs;
         })
       );
       maxActionLeverage = Math.max.apply(
         Math,
-        newActions.map(function (a) {
+        that.chartableActions.map(function (a) {
           return a.actionLeverage;
         })
       );
       minActionLeverage = Math.min.apply(
         Math,
-        newActions.map(function (a) {
+        that.chartableActions.map(function (a) {
           return a.actionLeverage;
         })
       );
       maxOwnDirectCost = Math.max.apply(
         Math,
-        newActions.map(function (a) {
+        that.chartableActions.map(function (a) {
           return a.ownDirectCost;
         })
       );
@@ -495,6 +489,13 @@ export default {
         .on("click", function (d, i) {
           that.bubbleClick(d, i, "regularClick");
         });
+    },
+  },
+
+  watch: {
+    chartableActions: function () {
+      if (this.chartableActions.length == 0) return;
+      this.updateActionsChart();
     },
 
     selectedActionId: function () {

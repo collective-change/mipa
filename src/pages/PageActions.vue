@@ -48,7 +48,7 @@ export default {
     return { selectedAction: null };
   },
   computed: {
-    ...mapState("actions", ["actions"]),
+    ...mapState("actions", ["matchingActions"]),
     ...mapState("ui", ["selectedActionId"]),
     ...mapState("uiAction", ["uiActionChanged"]),
   },
@@ -60,7 +60,7 @@ export default {
         await new Promise((resolve) => setTimeout(resolve, 200));
 
       let orgId = this.$route.params.orgId;
-      this.$store.dispatch("actions/bindActions", orgId);
+      //this.$store.dispatch("actions/bindActions", orgId);
     })();
   },
 
@@ -79,7 +79,7 @@ export default {
   methods: {
     refreshSelectedAction() {
       let that = this;
-      this.selectedAction = this.actions.find(function (action) {
+      this.selectedAction = this.matchingActions.find(function (action) {
         return action.id == that.selectedActionId;
       });
     },
@@ -89,7 +89,7 @@ export default {
     selectedActionId() {
       this.refreshSelectedAction();
     },
-    actions() {
+    matchingActions() {
       this.refreshSelectedAction();
     },
   },
@@ -112,7 +112,7 @@ export default {
   beforeDestroy() {
     //if the new route does not need actions, then unbind
     if (!this.$route.name in ["actions", "actionDetails"]) {
-      this.$store.dispatch("actions/unbindActions");
+      this.$store.dispatch("actions/unbindMatchingActions");
     }
   },
 };

@@ -1,13 +1,15 @@
 <template>
   <div>
     <q-select
-      ref="selectRef"
+      dense
+      ref="selectUserRef"
       :label="label"
       @filter="filterFn"
       @filter-abort="abortFilterFn"
       :options="filteredUserOptions"
       emit-value
       map-options
+      clearable
       use-input
       v-bind:value="value"
       v-on:input="(value) => $emit('input', value)"
@@ -38,10 +40,12 @@ export default {
     ...mapGetters("users", ["currentOrgUsers"]),
 
     userOptions() {
-      return this.currentOrg.users.map((userId) => {
-        let foundUser = this.currentOrgUsers.find((u) => u.id == userId);
-        return { label: foundUser ? foundUser.email : userId, value: userId };
-      });
+      if (this.currentOrg == undefined) return [];
+      else
+        return this.currentOrg.users.map((userId) => {
+          let foundUser = this.currentOrgUsers.find((u) => u.id == userId);
+          return { label: foundUser ? foundUser.email : userId, value: userId };
+        });
     },
   },
 

@@ -119,15 +119,6 @@ export default {
       return outputString;
     },
 
-    getUserDisplayNameOrTruncatedEmail(userId) {
-      let foundUser = this.currentOrgUsers.find((u) => u.id == userId);
-      if (foundUser)
-        return foundUser.displayName
-          ? foundUser.displayName
-          : foundUser.email.split("@")[0];
-      else return userId;
-    },
-
     getRouteFromChat(chat) {
       let routeObj = {};
       switch (chat.subjectDocType) {
@@ -157,7 +148,7 @@ export default {
           };
         default:
           console.error(
-            `Document type does not exist in getRuteFromSubjectDoc`
+            `Document type "${chat.subjectDocType}" does not exist in getRouteFromChat`
           );
       }
       return routeObj;

@@ -68,7 +68,7 @@ export default {
   eligible: "eligible",
   approved: "approved",
   done: "done",
-  cancellation_requested: "cancellation requeted",
+  cancellation_requested: "cancellation requested",
   canceled: "canceled",
 
   //action trigger button labels

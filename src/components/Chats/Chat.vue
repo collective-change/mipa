@@ -43,13 +43,16 @@
           :name="
             message.from == currentUser.id
               ? ''
-              : getUserDisplayNameOrTruncatedEmail(message.from)
+              : getUserDisplayNameOrTruncatedEmail(
+                  currentOrgUsers,
+                  message.from
+                )
           "
           :avatar="
             message.from == currentUser.id
               ? undefined
-              : getUserPhotoURL(message.from)
-              ? getUserPhotoURL(message.from)
+              : getUserPhotoURL(currentOrgUsers, message.from)
+              ? getUserPhotoURL(currentOrgUsers, message.from)
               : undefined
           "
           :text="[message.text]"
@@ -95,6 +98,10 @@
 <script>
 import { mapState, mapActions, mapGetters } from "vuex";
 import { firebase, firebaseAuth } from "boot/firebase";
+import {
+  getUserDisplayNameOrTruncatedEmail,
+  getUserPhotoURL,
+} from "src/utils/util-getUserDetails";
 
 export default {
   components: {
@@ -160,7 +167,8 @@ export default {
         message: {
           text: this.newMessage,
           from: firebaseAuth.currentUser.uid,
-          fromNameCached: this.getUserDisplayNameOrTruncatedEmail(
+          fromNameCached: getUserDisplayNameOrTruncatedEmail(
+            this.currentOrgUsers,
             firebaseAuth.currentUser.uid
           ),
           timestamp: firebase.firestore.Timestamp.now(),
@@ -199,21 +207,6 @@ export default {
       //always include the time
       outputString += isoString.slice(11, 16);
       return outputString;
-    },
-
-    getUserDisplayNameOrTruncatedEmail(userId) {
-      let foundUser = this.currentOrgUsers.find((u) => u.id == userId);
-      if (foundUser)
-        return foundUser.displayName
-          ? foundUser.displayName
-          : foundUser.email.split("@")[0];
-      else return userId;
-    },
-
-    getUserPhotoURL(userId) {
-      let foundUser = this.currentOrgUsers.find((u) => u.id == userId);
-      if (foundUser) return foundUser.photoURL ? foundUser.photoURL : undefined;
-      else return null;
     },
   },
   watch: {
@@ -255,6 +248,10 @@ export default {
         this.scrollToBottom();
       });
     },
+  },
+  created() {
+    this.getUserDisplayNameOrTruncatedEmail = getUserDisplayNameOrTruncatedEmail; //now we can call this function in the template
+    this.getUserPhotoURL = getUserPhotoURL;
   },
   mounted() {
     if (this.chatId) this.bindCurrentChat(this.chatId);
