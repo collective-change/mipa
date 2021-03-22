@@ -120,6 +120,15 @@ export default {
           field: (row) => row.title,
           sortable: true,
         },
+        {
+          name: "responsible-accountable",
+          required: true,
+          label: this.$t("Responsible / Accountable"),
+          align: "left",
+          field: (row) => row.responsiblePerson + " / " + row.accountablePerson,
+          //field: (row) => row.title,
+          sortable: true,
+        },
         /*{
           name: "isProject",
           align: "center",
