@@ -1,6 +1,7 @@
 export { getUserDisplayNameOrTruncatedEmail, getUserPhotoURL };
 
 function getUserDisplayNameOrTruncatedEmail(currentOrgUsers, userId) {
+  if (userId === undefined) return "";
   let foundUser = currentOrgUsers.find(u => u.id == userId);
   if (foundUser)
     return foundUser.displayName

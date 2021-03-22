@@ -6,6 +6,7 @@ import { showErrorMessage } from "src/utils/util-show-error-message";
 const state = {
   currentAction: null,
   actions: [],
+  matchingActions: [],
   search: "",
   sort: "name"
 };
@@ -179,7 +180,7 @@ const actions = {
     }
   },*/
 
-  bindActions: firestoreAction(({ bindFirestoreRef }, orgId) => {
+  /*bindActions: firestoreAction(({ bindFirestoreRef }, orgId) => {
     let userId = firebaseAuth.currentUser.uid;
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
@@ -198,6 +199,36 @@ const actions = {
 
   unbindActions: firestoreAction(({ unbindFirestoreRef }) => {
     unbindFirestoreRef("actions", true); //reset data when unbinding
+  }), */
+
+  bindMatchingActions: firestoreAction(({ bindFirestoreRef }, payload) => {
+    let userId = firebaseAuth.currentUser.uid;
+    let query = firebaseDb
+      .collection("actions")
+      .where("orgId", "==", payload.orgId)
+      .where("actionMchState.value", "in", payload.actionStatesToSearch);
+    if (payload.responsiblePersonToSearch)
+      query = query.where(
+        "responsiblePerson",
+        "==",
+        payload.responsiblePersonToSearch
+      );
+    if (payload.accountablePersonToSearch)
+      query = query.where(
+        "responsiblePerson",
+        "==",
+        payload.accountablePersonToSearch
+      );
+    // return the promise returned by `bindFirestoreRef`
+    return bindFirestoreRef("matchingActions", query, {
+      maxRefDepth: 1,
+      reset: true, //reset actions so they don't linger when switching orgs
+      wait: false
+    });
+  }),
+
+  unbindMatchingActions: firestoreAction(({ unbindFirestoreRef }) => {
+    unbindFirestoreRef("matchingActions", true); //reset data when unbinding
   }),
 
   setSearch({ commit }, value) {

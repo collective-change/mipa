@@ -467,7 +467,7 @@ export default {
     },
     unbindAllOrgRelatedData() {
       this.$store.dispatch("orgs/unbindCurrentOrg");
-      this.$store.dispatch("actions/unbindActions");
+      this.$store.dispatch("actions/unbindMatchingActions");
       this.$store.dispatch("model/unbindCurrentModel");
       this.$store.dispatch("model/unbindNodes");
       //this.$store.dispatch("calcResults/unbindBaseline");

@@ -68,7 +68,6 @@ export default {
   beforeDestroy() {
     //if the new route does not need actions, then unbind
     if (!this.$route.name in ["actionDetails"]) {
-      //this.$store.dispatch("actions/unbindActions");
       this.$store.dispatch("actions/unbindCurrentAction");
     }
   },

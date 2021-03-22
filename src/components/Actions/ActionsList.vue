@@ -1,9 +1,8 @@
 <template>
   <div>
-    {{ currentOrgUsers }}
     <q-table
       title="Actions"
-      :data="actions"
+      :data="matchingActions"
       :columns="columnsI18n"
       row-key="id"
       :filter="filter"
@@ -15,6 +14,7 @@
     >
       <template v-slot:top>
         <div class="col-2 q-table__title">{{ $t("Actions") }}</div>
+        <q-space />
         <div class="row q-gutter-sm">
           <q-btn
             color="primary"
@@ -27,19 +27,35 @@
             :buttonLabel="$t('Recalculate')"
           />
         </div>
-
-        <q-space />
-        <q-input
-          dense
-          debounce="300"
-          color="primary"
-          v-model="filter"
-          clearable
-        >
-          <template v-slot:append>
-            <q-icon name="search" />
-          </template>
-        </q-input>
+        <div class="row q-gutter-sm">
+          <select-action-states
+            class="q-pl-sm"
+            label="States"
+            v-model="actionStatesToSearch"
+          />
+          <select-user
+            class="q-pl-sm"
+            label="Responsible"
+            v-model="responsiblePersonToSearch"
+          />
+          <select-user
+            class="q-pl-sm"
+            label="Accountable"
+            v-model="accountablePersonToSearch"
+          />
+          <q-input
+            dense
+            debounce="300"
+            color="primary"
+            v-model="filter"
+            clearable
+            class="q-pl-sm"
+          >
+            <template v-slot:append>
+              <q-icon name="search" />
+            </template>
+          </q-input>
+        </div>
       </template>
     </q-table>
     <q-dialog v-model="showAddAction">
@@ -73,12 +89,23 @@ export default {
   components: {
     "add-action": require("components/Actions/Modals/AddAction.vue").default,
     "calculator-ui": require("components/Calc/CalculatorUi.vue").default,
+    "select-user": require("components/Users/SelectUser.vue").default,
+    "select-action-states": require("components/Actions/SelectActionStates.vue")
+      .default,
   },
   data() {
     return {
       showAddAction: false,
       loading: false,
       filter: "",
+      actionStatesToSearch: [
+        "initiating",
+        "eligible",
+        "to_approve",
+        "approved",
+      ],
+      responsiblePersonToSearch: null,
+      accountablePersonToSearch: null,
       //rowCount: 10, //only used in sample code; delete when not needed anymore
       pagination: {
         sortBy: "actionLeverage",
@@ -92,9 +119,10 @@ export default {
 
   computed: {
     //...mapGetters("settings", ["settings"]),
-    ...mapState("actions", ["actions"]),
+    ...mapState("actions", ["matchingActions"]),
     ...mapState("uiAction", ["uiActionChanged"]),
     ...mapState("ui", ["selectedActionId"]),
+    ...mapState("orgs", ["currentOrg"]),
     ...mapGetters("users", ["currentOrgUsers"]),
     columnsI18n() {
       let columns = [
@@ -227,6 +255,8 @@ export default {
     this.getUserDisplayNameOrTruncatedEmail = getUserDisplayNameOrTruncatedEmail;
   },
 
+  mounted() {},
+
   methods: {
     formatNumber,
     onRowClick(evt, row) {
@@ -278,6 +308,29 @@ export default {
         ];
         this.loading = false;
       }, 500);
+    },
+    dispatchBindMatchingActions() {
+      this.$store.dispatch("actions/bindMatchingActions", {
+        orgId: this.currentOrg.id,
+        actionStatesToSearch: this.actionStatesToSearch,
+        responsiblePersonToSearch: this.responsiblePersonToSearch,
+        accountablePersonToSearch: this.accountablePersonToSearch,
+      });
+    },
+  },
+
+  watch: {
+    currentOrg() {
+      this.dispatchBindMatchingActions();
+    },
+    actionStatesToSearch() {
+      this.dispatchBindMatchingActions();
+    },
+    responsiblePersonToSearch() {
+      this.dispatchBindMatchingActions();
+    },
+    accountablePersonToSearch() {
+      this.dispatchBindMatchingActions();
     },
   },
 };
