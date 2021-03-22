@@ -48,7 +48,7 @@ export default {
     return { selectedAction: null };
   },
   computed: {
-    ...mapState("actions", ["actions"]),
+    ...mapState("actions", ["matchingActions"]),
     ...mapState("ui", ["selectedActionId"]),
     ...mapState("uiAction", ["uiActionChanged"]),
   },
@@ -79,7 +79,7 @@ export default {
   methods: {
     refreshSelectedAction() {
       let that = this;
-      this.selectedAction = this.actions.find(function (action) {
+      this.selectedAction = this.matchingActions.find(function (action) {
         return action.id == that.selectedActionId;
       });
     },
@@ -89,7 +89,7 @@ export default {
     selectedActionId() {
       this.refreshSelectedAction();
     },
-    actions() {
+    matchingActions() {
       this.refreshSelectedAction();
     },
   },

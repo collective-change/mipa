@@ -40,9 +40,9 @@ export default {
       )
         await new Promise((resolve) => setTimeout(resolve, 200));
 
-      //let orgId = this.$route.params.orgId;
+      let orgId = this.$route.params.orgId;
       let actionId = this.$route.params.actionId;
-      //await this.$store.dispatch("actions/bindActions", orgId);
+      await this.$store.dispatch("actions/bindActions", orgId);
       await this.$store.dispatch("actions/bindCurrentAction", actionId);
     })();
   },

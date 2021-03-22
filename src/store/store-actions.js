@@ -180,7 +180,7 @@ const actions = {
     }
   },*/
 
-  /*bindActions: firestoreAction(({ bindFirestoreRef }, orgId) => {
+  bindActions: firestoreAction(({ bindFirestoreRef }, orgId) => {
     let userId = firebaseAuth.currentUser.uid;
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
@@ -199,7 +199,7 @@ const actions = {
 
   unbindActions: firestoreAction(({ unbindFirestoreRef }) => {
     unbindFirestoreRef("actions", true); //reset data when unbinding
-  }), */
+  }),
 
   bindMatchingActions: firestoreAction(({ bindFirestoreRef }, payload) => {
     let userId = firebaseAuth.currentUser.uid;
