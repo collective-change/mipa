@@ -1,5 +1,6 @@
 <template>
   <div>
+    {{ currentOrgUsers }}
     <q-table
       title="Actions"
       :data="actions"
@@ -51,6 +52,10 @@
 import { mapGetters, mapState } from "vuex";
 import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
 import { formatNumber } from "src/utils/util-formatNumber";
+import {
+  getUserDisplayNameOrTruncatedEmail,
+  getUserPhotoURL,
+} from "src/utils/util-getUserDetails";
 
 function getRelationshipsDisplay(row) {
   let relationships = [];
@@ -90,6 +95,7 @@ export default {
     ...mapState("actions", ["actions"]),
     ...mapState("uiAction", ["uiActionChanged"]),
     ...mapState("ui", ["selectedActionId"]),
+    ...mapGetters("users", ["currentOrgUsers"]),
     columnsI18n() {
       let columns = [
         {
@@ -123,9 +129,18 @@ export default {
         {
           name: "responsible-accountable",
           required: true,
-          label: this.$t("Responsible / Accountable"),
+          label: this.$t("Responsible, accountable"),
           align: "left",
-          field: (row) => row.responsiblePerson + " / " + row.accountablePerson,
+          field: (row) =>
+            getUserDisplayNameOrTruncatedEmail(
+              this.currentOrgUsers,
+              row.responsiblePerson
+            ) +
+            ", " +
+            getUserDisplayNameOrTruncatedEmail(
+              this.currentOrgUsers,
+              row.accountablePerson
+            ),
           //field: (row) => row.title,
           sortable: true,
         },
@@ -206,6 +221,10 @@ export default {
       ];
       return columns;
     },
+  },
+
+  created() {
+    this.getUserDisplayNameOrTruncatedEmail = getUserDisplayNameOrTruncatedEmail;
   },
 
   methods: {
