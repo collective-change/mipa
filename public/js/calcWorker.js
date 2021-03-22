@@ -923,13 +923,13 @@ function doImpact(sim, nodeIndex, impact, operandScalingFactor = 1) {
     case "*":
       sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.multiply(
         sim.scope["$" + sim.sortedNodes[nodeIndex].id],
-        impact.operand * operandScalingFactor
+        1 + (impact.operand - 1) * operandScalingFactor
       );
       break;
     case "/":
       sim.scope["$" + sim.sortedNodes[nodeIndex].id] = math.divide(
         sim.scope["$" + sim.sortedNodes[nodeIndex].id],
-        impact.operand * operandScalingFactor
+        1 + (impact.operand - 1) * operandScalingFactor
       );
       break;
     case "=":
