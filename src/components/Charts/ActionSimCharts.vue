@@ -36,12 +36,12 @@
                   size="xs"
                   :options="[
                     {
-                      label: 'difference',
-                      value: showDifferenceConfig,
-                    },
-                    {
                       label: 'values',
                       value: showValuesConfig,
+                    },
+                    {
+                      label: 'difference',
+                      value: showDifferenceConfig,
                     },
                   ]"
                 />
