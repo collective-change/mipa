@@ -10,6 +10,7 @@ export const actionMachine = Machine({
   states: {
     initiating: {
       on: {
+        CANCEL: "canceled",
         APPROVAL_NOT_NEEDED: "eligible",
         REQUEST_APPROVAL: "to_approve"
       }

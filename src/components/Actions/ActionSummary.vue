@@ -74,6 +74,11 @@
             />
             <q-btn-group v-if="uiAction.actionMchState.value == 'initiating'">
               <q-btn
+                :label="$t('Cancel')"
+                @click="actionService.send('CANCEL')"
+                color="primary"
+              />
+              <q-btn
                 :label="$t('Request approval')"
                 @click="actionService.send('REQUEST_APPROVAL')"
                 color="primary"
