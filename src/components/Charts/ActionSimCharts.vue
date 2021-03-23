@@ -36,12 +36,12 @@
                   size="xs"
                   :options="[
                     {
-                      label: 'difference',
-                      value: showDifferenceConfig,
-                    },
-                    {
                       label: 'values',
                       value: showValuesConfig,
+                    },
+                    {
+                      label: 'difference',
+                      value: showDifferenceConfig,
                     },
                   ]"
                 />
@@ -232,10 +232,10 @@ export default {
               width: "80%",
             },
             legend: { position: "bottom" },
-            series: this.showDifferenceConfig,
+            series: this.showValuesConfig,
             width: 360,
             height: 240,
-            explorer: {}
+            explorer: {},
           },
         };
         this.chartsArr.push(chart);
