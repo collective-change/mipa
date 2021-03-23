@@ -8,10 +8,15 @@
         square
         v-for="actionId in costsAndImpacts.includedActionIds"
         :key="actionId"
-      >{{ getActionTitle(actionId) }}</q-chip>
+        >{{ getActionTitle(actionId) }}</q-chip
+      >
     </div>
     <q-list>
-      <q-item v-for="impact in costsAndImpacts.impacts" v-bind:key="impact.id" tag="label">
+      <q-item
+        v-for="impact in costsAndImpacts.impacts"
+        v-bind:key="impact.id"
+        tag="label"
+      >
         <q-item-section>
           <!-- <q-item-label overline>{{ impact.id }}</q-item-label> -->
           <q-item-label>
@@ -26,14 +31,14 @@
               {{ mathSymbols[impact.operation] }} {{ impact.operand }}
               {{ durationTypeText[impact.durationType] }}
               {{
-              durationTypesWithDuration.includes(impact.durationType)
-              ? impact.durationNumber
-              : ""
+                durationTypesWithDuration.includes(impact.durationType)
+                  ? impact.durationNumber
+                  : ""
               }}
               {{
-              durationTypesWithDuration.includes(impact.durationType)
-              ? impact.durationUnit
-              : ""
+                durationTypesWithDuration.includes(impact.durationType)
+                  ? impact.durationUnit
+                  : ""
               }}
             </div>
           </q-item-label>

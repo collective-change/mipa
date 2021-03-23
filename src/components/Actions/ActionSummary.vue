@@ -298,7 +298,7 @@
           <div class="text-h6">Computed</div>
           <q-list bordered separator class="rounded-borders">
             <q-expansion-item
-              label="Direct costs"
+              label="Impacts from related actions"
               header-class="text-weight-medium"
             >
               <simpleCostsAndImpacts
