@@ -350,8 +350,9 @@ export default {
         );
 
         //add impacted nodes
+        let that = this;
         this.uiAction.impacts.forEach(function (impact) {
-          this.defaultNodeIdsToChart.push(impact.nodeId);
+          that.defaultNodeIdsToChart.push(impact.nodeId);
         });
         //add benefit and cost nodes
         this.defaultNodeIdsToChart.push(this.currentModel.roleNodes.orgBenefit);
