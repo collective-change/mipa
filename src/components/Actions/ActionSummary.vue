@@ -178,7 +178,7 @@
               />
             </q-btn-group>
 
-            <q-btn color="primary" label="Meet about this" />
+            <!-- <q-btn color="primary" label="Meet about this" /> -->
           </div>
         </div>
       </div>
