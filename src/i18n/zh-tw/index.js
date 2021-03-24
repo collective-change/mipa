@@ -110,5 +110,8 @@ export default {
   estEffortHrs: "預估人員時間",
   percentDone: "% 完成",
   estSpending: "預估支出金額",
-  spentAmount: "已支出金額"
+  spentAmount: "已支出金額",
+
+  // for ActionRelationships.vue
+  "(some action)": "(某行動)"
 };

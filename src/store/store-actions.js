@@ -386,8 +386,6 @@ const getters = {
         []
       );
     });
-    //console.log("relationshipLinks updated");
-    console.log(relationships);
     return relationships;
   }
 };

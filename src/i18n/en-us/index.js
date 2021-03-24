@@ -110,5 +110,8 @@ export default {
   estEffortHrs: "Estimated hours",
   percentDone: "% done",
   estSpending: "Estimated spending",
-  spentAmount: "Spent amount"
+  spentAmount: "Spent amount",
+
+  // for ActionRelationships.vue
+  "(some action)": "(some action)"
 };

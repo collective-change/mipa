@@ -255,7 +255,7 @@ export default {
 
     getActionTitle(actionId) {
       let action = this.actions.find((a) => a.id == actionId);
-      return action.title;
+      return action ? action.title : this.$t("(some action)");
     },
 
     promptToDelete(targetActionId, relationshipType) {
