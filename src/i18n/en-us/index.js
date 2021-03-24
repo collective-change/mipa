@@ -92,6 +92,7 @@ export default {
   Leverage: "Leverage",
   State: "State",
   Title: "Title",
+  "Responsible, accountable": "Responsible, accountable",
   isProject: "Is project",
   marginalTotalBenefitNpv: "Total benefit",
   marginalTotalCostNpv: "Total cost",

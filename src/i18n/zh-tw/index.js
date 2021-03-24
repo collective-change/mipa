@@ -92,6 +92,7 @@ export default {
   Leverage: "效應比",
   State: "狀態",
   Title: "標題",
+  "Responsible, accountable": "負責, 當責",
   isProject: "專案",
   marginalTotalBenefitNpv: "總邊際效益",
   marginalTotalCostNpv: "總邊際成本",
