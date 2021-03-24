@@ -251,14 +251,17 @@ export default {
     this.getUserDisplayNameOrTruncatedEmail = getUserDisplayNameOrTruncatedEmail;
   },
 
-  mounted() {},
+  mounted() {
+    this.dispatchBindMatchingActions();
+  },
 
   methods: {
     formatNumber,
     onRowClick(evt, row) {
-      //console.log("clicked on", row.id);
       if (this.selectedActionId == row.id) {
-        return;
+        if (!this.uiActionChanged) {
+          this.$store.dispatch("ui/setSelectedActionId", row.id);
+        } else return;
       }
       if (this.uiActionChanged) {
         this.$q
@@ -306,11 +309,6 @@ export default {
       }, 500);
     },
     dispatchBindMatchingActions() {
-      console.log(
-        "dispatching for ",
-        this.responsiblePersonToSearch,
-        this.accountablePersonToSearch
-      );
       this.$store.dispatch("actions/bindMatchingActions", {
         orgId: this.currentOrg.id,
         actionStatesToSearch: this.actionStatesToSearch,
