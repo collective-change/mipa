@@ -48,16 +48,19 @@ export default {
   ideate: "醞釀計畫",
   "Strategic analysis": "策略性分析",
   Actions: "行動",
+  actions: "行動",
   "Action templates": "行動模板",
 
   Prioritize: "訂出優先",
+  prioritize: "訂出優先",
   Priorities: "優先事項",
   "Resource allocation": "資源安排",
   Roadmap: "路徑圖",
 
   Achieve: "協調執行",
+  achieve: "協調執行",
   "My current focus": "我的焦聚",
-  "To do": "待辦",
+  "My todo": "待辦",
   "Time log": "時間紀錄",
   "My team's work": "小組的工作",
 

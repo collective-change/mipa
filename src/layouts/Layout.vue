@@ -376,7 +376,14 @@ export default {
               to: "/placeholder",
               disable: true,
             },
-            { text: this.$t("To do"), to: "/placeholder", disable: true },
+            {
+              text: this.$t("My todo"),
+              to: {
+                name: "my-todo",
+                params: { orgNameSlug: this.orgNameSlug, orgId: this.orgId },
+              },
+              disable: false,
+            },
             { text: this.$t("Time log"), to: "/placeholder", disable: true },
             {
               text: this.$t("My team's work"),

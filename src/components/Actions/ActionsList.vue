@@ -93,19 +93,15 @@ export default {
     "select-action-states": require("components/Actions/SelectActionStates.vue")
       .default,
   },
+  props: ["options"],
   data() {
     return {
       showAddAction: false,
       loading: false,
       filter: "",
-      actionStatesToSearch: [
-        "initiating",
-        "eligible",
-        "to_approve",
-        "approved",
-      ],
-      responsiblePersonToSearch: null,
-      accountablePersonToSearch: null,
+      actionStatesToSearch: this.options.actionStatesToSearch,
+      responsiblePersonToSearch: this.options.responsiblePersonToSearch,
+      accountablePersonToSearch: this.options.accountablePersonToSearch,
       //rowCount: 10, //only used in sample code; delete when not needed anymore
       pagination: {
         sortBy: "actionLeverage",
@@ -310,10 +306,18 @@ export default {
       }, 500);
     },
     dispatchBindMatchingActions() {
+      console.log(
+        "dispatching for ",
+        this.responsiblePersonToSearch,
+        this.accountablePersonToSearch
+      );
       this.$store.dispatch("actions/bindMatchingActions", {
         orgId: this.currentOrg.id,
         actionStatesToSearch: this.actionStatesToSearch,
-        responsiblePersonToSearch: this.responsiblePersonToSearch,
+        responsiblePersonToSearch:
+          this.responsiblePersonToSearch == "me"
+            ? firebaseAuth.currentUser.uid
+            : this.responsiblePersonToSearch,
         accountablePersonToSearch: this.accountablePersonToSearch,
       });
     },
