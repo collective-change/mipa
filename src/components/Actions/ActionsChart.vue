@@ -146,10 +146,10 @@ export default {
     ...mapState("actions", ["matchingActions"]),
     ...mapState("uiAction", ["uiActionChanged"]),
     ...mapState("ui", ["selectedActionId"]),
-    ...mapGetters("actions", ["blockingRelationships"]),
+    ...mapGetters("actions", ["blockingRelationshipsOfMatchingActions"]),
 
     chartableActions() {
-      if (this.blockingRelationships)
+      if (this.blockingRelationshipsOfMatchingActions)
         return this.matchingActions
           .filter(
             (action) =>
@@ -192,9 +192,9 @@ export default {
       }
     },
 
-    getBlockingLinks(blockingRelationships) {
+    getBlockingLinks(blockingRelationshipsOfMatchingActions) {
       let chartableLinks = [];
-      blockingRelationships.forEach((relationship) => {
+      blockingRelationshipsOfMatchingActions.forEach((relationship) => {
         let blockerSouth = this.getPole(relationship.blockerId, "south");
         let blockeeNorth = this.getPole(relationship.blockeeId, "north");
         let source = blockerSouth
@@ -386,7 +386,9 @@ export default {
         return `M${x0},${y0} C${x1},${y1} ${x2},${y2} ${x},${y}`;
       };
 
-      let blockingLinkData = this.getBlockingLinks(this.blockingRelationships);
+      let blockingLinkData = this.getBlockingLinks(
+        this.blockingRelationshipsOfMatchingActions
+      );
       //console.log("blockingLinkData", blockingLinkData);
 
       this.svgInner

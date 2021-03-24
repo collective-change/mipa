@@ -353,6 +353,42 @@ const getters = {
     });
     //console.log("relationshipLinks updated");
     return relationships;
+  },
+  blockingRelationshipsOfMatchingActions: state => {
+    let relationships = [];
+    state.matchingActions.forEach(function(action) {
+      if ("blockerActionIds" in action) {
+        action.blockerActionIds.forEach(function(blockerId) {
+          relationships.push({
+            blockerId: blockerId,
+            blockeeId: action.id
+          });
+        });
+      }
+      if ("blockeeActionIds" in action) {
+        action.blockeeActionIds.forEach(function(blockeeId) {
+          relationships.push({
+            blockerId: action.id,
+            blockeeId: blockeeId
+          });
+        });
+      }
+      //remove duplicate relationships
+      relationships = relationships.reduce(
+        (acc, r) =>
+          acc.concat(
+            acc.find(
+              r1 => r1.blockerId == r.blockerId && r1.blockeeId == r.blockeeId
+            )
+              ? []
+              : [r]
+          ),
+        []
+      );
+    });
+    //console.log("relationshipLinks updated");
+    console.log(relationships);
+    return relationships;
   }
 };
 
