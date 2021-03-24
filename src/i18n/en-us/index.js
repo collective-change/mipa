@@ -48,16 +48,19 @@ export default {
   ideate: "ideate",
   "Strategic analysis": "Strategic analysis",
   Actions: "Actions",
+  actions: "actions",
   "Action templates": "Action templates",
 
   Prioritize: "Prioritize",
+  prioritize: "prioritize",
   Priorities: "Priorities",
   "Resource allocation": "Resource allocation",
   Roadmap: "Roadmap",
 
   Achieve: "Achieve",
+  achieve: "achieve",
   "My current focus": "My current focus",
-  "To do": "To do",
+  "My todo": "My todo",
   "Time log": "Time log",
   "My team's work": "My team's work",
 

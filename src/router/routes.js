@@ -34,6 +34,11 @@ const routes = [
         component: () => import("pages/PageActions.vue")
       },
       {
+        path: "/org/:orgNameSlug/achieve/my-todo/:orgId",
+        name: "my-todo",
+        component: () => import("pages/PageMyTodo.vue")
+      },
+      {
         path: "/org/:orgNameSlug/action-details/:orgId/:actionId",
         name: "actionDetails",
         component: () => import("pages/PageActionDetails.vue")

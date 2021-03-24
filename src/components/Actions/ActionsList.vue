@@ -93,19 +93,15 @@ export default {
     "select-action-states": require("components/Actions/SelectActionStates.vue")
       .default,
   },
+  props: ["options"],
   data() {
     return {
       showAddAction: false,
       loading: false,
       filter: "",
-      actionStatesToSearch: [
-        "initiating",
-        "eligible",
-        "to_approve",
-        "approved",
-      ],
-      responsiblePersonToSearch: null,
-      accountablePersonToSearch: null,
+      actionStatesToSearch: this.options.actionStatesToSearch,
+      responsiblePersonToSearch: this.options.responsiblePersonToSearch,
+      accountablePersonToSearch: this.options.accountablePersonToSearch,
       //rowCount: 10, //only used in sample code; delete when not needed anymore
       pagination: {
         sortBy: "actionLeverage",
@@ -255,14 +251,17 @@ export default {
     this.getUserDisplayNameOrTruncatedEmail = getUserDisplayNameOrTruncatedEmail;
   },
 
-  mounted() {},
+  mounted() {
+    this.dispatchBindMatchingActions();
+  },
 
   methods: {
     formatNumber,
     onRowClick(evt, row) {
-      //console.log("clicked on", row.id);
       if (this.selectedActionId == row.id) {
-        return;
+        if (!this.uiActionChanged) {
+          this.$store.dispatch("ui/setSelectedActionId", row.id);
+        } else return;
       }
       if (this.uiActionChanged) {
         this.$q
@@ -310,12 +309,16 @@ export default {
       }, 500);
     },
     dispatchBindMatchingActions() {
-      this.$store.dispatch("actions/bindMatchingActions", {
-        orgId: this.currentOrg.id,
-        actionStatesToSearch: this.actionStatesToSearch,
-        responsiblePersonToSearch: this.responsiblePersonToSearch,
-        accountablePersonToSearch: this.accountablePersonToSearch,
-      });
+      if (this.currentOrg)
+        this.$store.dispatch("actions/bindMatchingActions", {
+          orgId: this.currentOrg.id,
+          actionStatesToSearch: this.actionStatesToSearch,
+          responsiblePersonToSearch:
+            this.responsiblePersonToSearch == "me"
+              ? firebaseAuth.currentUser.uid
+              : this.responsiblePersonToSearch,
+          accountablePersonToSearch: this.accountablePersonToSearch,
+        });
     },
   },
 

@@ -47,7 +47,7 @@ export default {
           "to_approve",
           "approved",
         ],
-        responsiblePersonToSearch: null,
+        responsiblePersonToSearch: "me",
         accountablePersonToSearch: null,
       },
     };
@@ -56,6 +56,7 @@ export default {
     ...mapState("actions", ["matchingActions"]),
     ...mapState("ui", ["selectedActionId"]),
     ...mapState("uiAction", ["uiActionChanged"]),
+    ...mapState("auth", ["userId"]),
   },
   created() {
     (async () => {
@@ -80,6 +81,7 @@ export default {
       }
     },
   },*/
+
   mounted() {
     this.refreshSelectedAction();
   },
