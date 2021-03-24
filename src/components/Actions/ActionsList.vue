@@ -309,15 +309,16 @@ export default {
       }, 500);
     },
     dispatchBindMatchingActions() {
-      this.$store.dispatch("actions/bindMatchingActions", {
-        orgId: this.currentOrg.id,
-        actionStatesToSearch: this.actionStatesToSearch,
-        responsiblePersonToSearch:
-          this.responsiblePersonToSearch == "me"
-            ? firebaseAuth.currentUser.uid
-            : this.responsiblePersonToSearch,
-        accountablePersonToSearch: this.accountablePersonToSearch,
-      });
+      if (this.currentOrg)
+        this.$store.dispatch("actions/bindMatchingActions", {
+          orgId: this.currentOrg.id,
+          actionStatesToSearch: this.actionStatesToSearch,
+          responsiblePersonToSearch:
+            this.responsiblePersonToSearch == "me"
+              ? firebaseAuth.currentUser.uid
+              : this.responsiblePersonToSearch,
+          accountablePersonToSearch: this.accountablePersonToSearch,
+        });
     },
   },
 
