@@ -152,6 +152,8 @@ const actions = {
     //let userId = firebaseAuth.currentUser.uid;
 
     action.initiator = firebaseAuth.currentUser.uid;
+    action.responsiblePerson = firebaseAuth.currentUser.uid;
+    action.accountablePerson = firebaseAuth.currentUser.uid;
     action.createTime = firebase.firestore.FieldValue.serverTimestamp();
     action.createdBy = firebaseAuth.currentUser.uid;
     action.updateTime = firebase.firestore.FieldValue.serverTimestamp();
