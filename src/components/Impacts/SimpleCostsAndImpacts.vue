@@ -138,7 +138,8 @@ export default {
 
     getActionTitle(actionId) {
       let action = this.actions.find((a) => a.id == actionId);
-      return action.title;
+      if (action) return action.title;
+      else return actionId;
     },
 
     /*promptToDelete(impactId) {
