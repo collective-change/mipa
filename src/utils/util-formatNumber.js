@@ -1,5 +1,5 @@
 export function formatNumber(num, precision) {
-  if (typeof num == "undefined" || num == null) return "";
+  if (typeof num == "undefined" || num == null || num == "") return "";
   else if (typeof precision != "undefined" && Number.isInteger(precision)) {
     //return num.toExponential(precision - 1);
     if (Math.abs(num) >= 1)
