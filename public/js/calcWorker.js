@@ -102,12 +102,15 @@ async function calculateResultsOfActions(
     async (action, index, actionsToCalculate) => {
       let startTimeMs = new Date();
 
+      //TODO: if action has children that are not in actionsResults: add/move them to before this action in actionsToCalculate array
+
       //calculate branchAndBlockeesResults, save effectiveChainedCostsAndImpacts of self
       let branchAndBlockeesResults = await simulateActionWithDependencies(
         sim,
         action,
         averageEffortCostPerHour,
-        defaultBaseline
+        defaultBaseline,
+        actionsResults
         //yearlyDiscountRate
       );
 
@@ -152,12 +155,12 @@ async function calculateResultsOfActions(
 
       //if branchAndBlockeesResults changed significantly:
       if (
-        true || //TODO: get rid of this line when done with development
-        (action.branchAndBlockeesResultsNumbers &&
-          resultsNumbersChangedSignificantly(
-            branchAndBlockeesResults.actionResultsNumbers,
-            action.branchAndBlockeesResultsNumbers
-          ))
+        //true || //TODO: get rid of this line when done with development
+        action.branchAndBlockeesResultsNumbers &&
+        resultsNumbersChangedSignificantly(
+          branchAndBlockeesResults.actionResultsNumbers,
+          action.branchAndBlockeesResultsNumbers
+        )
       ) {
         console.log("branchAndBlockeesResults changed significantly");
         //if action has a parent: add/move parent to end of actionsToCalculate array
@@ -178,7 +181,7 @@ async function calculateResultsOfActions(
           );
         }
 
-        //if action has children: write branchAndBlockeesResults to
+        //TODO: if action has children: write branchAndBlockeesResults to
         //descendants in actionsResults array (add in if missing) as
         //inheritedResults (if leverage is higher) and update
         //descendants' effectiveResults
@@ -255,7 +258,8 @@ async function simulateActionWithDependencies(
   sim,
   action,
   averageEffortCostPerHour,
-  defaultBaseline
+  defaultBaseline,
+  actionsResults
   //yearlyDiscountRate
 ) {
   let costsAndImpactsOfSelf = composeCostsAndImpactsOfSelf(
@@ -266,7 +270,11 @@ async function simulateActionWithDependencies(
   let {
     costsAndImpacts: effectiveChainedCostsAndImpactsFromBranch,
     childrensCostsAndImpacts
-  } = await includeCostsAndImpactsFromChildren(action, costsAndImpactsOfSelf);
+  } = await includeCostsAndImpactsFromChildren(
+    action,
+    costsAndImpactsOfSelf,
+    actionsResults
+  );
 
   // simulate impact sets by including more blockees one by one until leverage drops
 
@@ -290,7 +298,8 @@ async function simulateActionWithDependencies(
   if (action.blockeeActionIds && action.blockeeActionIds.length) {
     //console.log("blockeeActionIds", action.blockeeActionIds);
     blockees = await getActionsFromFirestoreAndUpdateWithNewestValues(
-      action.blockeeActionIds
+      action.blockeeActionIds,
+      actionsResults
     );
 
     //console.log("blockees", blockees);
@@ -385,29 +394,34 @@ function composeCostsAndImpactsOfSelf(action, averageEffortCostPerHour) {
 }
 
 function includeActionInCostsAndImpacts(action, costsAndImpacts) {
-  let ae = action.effectiveChainedCostsAndImpacts;
-
-  let newCostsAndImpacts = {
-    estEffortHrs: costsAndImpacts.estEffortHrs + ae.estEffortHrs,
-    estEffortCosts: costsAndImpacts.estEffortCosts + ae.estEffortCosts,
-    outstandingDirectEffortHrs:
-      costsAndImpacts.outstandingDirectEffortHrs +
-      ae.outstandingDirectEffortHrs,
-    outstandingDirectEffortCosts:
-      costsAndImpacts.outstandingDirectEffortCosts +
-      ae.outstandingDirectEffortCosts,
-    estSpending: costsAndImpacts.estSpending + ae.estSpending,
-    estDirectCosts: costsAndImpacts.estDirectCosts + ae.estDirectCosts,
-    spentAmount: costsAndImpacts.spentAmount + ae.spentAmount,
-    outstandingSpending:
-      costsAndImpacts.outstandingSpending + ae.outstandingSpending,
-    outstandingDirectCosts:
-      costsAndImpacts.outstandingDirectCosts + ae.outstandingDirectCosts,
-
-    impacts: [...costsAndImpacts.impacts, ...ae.impacts],
-    includedActionIds: [...costsAndImpacts.includedActionIds, action.id]
-  };
-  return newCostsAndImpacts;
+  if (action.effectiveChainedCostsAndImpacts) {
+    let ae = action.effectiveChainedCostsAndImpacts;
+    let newCostsAndImpacts = {
+      estEffortHrs: costsAndImpacts.estEffortHrs + ae.estEffortHrs,
+      estEffortCosts: costsAndImpacts.estEffortCosts + ae.estEffortCosts,
+      outstandingDirectEffortHrs:
+        costsAndImpacts.outstandingDirectEffortHrs +
+        ae.outstandingDirectEffortHrs,
+      outstandingDirectEffortCosts:
+        costsAndImpacts.outstandingDirectEffortCosts +
+        ae.outstandingDirectEffortCosts,
+      estSpending: costsAndImpacts.estSpending + ae.estSpending,
+      estDirectCosts: costsAndImpacts.estDirectCosts + ae.estDirectCosts,
+      spentAmount: costsAndImpacts.spentAmount + ae.spentAmount,
+      outstandingSpending:
+        costsAndImpacts.outstandingSpending + ae.outstandingSpending,
+      outstandingDirectCosts:
+        costsAndImpacts.outstandingDirectCosts + ae.outstandingDirectCosts,
+      impacts: [...costsAndImpacts.impacts, ...ae.impacts],
+      includedActionIds: [...costsAndImpacts.includedActionIds, action.id]
+    };
+    return newCostsAndImpacts;
+  } else {
+    console.log(
+      "effectiveChainedCostsAndImpacts do not exist for " + action.title
+    );
+    return costsAndImpacts;
+  }
 }
 
 function simulateCostsAndImpacts(
@@ -571,12 +585,17 @@ function getEmptyCostsAndImpacts() {
   return costsAndImpacts;
 }
 
-async function includeCostsAndImpactsFromChildren(action, costsAndImpacts) {
+async function includeCostsAndImpactsFromChildren(
+  action,
+  costsAndImpacts,
+  actionsResults
+) {
   let childrensCostsAndImpacts = getEmptyCostsAndImpacts();
   if (action.childrenActionIds && action.childrenActionIds.length) {
     console.log("getting children for", action.title);
     let childrenActions = await getActionsFromFirestoreAndUpdateWithNewestValues(
-      action.childrenActionIds
+      action.childrenActionIds,
+      actionsResults
     );
 
     childrenActions.forEach(function(child) {
@@ -591,9 +610,21 @@ async function includeCostsAndImpactsFromChildren(action, costsAndImpacts) {
   return { costsAndImpacts, childrensCostsAndImpacts };
 }
 
-async function getActionsFromFirestoreAndUpdateWithNewestValues(actionIds) {
-  let actions = getActionsFromFirestore(actionIds);
+async function getActionsFromFirestoreAndUpdateWithNewestValues(
+  actionIds,
+  actionsResults
+) {
+  let actions = await getActionsFromFirestore(actionIds);
   //TODO: update actions with newest values from actionsResults
+  //for each action, if in actionsResults, then update actions with values
+  actions.forEach(action => {
+    const foundAction = actionsResults.find(a => a.id == action.id);
+    if (foundAction) {
+      action.effectiveChainedCostsAndImpacts =
+        foundAction.effectiveChainedCostsAndImpacts;
+      console.log("action.effectiveChainedCostsAndImpacts updated");
+    }
+  });
   return actions;
 }
 
