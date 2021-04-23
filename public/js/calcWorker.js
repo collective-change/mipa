@@ -308,6 +308,7 @@ async function simulateActionWithDependencies(
   blockees.sort(function(a, b) {
     return b.actionLeverage - a.actionLeverage;
   });
+  let testCostsAndImpactsExcludingSelf = getEmptyCostsAndImpacts();
   //if (blockees.length) console.log("blockees for", action.title, blockees);
   //include each blockee until resulting leverage drops
   while (blockees.length && blockees[0].actionLeverage > highestLeverageFound) {
@@ -316,6 +317,12 @@ async function simulateActionWithDependencies(
       blockees[0],
       testCostsAndImpacts
     );
+
+    testCostsAndImpactsExcludingSelf = includeActionInCostsAndImpacts(
+      blockees[0],
+      testCostsAndImpactsExcludingSelf
+    );
+
     testActionResults = simulateCostsAndImpacts(
       testCostsAndImpacts,
       sim,
@@ -332,10 +339,7 @@ async function simulateActionWithDependencies(
         testActionResults.actionResultsNumbers.actionLeverage;
       actionResults = testActionResults;
       actionResults.effectiveChainedCostsAndImpacts = testCostsAndImpacts;
-      actionResults.effectiveChainedCostsAndImpactsExcludingSelf = includeActionInCostsAndImpacts(
-        blockees[0],
-        testCostsAndImpacts
-      );
+      actionResults.effectiveChainedCostsAndImpactsExcludingSelf = testCostsAndImpactsExcludingSelf;
     }
     blockees.shift();
   }
