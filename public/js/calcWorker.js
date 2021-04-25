@@ -1,8 +1,6 @@
-importScripts("https://www.gstatic.com/firebasejs/7.18.0/firebase-app.js");
-importScripts("https://www.gstatic.com/firebasejs/7.18.0/firebase-auth.js");
-importScripts(
-  "https://www.gstatic.com/firebasejs/7.18.0/firebase-firestore.js"
-);
+importScripts("https://www.gstatic.com/firebasejs/8.4.1/firebase-app.js");
+importScripts("https://www.gstatic.com/firebasejs/8.4.1/firebase-auth.js");
+importScripts("https://www.gstatic.com/firebasejs/8.4.1/firebase-firestore.js");
 importScripts(
   "https://cdnjs.cloudflare.com/ajax/libs/mathjs/8.1.1/math.min.js"
 );
@@ -101,8 +99,31 @@ async function calculateResultsOfActions(
     actionsToCalculate,
     async (action, index, actionsToCalculate) => {
       let startTimeMs = new Date();
+      let uncalculatedChildrenAdded = false;
 
-      //TODO: if action has children that are not in actionsResults: add/move them to before this action in actionsToCalculate array
+      console.log("calculating for action: ", action.title);
+
+      //if action has children that are not in actionsResults:
+      //1. add/move them to this index and after in actionsToCalculate array
+      //2. change current action to newly added child action at indexx
+      if (action.childrenActionIds) {
+        const uncalculatedChildren = action.childrenActionIds.filter(
+          childActionId => !actionsResults.some(ar => ar.id === childActionId)
+        );
+        if (uncalculatedChildren.length > 0) {
+          console.log("uncalculated children: ", uncalculatedChildren);
+          await addOrMoveUncalculatedActionsToAfterIndex(
+            uncalculatedChildren,
+            actionsToCalculate,
+            index
+          );
+          uncalculatedChildrenAdded = true;
+        }
+      }
+      if (uncalculatedChildrenAdded) {
+        action = actionsToCalculate[index];
+        console.log("Switched to child action: ", action.title);
+      }
 
       //calculate branchAndBlockeesResults, save effectiveChainedCostsAndImpacts of self
       let branchAndBlockeesResults = await simulateActionWithDependencies(
@@ -138,7 +159,7 @@ async function calculateResultsOfActions(
         startTimeS: sim.scope.initialTimeS
         //calcTimeMs: calcTimeMs,
       };
-      //if action has a parent, then retain its inherited results
+      //if action has a parent, then retain its inherited results (will be overwritten at end of parent's calculation)
       if (action.parentActionId) {
         actionResults.inheritedResultsNumbers = action.inheritedResultsNumbers;
       }
@@ -165,7 +186,7 @@ async function calculateResultsOfActions(
         console.log("branchAndBlockeesResults changed significantly");
         //if action has a parent: add/move parent to end of actionsToCalculate array
         if (action.parentActionId) {
-          await addOrMoveActionToEndOfArray(
+          await addOrMoveActionsToEndOfArray(
             [action.parentActionId],
             actionsToCalculate,
             index
@@ -174,18 +195,21 @@ async function calculateResultsOfActions(
 
         //if action has a blocker: add / move blocker to end of actionsToCalculate array
         if (action.blockerActionIds && action.blockerActionIds.length) {
-          await addOrMoveActionToEndOfArray(
+          await addOrMoveActionsToEndOfArray(
             action.blockerActionIds,
             actionsToCalculate,
             index
           );
         }
 
-        //TODO: if action has children: write branchAndBlockeesResults to
+        //TODO: if action has children:
+        //get descendents tree from branch
+        //write branchAndBlockeesResults to
         //descendants in actionsResults array (add in if missing) as
         //inheritedResults (if leverage is higher) and update
         //descendants' effectiveResults
-        //get descendents tree from branch
+        if (action.childrenActionIds) {
+        }
       }
 
       //add in nodes values and calc time then save actionResults in IDB
@@ -603,7 +627,7 @@ async function includeCostsAndImpactsFromChildren(
     );
 
     childrenActions.forEach(function(child) {
-      console.log("child", child);
+      console.log("include costs and impacts of child action", child.title);
       costsAndImpacts = includeActionInCostsAndImpacts(child, costsAndImpacts);
       childrensCostsAndImpacts = includeActionInCostsAndImpacts(
         child,
@@ -619,8 +643,6 @@ async function getActionsFromFirestoreAndUpdateWithNewestValues(
   actionsResults
 ) {
   let actions = await getActionsFromFirestore(actionIds);
-  //TODO: update actions with newest values from actionsResults
-  //for each action, if in actionsResults, then update actions with values
   actions.forEach(action => {
     const foundAction = actionsResults.find(a => a.id == action.id);
     if (foundAction) {
@@ -633,19 +655,24 @@ async function getActionsFromFirestoreAndUpdateWithNewestValues(
 }
 
 async function getActionsFromFirestore(actionIds) {
+  console.log(
+    "Getting actions from Firestore for org " + orgId + " with ids " + actionIds
+  );
+  console.log(actionIds);
   const actionsRef = firebaseDb.collection("actions");
   const snapshot = await actionsRef
     .where("id", "in", actionIds)
     .where("orgId", "==", orgId)
     .get();
-  if (snapshot.empty) {
-    console.log("No matching actions.");
-    return;
+  if (snapshot.size == 0) {
+    console.log("No matching actions in Firestore.");
+    return [];
   }
   let actions = [];
   snapshot.forEach(doc => {
     actions.push(doc.data());
   });
+  console.log("Got actions from Firestore", actions);
   return actions;
 }
 
@@ -1882,7 +1909,7 @@ function resultsNumbersChangedSignificantly(newObj, oldObj) {
   return false;
 }
 
-async function addOrMoveActionToEndOfArray(
+async function addOrMoveActionsToEndOfArray(
   actionIds,
   actionsToCalculate,
   currentIndex
@@ -1910,4 +1937,49 @@ async function addOrMoveActionToEndOfArray(
       console.log("moved action to end of array");
     }
   });
+}
+
+async function addOrMoveUncalculatedActionsToAfterIndex(
+  actionIds,
+  actionsToCalculate,
+  currentIndex
+) {
+  let actionIdsNotFoundInArray = [];
+  await asyncForEach(actionIds, async function(actionId) {
+    //get index of actionId in actionsToCalculate
+    const foundIndex = actionsToCalculate.findIndex(
+      action => action.id == actionId
+    );
+    console.log(
+      "for actionId",
+      actionId,
+      "found index",
+      foundIndex,
+      "currentIndex",
+      currentIndex
+    );
+    //if not found (foundIndex == -1) then add action to actionIdsNotFoundInArray array
+    if (foundIndex == -1) actionIdsNotFoundInArray.push(actionId);
+    //else if foundIndex > currentIndex then move to currentIndex
+    else if (foundIndex > currentIndex) {
+      actionsToCalculate.splice(
+        currentIndex,
+        0,
+        actionsToCalculate[foundIndex]
+      ); //splice the element in at currentIndex
+      actionsToCalculate.splice(foundIndex + 1, 1); //delete the element at original position
+      console.log("moved action to currentIndex");
+    }
+  });
+  let actionsToAddArray = await getActionsFromFirestore(
+    actionIdsNotFoundInArray
+  );
+  console.log(
+    "actionsToAddArray for " +
+      actionIdsNotFoundInArray +
+      ": " +
+      actionsToAddArray
+  );
+  actionsToCalculate.splice(currentIndex, 0, ...actionsToAddArray);
+  console.log("got actions and added at currentIndex");
 }
