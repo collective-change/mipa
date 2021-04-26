@@ -165,15 +165,6 @@ async function calculateResultsOfActions(
         actionsResults.push(Object.assign({}, actionResults));
       }
 
-      //if branchAndBlockeesResults changed significantly:
-      console.log(
-        "branchAndBlockeesResults.actionResultsNumbers.actionLeverage",
-        branchAndBlockeesResults.actionResultsNumbers.actionLeverage
-      );
-      console.log(
-        "action.branchAndBlockeesResultsNumbers.actionLeverage",
-        action.branchAndBlockeesResultsNumbers.actionLeverage
-      );
       if (
         true || //TODO: get rid of this line when we can include parent's impacts when calculating children actions
         (action.branchAndBlockeesResultsNumbers &&
@@ -201,7 +192,7 @@ async function calculateResultsOfActions(
           );
         }
 
-        //TODO: if action has children:
+        //if action has children:
         //recursively write branchAndBlockeesResults to
         //descendants in actionsResults array (add in if missing) as
         //inheritedResults (if leverage is higher) and update
@@ -1993,11 +1984,7 @@ async function writeInheritedResultsOfActions(
   actionIds,
   actionsResults
 ) {
-  console.log(
-    "branchAndBlockeesResultsNumbers",
-    branchAndBlockeesResultsNumbers
-  );
-  //write branchAndBlockeesResults to
+  //write branchAndBlockeesResultsNumbers to
   //action in actionsResults array (add in if missing) as
   //inheritedResults (if leverage is higher) and update
   //action' effectiveResults
@@ -2012,5 +1999,6 @@ async function writeInheritedResultsOfActions(
         foundResults.effectiveResultsNumbers = branchAndBlockeesResultsNumbers;
       }
     }
+    //TODO: call writeInheritedResultsOfActions on action's children
   });
 }
