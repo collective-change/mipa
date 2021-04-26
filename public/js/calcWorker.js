@@ -135,16 +135,7 @@ async function calculateResultsOfActions(
         //yearlyDiscountRate
       );
 
-      //calculate action's effective results (max of branchAndBlockees', and inherited; based on leverage)
       let actionEffectiveResults = branchAndBlockeesResults;
-      if (
-        action.inheritedResultsNumbers &&
-        action.inheritedResultsNumbers.actionLeverage >
-          branchAndBlockeesResults.actionResultsNumbers.actionLeverage
-      ) {
-        actionEffectiveResults = action.inheritedResults;
-        console.log("inherited results used");
-      }
 
       actionResults = {
         id: action.id,
@@ -169,19 +160,27 @@ async function calculateResultsOfActions(
         element => element.id == action.id
       );
       if (foundResults) {
-        foundResult = Object.assign({}, actionResults);
+        foundResults = Object.assign({}, actionResults);
       } else {
         actionsResults.push(Object.assign({}, actionResults));
       }
 
       //if branchAndBlockeesResults changed significantly:
+      console.log(
+        "branchAndBlockeesResults.actionResultsNumbers.actionLeverage",
+        branchAndBlockeesResults.actionResultsNumbers.actionLeverage
+      );
+      console.log(
+        "action.branchAndBlockeesResultsNumbers.actionLeverage",
+        action.branchAndBlockeesResultsNumbers.actionLeverage
+      );
       if (
-        //true || //TODO: get rid of this line when done with development
-        action.branchAndBlockeesResultsNumbers &&
-        resultsNumbersChangedSignificantly(
-          branchAndBlockeesResults.actionResultsNumbers,
-          action.branchAndBlockeesResultsNumbers
-        )
+        true || //TODO: get rid of this line when we can include parent's impacts when calculating children actions
+        (action.branchAndBlockeesResultsNumbers &&
+          resultsNumbersChangedSignificantly(
+            branchAndBlockeesResults.actionResultsNumbers,
+            action.branchAndBlockeesResultsNumbers
+          ))
       ) {
         console.log("branchAndBlockeesResults changed significantly");
         //if action has a parent: add/move parent to end of actionsToCalculate array
@@ -203,12 +202,17 @@ async function calculateResultsOfActions(
         }
 
         //TODO: if action has children:
-        //get descendents tree from branch
-        //write branchAndBlockeesResults to
+        //recursively write branchAndBlockeesResults to
         //descendants in actionsResults array (add in if missing) as
         //inheritedResults (if leverage is higher) and update
         //descendants' effectiveResults
         if (action.childrenActionIds) {
+          console.log("calling writeInheritedResultsOfActions");
+          writeInheritedResultsOfActions(
+            branchAndBlockeesResults.actionResultsNumbers,
+            action.childrenActionIds,
+            actionsResults
+          );
         }
       }
 
@@ -1982,4 +1986,31 @@ async function addOrMoveUncalculatedActionsToAfterIndex(
   );
   actionsToCalculate.splice(currentIndex, 0, ...actionsToAddArray);
   console.log("got actions and added at currentIndex");
+}
+
+async function writeInheritedResultsOfActions(
+  branchAndBlockeesResultsNumbers,
+  actionIds,
+  actionsResults
+) {
+  console.log(
+    "branchAndBlockeesResultsNumbers",
+    branchAndBlockeesResultsNumbers
+  );
+  //write branchAndBlockeesResults to
+  //action in actionsResults array (add in if missing) as
+  //inheritedResults (if leverage is higher) and update
+  //action' effectiveResults
+  await asyncForEach(actionIds, async function(actionId) {
+    let foundResults = actionsResults.find(ar => ar.id == actionId);
+    if (foundResults) {
+      foundResults.inheritedResultsNumbers = branchAndBlockeesResultsNumbers;
+      if (
+        branchAndBlockeesResultsNumbers.actionLeverage >
+        foundResults.effectiveResultsNumbers.actionLeverage
+      ) {
+        foundResults.effectiveResultsNumbers = branchAndBlockeesResultsNumbers;
+      }
+    }
+  });
 }
