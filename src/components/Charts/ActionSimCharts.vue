@@ -385,6 +385,7 @@ export default {
       this.chartsArr = [];
     },
     nodes: function () {
+      console.log("nodes updated");
       this.updateChartsArr();
     },
     resultsOfAction: function () {
