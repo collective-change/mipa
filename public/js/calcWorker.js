@@ -173,7 +173,10 @@ async function calculateResultsOfActions(
             action.branchAndBlockeesResultsNumbers
           ))
       ) {
-        console.log("branchAndBlockeesResults changed significantly");
+        console.log(
+          "branchAndBlockeesResults changed significantly for",
+          action.title
+        );
         //if action has a parent: add/move parent to end of actionsToCalculate array
         if (action.parentActionId) {
           await addOrMoveActionsToEndOfArray(
@@ -198,8 +201,11 @@ async function calculateResultsOfActions(
         //inheritedResults (if leverage is higher) and update
         //descendants' effectiveResults
         if (action.childrenActionIds) {
-          console.log("calling writeInheritedResultsOfActions");
-          writeInheritedResultsOfActions(
+          console.log(
+            "calling writeInheritedResultsOfActions on: ",
+            action.childrenActionIds
+          );
+          await writeInheritedResultsOfActions(
             branchAndBlockeesResults.actionResultsNumbers,
             action.childrenActionIds,
             actionsResults
@@ -1914,22 +1920,22 @@ async function addOrMoveActionsToEndOfArray(
     let foundIndex = actionsToCalculate.findIndex(
       action => action.id == actionId
     );
-    console.log("found index", foundIndex, "currentIndex", currentIndex);
+    //console.log("found index", foundIndex, "currentIndex", currentIndex);
     //if not found (foundIndex == -1) then add action to end of actionsToCalculate
     if (foundIndex == -1) {
       let singleActionArray = await getActionsFromFirestore([actionId]);
       actionsToCalculate.push(singleActionArray[0]);
-      console.log("got action and added to end of array");
+      //console.log("got action and added to end of array");
     }
     //else if foundIndex <= currentIndex then add to end of actionsToCalculate
     else if (foundIndex <= currentIndex) {
       actionsToCalculate.push(actionsToCalculate[foundIndex]);
-      console.log("added processed action to end of array");
+      //console.log("added processed action to end of array");
     }
     //else move to end of array
     else {
       actionsToCalculate.push(actionsToCalculate.splice(foundIndex, 1)[0]);
-      console.log("moved action to end of array");
+      //console.log("moved action to end of array");
     }
   });
 }
@@ -1944,14 +1950,6 @@ async function addOrMoveUncalculatedActionsToAfterIndex(
     //get index of actionId in actionsToCalculate
     const foundIndex = actionsToCalculate.findIndex(
       action => action.id == actionId
-    );
-    console.log(
-      "for actionId",
-      actionId,
-      "found index",
-      foundIndex,
-      "currentIndex",
-      currentIndex
     );
     //if not found (foundIndex == -1) then add action to actionIdsNotFoundInArray array
     if (foundIndex == -1) actionIdsNotFoundInArray.push(actionId);
@@ -1991,6 +1989,14 @@ async function writeInheritedResultsOfActions(
   await asyncForEach(actionIds, async function(actionId) {
     let foundResults = actionsResults.find(ar => ar.id == actionId);
     if (foundResults) {
+      console.log(
+        "Results for",
+        foundResults.id,
+        "branch leverage",
+        branchAndBlockeesResultsNumbers.actionLeverage,
+        "effective leverage",
+        foundResults.effectiveResultsNumbers.actionLeverage
+      );
       foundResults.inheritedResultsNumbers = branchAndBlockeesResultsNumbers;
       if (
         branchAndBlockeesResultsNumbers.actionLeverage >
@@ -1998,7 +2004,7 @@ async function writeInheritedResultsOfActions(
       ) {
         foundResults.effectiveResultsNumbers = branchAndBlockeesResultsNumbers;
       }
-    }
+    } else console.log("results not found for ", actionId);
     //TODO: call writeInheritedResultsOfActions on action's children
   });
 }
