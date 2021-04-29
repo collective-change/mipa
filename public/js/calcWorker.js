@@ -1201,7 +1201,7 @@ function prepEnvironment(data) {
     },
     count: {
       baseName: "count",
-      aliases: ["counts"]
+      aliases: ["counts", "unit", "units", "piece", "pieces"]
     }
   });
 
