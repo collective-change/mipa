@@ -1,147 +1,158 @@
 <template>
-  <div class="row">
-    <draggable
-      v-model="chartsArr"
-      group="charts"
-      @start="drag = true"
-      @end="drag = false"
-    >
-      <transition-group
-        name="charts-list"
-        tag="ul"
-        class="row q-px-none q-mt-none"
+  <div>
+    <div v-if="nodes.length" class="row">
+      <draggable
+        v-model="chartsArr"
+        group="charts"
+        @start="drag = true"
+        @end="drag = false"
       >
-        <li
-          class="column q-gutter-md"
-          v-for="chart in chartsArr"
-          :key="chart.nodeId"
+        <transition-group
+          name="charts-list"
+          tag="ul"
+          class="row q-px-none q-mt-none"
         >
-          <q-card class="q-ma-md">
-            <div
-              class="row justify-center q-px-md q-pt-md"
-              style="width: 360px"
-            >
-              {{ chart.title }}
-            </div>
-            <div v-if="chart.chartData.length">
-              <gchart
-                type="LineChart"
-                :data="chart.chartData"
-                :options="chart.chartOptions"
-              />
-              <div class="row justify-center q-gutter-x-md q-mb-md">
-                <q-btn-toggle
-                  v-model="chart.chartOptions.series"
-                  action-color="primary"
-                  size="xs"
-                  :options="[
-                    {
-                      label: 'values',
-                      value: showValuesConfig,
-                    },
-                    {
-                      label: 'difference',
-                      value: showDifferenceConfig,
-                    },
-                  ]"
+          <li
+            class="column q-gutter-md"
+            v-for="chart in chartsArr"
+            :key="chart.nodeId"
+          >
+            <q-card class="q-ma-md">
+              <div
+                class="row justify-center q-px-md q-pt-md"
+                style="width: 360px"
+              >
+                {{ chart.title }}
+              </div>
+              <div v-if="chart.chartData.length">
+                <gchart
+                  type="LineChart"
+                  :data="chart.chartData"
+                  :options="chart.chartOptions"
                 />
+                <div class="row justify-center q-gutter-x-md q-mb-md">
+                  <q-btn-toggle
+                    v-model="chart.chartOptions.series"
+                    action-color="primary"
+                    size="xs"
+                    :options="[
+                      {
+                        label: 'values',
+                        value: showValuesConfig,
+                      },
+                      {
+                        label: 'difference',
+                        value: showDifferenceConfig,
+                      },
+                    ]"
+                  />
 
-                <q-btn-toggle
-                  v-model="chart.chartOptions.vAxis.scaleType"
-                  action-color="primary"
-                  size="xs"
-                  :options="[
-                    { label: 'linear', value: 'linear' },
-                    { label: 'log', value: 'mirrorLog' },
-                  ]"
-                />
-                <q-btn
-                  round
-                  size="xs"
-                  color="primary"
-                  icon="delete"
-                  @click="
-                    $store.dispatch(
-                      'uiAction/removeNodeIdToChart',
-                      chart.nodeId
-                    );
-                    removeFromCharts(chart.nodeId);
-                  "
-                />
-              </div>
-            </div>
-            <div
-              v-else
-              style="height: 277px; width: 360px"
-              class="column justify-center"
-            >
-              <div class="row justify-center">
-                <div class="column q-px-xl q-pb-xl">
-                  Simultion results have not been saved for this node. Please
-                  make sure to enable saving on this device, then recalculate.
-                </div>
-                <q-btn
-                  round
-                  size="xs"
-                  color="primary"
-                  icon="delete"
-                  @click="
-                    $store.dispatch(
-                      'uiAction/removeNodeIdToChart',
-                      chart.nodeId
-                    );
-                    removeFromCharts(chart.nodeId);
-                  "
-                />
-              </div>
-            </div>
-          </q-card>
-        </li>
-        <li class="column q-gutter-md" key="addChart">
-          <q-card class="q-ma-md">
-            <div class="row justify-center" style="height: 317px; width: 360px">
-              <div class="column justify-center">
-                <q-select
-                  label="Add chart"
-                  v-model="nodeIdToAdd"
-                  @filter="filterFn"
-                  @filter-abort="abortFilterFn"
-                  :options="filteredNodeOptions"
-                  @input="
-                    (nodeId) => {
-                      this.$store.dispatch('uiAction/addNodeIdToChart', nodeId);
-                      nodeIdToAdd = null;
-                    }
-                  "
-                  emit-value
-                  map-options
-                  outlined
-                  use-input
-                  hide-selected
-                  fill-input
-                  dense
-                  bg-color="white"
-                >
-                  <template v-slot:no-option>
-                    <q-item>
-                      <q-item-section class="text-grey">
-                        No results
-                      </q-item-section>
-                    </q-item>
-                  </template>
-                </q-select>
-                <div
-                  v-if="chartsArr.length > 1"
-                  class="row justify-center q-mt-xl"
-                >
-                  Drag to reorder
+                  <q-btn-toggle
+                    v-model="chart.chartOptions.vAxis.scaleType"
+                    action-color="primary"
+                    size="xs"
+                    :options="[
+                      { label: 'linear', value: 'linear' },
+                      { label: 'log', value: 'mirrorLog' },
+                    ]"
+                  />
+                  <q-btn
+                    round
+                    size="xs"
+                    color="primary"
+                    icon="delete"
+                    @click="
+                      $store.dispatch(
+                        'uiAction/removeNodeIdToChart',
+                        chart.nodeId
+                      );
+                      removeFromCharts(chart.nodeId);
+                    "
+                  />
                 </div>
               </div>
-            </div>
-          </q-card>
-        </li>
-      </transition-group>
-    </draggable>
+              <div
+                v-else
+                style="height: 277px; width: 360px"
+                class="column justify-center"
+              >
+                <div class="row justify-center">
+                  <div class="column q-px-xl q-pb-xl">
+                    Simultion results have not been saved for this node. Please
+                    make sure to enable saving on this device, then recalculate.
+                  </div>
+                  <q-btn
+                    round
+                    size="xs"
+                    color="primary"
+                    icon="delete"
+                    @click="
+                      $store.dispatch(
+                        'uiAction/removeNodeIdToChart',
+                        chart.nodeId
+                      );
+                      removeFromCharts(chart.nodeId);
+                    "
+                  />
+                </div>
+              </div>
+            </q-card>
+          </li>
+          <li class="column q-gutter-md" key="addChart">
+            <q-card class="q-ma-md">
+              <div
+                class="row justify-center"
+                style="height: 317px; width: 360px"
+              >
+                <div class="column justify-center">
+                  <q-select
+                    label="Add chart"
+                    v-model="nodeIdToAdd"
+                    @filter="filterFn"
+                    @filter-abort="abortFilterFn"
+                    :options="filteredNodeOptions"
+                    @input="
+                      (nodeId) => {
+                        this.$store.dispatch(
+                          'uiAction/addNodeIdToChart',
+                          nodeId
+                        );
+                        nodeIdToAdd = null;
+                      }
+                    "
+                    emit-value
+                    map-options
+                    outlined
+                    use-input
+                    hide-selected
+                    fill-input
+                    dense
+                    bg-color="white"
+                  >
+                    <template v-slot:no-option>
+                      <q-item>
+                        <q-item-section class="text-grey">
+                          No results
+                        </q-item-section>
+                      </q-item>
+                    </template>
+                  </q-select>
+                  <div
+                    v-if="chartsArr.length > 1"
+                    class="row justify-center q-mt-xl"
+                  >
+                    Drag to reorder
+                  </div>
+                </div>
+              </div>
+            </q-card>
+          </li>
+        </transition-group>
+      </draggable>
+    </div>
+    <div v-else class="row q-pa-xl">
+      <q-spinner color="primary" size="3em" />
+    </div>
   </div>
 </template>
 
