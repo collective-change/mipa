@@ -252,6 +252,7 @@ export default {
         this.chartsArr.push(chart);
       } else {
         //console.log("existing chart found");
+        chart.title = this.getNodeName(nodeId);
         chart.chartData = [];
       }
       // if resultsOfAction is available then then load it for the node; otherwise set data for the node to empty
