@@ -192,10 +192,11 @@
             <q-btn label="Save" color="primary" type="submit" />
           </q-card-actions>
 
-          <div class="text-h6">Direct impacts</div>
+          <div class="text-h6 q-mt-md">Direct impacts</div>
           <impacts />
 
-          <div class="row q-gutter-md q-mt-md items-start">
+          <div class="text-h6 q-mt-md">Action costs and progress</div>
+          <div class="row q-gutter-md items-start">
             <q-select
               v-model="effortCostPerHrType"
               :label="$t('effortCostPerHour')"
