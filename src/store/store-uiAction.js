@@ -26,12 +26,19 @@ const state = {
 
 const mutations = {
   setUiAction(state, action) {
+    console.log("setUiAction");
     state.uiAction = action;
+
+    //initialize newly coded properties if they're missing from the retrieved action
+    initializeNewlyAddedProperties(state.uiAction);
+
     state.uiActionChanged = false;
     state.uiActionChangedFields = [];
   },
   mergeNewActionToUiAction(state, newAction) {
-    let tempUiAction = { id: state.uiAction.id };
+    let tempUiAction = {
+      id: state.uiAction.id
+    };
     for (const property in newAction) {
       //if property name is in changedFields, then keep user's changes
       // else set uiAction's property to new value
@@ -46,6 +53,7 @@ const mutations = {
   updateUiActionField(state, field) {
     if (state.uiAction.id == undefined) return;
     let fieldName = field.path.replace("uiAction.", "");
+    console.log(field);
     updateField(state, field);
     if (!fieldsToIgnoreForUiActionChanged.includes(fieldName)) {
       state.uiActionChanged = true;
@@ -105,7 +113,6 @@ const mutations = {
 
 const actions = {
   setUiAction({ commit }, action) {
-    //if (action) action.saveFullResults = false; //add this non-persisted flag
     if (action.nodeIdsToChart == undefined) action.nodeIdsToChart = [];
     commit("setUiAction", action);
   },
@@ -168,6 +175,20 @@ const actions = {
 };
 
 const getters = { getField };
+
+function initializeNewlyAddedProperties(uiAction) {
+  const newProperties = {
+    useSimpleEstimateMethod: false,
+    simpleEstimateTotalBenefit: null,
+    simpleEstimateTotalBenefitNotes: null,
+    simpleEstimateOtherCosts: null,
+    simpleEstimateOtherCostsNotes: null
+  };
+  for (const newProperty in newProperties) {
+    if (!uiAction.hasOwnProperty(newProperty))
+      state.uiAction[newProperty] = newProperties[newProperty];
+  }
+}
 
 export default {
   namespaced: true,
