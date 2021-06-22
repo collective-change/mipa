@@ -156,13 +156,14 @@ export default {
         targetType: "",
         //type: ""
       },
+      selectedNodeGroup: null,
     };
   },
 
   computed: {
     ...mapState("ui", [
       "selectedNodeId",
-      "selectedNodeGroup",
+      "selectedNodeGroupId",
       "uiNodeChanged",
       "uiNodeChangedFields",
       "circularNodeIds",
@@ -233,7 +234,7 @@ export default {
     this.filteredNodeOptions = this.nodeOptions;
   },
 
-  mounted() {
+  async mounted() {
     //set up svg
     this.selections.svg = d3.select(
       this.$el.querySelector("svg#dependencyGraph")
@@ -342,7 +343,7 @@ export default {
     this.selections.graph = svg.append("g");
     const graph = this.selections.graph;
 
-    this.updateData();
+    await this.updateData();
     this.handleSelectedNodeIdChange();
   },
 
@@ -1110,7 +1111,7 @@ export default {
                     nodeId: that.selectedNodeId,
                     groupName: node.name,
                   });
-                  that.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
+                  that.$store.commit("ui/setSelectedNodeGroupId", nodeGroup.id);
                   //TODO: set nodeGroup as expanded
                   let expandedNodeGroups = [...that.expandedNodeGroups];
                   expandedNodeGroups.push(nodeGroup.id);
@@ -1454,14 +1455,14 @@ export default {
                 nodeGroup.nodeIds.includes(d.id)) ||
               nodeGroup.id == d.id
             ) {
-              that.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
+              that.$store.commit("ui/setSelectedNodeGroupId", nodeGroup.id);
               selectedNodeGroupFound = true;
             }
           });
           if (!selectedNodeGroupFound)
-            that.$store.commit("ui/setSelectedNodeGroup", null);
+            that.$store.commit("ui/setSelectedNodeGroupId", null);
         } else {
-          that.$store.commit("ui/setSelectedNodeGroup", null);
+          that.$store.commit("ui/setSelectedNodeGroupId", null);
         }
         this.updateNodeClassAndText(false);
       }
@@ -1660,8 +1661,9 @@ export default {
           : null;
       if (foundNodeGroup) {
         await this.expandGroup(foundNodeGroup.id);
-        this.$store.commit("ui/setSelectedNodeGroup", foundNodeGroup);
-      }
+        this.$store.commit("ui/setSelectedNodeGroupId", foundNodeGroup.id);
+      } else this.$store.commit("ui/setSelectedNodeGroupId", null);
+
       // highlight the selected node
       const circles = this.selections.graph.selectAll("circle");
       circles.classed("selected", false);
@@ -1694,6 +1696,14 @@ export default {
       },
     },
 
+    selectedNodeGroupId: {
+      async handler() {
+        this.selectedNodeGroup = await this.nodeGroups.find(
+          (ng) => ng.id == this.selectedNodeGroupId
+        );
+      },
+    },
+
     selectedNodeGroup: {
       deep: true,
       handler() {
@@ -1708,7 +1718,9 @@ export default {
           let nodeGroup = nodeGroups.find(
             (ng) => ng.id == this.selectedNodeGroup.id
           );
-          this.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
+          if (nodeGroup)
+            this.$store.commit("ui/setSelectedNodeGroupId", nodeGroup.id);
+          else this.$store.commit("ui/setSelectedNodeGroupId", null);
         }
       },
     },
@@ -1767,7 +1779,7 @@ export default {
           let nodeGroupToSelect = this.currentModel.nodeGroups.find(
             (ng) => ng.id == idOfNodeGroupToSelect
           );
-          this.$store.commit("ui/setSelectedNodeGroup", nodeGroupToSelect);
+          this.$store.commit("ui/setSelectedNodeGroupId", nodeGroupToSelect.id);
 
           //notify prepD3DataAndUpdate with newly expanded node group
           this.prepD3DataAndUpdate({ newlyExpandedGroupId });
