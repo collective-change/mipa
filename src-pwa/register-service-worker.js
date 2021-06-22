@@ -28,9 +28,7 @@ register(process.env.SERVICE_WORKER_FILE, {
 
     if (!!window.chrome) {
       // for chromium based browsers
-      const r = confirm(
-        "A new version of mipa is available. Reload now? Needed for all mipa tabs."
-      );
+      const r = confirm("A new version of mipa is available. Reload now?");
       if (r === true) {
         location.reload();
       } else {
@@ -44,9 +42,7 @@ register(process.env.SERVICE_WORKER_FILE, {
 
     if (!window.chrome) {
       // for non chromium browsers
-      const r = confirm(
-        "A new version of mipa is available. Reload now? Needed for all mipa tabs."
-      );
+      const r = confirm("A new version of mipa is available. Reload now?");
       if (r === true) {
         location.reload();
       } else {
