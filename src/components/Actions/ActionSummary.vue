@@ -192,7 +192,44 @@
             <q-btn label="Save" color="primary" type="submit" />
           </q-card-actions>
 
-          <div class="text-h6 q-mt-md">Direct impacts</div>
+          <div class="text-h6 q-mt-md">Impact estimates</div>
+          <!--
+          <div class="q-gutter-sm">
+            <q-checkbox
+              v-model="useSimpleEstimateMethod"
+              label="Use simple method"
+            />
+          </div>
+
+          <div
+            v-if="useSimpleEstimateMethod"
+            class="row q-gutter-md items-start"
+          >
+            <q-input
+              v-model.number="simpleEstimateTotalBenefit"
+              :label="$t('simpleEstimateTotalBenefit')"
+              type="number"
+              step="any"
+              :suffix="currentOrg.currency"
+              :rules="[
+                (val) => val == null || val >= 0 || 'Should be at least 0',
+              ]"
+              filled
+              class="col-3"
+              style="max-width: 150px"
+              debounce="500"
+            />
+            <q-input
+              class="col-8"
+              v-model="simpleEstimateTotalBenefitNotes"
+              :label="$t('simpleEstimateTotalBenefitNotes')"
+              filled
+              autogrow
+            />
+            simpleEstimateTotalBenefit simpleEstimateTotalBenefitNotes
+            simpleEstimateOtherCosts simpleEstimatseOtherCostsNotes
+          </div>
+          <impacts v-else /> -->
           <impacts />
 
           <div class="text-h6 q-mt-md">Action costs and progress</div>
@@ -226,6 +263,7 @@
               v-model.number="estEffortHrs"
               :label="$t('estEffortHrs')"
               type="number"
+              step="any"
               suffix="hours"
               :rules="[
                 (val) => val == null || val >= 0 || 'Should be at least 0',
@@ -237,6 +275,7 @@
             <q-input
               v-model.number="effortCompletionPercentage"
               type="number"
+              step="any"
               :suffix="$t('percentDone')"
               :rules="[
                 (val) => val == null || val >= 0 || 'Should be at least 0',
@@ -264,6 +303,7 @@
               v-model.number="estSpending"
               :label="$t('estSpending')"
               type="number"
+              step="any"
               :suffix="currentOrg.currency"
               :rules="[
                 (val) => val == null || val >= 0 || 'Should be at least 0',
@@ -276,6 +316,7 @@
               v-model.number="spentAmount"
               :label="$t('spentAmount')"
               type="number"
+              step="any"
               :suffix="currentOrg.currency"
               :rules="[
                 (val) => val == null || val >= 0 || 'Should be at least 0',
@@ -505,6 +546,11 @@ export default {
     ...mapFields([
       "uiAction.title",
       "uiAction.actionMchState",
+      "uiAction.useSimpleEstimateMethod",
+      "uiAction.simpleEstimateTotalBenefit",
+      "uiAction.simpleEstimateTotalBenefitNotes",
+      "uiAction.simpleEstimateOtherCosts",
+      "uiAction.simpleEstimatseOtherCostsNotes",
       "uiAction.estEffortHrs",
       "uiAction.effortCompletionPercentage",
       "uiAction.effortCostPerHrType",
