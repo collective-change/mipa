@@ -1,6 +1,6 @@
 const state = {
   selectedNodeId: null,
-  selectedNodeGroup: null,
+  selectedNodeGroupId: null,
   uiNodeChanged: false,
   uiNodeChangedFields: [],
   selectedIssueId: null,
@@ -16,8 +16,8 @@ const mutations = {
     state.uiNodeChanged = false;
     state.uiNodeChangedFields = [];
   },
-  setSelectedNodeGroup(state, nodeGroup) {
-    state.selectedNodeGroup = nodeGroup;
+  setSelectedNodeGroupId(state, nodeGroupId) {
+    state.selectedNodeGroupId = nodeGroupId;
   },
   setExpandedNodeGroups(state, expandedNodeGroups) {
     state.expandedNodeGroups = expandedNodeGroups;
