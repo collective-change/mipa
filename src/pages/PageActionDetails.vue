@@ -17,8 +17,8 @@ export default {
     //"actions-todo": require("components/Actions/ActionsTodo.vue").default,
     //"actions-completed": require("components/Actions/ActionsCompleted.vue").default,
     "actions-list": require("components/Actions/ActionsList.vue").default,
-    "unprioritized-actions-list": require("components/Actions/UnprioritizedActionsList.vue")
-      .default,
+    "unprioritized-actions-list":
+      require("components/Actions/UnprioritizedActionsList.vue").default,
     //"add-action": require("components/Actions/Modals/AddAction.vue").default,
     "action-summary": require("components/Actions/ActionSummary.vue").default,
     //search: require("components/Actions/Tools/Search.vue").default,
@@ -48,6 +48,21 @@ export default {
   },
   mounted() {
     //console.log("actionDetails");
+  },
+
+  watch: {
+    "$route.params.orgId": {
+      handler: function (orgId) {
+        this.$store.dispatch("actions/bindActions", orgId);
+      },
+      immediate: true,
+    },
+    "$route.params.actionId": {
+      handler: function (actionId) {
+        this.$store.dispatch("actions/bindCurrentAction", actionId);
+      },
+      immediate: true,
+    },
   },
 
   beforeRouteLeave(to, from, next) {
