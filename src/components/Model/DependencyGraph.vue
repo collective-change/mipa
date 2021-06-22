@@ -343,6 +343,7 @@ export default {
     const graph = this.selections.graph;
 
     this.updateData();
+    this.handleSelectedNodeIdChange();
   },
 
   beforeUpdate() {
@@ -1643,6 +1644,31 @@ export default {
       });
       this.$emit("close");
     },
+    async handleSelectedNodeIdChange() {
+      // wait until currentModel is defined
+      while (
+        !this.currentModel // define the condition as you like
+      )
+        await new Promise((resolve) => setTimeout(resolve, 200));
+
+      // expand the group that the node is in
+      const foundNodeGroup =
+        this.currentModel.nodeGroups !== undefined
+          ? this.currentModel.nodeGroups.find((group) =>
+              group.nodeIds.includes(this.selectedNodeId)
+            )
+          : null;
+      if (foundNodeGroup) {
+        await this.expandGroup(foundNodeGroup.id);
+        this.$store.commit("ui/setSelectedNodeGroup", foundNodeGroup);
+      }
+      // highlight the selected node
+      const circles = this.selections.graph.selectAll("circle");
+      circles.classed("selected", false);
+      circles
+        .filter((circle) => circle.id == this.selectedNodeId)
+        .classed("selected", true);
+    },
     async expandGroup(groupId) {
       if (!this.expandedNodeGroups.includes(groupId)) {
         let expandedNodeGroups = [...this.expandedNodeGroups];
@@ -1663,24 +1689,8 @@ export default {
     selectedNodeId: {
       // This is for responding to search and also store-calculator setting the selectedNodeId
       // when reporting an error.
-      async handler() {
-        // expand the group that the node is in
-        const foundNodeGroup =
-          this.currentModel.nodeGroups !== undefined
-            ? this.currentModel.nodeGroups.find((group) =>
-                group.nodeIds.includes(this.selectedNodeId)
-              )
-            : null;
-        if (foundNodeGroup) {
-          await this.expandGroup(foundNodeGroup.id);
-          this.$store.commit("ui/setSelectedNodeGroup", foundNodeGroup);
-        }
-        // highlight the selected node
-        const circles = this.selections.graph.selectAll("circle");
-        circles.classed("selected", false);
-        circles
-          .filter((circle) => circle.id == this.selectedNodeId)
-          .classed("selected", true);
+      handler() {
+        this.handleSelectedNodeIdChange();
       },
     },
 
