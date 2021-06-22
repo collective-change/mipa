@@ -145,7 +145,7 @@ export default {
       //dependencyGraphSavefile: null,
       showConfigOrgModel: false,
       models: null,
-      selectedNodeGroupId: null,
+      //selectedNodeGroupId: null,
       expanded: [],
       initialCirclePositions: null,
     };
@@ -156,9 +156,19 @@ export default {
     ...mapState("ui", [
       "uiNodeChanged",
       "uiNodeChangedFields",
-      "selectedNodeGroup",
+      //"selectedNodeGroupId",
       "selectedNodeId",
     ]),
+    selectedNodeGroupId: {
+      get() {
+        return this.$store.state.ui.selectedNodeGroupId
+          ? this.$store.state.ui.selectedNodeGroupId
+          : null;
+      },
+      set(value) {
+        this.$store.commit("ui/setSelectedNodeGroupId", value);
+      },
+    },
     expandedNodeGroups: {
       get() {
         return this.$store.state.ui.expandedNodeGroups
@@ -236,15 +246,30 @@ export default {
         let nodeGroup = this.currentModel.nodeGroups.find(
           (nodeGroup) => nodeGroup.id == this.selectedNodeGroupId
         );
-        this.$store.commit("ui/setSelectedNodeGroup", nodeGroup);
+        this.$store.commit("ui/setSelectedNodeGroupId", nodeGroup.Id);
       }
     },
     //sync ui.selectedNodeGroup to selectedNodeGroupId
-    selectedNodeGroup() {
+    /*selectedNodeGroup: {
+      handler() {
+        console.log(
+          `selectedNodeGroup changed to id ${this.selectedNodeGroup.id}`
+        );
+        if (this.selectedNodeGroup)
+          this.selectedNodeGroupId = this.selectedNodeGroup.id;
+        else this.selectedNodeGroupId = null;
+      },
+      deep: true,
+      immediate: true,
+    },*/
+    /*selectedNodeGroup() {
+      console.log(
+        `selectedNodeGroup changed to id ${this.selectedNodeGroup.id}`
+      );
       if (this.selectedNodeGroup)
         this.selectedNodeGroupId = this.selectedNodeGroup.id;
       else this.selectedNodeGroupId = null;
-    },
+    },*/
   },
   created() {
     (async () => {
