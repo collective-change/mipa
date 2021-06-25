@@ -344,7 +344,8 @@ export default {
     const graph = this.selections.graph;
 
     await this.updateData();
-    this.handleSelectedNodeIdChange();
+    await this.handleSelectedNodeIdChange();
+    this.findNodeGroupAndExpand(this.selectedNodeId);
   },
 
   beforeUpdate() {
@@ -1652,18 +1653,6 @@ export default {
       )
         await new Promise((resolve) => setTimeout(resolve, 200));
 
-      // expand the group that the node is in
-      const foundNodeGroup =
-        this.currentModel.nodeGroups !== undefined
-          ? this.currentModel.nodeGroups.find((group) =>
-              group.nodeIds.includes(this.selectedNodeId)
-            )
-          : null;
-      if (foundNodeGroup) {
-        await this.expandGroup(foundNodeGroup.id);
-        this.$store.commit("ui/setSelectedNodeGroupId", foundNodeGroup.id);
-      } else this.$store.commit("ui/setSelectedNodeGroupId", null);
-
       // highlight the selected node
       const circles = this.selections.graph.selectAll("circle");
       circles.classed("selected", false);
@@ -1671,6 +1660,20 @@ export default {
         .filter((circle) => circle.id == this.selectedNodeId)
         .classed("selected", true);
     },
+
+    async findNodeGroupAndExpand(nodeId) {
+      const foundNodeGroup =
+        this.currentModel.nodeGroups !== undefined
+          ? this.currentModel.nodeGroups.find((group) =>
+              group.nodeIds.includes(nodeId)
+            )
+          : null;
+      if (foundNodeGroup) {
+        await this.expandGroup(foundNodeGroup.id);
+        this.$store.commit("ui/setSelectedNodeGroupId", foundNodeGroup.id);
+      } else this.$store.commit("ui/setSelectedNodeGroupId", null);
+    },
+
     async expandGroup(groupId) {
       if (!this.expandedNodeGroups.includes(groupId)) {
         let expandedNodeGroups = [...this.expandedNodeGroups];
@@ -1718,9 +1721,10 @@ export default {
           let nodeGroup = nodeGroups.find(
             (ng) => ng.id == this.selectedNodeGroup.id
           );
-          if (nodeGroup)
+          if (nodeGroup) {
+            this.selectedNodeGroup = nodeGroup;
             this.$store.commit("ui/setSelectedNodeGroupId", nodeGroup.id);
-          else this.$store.commit("ui/setSelectedNodeGroupId", null);
+          } else this.$store.commit("ui/setSelectedNodeGroupId", null);
         }
       },
     },
