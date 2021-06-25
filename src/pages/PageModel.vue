@@ -234,54 +234,12 @@ export default {
     collapseAllGroups() {
       this.expandedNodeGroups = [];
     },
-  },
 
-  watch: {
-    //sync selectedNodeGroupId to ui.selectedNodeGroup
-    selectedNodeGroupId() {
-      if (
-        this.selectedNodeGroup == null ||
-        this.selectedNodeGroup.id != this.selectedNodeGroupId
-      ) {
-        let nodeGroup = this.currentModel.nodeGroups.find(
-          (nodeGroup) => nodeGroup.id == this.selectedNodeGroupId
-        );
-        this.$store.commit("ui/setSelectedNodeGroupId", nodeGroup.Id);
-      }
-    },
-    //sync ui.selectedNodeGroup to selectedNodeGroupId
-    /*selectedNodeGroup: {
-      handler() {
-        console.log(
-          `selectedNodeGroup changed to id ${this.selectedNodeGroup.id}`
-        );
-        if (this.selectedNodeGroup)
-          this.selectedNodeGroupId = this.selectedNodeGroup.id;
-        else this.selectedNodeGroupId = null;
-      },
-      deep: true,
-      immediate: true,
-    },*/
-    /*selectedNodeGroup() {
-      console.log(
-        `selectedNodeGroup changed to id ${this.selectedNodeGroup.id}`
-      );
-      if (this.selectedNodeGroup)
-        this.selectedNodeGroupId = this.selectedNodeGroup.id;
-      else this.selectedNodeGroupId = null;
-    },*/
-  },
-  created() {
-    (async () => {
-      //console.log("waiting for currentUser to be defined");
-      while (
-        !firebaseAuth.currentUser // define the condition as you like
-      )
-        await new Promise((resolve) => setTimeout(resolve, 200));
+    async loadData() {
       //bind to list of models the org-user can view
       //(user is in model's owners, editors, or viewers)
       //this.$store.dispatch("orgs/bindReadableModels", this.$route.params.orgId);
-      let modelId = this.$route.params.orgId;
+      let modelId = this.$route.params.modelId;
       this.$store.dispatch("model/bindCurrentModel", modelId);
       this.$store.dispatch("model/bindNodes", modelId);
       this.$store.dispatch("adHocDocs/bindExchangeRates");
@@ -305,12 +263,31 @@ export default {
       //bind to currentModel's nodes
       //this.$store.dispatch("orgs/bindCurrentOrg", this.$route.params.orgId);
       //this.$store.dispatch("model/bindNodes", this.$route.params.orgId);
+    },
+  },
+
+  created() {
+    (async () => {
+      //console.log("waiting for currentUser to be defined");
+      while (
+        !firebaseAuth.currentUser // define the condition as you like
+      )
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      this.loadData();
     })();
     //console.log("above code doesn't block main function stack");
   },
   mounted() {},
 
   watch: {
+    "$route.params.modelId": {
+      handler: function (modelId, oldModelId) {
+        //if we are changing from one model to another one
+        if (oldModelId) this.loadData();
+      },
+      immediate: true,
+    },
+
     "$route.params.nodeId": {
       handler: function (nodeId) {
         if (this.selectedNodeId != nodeId) this.setSelectedNodeId(nodeId);
