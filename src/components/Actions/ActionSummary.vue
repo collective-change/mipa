@@ -491,13 +491,14 @@ export default {
     /*"modal-save-button": require("components/Shared/ModalComponents/ModalSaveButton.vue")
       .default,*/
     impacts: require("components/Impacts/Impacts.vue").default,
-    simpleCostsAndImpacts: require("components/Impacts/SimpleCostsAndImpacts.vue")
-      .default,
+    simpleCostsAndImpacts:
+      require("components/Impacts/SimpleCostsAndImpacts.vue").default,
     "calculator-ui": require("components/Calc/CalculatorUi.vue").default,
     "export-calc-results": require("components/Calc/ExportCalcResults.vue")
       .default,
-    "action-relationships": require("components/Actions/Relationships/ActionRelationships.vue")
-      .default,
+    "action-relationships":
+      require("components/Actions/Relationships/ActionRelationships.vue")
+        .default,
     "select-user": require("components/Users/SelectUser.vue").default,
     "action-sim-charts": require("components/Charts/ActionSimCharts.vue")
       .default,
@@ -730,12 +731,16 @@ export default {
           (newAction && !oldAction) ||
           (newAction && newAction.id != oldAction.id)
         ) {
+          console.log(`${newAction.id} / ${oldAction.id}`);
           this.loadAction(newAction);
           this.saveFullResults = false;
         } else if (newAction) {
           //same action, just refreshed
           this.$store.commit("uiAction/mergeNewActionToUiAction", newAction);
-        } else this.$store.dispatch("uiAction/setUiAction", null); //no new action
+        } else {
+          this.$store.dispatch("uiAction/setUiAction", null);
+          console.log("no new action, setUiAction to null");
+        }
       },
     },
 
@@ -744,8 +749,10 @@ export default {
       this.ownDirectCost = this.directCost.own;
       this.outstandingDirectCost = this.directCost.outstanding;
       this.sunkenDirectCost = this.directCost.sunken;
-      this.outstandingDirectEffortHrs = this.directCost.outstandingDirectEffortHrs;
-      this.outstandingDirectEffortCost = this.directCost.outstandingDirectEffortCost;
+      this.outstandingDirectEffortHrs =
+        this.directCost.outstandingDirectEffortHrs;
+      this.outstandingDirectEffortCost =
+        this.directCost.outstandingDirectEffortCost;
       this.outstandingSpending = this.directCost.outstandingSpending;
     },
   },

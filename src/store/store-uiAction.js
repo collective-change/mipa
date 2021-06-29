@@ -26,7 +26,6 @@ const state = {
 
 const mutations = {
   setUiAction(state, action) {
-    console.log("setUiAction");
     state.uiAction = action;
 
     //initialize newly coded properties if they're missing from the retrieved action
@@ -53,7 +52,7 @@ const mutations = {
   updateUiActionField(state, field) {
     if (state.uiAction.id == undefined) return;
     let fieldName = field.path.replace("uiAction.", "");
-    console.log(field);
+    //console.log(field);
     updateField(state, field);
     if (!fieldsToIgnoreForUiActionChanged.includes(fieldName)) {
       state.uiActionChanged = true;

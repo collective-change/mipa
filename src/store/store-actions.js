@@ -29,7 +29,7 @@ const mutations = {
 
 const actions = {
   bindCurrentAction: firestoreAction(({ bindFirestoreRef }, actionId) => {
-    let userId = firebaseAuth.currentUser.uid;
+    //let userId = firebaseAuth.currentUser.uid;
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "currentAction",
@@ -135,7 +135,7 @@ const actions = {
   },
 
   deleteAction({ dispatch }, actionId) {
-    let userId = firebaseAuth.currentUser.uid;
+    //let userId = firebaseAuth.currentUser.uid;
     firebaseDb
       .collection("actions")
       .doc(actionId)
@@ -183,7 +183,7 @@ const actions = {
   },*/
 
   bindActions: firestoreAction(({ bindFirestoreRef }, orgId) => {
-    let userId = firebaseAuth.currentUser.uid;
+    //let userId = firebaseAuth.currentUser.uid;
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "actions",
@@ -204,7 +204,7 @@ const actions = {
   }),
 
   bindMatchingActions: firestoreAction(({ bindFirestoreRef }, payload) => {
-    let userId = firebaseAuth.currentUser.uid;
+    //let userId = firebaseAuth.currentUser.uid;
     let query = firebaseDb
       .collection("actions")
       .where("orgId", "==", payload.orgId)

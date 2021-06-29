@@ -214,6 +214,7 @@ async function calculateResultsOfActions(
       }
 
       //add in nodes values and calc time then save actionResults in IDB
+      actionResults.nodesUnit = branchAndBlockeesResults.nodesUnit;
       actionResults.timeSPoints = sim.scope.timeSeries.timeSPoints;
       actionResults.baselineNodesValues =
         branchAndBlockeesResults.baselineNodesValues;
@@ -526,8 +527,11 @@ function simulateCostsAndImpacts(
 
   //extract relevant baselineNodesValues
   let baselineNodesValues = {};
+  let nodesUnit = {};
+  console.log(sim.nodes);
   onlyNodeIds.forEach(function(nodeId) {
     baselineNodesValues[nodeId] = defaultBaseline.nodesValues[nodeId];
+    nodesUnit[nodeId] = sim.nodes.find(n => n.id == nodeId).unit;
   });
 
   //TODO: if extra timepoints are required then build customTimeSPoints
@@ -586,6 +590,7 @@ function simulateCostsAndImpacts(
   );
 
   let simulateCostsAndImpactsResults = {
+    nodesUnit,
     baselineNodesValues,
     ifDoneNodesValues,
     ifNotDoneNodesValues,
