@@ -253,6 +253,7 @@ export default {
       } else {
         //console.log("existing chart found");
         chart.title = this.getNodeName(nodeId);
+        chart.chartOptions.vAxis.title = this.getNodeUnit(nodeId);
         chart.chartData = [];
       }
       // if resultsOfAction is available then then load it for the node; otherwise set data for the node to empty
@@ -314,9 +315,13 @@ export default {
       else return nodeId;
     },
     getNodeUnit(nodeId) {
-      const found = this.nodes.find((node) => node.id == nodeId);
-      if (found) return found.unit;
-      else return "";
+      if (this.resultsOfAction && this.resultsOfAction.nodesUnit) {
+        return this.resultsOfAction.nodesUnit[nodeId];
+      } else {
+        const found = this.nodes.find((node) => node.id == nodeId);
+        if (found) return found.unit;
+        else return "";
+      }
     },
     filterFn(val, update, abort) {
       update(() => {
@@ -397,7 +402,6 @@ export default {
       this.chartsArr = [];
     },
     nodes: function () {
-      console.log("nodes updated");
       this.updateChartsArr();
     },
     resultsOfAction: function () {

@@ -33,22 +33,8 @@ export default {
     ...mapState("actions", ["currentAction"]),
     ...mapState("uiAction", ["uiActionChanged"]),
   },
-  created() {
-    (async () => {
-      while (
-        !firebaseAuth.currentUser // define the condition as you like
-      )
-        await new Promise((resolve) => setTimeout(resolve, 200));
-
-      let orgId = this.$route.params.orgId;
-      let actionId = this.$route.params.actionId;
-      await this.$store.dispatch("actions/bindActions", orgId);
-      await this.$store.dispatch("actions/bindCurrentAction", actionId);
-    })();
-  },
-  mounted() {
-    //console.log("actionDetails");
-  },
+  created() {},
+  mounted() {},
 
   watch: {
     "$route.params.orgId": {
