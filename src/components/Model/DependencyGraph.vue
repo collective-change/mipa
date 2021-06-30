@@ -1694,9 +1694,9 @@ export default {
     selectedNodeId: {
       // This is for responding to search and also store-calculator setting the selectedNodeId
       // when reporting an error.
-      handler() {
+      async handler() {
+        await this.findNodeGroupAndExpand(this.selectedNodeId);
         this.handleSelectedNodeIdChange();
-        this.findNodeGroupAndExpand(this.selectedNodeId);
       },
     },
 
