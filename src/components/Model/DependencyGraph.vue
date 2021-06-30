@@ -1696,6 +1696,7 @@ export default {
       // when reporting an error.
       handler() {
         this.handleSelectedNodeIdChange();
+        this.findNodeGroupAndExpand(this.selectedNodeId);
       },
     },
 
