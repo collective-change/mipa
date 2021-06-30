@@ -157,6 +157,7 @@ export default {
         //type: ""
       },
       selectedNodeGroup: null,
+      lastClickType: null,
     };
   },
 
@@ -723,11 +724,11 @@ export default {
           const groupNames = unvisitedGroups
             .map((group) => group.name)
             .join(", ");
-          console.log("unvisitedNodeGroups: ", groupNames);
+          //console.log("unvisitedNodeGroups: ", groupNames);
           throw "Circular hierarchy detected in node groups: " + groupNames;
         }
       } catch (err) {
-        console.log(err);
+        //console.log(err);
         showErrorMessage("Error sorting node groups", err.message);
       }
       return L;
@@ -1417,6 +1418,8 @@ export default {
       texts.classed("highlight", false);
     },
     nodeClick(event, d, clickType) {
+      //console.log("nodeClick", clickType);
+      this.lastClickType = clickType;
       const circles = this.selections.graph.selectAll("circle");
 
       circles.classed("selected", false);
@@ -1460,8 +1463,9 @@ export default {
               selectedNodeGroupFound = true;
             }
           });
-          if (!selectedNodeGroupFound)
+          if (!selectedNodeGroupFound) {
             that.$store.commit("ui/setSelectedNodeGroupId", null);
+          }
         } else {
           that.$store.commit("ui/setSelectedNodeGroupId", null);
         }
@@ -1670,8 +1674,13 @@ export default {
           : null;
       if (foundNodeGroup) {
         await this.expandGroup(foundNodeGroup.id);
-        this.$store.commit("ui/setSelectedNodeGroupId", foundNodeGroup.id);
-      } else this.$store.commit("ui/setSelectedNodeGroupId", null);
+        {
+          this.$store.commit("ui/setSelectedNodeGroupId", foundNodeGroup.id);
+        }
+      } else {
+        //if nodeId is not a group node
+        this.$store.commit("ui/setSelectedNodeGroupId", null);
+      }
     },
 
     async expandGroup(groupId) {
@@ -1695,7 +1704,18 @@ export default {
       // This is for responding to search and also store-calculator setting the selectedNodeId
       // when reporting an error.
       async handler() {
-        await this.findNodeGroupAndExpand(this.selectedNodeId);
+        // only findNodeGroupAndExpand if not contextMenuClick and selectedNode is not a groupNode
+        if (
+          this.lastClickType != "contextMenuClick" &&
+          this.currentModel.nodeGroups.find(
+            (ng) => ng.id == this.selectedNodeId
+          ) == undefined
+          //selectedNodeId.length < 36
+          //group nodes have id length of 36 characters
+        ) {
+          await this.findNodeGroupAndExpand(this.selectedNodeId);
+        }
+        this.lastClickType = null;
         this.handleSelectedNodeIdChange();
       },
     },
@@ -1725,8 +1745,11 @@ export default {
           if (nodeGroup) {
             this.selectedNodeGroup = nodeGroup;
             this.$store.commit("ui/setSelectedNodeGroupId", nodeGroup.id);
-          } else this.$store.commit("ui/setSelectedNodeGroupId", null);
+          } else {
+            this.$store.commit("ui/setSelectedNodeGroupId", null);
+          }
         }
+        this.prepD3DataAndUpdate();
       },
     },
 
