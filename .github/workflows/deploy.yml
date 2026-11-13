@@ -1,0 +1,104 @@
+# Deploys master to Firebase (Hosting, Firestore rules and indexes, Cloud
+# Functions). Setup is described in README.md under "Deploying".
+#
+# Needs, in the repository settings:
+#   - secret   FIREBASE_SERVICE_ACCOUNT: JSON key of a service account that can
+#              deploy to the Firebase project
+#   - variable APP_ENV_FILE: contents of the production .env (see .env_sample);
+#              its projectId is the project deployed to
+#   - variable FUNCTIONS_ENV_FILE (optional): contents of functions/.env;
+#              functions/.env.example is used when it is not set
+# Until the secret and APP_ENV_FILE exist, the workflow skips the deploy.
+
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check configuration
+        id: config
+        env:
+          HAS_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+          APP_ENV_FILE: ${{ vars.APP_ENV_FILE }}
+        run: |
+          if [ "$HAS_KEY" != "true" ] || [ -z "$APP_ENV_FILE" ]; then
+            echo "::notice::Deploy skipped: set the FIREBASE_SERVICE_ACCOUNT secret and the APP_ENV_FILE variable (see README, Deploying)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          project=$(printf '%s\n' "$APP_ENV_FILE" | sed -n 's/^projectId=//p' | tr -d '[:space:]')
+          if [ -z "$project" ]; then
+            echo "::error::APP_ENV_FILE has no projectId= line."
+            exit 1
+          fi
+          if printf '%s\n' "$APP_ENV_FILE" | grep -qi '^useEmulators=true'; then
+            echo "::error::APP_ENV_FILE sets useEmulators=true; production must not use the emulators."
+            exit 1
+          fi
+          echo "project=$project" >> "$GITHUB_OUTPUT"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.config.outputs.ready == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.config.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Write configuration files
+        if: steps.config.outputs.ready == 'true'
+        env:
+          APP_ENV_FILE: ${{ vars.APP_ENV_FILE }}
+          FUNCTIONS_ENV_FILE: ${{ vars.FUNCTIONS_ENV_FILE }}
+        run: |
+          printf '%s\n' "$APP_ENV_FILE" > .env
+          if [ -n "$FUNCTIONS_ENV_FILE" ]; then
+            printf '%s\n' "$FUNCTIONS_ENV_FILE" > functions/.env
+          else
+            cp functions/.env.example functions/.env
+          fi
+
+      - name: Build and test the app
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          npm ci
+          npm ci --prefix src-pwa
+          npm run lint
+          npm test
+          npm run build
+
+      - name: Install Cloud Functions dependencies
+        if: steps.config.outputs.ready == 'true'
+        run: npm ci --prefix functions
+
+      - uses: google-github-actions/auth@v2
+        if: steps.config.outputs.ready == 'true'
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Deploy to Firebase
+        if: steps.config.outputs.ready == 'true'
+        run: >
+          npx --yes firebase-tools@15.36.0 deploy
+          --project "${{ steps.config.outputs.project }}"
+          --only firestore:rules,firestore:indexes,functions,hosting
+          --non-interactive
