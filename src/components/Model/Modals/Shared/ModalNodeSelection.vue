@@ -2,7 +2,7 @@
   <div class="row q-mb-sm">
     <q-select
       filled
-      label="Node"
+      :label="$t('Factor')"
       style="width: 250px"
       autofocus
       :model-value="targetNodeId"
@@ -12,7 +12,7 @@
       option-value="id"
       option-label="name"
       @filter="filterFn"
-      :rules="[val => !!val || 'Field is required']"
+      :rules="[val => !!val || $t('Required')]"
       emit-value
       map-options
       @update:model-value="$emit('update:targetNodeId', $event)"
@@ -20,7 +20,7 @@
     >
       <template v-slot:no-option>
         <q-item>
-          <q-item-section class="text-grey">No results</q-item-section>
+          <q-item-section class="text-grey">{{ $t("No matching factors") }}</q-item-section>
         </q-item>
       </template>
     </q-select>

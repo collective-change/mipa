@@ -1,7 +1,7 @@
 <template>
   <q-card-actions align="right">
-    <q-btn label="Cancel" color="primary" v-close-popup />
-    <q-btn label="Delete" color="negative" type="submit" />
+    <q-btn :label="$t('Cancel')" color="primary" flat no-caps v-close-popup />
+    <q-btn :label="$t('Delete')" color="negative" type="submit" unelevated no-caps />
   </q-card-actions>
 </template>
 

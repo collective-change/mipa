@@ -5,47 +5,53 @@
         <q-input
           class="text-h6"
           v-model="nodeToSubmit.name"
-          placeholder="Name"
-          :rules="[(val) => !!val || 'Field is required']"
+          :placeholder="$t('Name of the factor')"
+          :rules="[(val) => !!val || $t('Required')]"
           ref="nodeName"
         />
         <div class="row justify-between">
           <div class="col-8">
             <q-input
               v-model="nodeToSubmit.symbol"
-              label="Symbol"
+              :label="$t('Short name')"
+              :hint="$t('shortNameHint')"
               debounce="500"
               :rules="[
-                (val) => !!val || 'Field is required',
+                (val) => !!val || $t('Required'),
                 (val) =>
                   isNaN(parseInt(val.substring(0, 1))) ||
-                  'Cannot start with a number',
+                  $t('Cannot start with a number'),
                 (val) =>
                   this.isAlphanumeric(val) ||
-                  'Only alphanumeric characters and underscores supported',
+                  $t('shortNameCharacters'),
               ]"
             />
           </div>
           <div class="col-3">
             <q-input
               v-model="nodeToSubmit.unit"
-              label="Unit"
+              :label="$t('Unit')"
+              :hint="$t('unitHint')"
               :rules="[
                 (val) =>
                   typeof val == 'undefined' ||
                   val == '' ||
                   (val != '' && isNaN(parseInt(val.substring(0, 1)))) ||
-                  'Cannot start with a number',
+                  $t('Cannot start with a number'),
               ]"
             />
           </div>
         </div>
-        <q-markup-table flat bordered v-if="influencerNodesInfo.length">
+        <div class="text-caption text-grey-8 q-mt-sm">{{ $t("Uses these factors") }}</div>
+        <div v-if="!influencerNodesInfo.length" class="text-caption text-grey-7 q-mb-sm">
+          {{ $t("noInfluencersHint") }}
+        </div>
+        <q-markup-table flat bordered dense v-if="influencerNodesInfo.length">
           <thead>
             <tr>
-              <th class="text-left">Influencer</th>
-              <th class="text-left">Symbol</th>
-              <th class="text-left">Unit</th>
+              <th class="text-left">{{ $t("Factor") }}</th>
+              <th class="text-left">{{ $t("Short name") }}</th>
+              <th class="text-left">{{ $t("Unit") }}</th>
             </tr>
           </thead>
           <tr v-for="influencer in influencerNodesInfo" :key="influencer.id">
@@ -67,15 +73,24 @@
 
         <q-input
           v-model="nodeToSubmit.symbolFormula"
-          label="Formula"
+          :label="$t('Formula: how this factor is calculated')"
           prefix="="
           autogrow
           debounce="800"
           :rules="[
             (val) =>
-              this.isAllowedInFormula(val) || 'Disallowed character detected',
+              this.isAllowedInFormula(val) || $t('formulaCharacters'),
           ]"
         />
+        <q-expansion-item
+          dense
+          dense-toggle
+          icon="help_outline"
+          :label="$t('How to write formulas')"
+          header-class="text-caption text-primary q-px-none"
+        >
+          <div class="text-caption formula-help">{{ $t("formulaHelp") }}</div>
+        </q-expansion-item>
         <div v-if="parserError == '' && latexFormula">
           <latex-formula
             :formula="nodeToSubmit.symbol + '=' + latexFormula"
@@ -84,22 +99,22 @@
         <div v-else class="text-negative">{{ parserError }}</div>
         <q-input
           v-model="nodeToSubmit.latestValue"
-          label="Latest value (optional)"
+          :label="$t('Current value (optional)')"
           type="number"
           step="any"
           :suffix="nodeToSubmit.unit"
-          hint="Only used if a delay function with 'best_guess' as initial value references this node."
+          :hint="$t('currentValueHint')"
           debounce="300"
         />
         <div style="height: 15px"></div>
         <select-user
-          label="Responsible person"
+          :label="$t('Responsible person')"
           v-model="nodeToSubmit.responsiblePerson"
         />
-        <q-input v-model="nodeToSubmit.notes" label="Notes" autogrow />
+        <q-input v-model="nodeToSubmit.notes" :label="$t('Notes')" autogrow />
         <modal-buttons />
       </q-form>
-      <div class="text-h6">Chat</div>
+      <div class="text-h6">{{ $t("Chat") }}</div>
       <chat
         :chatId="nodeToSubmit.chatId"
         subjectDocType="node"
@@ -122,14 +137,14 @@
             toggle-color="primary"
             size="xs"
             :options="[
-              { label: 'linear', value: 'linear' },
-              { label: 'log', value: 'mirrorLog' },
+              { label: $t('Linear'), value: 'linear' },
+              { label: $t('Log scale'), value: 'mirrorLog' },
             ]"
           />
         </div>
       </div>
 
-      <div v-if="influencerChartsArr.length" class="text-h6">Influencers</div>
+      <div v-if="influencerChartsArr.length" class="text-h6">{{ $t("Factors it uses") }}</div>
       <div
         v-for="chart in influencerChartsArr"
         :key="chart.nodeId"
@@ -146,19 +161,19 @@
             action-color="primary"
             size="xs"
             :options="[
-              { label: 'linear', value: 'linear' },
-              { label: 'log', value: 'mirrorLog' },
+              { label: $t('Linear'), value: 'linear' },
+              { label: $t('Log scale'), value: 'mirrorLog' },
             ]"
           />
           <q-btn
             size="xs"
-            label="go to node"
+            :label="$t('Open')"
             @click="setSelectedNodeId(chart.nodeId)"
           />
         </div>
       </div>
 
-      <p>Node ID: {{ nodeToSubmit.id }}</p>
+      <p class="text-caption text-grey-6 q-mt-md">ID: {{ nodeToSubmit.id }}</p>
       <!--
       <p>symbolFormula</p>
       <pre>{{ nodeToSubmit.symbolFormula }}</pre>
@@ -558,3 +573,9 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.formula-help {
+  white-space: pre-line;
+}
+</style>

@@ -22,6 +22,16 @@
         </q-expansion-item>
       </q-list>
 
+      <div class="text-h6 q-mt-xl">{{ $t("Glossary") }}</div>
+      <q-list bordered separator class="rounded-borders q-mt-sm">
+        <q-item v-for="term in glossary" :key="term">
+          <q-item-section>
+            <q-item-label class="text-weight-medium">{{ $t(`glossary.${term}.term`) }}</q-item-label>
+            <q-item-label class="text-body2 text-grey-9">{{ $t(`glossary.${term}.text`) }}</q-item-label>
+          </q-item-section>
+        </q-item>
+      </q-list>
+
       <p class="text-body2 text-grey-8 q-mt-lg">
         {{ $t("helpMore") }}
         <a :href="feedbackUrl" target="_blank" rel="noopener">{{ $t("Report a problem or suggest an idea") }}</a>
@@ -38,7 +48,21 @@ export default {
     return {
       feedbackUrl: FEEDBACK_URL,
       sections: ["Org", "Model", "Actions", "Achieve"],
-      icons: ["groups", "share", "wb_incandescent", "checklist"]
+      icons: ["groups", "share", "wb_incandescent", "checklist"],
+      glossary: [
+        "factor",
+        "shortName",
+        "formula",
+        "unit",
+        "link",
+        "delay",
+        "step",
+        "keyFactors",
+        "action",
+        "impact",
+        "netBenefit",
+        "leverage"
+      ]
     };
   }
 };

@@ -1,73 +1,77 @@
 <template>
   <q-card>
     <modal-header v-if="modelToSubmit.isOrgMainModel">
-      <template v-slot:header>Configure main model</template>
+      <template v-slot:header>{{ $t("Model settings") }}</template>
     </modal-header>
     <modal-header v-else>
-      <template v-slot:header>Configure model</template>
+      <template v-slot:header>{{ $t("Model settings") }}</template>
     </modal-header>
 
     <q-form @submit.prevent="submitModel">
       <q-card-section>
         <q-input
           v-model="modelToSubmit.name"
-          label="Model name"
-          :rules="[val => !!val || 'Field is required']"
+          :label="$t('Model name')"
+          :rules="[val => !!val || $t('Required')]"
           filled
         />
       </q-card-section>
       <div class="row">
         <div class="col">
           <q-card-section>
-            <div class="text-h6">Simulation parameters</div>
+            <div class="text-h6">{{ $t("Time") }}</div>
+            <div class="text-body2 text-grey-8 q-mb-sm">{{ $t("timeIntro") }}</div>
             <!-- <q-select
           v-model="modelToSubmit.simulationParams.timeStepType"
           :options="timeStepTypeOptions"
           label="Time step type"
           emit-value
           map-options
-          :rules="[val => !!val || 'Field is required']"
+          :rules="[val => !!val || $t('Required')]"
           filled
             />-->
 
             <div class="row">
               <q-input
                 v-model.number="modelToSubmit.simulationParams.timeStepNumber"
-                label="initial time step"
+                :label="$t('Calculate every')"
                 :rules="[
-                  val => val > 0 || 'A number greater than 0 is required'
+                  val => val > 0 || $t('Enter a number greater than 0')
                 ]"
                 filled
               />
               <q-select
                 v-model="modelToSubmit.simulationParams.timeStepUnit"
                 :options="timeUnitOptions"
-                label="units"
+                :label="$t('Time unit')"
+                style="min-width: 140px"
+                :option-label="(opt) => $t(opt.label)"
                 emit-value
                 map-options
-                :rules="[val => !!val || 'Field is required']"
+                :rules="[val => !!val || $t('Required')]"
                 filled
               />
             </div>
             <q-input
               v-model.number="modelToSubmit.simulationParams.numTimeSteps"
-              label="number of time steps"
+              :label="$t('Number of steps')"
               :rules="[
                 val =>
                   (val == parseInt(val) && val > 0) ||
-                  'A number greater than 0 is required'
+                  $t('Enter a whole number greater than 0')
               ]"
               filled
             />
             <q-input
               v-model.number="modelToSubmit.simulationParams.timeStepGrowthRate"
-              label="time step growth rate"
+              :label="$t('Step growth (advanced)')"
+              :hint="$t('stepGrowthHint')"
               filled
             />
             <div class="row">
               <q-input
                 v-model.number="modelToSubmit.simulationParams.finalTimeNumber"
-                label="final time"
+                :label="$t('Looks ahead to')"
                 :suffix="modelToSubmit.simulationParams.finalTimeUnit"
                 readonly
               />
@@ -84,14 +88,15 @@
         </div>
         <div class="col" v-if="modelToSubmit.isOrgMainModel">
           <q-card-section>
-            <div class="text-h6">Node assignments</div>
+            <div class="text-h6">{{ $t("Key factors") }}</div>
+            <div class="text-body2 text-grey-8 q-mb-sm">{{ $t("keyFactorsIntro") }}</div>
             <q-select
-              label="Average effort cost per hour"
+              :label="$t('Hourly cost of work')"
               v-model="modelToSubmit.roleNodes.averageEffortCostPerHour"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
-              :rules="[val => !!val || 'Field is required']"
+              :rules="[val => !!val || $t('Required')]"
               emit-value
               map-options
               filled
@@ -100,12 +105,12 @@
               fill-input
             />
             <q-select
-              label="One-time effort (time)"
+              :label="$t('Work hours an action needs')"
               v-model="modelToSubmit.roleNodes.effort"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
-              :rules="[val => !!val || 'Field is required']"
+              :rules="[val => !!val || $t('Required')]"
               emit-value
               map-options
               filled
@@ -114,12 +119,12 @@
               fill-input
             />
             <q-select
-              label="One-time spending"
+              :label="$t('Money an action needs')"
               v-model="modelToSubmit.roleNodes.spending"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
-              :rules="[val => !!val || 'Field is required']"
+              :rules="[val => !!val || $t('Required')]"
               emit-value
               map-options
               filled
@@ -129,12 +134,12 @@
             />
 
             <q-select
-              label="Cost to organization during interval"
+              :label="$t('Cost to the organization (per step)')"
               v-model="modelToSubmit.roleNodes.orgCost"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
-              :rules="[val => !!val || 'Field is required']"
+              :rules="[val => !!val || $t('Required')]"
               emit-value
               map-options
               filled
@@ -143,12 +148,12 @@
               fill-input
             />
             <q-select
-              label="Cost to world during interval"
+              :label="$t('Cost to the world (per step)')"
               v-model="modelToSubmit.roleNodes.worldCost"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
-              :rules="[val => !!val || 'Field is required']"
+              :rules="[val => !!val || $t('Required')]"
               emit-value
               map-options
               filled
@@ -157,12 +162,12 @@
               fill-input
             />
             <q-select
-              label="Benefit to organization during interval"
+              :label="$t('Benefit to the organization (per step)')"
               v-model="modelToSubmit.roleNodes.orgBenefit"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
-              :rules="[val => !!val || 'Field is required']"
+              :rules="[val => !!val || $t('Required')]"
               emit-value
               map-options
               filled
@@ -171,12 +176,12 @@
               fill-input
             />
             <q-select
-              label="Benefit to world during interval"
+              :label="$t('Benefit to the world (per step)')"
               v-model="modelToSubmit.roleNodes.worldBenefit"
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
-              :rules="[val => !!val || 'Field is required']"
+              :rules="[val => !!val || $t('Required')]"
               emit-value
               map-options
               filled
@@ -184,7 +189,8 @@
               hide-selected
               fill-input
             />
-            <div class="text-subtitle2">Benevolence ratio</div>
+            <div class="text-subtitle2 q-mt-md">{{ $t("Weight of the world's benefit") }}</div>
+            <div class="text-caption text-grey-8">{{ $t("weightHint") }}</div>
             <q-slider
               v-model.number="
                 modelToSubmit.simulationParams.worldToOrgWeightingRatio
@@ -196,9 +202,10 @@
             />
             <div style="position: relative" class="q-mb-lg">
               <q-badge color="primary" class="q-mb-sm absolute-center">
-                Self
+                {{ $t("Organization") }}
                 {{ modelToSubmit.simulationParams.orgWeightingFactor }} :
-                {{ modelToSubmit.simulationParams.worldWeightingFactor }} World
+                {{ modelToSubmit.simulationParams.worldWeightingFactor }}
+                {{ $t("World") }}
               </q-badge>
             </div>
             <!--
@@ -208,7 +215,7 @@
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
-              :rules="[val => !!val || 'Field is required']"
+              :rules="[val => !!val || $t('Required')]"
               emit-value
               map-options
               filled
@@ -222,7 +229,7 @@
               @filter="filterFn"
               @filter-abort="abortFilterFn"
               :options="filteredNodeOptions"
-              :rules="[val => !!val || 'Field is required']"
+              :rules="[val => !!val || $t('Required')]"
               emit-value
               map-options
               filled

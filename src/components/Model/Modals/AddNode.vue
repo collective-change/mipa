@@ -1,7 +1,13 @@
 <template>
   <q-card>
     <modal-header>
-      <template v-slot:header>Add {{ newNodeRole ? "new " + newNodeRole : "node" }}</template>
+      <template v-slot:header>{{
+        newNodeRole == "influencer"
+          ? $t("Add a factor this one uses")
+          : newNodeRole == "influencee"
+          ? $t("Add a factor that uses this one")
+          : $t("Add factor")
+      }}</template>
     </modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
