@@ -3,6 +3,7 @@
 // "firebase/auth" where needed; this module only provides the instances.
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 import {
   initializeFirestore,
   connectFirestoreEmulator,
@@ -32,6 +33,8 @@ if (isTest) {
 
 const firebaseApp = initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
+// Callable Cloud Functions (functions/src); same region as their deployment.
+const firebaseFunctions = getFunctions(firebaseApp, "us-central1");
 
 // Offline persistence (shared across tabs) in production builds.
 const firebaseDb = initializeFirestore(firebaseApp, {
@@ -47,9 +50,17 @@ if (useEmulators) {
     disableWarnings: true
   });
   connectFirestoreEmulator(firebaseDb, "127.0.0.1", 5002);
+  connectFunctionsEmulator(firebaseFunctions, "127.0.0.1", 5001);
 }
 
-export { firebaseApp, firebaseAuth, firebaseDb, firebaseConfig, useEmulators };
+export {
+  firebaseApp,
+  firebaseAuth,
+  firebaseDb,
+  firebaseFunctions,
+  firebaseConfig,
+  useEmulators
+};
 
 // Quasar boot entry (instances are created on import above).
 export default () => {};

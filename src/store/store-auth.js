@@ -5,7 +5,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
-  onAuthStateChanged
+  onAuthStateChanged,
+  sendEmailVerification
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { showErrorMessage } from "@/utils/util-show-error-message";
@@ -34,6 +35,9 @@ const actions = {
     Loading.show();
     createUserWithEmailAndPassword(firebaseAuth, payload.email, payload.password)
       .then(cred => {
+        sendEmailVerification(cred.user).catch(error =>
+          console.warn("Could not send verification email:", error.message)
+        );
         return setDoc(doc(firebaseDb, "users", cred.user.uid), {
           email: payload.email,
           displayName: payload.email.split("@")[0],

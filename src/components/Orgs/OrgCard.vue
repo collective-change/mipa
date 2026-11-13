@@ -43,6 +43,19 @@
           </q-item-section>
           <q-item-section>{{ $t("My todo") }}</q-item-section>
         </q-item>
+        <q-item
+          clickable
+          :to="{
+            name: 'members',
+            params: { orgNameSlug: org.nameSlug, orgId: id },
+          }"
+          class="rounded-borders"
+        >
+          <q-item-section avatar>
+            <q-icon name="group" color="primary" />
+          </q-item-section>
+          <q-item-section>{{ $t("Members") }}</q-item-section>
+        </q-item>
       </q-list>
     </q-card-section>
 

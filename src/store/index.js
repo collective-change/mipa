@@ -7,6 +7,7 @@ import auth from "./store-auth";
 import calculator from "./store-calculator";
 import calcResults from "./store-calcResults";
 import chats from "./store-chats";
+import members from "./store-members";
 import model from "./store-model";
 import orgs from "./store-orgs";
 import settings from "./store-settings";
@@ -33,6 +34,7 @@ export default function(/* { ssrContext } */) {
       calculator,
       calcResults,
       chats,
+      members,
       model,
       orgs,
       settings,

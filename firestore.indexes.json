@@ -34,6 +34,20 @@
       "collectionGroup": "nodeValuesShards",
       "fieldPath": "timestamps",
       "indexes": []
+    },
+    {
+      "collectionGroup": "invitations",
+      "fieldPath": "email",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
     }
   ]
 }

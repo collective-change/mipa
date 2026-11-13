@@ -12,19 +12,43 @@ service cloud.firestore {
     }
 
     match /orgs/{org} {
-      //allow read, write
-      allow create: if request.auth.uid != null;
-      allow read, update: if request.auth.uid in resource.data.users;
-      allow delete: if request.auth.uid in resource.data.superAdmins;
+      // A new organization starts with its creator as the only member and admin.
+      allow create: if request.auth != null
+        && request.resource.data.users == [request.auth.uid]
+        && request.resource.data.superAdmins == [request.auth.uid];
+      allow read: if request.auth != null && request.auth.uid in resource.data.users;
+      // Members may edit the organization; only admins may change who is in it.
+      // (Joining, leaving and role changes go through Cloud Functions.)
+      allow update: if request.auth != null && request.auth.uid in resource.data.users
+        && (request.auth.uid in resource.data.superAdmins
+          || !request.resource.data.diff(resource.data).affectedKeys().hasAny(["users", "superAdmins"]));
+      allow delete: if request.auth != null && request.auth.uid in resource.data.superAdmins;
 
       // Name and email of each member, visible to the organization's members.
       // A member may write only their own entry.
       match /members/{memberId} {
         allow read: if userInOrg(org);
         allow create, update: if request.auth.uid == memberId && userInOrg(org);
-        allow delete: if request.auth.uid == memberId
-          || request.auth.uid in get(/databases/$(database)/documents/orgs/$(org)).data.superAdmins;
+        allow delete: if request.auth.uid == memberId || isOrgAdmin(org);
       }
+
+      // Invitations: created and withdrawn by admins; the invited person can
+      // see and decline theirs. Accepting goes through the acceptInvitation
+      // Cloud Function, which needs a verified email.
+      match /invitations/{invitationId} {
+        allow read: if isOrgAdmin(org) || isInvitee(resource.data);
+        allow create: if isOrgAdmin(org)
+          && request.resource.data.email == request.resource.data.email.lower()
+          && request.resource.data.role in ["member", "admin"]
+          && request.resource.data.orgId == org
+          && request.resource.data.invitedBy == request.auth.uid;
+        allow delete: if isOrgAdmin(org) || isInvitee(resource.data);
+      }
+    }
+
+    // Lets people find invitations addressed to them across organizations.
+    match /{path=**}/invitations/{invitationId} {
+      allow read: if isInvitee(resource.data);
     }
 
     // Match any document in the 'models' collection or subcollections
@@ -57,6 +81,17 @@ service cloud.firestore {
       allow read, update: if request.auth != null
         && resource.data.membersOnly == false
         && userInOrg(resource.data.orgId);
+    }
+
+    function isOrgAdmin(orgId) {
+      return request.auth != null
+        && request.auth.uid in get(/databases/$(database)/documents/orgs/$(orgId)).data.superAdmins;
+    }
+
+    function isInvitee(invitation) {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == invitation.email;
     }
 
     function userInOrg(orgId) {

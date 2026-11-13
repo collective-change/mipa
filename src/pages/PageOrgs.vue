@@ -14,6 +14,7 @@
           no-caps
         />
       </div>
+      <my-invitations />
       <no-orgs @add-org="showAddOrg = true" v-if="orgs.length == 0" />
       <orgs v-else :orgs="orgs" />
     </template>
@@ -30,6 +31,7 @@
 import { mapGetters, mapState, mapActions } from "vuex";
 import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import NoOrgs from "@/components/Orgs/NoOrgs.vue";
+import MyInvitations from "@/components/Orgs/MyInvitations.vue";
 import Orgs from "@/components/Orgs/Orgs.vue";
 import AddOrg from "@/components/Orgs/Modals/AddOrg.vue";
 
@@ -79,6 +81,7 @@ export default {
 
   components: {
     "no-orgs": NoOrgs,
+    "my-invitations": MyInvitations,
     orgs: Orgs,
     "add-org": AddOrg
   }
