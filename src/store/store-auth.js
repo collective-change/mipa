@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { showErrorMessage } from "@/utils/util-show-error-message";
+import { PUBLIC_PATHS } from "@/router/public-paths";
 
 const state = {
   loggedIn: false,
@@ -102,7 +103,11 @@ const actions = {
         commit("setUserId", null);
         commit("setUser", null);
         LocalStorage.set("loggedIn", false);
-        this.$router.replace("/auth");
+        // window.location: at startup the router hasn't resolved the first
+        // route yet, so currentRoute would still be "/"
+        if (!PUBLIC_PATHS.includes(window.location.pathname)) {
+          this.$router.replace("/auth");
+        }
         //commit("tasks/clearTasks", null, { root: true });
         //commit("tasks/setTasksDownloaded", false, { root: true });
         commit("orgs/clearOrgs", null, { root: true });

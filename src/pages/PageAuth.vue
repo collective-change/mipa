@@ -49,6 +49,9 @@
             </q-tab-panel>
           </q-tab-panels>
         </q-card>
+        <div class="text-center text-caption text-grey-7 q-mt-md">
+          <router-link to="/privacy" class="text-grey-7">{{ $t("Privacy") }}</router-link>
+        </div>
       </div>
     </div>
   </q-page>

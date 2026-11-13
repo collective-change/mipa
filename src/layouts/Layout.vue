@@ -210,15 +210,22 @@
 
           <div class="q-px-md text-grey-9">
             <div class="row items-center q-gutter-x-sm q-gutter-y-xs">
-              <a
-                v-for="button in buttons1"
-                :key="button.text"
-                class="drawer-footer-link"
-                :href="button.href"
-                target="_blank"
-                rel="noopener"
-                >{{ $t(button.text) }}</a
-              >
+              <template v-for="button in buttons1" :key="button.text">
+                <router-link
+                  v-if="button.to"
+                  :to="button.to"
+                  class="drawer-footer-link"
+                  >{{ $t(button.text) }}</router-link
+                >
+                <a
+                  v-else
+                  class="drawer-footer-link"
+                  :href="button.href"
+                  target="_blank"
+                  rel="noopener"
+                  >{{ $t(button.text) }}</a
+                >
+              </template>
             </div>
           </div>
           <!-- <div v-if="loggedIn" class="q-py-md q-px-md text-grey-9">
@@ -269,6 +276,7 @@ export default {
       buttons1: [
         { text: "About", href: "https://collective-change.org" },
         { text: "Source code", href: "https://github.com/collective-change/mipa" },
+        { text: "Privacy", to: "/privacy" },
       ],
     };
   },
@@ -587,10 +595,7 @@ export default {
           oldCurrentOrg == null ||
           newCurrentOrg.users.length != oldCurrentOrg.users.length
         ) {
-          this.$store.dispatch(
-            "users/bindCurrentOrgUsers",
-            newCurrentOrg.users
-          );
+          this.$store.dispatch("users/bindCurrentOrgUsers", newCurrentOrg.id);
         }
       }
     },

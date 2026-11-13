@@ -75,6 +75,9 @@ export default {
     "為每個行動指定負責人和當責人，並隨著核准與完成推進它的狀態。「待辦」會列出由你負責的行動。每個節點和行動都有聊天室，讓討論緊貼著工作本身。",
   helpMore: "有不清楚或無法運作的地方嗎？",
 
+  // for PagePrivacy.vue
+  privacyEnglishOnly: "本隱私權政策目前僅提供英文版本。",
+
   // for PageOrgs.vue
   "My organizations": "我的組織",
   "Add organization": "新增組織",
