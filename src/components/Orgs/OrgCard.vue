@@ -1,75 +1,75 @@
 <template>
-  <q-card class="org-card">
-    <q-card-section class="bg-primary text-white text-h4">
-      <div class="text-h5">{{ org.name }}</div>
-      <div class="text-h4">{{ org.goal }}</div>
+  <q-card class="org-card column">
+    <q-card-section class="bg-primary text-white">
+      <div class="text-h6 ellipsis">{{ org.name }}</div>
+      <div v-if="org.goal" class="text-body2 org-goal">{{ org.goal }}</div>
+    </q-card-section>
+
+    <q-card-section class="q-pa-sm col-grow">
+      <q-list dense>
+        <q-item
+          clickable
+          :to="`/org/${org.nameSlug}/model/${id}/${id}`"
+          class="rounded-borders"
+        >
+          <q-item-section avatar>
+            <q-icon name="share" class="rotate-90" color="primary" />
+          </q-item-section>
+          <q-item-section>{{ $t("ModelNoun") }}</q-item-section>
+        </q-item>
+        <q-item
+          clickable
+          :to="{
+            name: 'actions',
+            params: { orgNameSlug: org.nameSlug, orgId: id },
+          }"
+          class="rounded-borders"
+        >
+          <q-item-section avatar>
+            <q-icon name="wb_incandescent" class="flip-vertical" color="primary" />
+          </q-item-section>
+          <q-item-section>{{ $t("Actions") }}</q-item-section>
+        </q-item>
+        <q-item
+          clickable
+          :to="{
+            name: 'my-todo',
+            params: { orgNameSlug: org.nameSlug, orgId: id },
+          }"
+          class="rounded-borders"
+        >
+          <q-item-section avatar>
+            <q-icon name="checklist" color="primary" />
+          </q-item-section>
+          <q-item-section>{{ $t("My todo") }}</q-item-section>
+        </q-item>
+      </q-list>
     </q-card-section>
 
     <q-separator />
 
     <q-card-actions align="right">
-      <div class="row">
-        <q-btn
-          :to="`/org/${org.nameSlug}/model/${id}/${id}`"
-          flat
-          round
-          dense
-          icon="share"
-          class="rotate-90"
-        >
-          <q-tooltip>Model</q-tooltip>
-        </q-btn>
-        <q-btn
-          :xto="`/org/${org.nameSlug}/ideate/${id}`"
-          :to="{
-            name: 'actions',
-            params: { orgNameSlug: org.nameSlug, orgId: id },
-          }"
-          flat
-          round
-          dense
-          icon="wb_incandescent"
-          class="flip-vertical"
-        >
-          <q-tooltip>Ideate</q-tooltip>
-        </q-btn>
-        <q-btn to="/model/model" flat round dense icon="poll">
-          <q-tooltip>Prioritize</q-tooltip>
-        </q-btn>
-        <q-btn to="/model/model" flat round dense icon="whatshot">
-          <q-tooltip>Achieve</q-tooltip>
-        </q-btn>
-        <q-btn
-          :to="`/org/${org.nameSlug}/details/${id}`"
-          flat
-          round
-          dense
-          icon="people"
-        >
-          <q-tooltip>Organization details</q-tooltip>
-        </q-btn>
-        <q-btn
-          @click.stop="showEditOrgModal"
-          flat
-          round
-          dense
-          color="primary"
-          icon="edit"
-        >
-          <q-tooltip>Edit organization</q-tooltip>
-        </q-btn>
-        <q-btn
-          @click.stop="promptToDelete(id)"
-          :disabled="!org.superAdmins.includes(userId)"
-          flat
-          round
-          dense
-          color="red-4"
-          icon="delete"
-        >
-          <q-tooltip>Delete organization</q-tooltip>
-        </q-btn>
-      </div>
+      <q-btn
+        @click.stop="showEditOrgModal"
+        flat
+        round
+        dense
+        icon="edit"
+        :aria-label="$t('Edit organization')"
+      >
+        <q-tooltip>{{ $t("Edit organization") }}</q-tooltip>
+      </q-btn>
+      <q-btn
+        v-if="org.superAdmins.includes(userId)"
+        @click.stop="promptToDelete(id)"
+        flat
+        round
+        dense
+        icon="delete"
+        :aria-label="$t('Delete organization')"
+      >
+        <q-tooltip>{{ $t("Delete organization") }}</q-tooltip>
+      </q-btn>
     </q-card-actions>
 
     <q-dialog v-model="showEditOrg">
@@ -101,8 +101,8 @@ export default {
     promptToDelete(orgId) {
       this.$q
         .dialog({
-          title: "Confirm",
-          message: "Really delete?",
+          title: this.$t("Delete organization"),
+          message: this.$t("deleteOrgConfirm", { name: this.org.name }),
           cancel: true,
           persistent: true,
         })
@@ -120,10 +120,18 @@ export default {
 <style lang="scss" scoped>
 .org-card {
   width: 100%;
-  max-width: 260px;
+  height: 100%;
 }
 
-.q-btn {
-  color: $grey-8;
+.org-goal {
+  opacity: 0.9;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.q-card__actions .q-btn {
+  color: $grey-7;
 }
 </style>

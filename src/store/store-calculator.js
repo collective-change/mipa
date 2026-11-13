@@ -1,6 +1,7 @@
 import { uid, Notify } from "quasar";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { toPlain } from "@/utils/util-toPlain";
+import { i18n } from "@/boot/i18n";
 import { firebaseAuth, firebaseConfig, useEmulators } from "@/boot/firebase";
 
 const state = {
@@ -132,9 +133,12 @@ const actions = {
           calcWorker.terminate();
           commit("setCalculatorIsRunning", false);
           commit("setCalculationProgress", 0);
-          Notify.create(
-            "Calculation time " + e.data.calcTimeMs / 1000 + " seconds."
-          );
+          Notify.create({
+            type: "positive",
+            message: i18n.global.t("Calculation finished"),
+            timeout: 2000
+          });
+          console.log("Calculation time", e.data.calcTimeMs / 1000, "s");
           console.table(e.data.calcTimeStages);
         }
       } else if ("progressValue" in e.data) {

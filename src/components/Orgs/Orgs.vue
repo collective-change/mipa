@@ -4,8 +4,14 @@
     enter-active-class="animated zoomIn"
     leave-active-class="animated zoomOut absolute-top"
   >
-    <div class="q-pa-md row items-start q-gutter-md">
-      <orgCard v-for="(org, key) in orgs" :key="key" :org="org" :id="org.id"></orgCard>
+    <div class="row items-stretch q-col-gutter-md">
+      <div
+        v-for="(org, key) in orgs"
+        :key="key"
+        class="col-12 col-sm-6 col-md-4 col-lg-3"
+      >
+        <orgCard :org="org" :id="org.id" />
+      </div>
     </div>
   </transition>
 </template>

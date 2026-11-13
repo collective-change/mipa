@@ -1,26 +1,24 @@
 <template>
-  <q-page>
-    <div class="q-pa-md absolute full-width full-height">
-      <template v-if="orgs != null">
-        <div class="text-h6">My Organizations</div>
-        <no-orgs @add-org="showAddOrg = true" v-if="orgs.length == 0" />
-        <orgs :orgs="orgs" />
-        <q-page-sticky position="bottom" :offset="[0, 18]">
-          <q-btn
-            @click="showAddOrg = true"
-            label="add organization"
-            class="all-pointer-events"
-            color="primary"
-            size="24px"
-            icon="add"
-          />
-        </q-page-sticky>
-      </template>
-      <template v-else>
-        <span class="absolute-center">
-          <q-spinner color="primary" size="3em" />
-        </span>
-      </template>
+  <q-page class="q-pa-md">
+    <template v-if="orgs != null">
+      <div class="row items-center q-mb-md">
+        <div class="text-h5">{{ $t("My organizations") }}</div>
+        <q-space />
+        <q-btn
+          v-if="orgs.length"
+          @click="showAddOrg = true"
+          :label="$t('Add organization')"
+          color="primary"
+          icon="add"
+          unelevated
+          no-caps
+        />
+      </div>
+      <no-orgs @add-org="showAddOrg = true" v-if="orgs.length == 0" />
+      <orgs v-else :orgs="orgs" />
+    </template>
+    <div v-else class="absolute-center">
+      <q-spinner color="primary" size="3em" />
     </div>
     <q-dialog v-model="showAddOrg">
       <add-org @close="showAddOrg = false" />

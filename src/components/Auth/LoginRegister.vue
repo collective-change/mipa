@@ -1,51 +1,52 @@
 <template>
-  <q-form @submit.prevent="submitForm">
-    <div class="row q-mb-md">
-      <q-banner class="bg-grey-3 col">
-        <template v-slot:avatar>
-          <q-icon name="account_circle" color="primary" />
-        </template>
-        <span class="tabName">{{ titleCase(tab) }}</span> to access mipa from anywhere.
-      </q-banner>
-    </div>
-    <div class="row q-mb-md">
-      <q-input
-        outlined
-        v-model="formData.email"
-        ref="email"
-        :rules="[ val => isValidEmailAddress(val) || 'Please enter a valid email address.']"
-        lazy-rules
-        label="Email"
-        stack-label
-        class="col"
-        name="email"
-      />
-    </div>
-    <div class="row q-mb-md">
-      <q-input
-        outlined
-        v-model="formData.password"
-        ref="password"
-        :rules="[ val => val.length >= 8 || 'Please enter at least 8 characters.']"
-        lazy-rules
-        type="password"
-        label="Password"
-        stack-label
-        class="col"
-        name="password"
-      />
-    </div>
-    <div class="row">
-      <q-space />
-      <q-btn color="primary" :label="tab" type="submit" />
-    </div>
-    <div class="row">
-      <q-space />
+  <q-form @submit.prevent="submitForm" class="q-gutter-y-md">
+    <q-input
+      outlined
+      v-model="formData.email"
+      ref="email"
+      :rules="[(val) => isValidEmailAddress(val) || $t('Please enter a valid email address.')]"
+      lazy-rules
+      :label="$t('Email')"
+      type="email"
+      autocomplete="email"
+      name="email"
+    />
+    <q-input
+      outlined
+      v-model="formData.password"
+      ref="password"
+      :rules="[(val) => val.length >= 8 || $t('Please enter at least 8 characters.')]"
+      lazy-rules
+      :type="showPassword ? 'text' : 'password'"
+      :label="$t('Password')"
+      :hint="tab == 'register' ? $t('At least 8 characters') : undefined"
+      :autocomplete="tab == 'register' ? 'new-password' : 'current-password'"
+      name="password"
+    >
+      <template v-slot:append>
+        <q-icon
+          :name="showPassword ? 'visibility_off' : 'visibility'"
+          class="cursor-pointer"
+          @click="showPassword = !showPassword"
+        />
+      </template>
+    </q-input>
+    <q-btn
+      class="full-width"
+      color="primary"
+      :label="tab == 'register' ? $t('Create account') : $t('Sign in')"
+      type="submit"
+      unelevated
+      no-caps
+      size="md"
+    />
+    <div v-if="tab == 'login'" class="text-center">
       <q-btn
-        size="sm"
         flat
+        dense
+        no-caps
         color="primary"
-        label="send password reset email"
+        :label="$t('Forgot password?')"
         @click="sendPwdResetEmail"
       />
     </div>
@@ -64,6 +65,7 @@ export default {
         email: "",
         password: "",
       },
+      showPassword: false,
     };
   },
   methods: {
@@ -88,9 +90,6 @@ export default {
       if (!this.$refs.email.hasError) {
         this.sendPasswordResetEmail(this.formData);
       }
-    },
-    titleCase(value) {
-      return value.charAt(0).toUpperCase() + value.slice(1);
     },
   },
 };

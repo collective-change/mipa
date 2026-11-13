@@ -61,10 +61,12 @@ export default defineConfig(ctx => {
 
     pwa: {
       workboxMode: "GenerateSW",
-      extendGenerateSWOptions(cfg) {
+      extendPWAGenerateSWOptions(cfg) {
         cfg.skipWaiting = true;
         cfg.clientsClaim = true;
         cfg.maximumFileSizeToCacheInBytes = 8 * 1024 * 1024;
+        // public/service-worker.js only retires the old app's service worker
+        cfg.globIgnores = [...(cfg.globIgnores || []), "**/service-worker.js"];
       }
     }
   };

@@ -1,51 +1,58 @@
 <template>
   <q-page>
-    <div class="q-mx-sm text-h5">
-      <span v-if="currentOrg">{{ currentOrg.goal }}</span>
+    <div v-if="currentOrg && currentOrg.goal" class="q-px-md q-pt-sm text-subtitle1 text-grey-8">
+      {{ currentOrg.goal }}
     </div>
 
     <div class="row">
-      <div class="col-12 col-md-2 print-hide q-pl-sm">
+      <div class="col-12 col-md-2 print-hide q-px-sm">
         <div class="column full-height">
-          <div class="row">
-            {{ currentModel ? currentModel.name : "" }}
-            {{
-              currentModel ? (currentModel.isOrgMainModel ? " (main)" : "") : ""
-            }}
-          </div>
-          <div class="row q-ma-xs">
-            <q-btn
-              @click="showConfigOrgModel = true"
-              class="all-pointer-events print-hide"
-              color="primary"
-              label="Configure model"
-            />
-          </div>
-          <div class="row q-ma-xs">
+          <div class="q-gutter-y-sm q-mt-sm">
             <calculator-ui
               calculationType="baseline"
-              buttonLabel="Calculate baseline"
+              :buttonLabel="$t('Calculate')"
+              icon="calculate"
+              unelevated
+              no-caps
+              class="full-width"
             />
-          </div>
-          <div class="row q-ma-xs">
+            <q-btn
+              @click="showConfigOrgModel = true"
+              class="full-width print-hide"
+              color="primary"
+              outline
+              no-caps
+              icon="tune"
+              :label="$t('Model settings')"
+            />
             <export-calc-results
               data-source="baseline"
-              buttonLabel="Export baseline TSV"
-            />
+              :buttonLabel="$t('Download results')"
+              icon="download"
+              flat
+              no-caps
+              class="full-width"
+            >
+            </export-calc-results>
           </div>
 
-          <div>
-            <div class="row text-h6">Node groups</div>
-            <div class="q-ma-xs q-gutter-xs">
-              Expand
-              <q-btn label="menu tree" size="sm" @click="expandMenuTree" />
-              <q-btn label="all groups" size="sm" @click="expandAllGroups" />
+          <div class="row items-center q-mt-lg">
+            <div class="text-subtitle1 text-weight-medium">
+              {{ $t("Node groups") }}
             </div>
-            <div class="q-ma-xs q-gutter-xs">
-              Collapse
-              <q-btn label="menu tree" size="sm" @click="collapseMenuTree" />
-              <q-btn label="all groups" size="sm" @click="collapseAllGroups" />
-            </div>
+            <q-space />
+            <q-btn flat round dense size="sm" icon="unfold_more" @click="expandMenuTree">
+              <q-tooltip>{{ $t("Expand list") }}</q-tooltip>
+            </q-btn>
+            <q-btn flat round dense size="sm" icon="unfold_less" @click="collapseMenuTree">
+              <q-tooltip>{{ $t("Collapse list") }}</q-tooltip>
+            </q-btn>
+            <q-btn flat round dense size="sm" icon="open_in_full" @click="expandAllGroups">
+              <q-tooltip>{{ $t("Show all nodes in groups") }}</q-tooltip>
+            </q-btn>
+            <q-btn flat round dense size="sm" icon="close_fullscreen" @click="collapseAllGroups">
+              <q-tooltip>{{ $t("Collapse all groups in the graph") }}</q-tooltip>
+            </q-btn>
           </div>
           <q-scroll-area class="col" visible>
             <q-tree
@@ -58,7 +65,7 @@
               tick-strategy="strict"
               v-model:ticked="expandedNodeGroups"
               v-model:expanded="expanded"
-              no-nodes-label="To organize nodes into groups, right click on a node and select 'Start node group', then you can add more nodes to it."
+              :no-nodes-label="$t('noNodeGroupsHint')"
             >
               <template v-slot:default-header="{ node }">
                 <div class>{{ node.name }}</div>
@@ -101,10 +108,8 @@
         ></dependency-graph>
       </div>
       <div class="col-12 col-md-3">
-        <div class="column full-height">
-          <q-scroll-area class="col q-pa-sm" visible>
-            <node-summary />
-          </q-scroll-area>
+        <div class="node-panel q-pa-sm">
+          <node-summary />
         </div>
       </div>
     </div>
@@ -324,3 +329,19 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* Keeps the selected node's details in view while the graph scrolls. */
+.node-panel {
+  padding-right: 16px;
+}
+@media (min-width: 1024px) {
+  .node-panel {
+    position: sticky;
+    top: 50px;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+</style>
