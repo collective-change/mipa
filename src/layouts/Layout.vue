@@ -418,9 +418,12 @@ export default {
               disable: true,
             },
             {
-              text: this.$t("Users"),
-              to: "/organization/users",
-              disable: true,
+              text: this.$t("Members"),
+              to: {
+                name: "members",
+                params: { orgNameSlug: this.orgNameSlug, orgId: this.orgId },
+              },
+              disable: false,
             },
             {
               text: this.$t("Structure"),

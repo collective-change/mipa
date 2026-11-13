@@ -83,6 +83,42 @@ export default {
   // for PagePrivacy.vue
   privacyEnglishOnly: "This policy is currently available in English only.",
 
+  // for organization members
+  Members: "Members",
+  Member: "Member",
+  Admin: "Admin",
+  Role: "Role",
+  you: "you",
+  Invite: "Invite",
+  "Invite someone": "Invite someone",
+  inviteHelp:
+    "They will see the invitation on their dashboard when they sign in to mipa with this email address, and can accept or decline it. Admins can invite and remove members and change roles.",
+  "Waiting for a reply": "Waiting for a reply",
+  Withdraw: "Withdraw",
+  "Member options": "Member options",
+  "Make admin": "Make admin",
+  "Remove admin role": "Remove admin role",
+  "Leave organization": "Leave organization",
+  "Remove from organization": "Remove from organization",
+  leaveConfirm: "Leave {name}? You will lose access to its models, actions and chats.",
+  removeConfirm: "Remove {name} from the organization? They will lose access to its models, actions and chats.",
+  alreadyMember: "This person is already a member.",
+  "Invitation created": "Invitation created",
+  Invitations: "Invitations",
+  invitedBy: "{name} invited you to join as {role}",
+  Accept: "Accept",
+  Decline: "Decline",
+  "Decline invitation": "Decline invitation",
+  declineInvitationConfirm: "Decline the invitation to join {name}?",
+  "You joined the organization": "You joined the organization",
+  verifyEmailToAccept:
+    "To accept an invitation, please verify your email address first. We sent you a link when you registered; you can send a new one.",
+  "Send verification email": "Send verification email",
+  "I have verified my email": "I have verified my email",
+  "Verification email sent": "Verification email sent",
+  emailNotVerifiedYet: "Your email isn't verified yet. Please click the link in the email first.",
+  "Something went wrong": "Something went wrong",
+
   // for PageOrgs.vue
   "My organizations": "My organizations",
   "Add organization": "Add organization",

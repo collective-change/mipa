@@ -78,6 +78,42 @@ export default {
   // for PagePrivacy.vue
   privacyEnglishOnly: "本隱私權政策目前僅提供英文版本。",
 
+  // for organization members
+  Members: "成員",
+  Member: "成員",
+  Admin: "管理員",
+  Role: "角色",
+  you: "你",
+  Invite: "邀請",
+  "Invite someone": "邀請成員",
+  inviteHelp:
+    "對方用這個電子郵件地址登入 mipa 時，會在儀錶板上看到邀請，並可選擇接受或拒絕。管理員可以邀請與移除成員，以及變更角色。",
+  "Waiting for a reply": "等待回覆",
+  Withdraw: "撤回",
+  "Member options": "成員選項",
+  "Make admin": "設為管理員",
+  "Remove admin role": "取消管理員",
+  "Leave organization": "離開組織",
+  "Remove from organization": "從組織移除",
+  leaveConfirm: "確定要離開「{name}」嗎？你將無法再存取它的模型、行動和聊天室。",
+  removeConfirm: "確定要將 {name} 從組織移除嗎？對方將無法再存取組織的模型、行動和聊天室。",
+  alreadyMember: "這個人已經是成員了。",
+  "Invitation created": "已建立邀請",
+  Invitations: "邀請",
+  invitedBy: "{name} 邀請你以{role}身分加入",
+  Accept: "接受",
+  Decline: "拒絕",
+  "Decline invitation": "拒絕邀請",
+  declineInvitationConfirm: "確定要拒絕加入「{name}」的邀請嗎？",
+  "You joined the organization": "你已加入組織",
+  verifyEmailToAccept:
+    "接受邀請前，請先驗證你的電子郵件地址。註冊時我們已寄出驗證連結，你也可以重新寄送。",
+  "Send verification email": "寄送驗證信",
+  "I have verified my email": "我已完成驗證",
+  "Verification email sent": "已寄出驗證信",
+  emailNotVerifiedYet: "你的電子郵件尚未驗證，請先點選信中的連結。",
+  "Something went wrong": "發生錯誤",
+
   // for PageOrgs.vue
   "My organizations": "我的組織",
   "Add organization": "新增組織",

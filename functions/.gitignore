@@ -6,3 +6,5 @@
 typings/
 
 node_modules/
+# Local secrets for the Functions emulator
+.secret.local
