@@ -80,6 +80,9 @@ export default {
     "Give each action a responsible and an accountable person, and move it through its states as it is approved and completed. My to-do lists the actions you are responsible for. Every node and action has a chat, so the discussion stays next to the work.",
   helpMore: "Something unclear or not working?",
 
+  // for PagePrivacy.vue
+  privacyEnglishOnly: "This policy is currently available in English only.",
+
   // for PageOrgs.vue
   "My organizations": "My organizations",
   "Add organization": "Add organization",

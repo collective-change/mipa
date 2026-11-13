@@ -62,6 +62,15 @@ Cloud Functions need the project on the Blaze plan.
    firebase deploy --only firestore:rules,firestore:indexes,functions,hosting
    ```
 
+6. Right after the deploy, copy members' names and emails into each
+   organization's member list. User profiles are now private to each user,
+   and members see each other through `orgs/{orgId}/members`:
+
+   ```bash
+   cd scripts/backfill-org-members && npm install
+   node backfill.mjs --project <project-id>
+   ```
+
 Browsers that still have the old app installed pick up the new one by
 themselves: `public/service-worker.js` replaces the old service worker,
 clears its caches and reloads the tab.

@@ -1,6 +1,7 @@
 # Design: "Draft my model" with AI
 
 Status: proposal, November 2026. Available to all users at launch (no feature flag).
+Organizations can use mipa's built-in AI or bring their own provider and model.
 
 ## Problem
 
@@ -41,8 +42,9 @@ two cafés. Our biggest costs are flour, butter, energy for the ovens and wages.
 We want to reach net-zero emissions by 2030."
 
 Before the first use, the dialog states what is sent and to whom: "Your
-description and this model are sent to Anthropic's Claude AI to prepare the
-draft." with a link to the privacy policy.
+description and this model are sent to <provider> to prepare the draft."
+(by default Anthropic's Claude, or the provider your organization chose),
+with a link to the privacy policy.
 
 **2. Clarifying questions (optional).** The AI may ask up to four short
 questions per round, for at most two rounds, and only when the answer changes
@@ -105,10 +107,11 @@ Browser (Model page dialog)
   │ 1. callable function: draftModel({ modelId, draftId?, userText })
   ▼
 Cloud Function draftModel (2nd gen, onCall, Node 22)
-  ├─ checks: signed in, editor of the model, daily limit
+  ├─ checks: signed in, editor of the model, description size
   ├─ loads org, model and nodes with the Admin SDK
   ├─ loads/saves the conversation in models/{modelId}/aiDrafts/{draftId}
-  ├─ calls the Claude API (secret ANTHROPIC_API_KEY)
+  ├─ reads the organization's AI settings (provider, model, key)
+  ├─ calls the provider through an adapter (default: Claude, mipa's key)
   └─ returns { draftId, kind: "questions" | "draft", ... }
 Browser
   ├─ applyDraft() → candidate nodes
@@ -120,9 +123,9 @@ Browser
 
 Decisions behind this shape:
 
-- **The API key stays on the server.** The browser never calls Claude directly.
-  The function also enforces the editor check, the daily limit and a size limit
-  on the description.
+- **API keys stay on the server.** The browser never calls an AI provider
+  directly. The function also enforces the editor check and a size limit on
+  the description. There is no per-user daily limit.
 - **The conversation is stored server-side** (`aiDrafts`), and the browser only
   sends the new text. A browser that sent the whole history could rewrite the
   AI's earlier turns. The draft session document also records token usage for
@@ -136,7 +139,45 @@ Decisions behind this shape:
 - **Writes happen in the browser** after the user accepts, so the existing
   Firestore rules (only model editors may write nodes) apply unchanged.
 
-## Claude API usage
+## Choosing the provider and model
+
+Each organization has AI settings, edited on a new "AI" tab of the
+organization settings:
+
+- **Provider:** "mipa (Claude)" by default, which uses mipa's own Anthropic
+  account; or the organization's own account with one of the supported
+  providers:
+  - Anthropic (Claude), with the organization's own API key;
+  - OpenAI;
+  - Google (Gemini);
+  - "OpenAI-compatible endpoint" (a base URL plus key), which covers Azure
+    OpenAI, OpenRouter, Mistral, self-hosted models (Ollama, vLLM) and many
+    others.
+- **Model:** chosen from the provider's models. mipa marks the models it has
+  tested with its evaluation set as "Recommended"; others can be chosen with a
+  note that drafts may be less reliable.
+- **Who may change these settings:** organization admins, plus any members an
+  admin adds to an "AI settings managers" list. Everyone else in the
+  organization sees which provider and model are in use but can't change them.
+
+How it is built:
+
+- **Keys are stored only on the server**, in `orgSecrets/{orgId}`, a
+  collection the security rules close to every browser. A callable function
+  `setAiSettings` checks the caller's permission, tests the key with a small
+  request, encrypts it (AES-GCM with a key held in Secret Manager) and stores
+  it. The settings page only ever shows the last four characters.
+- **One adapter per provider** behind a common interface: send the system
+  prompt, conversation and output schema; get back the parsed JSON reply and
+  token usage. Each adapter uses its provider's structured-output feature, and
+  every reply is validated against the same Zod schema afterwards, so a
+  provider with weaker JSON support gets one retry with the validation error.
+- **The evaluation set runs per recommended model**, so "Recommended" means
+  measured, not assumed.
+- **Costs** of a bring-your-own provider go to that organization's own
+  account; mipa's account pays only for "mipa (Claude)".
+
+## Claude API usage (the default provider)
 
 - **Model:** `claude-opus-5-5` (the current Opus; $4 / $20 per million input /
   output tokens). Thinking is always on; set `output_config.effort` to
@@ -189,19 +230,22 @@ prototype:
 | Output, including thinking, over 3-4 requests | ~15,000-30,000 | ~$0.30-$0.60 |
 | **Total per draft** | | **~$0.40-$0.70** |
 
-At 100 drafts a month that is roughly $40-$70. Controls: a per-user daily limit
-(proposed: 5 draft sessions), a cap of 6 requests per session, a description
-size limit, a monthly spend limit on the Anthropic account, and usage recorded
-on each draft session so cost per draft can be tracked.
+At 100 drafts a month that is roughly $40-$70 on mipa's account. There is no
+per-user daily limit. Controls: a cap of 6 requests per draft session, a
+description size limit, a monthly spend limit and alert on mipa's Anthropic
+account, and usage recorded on each draft session so cost per draft can be
+tracked. Organizations that bring their own provider pay for their own usage.
 
 ## Privacy
 
 The organization's name, goal, the user's description and the model's nodes
-are sent to Anthropic. Before launch:
+are sent to the AI provider the organization uses: Anthropic for "mipa
+(Claude)", or the provider the organization chose, under the organization's own
+agreement with it. Before launch:
 
-- a privacy policy that covers this (mipa doesn't have one yet; it needs one
-  anyway before real users sign up);
-- the notice in the dialog before first use, linking to it;
+- the privacy policy (drafted at `/privacy`) covers this;
+- the notice in the dialog before first use names the provider in use and
+  links to the policy;
 - an organization setting "Allow AI features", on by default, so an
   organization whose own policy doesn't allow sending data to AI services can
   turn it off for all its members;
@@ -227,19 +271,26 @@ up in the logs.
 ## Plan
 
 1. `applyDraft()` and the shared `sysFormula` utility, with tests. No AI yet.
-2. Cloud Function `draftModel`: auth and editor check, daily limit, draft
-   session storage, Claude call with structured output, tests with a mocked
-   SDK.
-3. Dialog: describe, questions, preview with the trial calculation and repair
+2. Organization admin role and member management (separate work; the AI
+   settings permissions build on it).
+3. Cloud Function `draftModel`: auth and editor check, draft session storage,
+   the provider adapter interface with the Claude adapter, structured output,
+   tests with a mocked SDK.
+4. Dialog: describe, questions, preview with the trial calculation and repair
    loop, accept and undo, English and Chinese strings.
-4. Evaluation set, prompt tuning, cost measurement.
-5. Privacy policy, notice and organization setting, then launch.
+5. AI settings: `setAiSettings`, encrypted key storage, adapters for OpenAI,
+   Google and OpenAI-compatible endpoints, the settings tab and its
+   permissions.
+6. Evaluation set across the recommended models, prompt tuning, cost
+   measurement.
+7. Final privacy policy, notice and organization setting, then launch.
 
 ## Open decisions
 
-- **Provider and budget.** This design assumes Anthropic's Claude API. Needs an
-  Anthropic account for the project, the `ANTHROPIC_API_KEY` secret, and a
-  monthly budget.
-- **Privacy policy** text and a contact address.
-- **Limits:** the per-user daily limit and the default for the organization
-  setting.
+- **Budget for the default provider.** Needs an Anthropic account for the
+  project, the `ANTHROPIC_API_KEY` secret, and a monthly spend limit.
+- **Privacy policy:** the draft at `/privacy` needs review (ideally by someone
+  with legal knowledge for Taiwan and the EU) before launch.
+- **Which providers to support first.** Proposed: Anthropic and
+  OpenAI-compatible endpoints, which together cover most options; then
+  OpenAI and Google with their own adapters.
