@@ -5,7 +5,7 @@
     </modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
-        <modal-node-name :name.sync="nodeToSubmit.name" ref="modalNodeName" />
+        <modal-node-name v-model:name="nodeToSubmit.name" ref="modalNodeName" />
       </q-card-section>
       <modal-buttons />
     </q-form>

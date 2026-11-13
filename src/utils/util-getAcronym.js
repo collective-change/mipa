@@ -3,7 +3,7 @@ export function getAcronym(term) {
 
   words = term.split(" ");
   acronym = "";
-  index = 0;
+  let index = 0;
   while (index < words.length) {
     nextWord = words[index];
     acronym = acronym + nextWord.charAt(0);

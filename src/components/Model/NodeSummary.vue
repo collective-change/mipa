@@ -280,7 +280,6 @@ export default {
             implicit: "hide",
           })
         : "";
-      console.log("LaTeX expression:", latex);
     },
   },
 

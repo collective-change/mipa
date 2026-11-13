@@ -54,10 +54,10 @@
               ref="tree"
               label-key="name"
               selected-color="primary"
-              :selected.sync="selectedNodeGroupId"
+              v-model:selected="selectedNodeGroupId"
               tick-strategy="strict"
-              :ticked.sync="expandedNodeGroups"
-              :expanded.sync="expanded"
+              v-model:ticked="expandedNodeGroups"
+              v-model:expanded="expanded"
               no-nodes-label="To organize nodes into groups, right click on a node and select 'Start node group', then you can add more nodes to it."
             >
               <template v-slot:default-header="{ node }">
@@ -72,7 +72,7 @@
                   ></q-icon>
                   <q-popup-edit v-model="node.name">
                     <q-input
-                      :value="node.name"
+                      :model-value="node.name"
                       dense
                       autofocus
                       @change="

@@ -1,11 +1,11 @@
 <template>
   <q-card>
-    <modal-header v-slot:header>Add Action</modal-header>
+    <modal-header>Add Action</modal-header>
 
     <q-form @submit.prevent="submitForm">
       <q-card-section>
         <modal-action-title
-          :title.sync="actionToSubmit.title"
+          v-model:title="actionToSubmit.title"
           ref="modalActionTitle"
         />
       </q-card-section>

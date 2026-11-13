@@ -224,7 +224,7 @@ export default {
           sign = 1;
           break;
         default:
-          throw new error(`Direction "${direction}" not supported.`);
+          throw new Error(`Direction "${direction}" not supported.`);
       }
       let action = this.chartableActions.find((a) => a.id == actionId);
       if (action) {

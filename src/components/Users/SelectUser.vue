@@ -11,8 +11,8 @@
       map-options
       clearable
       use-input
-      v-bind:value="value"
-      v-on:input="(value) => $emit('input', value)"
+      :model-value="modelValue"
+      @update:model-value="(value) => $emit('update:modelValue', value)"
     />
   </div>
 </template>
@@ -21,7 +21,8 @@
 import { mapActions, mapGetters, mapState } from "vuex";
 
 export default {
-  props: ["label", "value"],
+  props: ["label", "modelValue"],
+  emits: ["update:modelValue"],
   data() {
     return {
       filteredUserOptions: [],

@@ -6,7 +6,7 @@
     <q-form @submit.prevent="submitForm">
       <q-card-section>
         <modal-node-selection
-          :targetNodeId.sync="linkToSubmit.targetNodeId"
+          v-model:targetNodeId="linkToSubmit.targetNodeId"
           ref="modalNodeSelection"
         />
       </q-card-section>

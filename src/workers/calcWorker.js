@@ -17,6 +17,11 @@ const math = create(all);
 
 var firebaseApp, firebaseAuth, firebaseDb;
 
+// Shared state between functions. These used to be implicit globals, which
+// throw in strict mode (module workers are always strict).
+let scenario, timeSPoints, expectedUnit, expressionsArray, expectedUnits;
+let prevItem, nodes;
+
 const parser = math.parser();
 const mipaIdbVersion = 3;
 

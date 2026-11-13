@@ -16,7 +16,7 @@
       @filter="filterFn"
       @filter-abort="abortFilterFn"
       :options="filteredNodeOptions"
-      @input="
+      @update:model-value="
         (nodeId) => {
           searchNodeId(nodeId);
         }

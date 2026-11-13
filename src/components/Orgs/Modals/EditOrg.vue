@@ -1,16 +1,16 @@
 <template>
   <q-card>
-    <modal-header v-slot:header>Edit Organization</modal-header>
+    <modal-header>Edit Organization</modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
-        <modal-org-name :name.sync="orgToSubmit.name" ref="modalOrgName" />
+        <modal-org-name v-model:name="orgToSubmit.name" ref="modalOrgName" />
         <q-input
           v-model="orgToSubmit.goal"
           label="Goal"
           :rules="[val => !!val || 'Field is required']"
           clearable
         />
-        <modal-org-currency :currency.sync="orgToSubmit.currency" ref="modalOrgCurrency" />
+        <modal-org-currency v-model:currency="orgToSubmit.currency" ref="modalOrgCurrency" />
       </q-card-section>
       <modal-buttons />
     </q-form>

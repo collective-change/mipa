@@ -4,8 +4,8 @@
       autofocus
       v-select-all
       clearable
-      :value="name"
-      @input="$emit('update:name', $event)"
+      :model-value="name"
+      @update:model-value="$emit('update:name', $event)"
       :rules="[val => !!val || 'Field is required']"
       ref="name"
       label="Name"

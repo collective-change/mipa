@@ -35,7 +35,7 @@ export default {
         let db = event.target.result;
 
         db.onerror = function(errorEvent) {
-          note.innerHTML += "<li>Error loading database.</li>";
+          console.error("Error loading database.", errorEvent);
         };
 
         if (event.oldVersion < 1) {
@@ -131,7 +131,7 @@ export default {
         resultsOfAction = e.target.result;
       };
       entry.onerror = e => {
-        resultOfAction = null;
+        resultsOfAction = null;
       };
     });
   },

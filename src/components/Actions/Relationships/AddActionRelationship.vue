@@ -1,7 +1,7 @@
 <template>
   <q-card>
     <q-card-section>
-      <modal-header v-slot:header>Add {{ targetType }}</modal-header>
+      <modal-header>Add {{ targetType }}</modal-header>
     </q-card-section>
 
     <q-form @submit.prevent="submitImpact">

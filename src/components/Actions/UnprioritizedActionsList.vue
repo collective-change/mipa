@@ -2,12 +2,12 @@
   <div>
     <q-table
       title="Actions"
-      :data="actions"
+      :rows="actions"
       :columns="columns"
       row-key="id"
       :filter="filter"
       :loading="loading"
-      :pagination.sync="pagination"
+      v-model:pagination="pagination"
       @row-click="onRowClick"
     >
       <template v-slot:top>

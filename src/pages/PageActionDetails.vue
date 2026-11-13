@@ -71,7 +71,7 @@ export default {
 
   beforeUnmount() {
     //if the new route does not need actions, then unbind
-    if (!this.$route.name in ["actionDetails"]) {
+    if (!["actionDetails"].includes(this.$route.name)) {
       this.$store.dispatch("actions/unbindCurrentAction");
     }
   },

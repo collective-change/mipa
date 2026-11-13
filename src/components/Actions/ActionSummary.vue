@@ -57,7 +57,7 @@
             <q-checkbox
               v-model="saveResultsOnDevice"
               label="Save results for charting on this device"
-              @input="
+              @update:model-value="
                 setSaveResultsOnDeviceForAction(action.id, saveResultsOnDevice)
               "
             />
@@ -286,7 +286,7 @@
             />
 
             <q-slider
-              :value="effortCompletionPercentage"
+              :model-value="effortCompletionPercentage"
               @change="
                 (val) => {
                   effortCompletionPercentage = val;

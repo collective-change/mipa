@@ -2,12 +2,12 @@
   <div>
     <q-table
       title="Actions"
-      :data="matchingActions"
+      :rows="matchingActions"
       :columns="columnsI18n"
       row-key="id"
       :filter="filter"
       :loading="loading"
-      :pagination.sync="pagination"
+      v-model:pagination="pagination"
       :rows-per-page-options="[10, 20, 50, 0]"
       binary-state-sort
       @row-click="onRowClick"

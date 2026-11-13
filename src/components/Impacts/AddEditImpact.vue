@@ -7,7 +7,6 @@
     </q-card-section>
     <q-card-section
       ><q-btn
-        type="a"
         :href="`/org/${currentOrg.nameSlug}/model/${currentOrg.id}/${currentModel.id}`"
         target="model"
         label="see model"

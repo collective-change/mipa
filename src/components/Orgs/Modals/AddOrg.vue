@@ -1,9 +1,9 @@
 <template>
   <q-card>
-    <modal-header v-slot:header>Add a new organization</modal-header>
+    <modal-header>Add a new organization</modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
-        <modal-org-name :name.sync="orgToSubmit.name" ref="modalOrgName" />
+        <modal-org-name v-model:name="orgToSubmit.name" ref="modalOrgName" />
         <q-input
           v-model="orgToSubmit.goal"
           label="Goal"
@@ -11,7 +11,7 @@
           clearable
         />
         <q-select v-model="orgToSubmit.orgType" :options="options" emit-value label="Type" />
-        <modal-org-currency :currency.sync="orgToSubmit.currency" ref="modalOrgCurrency" />
+        <modal-org-currency v-model:currency="orgToSubmit.currency" ref="modalOrgCurrency" />
       </q-card-section>
       <modal-buttons />
     </q-form>

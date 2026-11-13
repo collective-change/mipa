@@ -130,9 +130,8 @@
       side="right"
       v-model="rightDrawerOpen"
       bordered
-      content-class="bg-grey-2"
+      class="bg-grey-2 print-hide"
       :width="240"
-      class="print-hide"
     >
       <q-scroll-area class="fit">
         <q-list padding>
