@@ -49,5 +49,8 @@
   },
   "engines": {
     "node": ">=22.22.0"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.7"
   }
 }

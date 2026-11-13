@@ -341,14 +341,15 @@ const actions = {
     if (link.sourceNodeId == link.targetNodeId) {
       throw new Error("Source node and target node cannot be the same node!");
     }
+    let influencerNodeId, influenceeNodeId;
     switch (link.targetType) {
       case "influencer":
-        var influencerNodeId = link.targetNodeId;
-        var influenceeNodeId = link.sourceNodeId;
+        influencerNodeId = link.targetNodeId;
+        influenceeNodeId = link.sourceNodeId;
         break;
       case "influencee":
-        var influencerNodeId = link.sourceNodeId;
-        var influenceeNodeId = link.targetNodeId;
+        influencerNodeId = link.sourceNodeId;
+        influenceeNodeId = link.targetNodeId;
         break;
       default:
         throw new Error("Link target type not recognized.");

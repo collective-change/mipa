@@ -175,11 +175,11 @@ async function calculateResultsOfActions(
       }
 
       //if action is in actionsResults, then replace it, else add it
-      let foundResults = actionsResults.find(
+      const foundIndex = actionsResults.findIndex(
         element => element.id == action.id
       );
-      if (foundResults) {
-        foundResults = Object.assign({}, actionResults);
+      if (foundIndex > -1) {
+        actionsResults[foundIndex] = Object.assign({}, actionResults);
       } else {
         actionsResults.push(Object.assign({}, actionResults));
       }

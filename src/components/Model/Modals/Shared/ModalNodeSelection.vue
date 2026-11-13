@@ -34,9 +34,12 @@ export default {
   props: ["targetNodeId"],
   data() {
     return {
-      options: this.nodeOptions,
+      options: [],
       selected: this.targetNodeId,
     };
+  },
+  created() {
+    this.options = this.nodeOptions;
   },
   computed: {
     ...mapState("ui", ["selectedNodeId"]),
