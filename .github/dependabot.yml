@@ -1,0 +1,41 @@
+# Grouped dependency updates: at most one pull request per directory per week
+# for version updates, so they don't pile up. Security updates still arrive
+# as soon as they're available.
+#
+# scripts/formula-check is left out on purpose: it pins mathjs 8.1.1 to
+# compare against the old production calculator.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      app-dependencies:
+        patterns: ["*"]
+        update-types: [minor, patch]
+      app-major-updates:
+        patterns: ["*"]
+        update-types: [major]
+
+  - package-ecosystem: npm
+    directory: /functions
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      functions-dependencies:
+        patterns: ["*"]
+        update-types: [minor, patch]
+      functions-major-updates:
+        patterns: ["*"]
+        update-types: [major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
