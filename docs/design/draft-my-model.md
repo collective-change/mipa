@@ -139,6 +139,34 @@ Decisions behind this shape:
 - **Writes happen in the browser** after the user accepts, so the existing
   Firestore rules (only model editors may write nodes) apply unchanged.
 
+## What the AI receives
+
+Every request to the AI provider is built from these parts, in this order (the
+first part is the same for everyone, so it can be cached):
+
+1. **Fixed instructions:** how mipa models work (nodes, formulas that use node
+   symbols, `delay(node, dt, initial)` for anything that builds up over time,
+   `dt` as the time step), the units and currencies mipa knows, what the
+   starter role nodes mean and that the draft must connect to them, how to
+   answer (about 8-25 nodes, plain-language explanations, estimates marked
+   with their reasoning, questions only when they change the model's
+   structure, the user's language), the reply format, and two short worked
+   examples (a bakery and a school club).
+2. **The organization:** name, goal, type and currency, and the model's time
+   settings (time step and how far ahead it simulates).
+3. **The current model's nodes:** name, symbol, formula, unit and group of
+   each node.
+4. **The conversation:** the user's description, the AI's questions and the
+   user's answers, and the previous draft when the user asks for changes.
+5. **Trial-calculation errors:** when a draft fails the trial calculation, the
+   errors (which node, what went wrong) so the AI can repair it.
+
+**Not sent:** members' names or email addresses, chats, actions, node notes,
+calculation results, anything from other organizations, and the user's own
+email address. Notes and chats can contain sensitive internal discussion; if
+a later feature needs them, it must ask the user first and the privacy policy
+must say so.
+
 ## Choosing the provider and model
 
 Each organization has AI settings, edited on a new "AI" tab of the
