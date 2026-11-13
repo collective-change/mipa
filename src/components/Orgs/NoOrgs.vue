@@ -1,21 +1,18 @@
 <template>
-  <transition
-    appear
-    enter-active-class="animated zoomIn"
-    leave-active-class="animated zoomOut absolute-top"
-  >
-    <q-banner class="bg-grey-3">
-      <template v-slot:avatar>
-        <q-icon name="people" color="primary" />
-      </template>
-      An organization is a group of people with a goal. Add an organization to get started!
-      <template
-        v-slot:action
-      >
-        <q-btn @click="$emit('add-org')" flat color="primary" label="Add organization" />
-      </template>
-    </q-banner>
-  </transition>
+  <q-card flat bordered class="no-orgs q-pa-lg text-center">
+    <q-icon name="groups" color="primary" size="64px" />
+    <div class="text-h6 q-mt-md">{{ $t("noOrgsTitle") }}</div>
+    <p class="text-body1 text-grey-8 q-mt-sm">{{ $t("noOrgsText") }}</p>
+    <q-btn
+      @click="$emit('add-org')"
+      color="primary"
+      icon="add"
+      :label="$t('Add organization')"
+      unelevated
+      no-caps
+      size="md"
+    />
+  </q-card>
 </template>
 
 <script>
@@ -23,3 +20,10 @@ export default {
   emits: ["add-org"]
 };
 </script>
+
+<style scoped>
+.no-orgs {
+  max-width: 560px;
+  margin: 48px auto 0;
+}
+</style>

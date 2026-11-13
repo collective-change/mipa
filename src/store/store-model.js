@@ -93,7 +93,7 @@ const actions = {
     };
     const nodes = [
       {
-        name: "average effort cost per hour (TODO: change value in formula)",
+        name: "average effort cost per hour",
         symbol: "averageEffortCostPerHour",
         symbolFormula: "10",
         sysFormula: "10",
@@ -178,7 +178,8 @@ const actions = {
 
     dispatch("updateModel", {
       modelId: payload.modelId,
-      updates: { roleNodes }
+      updates: { roleNodes },
+      silent: true // part of creating the organization; not a user edit
     });
   },
 
@@ -192,7 +193,7 @@ const actions = {
     let modelRef = doc(firebaseDb, "models", modelId);
     try {
       await setDoc(modelRef, payload.updates, { merge: true });
-      Notify.create("Model updated!");
+      if (!payload.silent) Notify.create("Model updated!");
     } catch (error) {
       console.error("Error updating model", error.message);
       showErrorMessage("Error updating model", error.message);

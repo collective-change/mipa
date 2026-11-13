@@ -23,6 +23,75 @@ export default {
   Privacy: "Privacy",
   "Policy & Safety": "Policy & Safety",
 
+  // for PageAuth.vue and LoginRegister.vue
+  authTagline:
+    "Strategic coordination for organizations that want to succeed and help the world reach sustainability.",
+  authPointModelTitle: "Model",
+  authPointModelText:
+    "Describe how your organization works as connected numbers, and simulate where it is heading.",
+  authPointPrioritizeTitle: "Ideate and prioritize",
+  authPointPrioritizeText:
+    "Compare ideas by their benefits and costs to your organization and to the world, and see which give the most leverage.",
+  authPointAchieveTitle: "Achieve",
+  authPointAchieveText:
+    "Agree on who is responsible, follow progress, and keep the discussion next to the work.",
+  "Sign in": "Sign in",
+  "Create account": "Create account",
+  Email: "Email",
+  Password: "Password",
+  "At least 8 characters": "At least 8 characters",
+  "Forgot password?": "Forgot password?",
+  "Please enter a valid email address.": "Please enter a valid email address.",
+  "Please enter at least 8 characters.": "Please enter at least 8 characters.",
+
+  // for PageModel.vue
+  Calculate: "Calculate",
+  "Model settings": "Model settings",
+  "Download results": "Download results",
+  "Node groups": "Node groups",
+  "Expand list": "Expand list",
+  "Collapse list": "Collapse list",
+  "Show all nodes in groups": "Show all nodes in groups",
+  "Collapse all groups in the graph": "Collapse all groups in the graph",
+  noNodeGroupsHint:
+    "To group nodes, right-click a node and choose 'Start node group'. Then add more nodes to it.",
+
+  // for store-calculator.js
+  "Calculation finished": "Calculation finished",
+
+  // for PageSettings.vue and PageHelp.vue
+  "Visit our website": "Visit our website",
+  "Report a problem or suggest an idea": "Report a problem or suggest an idea",
+  "Source code": "Source code",
+  helpTitle: "Getting started with mipa",
+  helpIntro:
+    "mipa helps an organization decide what to do next by estimating how much each idea would benefit the organization and the world, compared with what it costs.",
+  helpOrgTitle: "1. Add your organization",
+  helpOrgText:
+    "On My dashboard, choose Add organization and enter its name, goal and currency. mipa creates a model for it with starter nodes for effort, spending, and the costs and benefits to the organization and to the world.",
+  helpModelTitle: "2. Build the model",
+  helpModelText:
+    "Open Model. Each circle is a node: a number such as monthly sales or emissions. Click a node to edit its formula and unit. Formulas can use other nodes by their symbol, and delay(node, dt, 0) gives a node's previous value, so you can build up totals over time.\n\nStart with the node marked (new): set the average cost of an hour of work. Use Add node for more, and Model settings for the time step and how far ahead to simulate. Then choose Calculate.",
+  helpActionsTitle: "3. Add and compare actions",
+  helpActionsText:
+    "Open Actions and choose Add. Describe the idea, estimate the hours and money it needs, and add its impacts: which nodes it changes, by how much and for how long. Choose Recalculate, and mipa simulates the model with and without each action.\n\nActions are ranked by leverage: how much net benefit, to the organization and to the world, each hour of effort buys. Start with the actions at the top.",
+  helpAchieveTitle: "4. Get it done",
+  helpAchieveText:
+    "Give each action a responsible and an accountable person, and move it through its states as it is approved and completed. My to-do lists the actions you are responsible for. Every node and action has a chat, so the discussion stays next to the work.",
+  helpMore: "Something unclear or not working?",
+
+  // for PageOrgs.vue
+  "My organizations": "My organizations",
+  "Add organization": "Add organization",
+  noOrgsTitle: "Start with your organization",
+  noOrgsText:
+    "An organization is a group of people with a goal: a business, a non-profit, a school project, or just you. Add one to model how it works, compare actions by their benefit to you and to the world, and track who is doing what.",
+
+  // for OrgCard.vue
+  "Edit organization": "Edit organization",
+  "Delete organization": "Delete organization",
+  deleteOrgConfirm: "Delete {name} and everything in it? This cannot be undone.",
+
   // for linkGroups
   "My dashboard": "My dashboard",
   "To do": "To do",
@@ -60,7 +129,7 @@ export default {
   Achieve: "Achieve",
   achieve: "achieve",
   "My current focus": "My current focus",
-  "My todo": "My todo",
+  "My todo": "My to-do",
   "Time log": "Time log",
   "My team's work": "My team's work",
 

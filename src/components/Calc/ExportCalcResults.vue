@@ -4,6 +4,7 @@
       @click="exportCalcResults()"
       class="all-pointer-events print-hide"
       color="primary"
+      v-bind="$attrs"
     >{{ buttonLabel }}</q-btn>
   </div>
 </template>
@@ -12,6 +13,8 @@
 import { mapGetters, mapState } from "vuex";
 
 export default {
+  // attributes (icon, flat, no-caps...) go to the button, not the wrapper
+  inheritAttrs: false,
   props: ["dataSource", "actionId", "actionTitle", "buttonLabel"],
   components: {},
   data() {

@@ -4,6 +4,7 @@
       @click="calculate()"
       class="all-pointer-events print-hide"
       color="primary"
+      v-bind="$attrs"
       :percentage="calculationProgress * 100"
       :loading="calculatorIsRunning"
     >
@@ -20,6 +21,8 @@
 import { mapGetters, mapState } from "vuex";
 
 export default {
+  // attributes (icon, flat, no-caps...) go to the button, not the wrapper
+  inheritAttrs: false,
   props: ["calculationType", "buttonLabel", "uiAction"],
   components: {},
   data() {

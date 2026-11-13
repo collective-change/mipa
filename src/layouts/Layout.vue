@@ -2,7 +2,7 @@
   <q-layout view="hHh lpR fFf">
     <q-header elevated class="bg-white text-grey-8 q-py-none print-hide">
       <q-toolbar>
-        <div class="text-h6">{{ orgName }}</div>
+        <div v-if="$q.screen.gt.xs" class="text-h6 ellipsis org-name">{{ orgName }}</div>
         <q-btn
           flat
           no-caps
@@ -23,7 +23,7 @@
           :label="$t(currentLinkGroup)"
         >
           <q-list>
-            <div v-for="(linkGroup, key) in linkGroups" v-bind:key="key">
+            <div v-for="(linkGroup, key) in visibleLinkGroups" v-bind:key="key">
               <q-separator class="q-my-xs" />
               <q-item class="q-py-none">
                 <q-item-section avatar class="q-py-none">
@@ -46,7 +46,6 @@
                   no-caps
                   v-close-popup
                   :to="link.to"
-                  :disable="link.disable"
                 >
                   <q-item-section>
                     <q-item-section avatar>
@@ -66,13 +65,16 @@
           </q-list>
         </q-btn-dropdown>
 
-        <q-tabs v-if="linkGroups[currentLinkGroup]" align="left" no-caps>
+        <q-tabs
+          v-if="loggedIn && $q.screen.gt.xs && visibleLinkGroups[currentLinkGroup]"
+          align="left"
+          no-caps
+        >
           <q-route-tab
-            v-for="link in linkGroups[currentLinkGroup].links"
+            v-for="link in visibleLinkGroups[currentLinkGroup].links"
             :key="link.text"
             :to="link.to"
             :label="link.text"
-            :disable="link.disable"
           />
         </q-tabs>
 
@@ -93,7 +95,7 @@
           </q-btn>
 
           <q-btn
-            v-if="!loggedIn"
+            v-if="!loggedIn && $route.path != '/auth'"
             to="/auth"
             flat
             icon-right="account_circle"
@@ -109,6 +111,7 @@
           </q-btn>
 
           <q-select
+            v-if="!(loggedIn && $q.screen.xs)"
             v-model="lang"
             :options="langOptions"
             dense
@@ -159,6 +162,8 @@
             v-ripple
             clickable
             :to="link.to"
+            :href="link.href"
+            :target="link.href ? '_blank' : undefined"
             exact
           >
             <q-item-section avatar>
@@ -184,6 +189,23 @@
             </q-item-section>
           </q-item>
 
+          <q-item v-if="$q.screen.xs">
+            <q-item-section avatar>
+              <q-icon color="grey" name="language" />
+            </q-item-section>
+            <q-item-section>
+              <q-select
+                v-model="lang"
+                :options="langOptions"
+                dense
+                borderless
+                emit-value
+                map-options
+                options-dense
+              />
+            </q-item-section>
+          </q-item>
+
           <q-separator class="q-mt-md q-mb-lg" />
 
           <div class="q-px-md text-grey-9">
@@ -192,18 +214,9 @@
                 v-for="button in buttons1"
                 :key="button.text"
                 class="drawer-footer-link"
-                href="javascript:void(0)"
-                >{{ $t(button.text) }}</a
-              >
-            </div>
-          </div>
-          <div class="q-py-md q-px-md text-grey-9">
-            <div class="row items-center q-gutter-x-sm q-gutter-y-xs">
-              <a
-                v-for="button in buttons2"
-                :key="button.text"
-                class="drawer-footer-link"
-                href="javascript:void(0)"
+                :href="button.href"
+                target="_blank"
+                rel="noopener"
                 >{{ $t(button.text) }}</a
               >
             </div>
@@ -226,6 +239,7 @@ import { mapState, mapActions } from "vuex";
 import { openURL } from "quasar";
 import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import UnreadMessages from "@/components/Chats/UnreadMessages.vue";
+import { FEEDBACK_URL } from "@/utils/util-links";
 //import { version } from "../../package.json";
 
 export default {
@@ -249,18 +263,12 @@ export default {
       links2: [
         { icon: "settings", text: "Settings", to: "/settings" },
         { icon: "help", text: "Help", to: "/settings/help" },
-        { icon: "feedback", text: "SendFeedback" },
+        { icon: "feedback", text: "SendFeedback", href: FEEDBACK_URL },
       ],
       links3: [{ icon: "exit_to_app", text: "Logout", onclick: "logoutUser" }],
       buttons1: [
-        { text: "About" },
-        { text: "Copyright" },
-        { text: "Contact us" },
-      ],
-      buttons2: [
-        { text: "Terms" },
-        { text: "Privacy" },
-        { text: "Policy & Safety" },
+        { text: "About", href: "https://collective-change.org" },
+        { text: "Source code", href: "https://github.com/collective-change/mipa" },
       ],
     };
   },
@@ -436,6 +444,16 @@ export default {
       };
     },
 
+    // Only links to pages that exist; sections with none are hidden.
+    visibleLinkGroups() {
+      const groups = {};
+      for (const [key, group] of Object.entries(this.linkGroups)) {
+        const links = group.links.filter((link) => !link.disable);
+        if (links.length) groups[key] = { ...group, links };
+      }
+      return groups;
+    },
+
     currentLinkGroup() {
       if (this.$route.path == "/" || this.$route.path == "/todo") {
         return "home";
@@ -599,5 +617,8 @@ export default {
   &:hover {
     color: #000;
   }
+}
+.org-name {
+  max-width: 220px;
 }
 </style>

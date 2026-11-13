@@ -1,98 +1,41 @@
 <template>
   <q-page padding>
-    <q-list class="q-mb-md" bordered padding>
-      <q-item-label header>Settings</q-item-label>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>Show 12 hour time format</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle color="blue" v-model="show12HourTimeFormat" />
-        </q-item-section>
-      </q-item>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>Show tasks in one list</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle color="blue" v-model="showTasksInOneList" />
-        </q-item-section>
-      </q-item>
-    </q-list>
-
-    <q-list bordered padding>
-      <q-item-label header>More</q-item-label>
-
-      <q-item to="/settings/help" tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>Help</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-icon name="chevron_right"></q-icon>
-        </q-item-section>
-      </q-item>
-
-      <q-item @click="visitOurWebsite" tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>Visit our website</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-icon name="chevron_right"></q-icon>
-        </q-item-section>
-      </q-item>
-
-      <q-item @click="emailUs" tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>Email us</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-icon name="chevron_right"></q-icon>
-        </q-item-section>
-      </q-item>
-    </q-list>
+    <div class="settings">
+      <div class="text-h5 q-mb-md">{{ $t("Settings") }}</div>
+      <q-list bordered separator class="rounded-borders">
+        <q-item to="/settings/help" clickable v-ripple>
+          <q-item-section avatar><q-icon name="help" color="primary" /></q-item-section>
+          <q-item-section>{{ $t("Help") }}</q-item-section>
+          <q-item-section side><q-icon name="chevron_right" /></q-item-section>
+        </q-item>
+        <q-item :href="websiteUrl" target="_blank" clickable v-ripple>
+          <q-item-section avatar><q-icon name="public" color="primary" /></q-item-section>
+          <q-item-section>{{ $t("Visit our website") }}</q-item-section>
+          <q-item-section side><q-icon name="open_in_new" /></q-item-section>
+        </q-item>
+        <q-item :href="feedbackUrl" target="_blank" clickable v-ripple>
+          <q-item-section avatar><q-icon name="feedback" color="primary" /></q-item-section>
+          <q-item-section>{{ $t("Report a problem or suggest an idea") }}</q-item-section>
+          <q-item-section side><q-icon name="open_in_new" /></q-item-section>
+        </q-item>
+      </q-list>
+    </div>
   </q-page>
 </template>
 
 <script>
-import { mapGetters, mapActions } from "vuex";
-import { openURL } from "quasar";
+import { WEBSITE_URL, FEEDBACK_URL } from "@/utils/util-links";
 
 export default {
-  computed: {
-    ...mapGetters("settings", ["settings"]),
-    show12HourTimeFormat: {
-      get() {
-        return this.settings.show12HourTimeFormat;
-      },
-      set(value) {
-        this.setShow12HourTimeFormat(value);
-      },
-    },
-    showTasksInOneList: {
-      get() {
-        return this.settings.showTasksInOneList;
-      },
-      set(value) {
-        this.setShowTasksInOneList(value);
-      },
-    },
-  },
-  methods: {
-    ...mapActions("settings", [
-      "setShow12HourTimeFormat",
-      "setShowTasksInOneList",
-    ]),
-    visitOurWebsite() {
-      openURL("http://www.google.com");
-    },
-    emailUs() {
-      window.location.href = "mailto: hello@mipa.io?subject=MIPA Todo Feedback";
-    },
-  },
+  data() {
+    return { websiteUrl: WEBSITE_URL, feedbackUrl: FEEDBACK_URL };
+  }
 };
 </script>
 
-<style>
+<style scoped>
+.settings {
+  max-width: 640px;
+  margin: 0 auto;
+}
 </style>

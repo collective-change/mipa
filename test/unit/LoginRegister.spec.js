@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
 import { createStore } from "vuex";
+import { createI18n } from "vue-i18n";
+import messages from "@/i18n";
 import LoginRegister from "@/components/Auth/LoginRegister.vue";
 
 const { Quasar } = All;
@@ -20,15 +22,28 @@ function mountLoginRegister(tab = "login") {
   });
   const wrapper = mount(LoginRegister, {
     props: { tab },
-    global: { plugins: [[Quasar, { components }], store] }
+    global: {
+      plugins: [
+        [Quasar, { components }],
+        store,
+        createI18n({ legacy: true, locale: "en-us", messages })
+      ]
+    }
   });
   return { wrapper, actions };
 }
 
 describe("LoginRegister.vue", () => {
-  it("title-cases the tab name", () => {
-    const { wrapper } = mountLoginRegister("login");
-    expect(wrapper.find(".tabName").text()).toBe("Login");
+  it("labels the submit button for the current tab", () => {
+    const login = mountLoginRegister("login").wrapper;
+    expect(login.find("button[type=submit]").text()).toBe("Sign in");
+    const register = mountLoginRegister("register").wrapper;
+    expect(register.find("button[type=submit]").text()).toBe("Create account");
+  });
+
+  it("offers a password reset only when signing in", () => {
+    expect(mountLoginRegister("login").wrapper.text()).toContain("Forgot password?");
+    expect(mountLoginRegister("register").wrapper.text()).not.toContain("Forgot password?");
   });
 
   it("binds email input to formData", async () => {
