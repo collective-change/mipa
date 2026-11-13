@@ -21,8 +21,8 @@ vi.mock("firebase/app", () => fb.app);
 vi.mock("firebase/auth", () => fb.auth);
 vi.mock("firebase/firestore", () => fb.firestore);
 
-// mathjs defines a year as 365.25 days.
-const MATHJS_YEAR_S = 365.25 * 24 * 3600;
+const DAY_S = 24 * 3600;
+const utcS = iso => Date.parse(iso) / 1000;
 
 beforeEach(() => {
   actionsInFirestore = [];
@@ -62,8 +62,9 @@ describe("baseline: time steps", () => {
     const start = FIXED_NOW.getTime() / 1000;
     expect(r.startTimeS).toBe(start);
     expect(r.calcDate).toBe(FIXED_NOW.getTime());
+    // yearly steps follow the calendar (not mathjs's 365.25-day year)
     expect(r.timeSPoints).toEqual(
-      [0, 1, 2, 3, 4].map(i => start + i * MATHJS_YEAR_S)
+      ["2026", "2027", "2028", "2029", "2030"].map(y => utcS(`${y}-01-01T00:00:00Z`))
     );
     expect(r.nodesValues.a).toHaveLength(5);
   });
@@ -72,10 +73,34 @@ describe("baseline: time steps", () => {
     const r = await baseline([node("a", "1")], {
       simulationParams: { ...defaultParams, timeStepGrowthRate: 1 }
     });
-    const gaps = r.timeSPoints
-      .slice(1)
-      .map((t, i) => (t - r.timeSPoints[i]) / MATHJS_YEAR_S);
-    expect(gaps).toEqual([1, 2, 4, 8]);
+    // steps of 1, 2, 4 and 8 calendar years
+    expect(r.timeSPoints).toEqual(
+      ["2026", "2027", "2029", "2033", "2041"].map(y => utcS(`${y}-01-01T00:00:00Z`))
+    );
+  });
+
+  it("steps by calendar months, keeping the day of month where it exists", async () => {
+    vi.setSystemTime(new Date("2026-01-31T10:00:00Z"));
+    const r = await baseline([node("a", "1")], {
+      simulationParams: { ...defaultParams, timeStepUnit: "months" }
+    });
+    expect(r.timeSPoints).toEqual(
+      [
+        "2026-01-31T10:00:00Z",
+        "2026-02-28T10:00:00Z",
+        "2026-03-31T10:00:00Z",
+        "2026-04-30T10:00:00Z",
+        "2026-05-31T10:00:00Z"
+      ].map(utcS)
+    );
+  });
+
+  it("steps by exact durations for non-calendar units", async () => {
+    const r = await baseline([node("a", "1")], {
+      simulationParams: { ...defaultParams, timeStepNumber: 2, timeStepUnit: "weeks" }
+    });
+    const start = FIXED_NOW.getTime() / 1000;
+    expect(r.timeSPoints).toEqual([0, 1, 2, 3, 4].map(i => start + i * 14 * DAY_S));
   });
 
   it("exposes the current step length as dt", async () => {
@@ -85,7 +110,9 @@ describe("baseline: time steps", () => {
       node("perDay", "2", { unit: "kg / day" }),
       node("perStep", "$perDay * dt", { unit: "kg", blockingInfluencers: ["perDay"] })
     ]);
-    expect(r.nodesValues.perStep).toEqual(steps(2 * 365.25));
+    // dt is the actual length of the calendar year just ended: 2025, 2026,
+    // 2027 and 2029 have 365 days, the leap year 2028 has 366
+    expect(r.nodesValues.perStep).toEqual([730, 730, 730, 732, 730]);
   });
 });
 
@@ -118,6 +145,23 @@ describe("baseline: formulas", () => {
     ]);
     expect(r.nodesValues.growing).toEqual([2, 4, 8, 16, 32]);
     expect(r.nodesValues.lagged).toEqual([0, 0, 2, 4, 8]);
+  });
+
+  it("finds past calendar time points exactly with delay() in calendar units", async () => {
+    // month-end start, so month lengths and day clamping both come into play
+    vi.setSystemTime(new Date("2026-01-31T10:00:00Z"));
+    const r = await baseline(
+      [
+        node("count", "delay($count, dt, 0) + 1"),
+        node("lagged", "delay($count, 2 months, 0)"),
+        node("halfLag", "delay($count, 1.5 months, 0)")
+      ],
+      { simulationParams: { ...defaultParams, timeStepUnit: "months" } }
+    );
+    expect(r.nodesValues.count).toEqual([1, 2, 3, 4, 5]);
+    expect(r.nodesValues.lagged).toEqual([0, 0, 1, 2, 3]);
+    // halfway through the month between two points: interpolated
+    expect(r.nodesValues.halfLag.slice(2)).toEqual([1.5, 2.5, 3.5]);
   });
 
   it("uses mathjs 15 grouping for a negative fraction followed by a symbol", async () => {
@@ -185,6 +229,48 @@ describe("baseline: date functions", () => {
     expect(r.nodesValues.year).toEqual([2026, 2027, 2028, 2029, 2030]);
     expect(r.nodesValues.month).toEqual(steps(7));
     expect(r.nodesValues.monthAhead).toEqual(steps(9));
+  });
+
+  it("returns calendar years for yearly steps starting on January 1", async () => {
+    const r = await baseline([
+      node("year", "getSimYear()"),
+      node("month", "getSimCalendarMonth()"),
+      node("lastYear", 'getSimYear("-1 year")')
+    ]);
+    expect(r.nodesValues.year).toEqual([2026, 2027, 2028, 2029, 2030]);
+    expect(r.nodesValues.month).toEqual(steps(1));
+    expect(r.nodesValues.lastYear).toEqual([2025, 2026, 2027, 2028, 2029]);
+  });
+
+  it("returns calendar months for monthly steps starting on the 1st", async () => {
+    vi.setSystemTime(new Date("2026-11-01T00:00:00Z"));
+    const r = await baseline(
+      [
+        node("year", "getSimYear()"),
+        node("month", "getSimCalendarMonth()"),
+        node("monthIndex", "getSimMonth()"),
+        node("weekday", "getSimDayOfWeek()")
+      ],
+      { simulationParams: { ...defaultParams, timeStepUnit: "months" } }
+    );
+    expect(r.nodesValues.year).toEqual([2026, 2026, 2027, 2027, 2027]);
+    expect(r.nodesValues.month).toEqual([11, 12, 1, 2, 3]);
+    expect(r.nodesValues.monthIndex).toEqual([10, 11, 0, 1, 2]);
+    // Nov 1 2026 is a Sunday, then Tue Dec 1, Fri Jan 1, Mon Feb 1, Mon Mar 1
+    expect(r.nodesValues.weekday).toEqual([0, 2, 5, 1, 1]);
+  });
+
+  it("doesn't depend on the time zone of the computer", async () => {
+    const tz = process.env.TZ;
+    process.env.TZ = "America/Los_Angeles";
+    try {
+      expect(new Date(FIXED_NOW).getFullYear()).toBe(2025); // TZ took effect
+      const r = await baseline([node("year", "getSimYear()")]);
+      expect(r.nodesValues.year).toEqual([2026, 2027, 2028, 2029, 2030]);
+    } finally {
+      if (tz === undefined) delete process.env.TZ;
+      else process.env.TZ = tz;
+    }
   });
 });
 
@@ -296,7 +382,8 @@ async function calcActions(actions) {
 function npvOfConstant(amount, points = 5) {
   let npv = 0;
   for (let i = 0; i < points; i++) {
-    const tYears = (i * MATHJS_YEAR_S) / YEAR_S;
+    // time points are on January 1 of each year from 2026
+    const tYears = (utcS(`${2026 + i}-01-01T00:00:00Z`) - utcS("2026-01-01T00:00:00Z")) / YEAR_S;
     npv += amount / Math.pow(1.05, tYears);
   }
   return npv;

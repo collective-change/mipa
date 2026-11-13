@@ -867,9 +867,21 @@ function iterateThroughTime(sim, scenario) {
   timeSPoints.forEach(function(timeS, timeSIndex) {
     if (!sim.errorOccurred) {
       sim.scope.timeS = timeS;
+      sim.scope.calendarMonths = sim.calendarMonthOffsets
+        ? sim.calendarMonthOffsets[timeSIndex]
+        : null;
       //prepare dt
       if (timeSIndex == 0) {
-        sim.scope.dt = sim.initialDt; //delta time
+        if (sim.calendarStepMonths) {
+          // the length of the calendar step that would end at the start
+          sim.scope.dt = math.unit(
+            timeS -
+              calendarTimeS(sim.scope.initialTimeS, -sim.calendarStepMonths),
+            "seconds"
+          );
+        } else {
+          sim.scope.dt = sim.initialDt; //delta time
+        }
       } else {
         //we're not on the first timeSPoint
         sim.scope.dt = math.unit(
@@ -1256,7 +1268,70 @@ function prepScope(sim) {
   return scope;
 }
 
+// Months per calendar unit, by the unit names mathjs uses. mathjs gives these
+// units fixed lengths (a year is 365.25 days), which drift against the
+// calendar, so time steps and delays in these units are taken on the UTC
+// calendar instead.
+const CALENDAR_UNIT_MONTHS = {
+  month: 1,
+  months: 1,
+  year: 12,
+  years: 12,
+  decade: 120,
+  decades: 120,
+  century: 1200,
+  centuries: 1200,
+  millennium: 12000,
+  millennia: 12000
+};
+
+// Number of calendar months in a mathjs Unit such as "2 years", or null if
+// the unit is not a single calendar unit (e.g. seconds, days, kg / month).
+function calendarMonthsOf(unit) {
+  if (!unit || !unit.units || unit.units.length != 1) return null;
+  const { unit: u, power } = unit.units[0];
+  if (power != 1 || !(u.name in CALENDAR_UNIT_MONTHS)) return null;
+  return unit.toNumeric() * CALENDAR_UNIT_MONTHS[u.name];
+}
+
+// UTC time (in seconds) a whole number of calendar months after startS,
+// keeping the day of month and time of day, and clamping the day to the
+// length of the target month (Jan 31 + 1 month = Feb 28 or 29).
+function addCalendarMonthsS(startS, months) {
+  const d = new Date(startS * 1000);
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth() + months;
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  return (
+    Date.UTC(
+      year,
+      month,
+      Math.min(d.getUTCDate(), daysInMonth),
+      d.getUTCHours(),
+      d.getUTCMinutes(),
+      d.getUTCSeconds(),
+      d.getUTCMilliseconds()
+    ) / 1000
+  );
+}
+
+// UTC time (in seconds) a possibly fractional number of calendar months after
+// startS. A fraction of a month is that fraction of the month it falls in.
+// Always counted from the same start, so equal offsets give equal times,
+// which delay() relies on to find past time points exactly.
+function calendarTimeS(startS, months) {
+  const whole = Math.floor(months);
+  const fraction = months - whole;
+  const a = addCalendarMonthsS(startS, whole);
+  if (fraction == 0) return a;
+  const b = addCalendarMonthsS(startS, whole + 1);
+  return Math.round(a + fraction * (b - a));
+}
+
 function prepDefaultTimeSPoints(sim) {
+  const stepMonths = calendarMonthsOf(sim.initialDt);
+  if (stepMonths) return prepCalendarTimeSPoints(sim, stepMonths);
+
   let timeSPoint = sim.scope.initialTimeS;
   let completedLoops = 0;
   let defaultTimeSPoints = [];
@@ -1274,6 +1349,38 @@ function prepDefaultTimeSPoints(sim) {
     completedLoops++;
   }
   return defaultTimeSPoints;
+}
+
+// Time points for steps in calendar units: step k is stepMonths * (1 + growth
+// rate)^k calendar months long.
+function prepCalendarTimeSPoints(sim, stepMonths) {
+  const startS = sim.scope.initialTimeS;
+  sim.calendarStepMonths = stepMonths;
+  sim.calendarMonthOffsets = [];
+  const defaultTimeSPoints = [];
+  let months = 0;
+  let step = stepMonths;
+  for (let i = 0; i < sim.maxLoops; i++) {
+    sim.calendarMonthOffsets.push(months);
+    defaultTimeSPoints.push(calendarTimeS(startS, months));
+    if (i > 0 && sim.params.timeStepGrowthRate != 0) {
+      step = step * (1 + sim.params.timeStepGrowthRate);
+    }
+    months += step;
+  }
+  return defaultTimeSPoints;
+}
+
+// Simulation time (in seconds) offset by a mathjs Unit of time, which can be
+// negative. Calendar units move along the UTC calendar; other units are exact.
+function offsetTimeS(scope, offset) {
+  const months = calendarMonthsOf(offset);
+  if (months === null) return scope.timeS + offset.toNumber("seconds");
+  if (scope.calendarMonths !== null && scope.calendarMonths !== undefined) {
+    // calendar time steps: count from the start like the time points do
+    return calendarTimeS(scope.initialTimeS, scope.calendarMonths + months);
+  }
+  return calendarTimeS(scope.timeS, months);
 }
 
 function resetScope(sim) {
@@ -1591,14 +1698,16 @@ function prepNodesForSort(sim) {
   return preppedNodes;
 }
 
+// The date functions read the simulated date in UTC, so results don't depend
+// on the time zone of the browser running the calculation.
 function getSimDayOfWeek(args, math, scope) {
   const adjustedDate = getAdjustedDate(args, math, scope, "getSimDayOfWeek()");
-  return adjustedDate.getDay();
+  return adjustedDate.getUTCDay();
 }
 
 function getSimMonth(args, math, scope) {
   const adjustedDate = getAdjustedDate(args, math, scope, "getSimMonth()");
-  return adjustedDate.getMonth();
+  return adjustedDate.getUTCMonth();
 }
 
 function getSimCalendarMonth(args, math, scope) {
@@ -1608,12 +1717,12 @@ function getSimCalendarMonth(args, math, scope) {
     scope,
     "getSimCalendarMonth()"
   );
-  return adjustedDate.getMonth() + 1;
+  return adjustedDate.getUTCMonth() + 1;
 }
 
 function getSimYear(args, math, scope) {
   const adjustedDate = getAdjustedDate(args, math, scope, "getSimYear()");
-  return adjustedDate.getFullYear();
+  return adjustedDate.getUTCFullYear();
 }
 
 // Since mathjs 9+, functions with `rawArgs` receive the scope as a Map rather
@@ -1652,9 +1761,7 @@ function getAdjustedDate(args, math, scope, caller) {
         var n = math.parse(args[0].value);
       }
       var timeAdjustment = n.compile().evaluate(scope.__map);
-      return new Date(
-        (scope.timeS + timeAdjustment.toNumber("seconds")) * 1000
-      );
+      return new Date(offsetTimeS(scope, timeAdjustment) * 1000);
       break;
     case args.length > 1:
       throw new Error(
@@ -1680,7 +1787,7 @@ function delay(args, math, scope) {
   const values = scope.timeSeries.nodes[nodeId];
   const timeSPoints = scope.timeSeries.timeSPoints;
   //let defaultValue = scope[$nodeId];
-  let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
+  let targetTimeS = offsetTimeS(scope, math.unaryMinus(delayTime));
 
   //quick case: if the last value in the time series is for the target time, then return it
   if (timeSPoints[timeSPoints.length - 1] == targetTimeS && values) {
