@@ -51,7 +51,7 @@ export default {
           items: [
             "Account: your email address and password. Passwords are handled by Firebase Authentication and are never visible to us.",
             "Profile: a display name (taken from the part of your email before the @), when you registered, and whether your email is verified.",
-            "Content you create: organizations, goals, models, nodes and formulas, actions and their estimates, notes, assignments of responsible and accountable people, and chat messages.",
+            "Content you create: organizations, goals, models, nodes and formulas, actions and their estimates, notes, assignments of responsible and accountable people, chat messages, and documents you give to AI features.",
             "Technical information needed to run the service, such as your IP address and browser type, which our hosting providers receive when your browser connects to them.",
           ],
           paragraphs: [
@@ -84,7 +84,22 @@ export default {
             "Google Firebase (Authentication, Cloud Firestore, Hosting and Cloud Functions), which stores and serves the app and your data.",
             "Google Charts, loaded from gstatic.com to draw some charts; Google receives your IP address when a chart loads.",
             "Fixer (fixer.io) supplies currency exchange rates to our server. No personal information is sent to it.",
-            "AI features (when available): to draft a model, the organization's name and goal, your description and the model's contents are sent to the AI provider your organization uses: Anthropic (Claude) by default, or a provider your organization has chosen and connected with its own account, under that organization's agreement with the provider.",
+            "AI providers, for the AI features described below: Anthropic (Claude) by default, or a provider your organization has chosen and connected with its own account.",
+          ],
+        },
+        {
+          title: "AI features",
+          paragraphs: [
+            "mipa's AI features (some are not yet available) help you draft and review models, suggest formulas, estimates and actions, explain and compare results, look for assumptions that would change a decision, write summaries and decision briefs, translate, and summarize progress.",
+            "To do this, a feature sends the AI provider only what it needs from the organization you are working in. Depending on the feature, that can include the organization's name and goal, its models and their results, actions and their estimates, notes, chat messages, progress updates, and documents you choose to give it. Members' names are included only when a feature needs them, for example a progress summary that says who is responsible for what. Email addresses and passwords are never sent.",
+            "Who receives it: Anthropic (Claude) by default, or the AI provider your organization has chosen and connected with its own account, in which case the organization's own agreement with that provider applies. Providers use the data to produce the response. We use providers and settings under which your data is not used to train their models; if your organization connects its own provider, check that provider's terms.",
+            "Some features look up published information on the web, such as typical costs or emission factors. Those searches are based on the subject of your model, not on personal information.",
+          ],
+          items: [
+            "Organization admins can turn AI features off for their organization.",
+            "Features that use chat messages or notes tell you so before you use them for the first time.",
+            "AI suggestions are shown to you for review; nothing in your organization changes until a person accepts it. Values the AI estimated are marked as estimates, with their reasoning or source.",
+            "AI can be wrong. Treat its output as a starting point for your own judgement.",
           ],
         },
         {
