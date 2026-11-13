@@ -1,7 +1,8 @@
 # Design: "Draft my model" with AI
 
-Status: proposal, November 2026. Available to all users at launch (no feature flag).
-Organizations can use mipa's built-in AI or bring their own provider and model.
+Status: proposal, November 2026. Available to all organizations at launch (no
+feature flag), once the organization connects its own AI provider. mipa does
+not provide or pay for AI itself.
 
 ## Problem
 
@@ -43,8 +44,14 @@ We want to reach net-zero emissions by 2030."
 
 Before the first use, the dialog states what is sent and to whom: "Your
 description and this model are sent to <provider> to prepare the draft."
-(by default Anthropic's Claude, or the provider your organization chose),
-with a link to the privacy policy.
+(the provider your organization connected), with a link to the privacy
+policy.
+
+If the organization hasn't connected a provider yet, the button is still
+shown, and opens an explanation of what AI can do in mipa and how to connect
+a provider (see "Connecting a provider" below), so organizations are
+encouraged to set it up rather than left wondering why the feature is
+missing.
 
 **2. Clarifying questions (optional).** The AI may ask up to four short
 questions per round, for at most two rounds, and only when the answer changes
@@ -111,7 +118,7 @@ Cloud Function draftModel (2nd gen, onCall, Node 22)
   ├─ loads org, model and nodes with the Admin SDK
   ├─ loads/saves the conversation in models/{modelId}/aiDrafts/{draftId}
   ├─ reads the organization's AI settings (provider, model, key)
-  ├─ calls the provider through an adapter (default: Claude, mipa's key)
+  ├─ calls the organization's provider through its adapter
   └─ returns { draftId, kind: "questions" | "draft", ... }
 Browser
   ├─ applyDraft() → candidate nodes
@@ -171,9 +178,8 @@ must say so.
 Each organization has AI settings, edited on a new "AI" tab of the
 organization settings:
 
-- **Provider:** "mipa (Claude)" by default, which uses mipa's own Anthropic
-  account; or the organization's own account with one of the supported
-  providers:
+- **Provider:** the organization's own account with one of the supported
+  providers (mipa offers no default provider and pays for no AI usage):
   - Anthropic (Claude), with the organization's own API key;
   - OpenAI;
   - Google (Gemini);
@@ -201,10 +207,36 @@ How it is built:
   provider with weaker JSON support gets one retry with the validation error.
 - **The evaluation set runs per recommended model**, so "Recommended" means
   measured, not assumed.
-- **Costs** of a bring-your-own provider go to that organization's own
-  account; mipa's account pays only for "mipa (Claude)".
+- **Costs** go to the organization's own account with its provider.
+- **Prompt caching** on every provider: prompts are built with the parts
+  that don't change first (fixed instructions, then the organization and
+  model, then the conversation), and each adapter uses its provider's caching:
+  Anthropic caches at the points the request marks (`cache_control`); OpenAI
+  caches long prompt prefixes automatically; Google Gemini caches implicitly
+  on recent models and also offers explicit caching; OpenAI-compatible
+  endpoints vary. This lowers the organization's cost and speeds up replies.
 
-## Claude API usage (the default provider)
+### Connecting a provider
+
+Because AI features depend on it, connecting a provider is made easy and
+encouraged:
+
+- **Where it's offered:** on the first-run checklist, in the organization's
+  settings, and wherever an AI button is pressed before a provider is
+  connected. The explanation shows what AI can do in mipa, what it would send,
+  and a rough cost per use (for example "drafting a model usually costs
+  US$0.40-0.70 on your provider's account").
+- **For admins and AI settings managers:** a short guided setup per provider:
+  where to create an account and an API key (with links), a recommended
+  model, a field for the key, and a "Test connection" button. It also links to
+  the provider's terms on data retention and training, and suggests setting a
+  monthly spending limit in the provider's console.
+- **For other members:** "Ask an admin to connect an AI provider", which
+  sends a note to the organization's admins inside mipa.
+- **Switching off:** disconnecting the provider turns AI off for the
+  organization; there is no separate switch.
+
+## Claude API usage (Anthropic adapter)
 
 - **Model:** `claude-opus-5-5` (the current Opus; $4 / $20 per million input /
   output tokens). Thinking is always on; set `output_config.effort` to
@@ -257,25 +289,24 @@ prototype:
 | Output, including thinking, over 3-4 requests | ~15,000-30,000 | ~$0.30-$0.60 |
 | **Total per draft** | | **~$0.40-$0.70** |
 
-At 100 drafts a month that is roughly $40-$70 on mipa's account. There is no
-per-user daily limit. Controls: a cap of 6 requests per draft session, a
-description size limit, a monthly spend limit and alert on mipa's Anthropic
-account, and usage recorded on each draft session so cost per draft can be
-tracked. Organizations that bring their own provider pay for their own usage.
+These costs are paid by the organization on its own provider account; mipa
+pays nothing. The estimate is shown to admins when they connect a provider.
+There is no per-user daily limit. Controls that protect the organization's
+bill: a cap of 6 requests per draft session, a description size limit, the
+spending limit the organization sets with its provider, and usage recorded on
+each draft session so admins can see what AI features cost.
 
 ## Privacy
 
 The organization's name, goal, the user's description and the model's nodes
-are sent to the AI provider the organization uses: Anthropic for "mipa
-(Claude)", or the provider the organization chose, under the organization's own
-agreement with it. Before launch:
+are sent to the AI provider the organization connected, under the
+organization's own agreement with it. Before launch:
 
 - the privacy policy (drafted at `/privacy`) covers this;
 - the notice in the dialog before first use names the provider in use and
   links to the policy;
-- an organization setting "Allow AI features", on by default, so an
-  organization whose own policy doesn't allow sending data to AI services can
-  turn it off for all its members;
+- no AI without a provider: an organization whose policy doesn't allow
+  sending data to AI services simply doesn't connect one (or disconnects it);
 - no promise about providers' data use: the policy says that retention and
   training depend on each provider's terms, and that organizations should
   choose a provider compatible with their own policies. The AI settings tab
@@ -316,8 +347,6 @@ up in the logs.
 
 ## Open decisions
 
-- **Budget for the default provider.** Needs an Anthropic account for the
-  project, the `ANTHROPIC_API_KEY` secret, and a monthly spend limit.
 - **Privacy policy:** the draft at `/privacy` needs review (ideally by someone
   with legal knowledge for Taiwan and the EU) before launch.
 - **Which providers to support first.** Proposed: Anthropic and

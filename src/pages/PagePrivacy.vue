@@ -84,7 +84,7 @@ export default {
             "Google Firebase (Authentication, Cloud Firestore, Hosting and Cloud Functions), which stores and serves the app and your data.",
             "Google Charts, loaded from gstatic.com to draw some charts; Google receives your IP address when a chart loads.",
             "Fixer (fixer.io) supplies currency exchange rates to our server. No personal information is sent to it.",
-            "AI providers, for the AI features described below: Anthropic (Claude) by default, or a provider your organization has chosen and connected with its own account.",
+            "The AI provider your organization has connected with its own account, for the AI features described below. mipa does not provide AI itself.",
           ],
         },
         {
@@ -92,11 +92,11 @@ export default {
           paragraphs: [
             "mipa's AI features (some are not yet available) help you draft and review models, suggest formulas, estimates and actions, explain and compare results, look for assumptions that would change a decision, write summaries and decision briefs, translate, and summarize progress.",
             "To do this, a feature sends the AI provider only what it needs from the organization you are working in. Depending on the feature, that can include the organization's name and goal, its models and their results, actions and their estimates, notes, chat messages, progress updates, and documents you choose to give it. Members' names are included only when a feature needs them, for example a progress summary that says who is responsible for what. Email addresses and passwords are never sent.",
-            "Who receives it: Anthropic (Claude) by default, or the AI provider your organization has chosen and connected with its own account, in which case the organization's own agreement with that provider applies. Providers use the data to produce the response. Whether a provider keeps the data or uses it to train its models depends on that provider's terms, which we do not control; each organization should choose a provider whose terms are compatible with its own policies.",
+            "Who receives it: the AI provider your organization has connected with its own account; the organization's own agreement with that provider applies. AI features work only when an organization has connected a provider. Providers use the data to produce the response. Whether a provider keeps the data or uses it to train its models depends on that provider's terms, which we do not control; each organization should choose a provider whose terms are compatible with its own policies.",
             "Some features look up published information on the web, such as typical costs or emission factors. Those searches are based on the subject of your model, not on personal information.",
           ],
           items: [
-            "Organization admins can turn AI features off for their organization.",
+            "AI features are off until an organization admin connects a provider, and disconnecting it turns them off again.",
             "Features that use chat messages or notes tell you so before you use them for the first time.",
             "AI suggestions are shown to you for review; nothing in your organization changes until a person accepts it. Values the AI estimated are marked as estimates, with their reasoning or source.",
             "AI can be wrong. Treat its output as a starting point for your own judgement.",

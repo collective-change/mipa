@@ -25,9 +25,13 @@ understandable to senior leaders come first.
 3. **Send only what the feature needs.** Each feature declares which data it
    uses (table below). Features that use chats or notes ask before their first
    use. Email addresses and passwords are never sent.
-4. **The organization stays in control.** Admins can turn AI off; admins and
-   designated members choose the provider and model (see
-   draft-my-model.md, "Choosing the provider and model").
+4. **The organization stays in control, and pays its own way.** AI works only
+   with a provider the organization connects with its own account; mipa
+   provides no AI and pays for none. Admins and designated members choose the
+   provider and model, and disconnecting turns AI off (see draft-my-model.md,
+   "Choosing the provider and model" and "Connecting a provider"). mipa
+   encourages connecting a provider by showing what AI adds wherever it would
+   help.
 5. **Show uncertainty.** Where a result depends on estimates, show ranges or
    the assumptions it hinges on, not just one precise-looking number.
 
@@ -84,8 +88,9 @@ people rely on.
 
 Built once, used by every feature:
 
-- **Provider adapters and settings:** from draft-my-model.md (default Claude,
-  or the organization's own provider and model).
+- **Provider adapters and settings:** from draft-my-model.md (the
+  organization's own provider and model; no mipa default), with prompt
+  caching on every provider.
 - **AI run service:** one Cloud Function entry point that checks permissions,
   loads only the data the feature declares, runs the agent loop with the
   feature's tools and step limit, records usage, and returns a proposal.
@@ -203,23 +208,11 @@ browser                     Cloud Function               AI provider
 |---|---|---|
 | Hosting, database, sign-in (Firebase) | mipa | small at pilot scale: mostly within free quotas; Cloud Functions need the pay-as-you-go plan but cost cents at this volume |
 | Calculations | nobody extra | run on users' devices |
-| AI with the default provider | mipa | the main cost: roughly $0.40-$0.70 per drafted model, more for agent features that run several steps |
-| AI with the organization's own provider | the organization | under its own account |
+| AI | the organization, on its own provider account | roughly US$0.40-0.70 per drafted model, more for agent features that run several steps; reduced by prompt caching |
 
-So mipa itself can stay free. The open question is only the default AI
-provider. Options, which can be combined:
-
-1. **Sponsored default AI:** a sponsor or grant (for example the pilot
-   organization or collective-change.org) pays for the default provider, with
-   a monthly spend limit on mipa's account.
-2. **Monthly allowance per organization** on the default provider, after
-   which the organization connects its own provider. (Per organization per
-   month, not a per-user daily limit.)
-3. **Bring your own provider only:** no default AI cost to mipa, but a
-   barrier for small organizations without an AI account.
-4. **Paid plan later** for heavy use of the default AI, if usage grows.
-
-Recommended to start: 1 with a spend limit, plus 2 if usage grows.
+mipa provides no AI of its own, so its running costs stay small and the app
+can stay free. The cost of AI is visible to each organization on its own
+provider account, and mipa shows estimates before features are used.
 
 ## Making mipa self-explanatory
 
@@ -235,7 +228,7 @@ AI helps, but the app must be clear without it. Planned work:
    | influencers / influencees | depends on / affects |
    | latest value (optional), used by `best_guess` in `delay()` | current value (optional), used as the starting point |
    | time step type, time step growth rate, number of time steps | "Calculate every [month] for [5 years]" |
-   | leverage | good done per hour of effort |
+   | leverage | keep the word (it is mipa's own measure), with a one-line explanation in place, such as "how strongly the action's net benefit outweighs what it costs; higher leverage means do it sooner" |
    | total ROI | benefit for each unit of cost |
    | outstanding direct cost | remaining cost |
    | benefit to world during interval | benefit to the world (per period) |
