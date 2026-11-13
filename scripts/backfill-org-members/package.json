@@ -1,0 +1,12 @@
+{
+  "name": "mipa-backfill-org-members",
+  "private": true,
+  "description": "One-time: copy members' names and emails into orgs/{orgId}/members",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1"
+  }
+}

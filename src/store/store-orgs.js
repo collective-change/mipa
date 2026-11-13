@@ -66,7 +66,11 @@ const actions = {
     org.nameSlug = slugify(org.name);
     addDoc(collection(firebaseDb, "orgs"), org)
       .then(function(docRef) {
-        //console.log(docRef.id);
+        const user = firebaseAuth.currentUser;
+        setDoc(doc(firebaseDb, "orgs", docRef.id, "members", user.uid), {
+          email: user.email,
+          displayName: user.displayName || user.email.split("@")[0]
+        });
         dispatch(
           "model/addOrgMainModel",
           { orgId: docRef.id, modelId: docRef.id, currency: org.currency },

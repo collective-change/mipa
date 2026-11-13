@@ -1,13 +1,6 @@
 import { uid, Notify } from "quasar";
 import { firebaseDb, firebaseAuth } from "@/boot/firebase";
-import {
-  collection,
-  doc,
-  setDoc,
-  query,
-  where,
-  documentId
-} from "firebase/firestore";
+import { collection, doc, setDoc } from "firebase/firestore";
 import { firestoreAction } from "./firestore-bind";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { slugify } from "@/utils/util-slugify";
@@ -55,14 +48,13 @@ const actions = {
     unbindFirestoreRef("currentUser", false); //don't reset data when unbinding
   }),
 
-  bindCurrentOrgUsers: firestoreAction(({ bindFirestoreRef }, orgUserIds) => {
+  // Members' names and emails, from orgs/{orgId}/members (the users
+  // collection is private to each user).
+  bindCurrentOrgUsers: firestoreAction(({ bindFirestoreRef }, orgId) => {
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "currentOrgUsers",
-      query(
-        collection(firebaseDb, "users"),
-        where(documentId(), "in", orgUserIds)
-      ),
+      collection(firebaseDb, "orgs", orgId, "members"),
       {
         maxRefDepth: 1,
         wait: true //this also forces reset: false
