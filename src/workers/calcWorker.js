@@ -1177,7 +1177,8 @@ function prepEnvironment(data) {
       getSimDayOfWeek: rawArgsFunction(getSimDayOfWeek),
       getSimMonth: rawArgsFunction(getSimMonth),
       getSimCalendarMonth: rawArgsFunction(getSimCalendarMonth),
-      getSimYear: rawArgsFunction(getSimYear)
+      getSimYear: rawArgsFunction(getSimYear),
+      valueInUnit
     },
     { override: true }
   );
@@ -1333,10 +1334,12 @@ function prepExpressionsArray(sim) {
               "$" + node.id + " = " + node.sysFormula
             );
           } else {
+            // A plain number gets the node's unit; a value that already has
+            // a unit ("5 km", "dt") is kept and checked by checkUnits().
             expressionsArray.push(
               "$" +
                 node.id +
-                " = unit(" +
+                " = valueInUnit(" +
                 node.sysFormula +
                 ",'" +
                 node.unit +
@@ -1589,6 +1592,11 @@ function prepNodesForSort(sim) {
   });
   sim.calcTimeLog.push({ stage: "prepNodesForSort", endTime: new Date() });
   return preppedNodes;
+}
+
+// Used for formulas without node references on nodes that have a unit.
+function valueInUnit(value, unit) {
+  return math.isUnit(value) ? value : math.unit(value, unit);
 }
 
 function getSimDayOfWeek(args, math, scope) {

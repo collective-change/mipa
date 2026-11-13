@@ -161,6 +161,21 @@ describe("baseline: units and currencies", () => {
     r.nodesValues.eur.forEach(v => expect(v).toBeCloseTo(24, 10));
   });
 
+  it("accepts constants written with a unit", async () => {
+    const r = await baseline([
+      node("bare", "5", { unit: "km" }),
+      node("withUnit", "5 km", { unit: "km" }),
+      node("converted", "5 km", { unit: "m" }),
+      node("money", "-3/4 USD", { unit: "USD" }),
+      node("stepDays", "dt", { unit: "days" })
+    ]);
+    expect(r.nodesValues.bare).toEqual(steps(5));
+    expect(r.nodesValues.withUnit).toEqual(steps(5));
+    expect(r.nodesValues.converted).toEqual(steps(5000));
+    expect(r.nodesValues.money).toEqual(steps(-0.75));
+    expect(r.nodesValues.stepDays).toEqual(steps(365.25));
+  });
+
   it("knows mipa's custom units", async () => {
     const r = await baseline([
       node("team", "3", { unit: "people" }),
@@ -202,6 +217,11 @@ describe("baseline: errors", () => {
       [node("a", "10", { unit: "km" }), node("b", "$a", { unit: "USD", blockingInfluencers: ["a"] })],
       "Unit mismatch"
     );
+  });
+
+  it("rejects a constant written in the wrong kind of unit", async () => {
+    const error = await expectError([node("a", "5 USD", { unit: "km" })], "Unit mismatch");
+    expect(error.errorData).toEqual({ nodeId: "a" });
   });
 
   it("reports circular dependencies with the nodes involved", async () => {
