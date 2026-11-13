@@ -17,6 +17,10 @@ import {
 import { firestoreAction } from "./firestore-bind";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { classifyInfluencers } from "@/utils/util-node-operations";
+import { i18n } from "@/boot/i18n";
+
+// Starter factors are named in the user's current language.
+const t = key => i18n.global.t(key);
 
 const state = {
   currentModel: null,
@@ -93,35 +97,35 @@ const actions = {
     };
     const nodes = [
       {
-        name: "average effort cost per hour",
+        name: t("starterHourlyCost"),
         symbol: "averageEffortCostPerHour",
         symbolFormula: "10",
         sysFormula: "10",
         isNew: true
       },
       {
-        name: "one-time effort",
+        name: t("starterEffort"),
         symbol: "oneTimeEffort",
         unit: "workhours"
       },
       {
-        name: "one-time spending",
+        name: t("starterSpending"),
         symbol: "oneTimeSpending"
       },
       {
-        name: "cost to organization during interval",
+        name: t("starterOrgCost"),
         symbol: "costToOrganizationDuringInterval"
       },
       {
-        name: "cost to world during interval",
+        name: t("starterWorldCost"),
         symbol: "costToWorldDuringInterval"
       },
       {
-        name: "benefit to organization during interval",
+        name: t("starterOrgBenefit"),
         symbol: "benefitToOrganizationDuringInterval"
       },
       {
-        name: "benefit to world during interval",
+        name: t("starterWorldBenefit"),
         symbol: "benefitToWorldDuringInterval"
       }
     ];

@@ -6,9 +6,9 @@
       clearable
       :model-value="name"
       @update:model-value="$emit('update:name', $event)"
-      :rules="[val => !!val || 'Field is required']"
+      :rules="[val => !!val || $t('Required')]"
       ref="name"
-      label="Name"
+      :label="$t('Name of the factor')"
       class="col"
     />
   </div>

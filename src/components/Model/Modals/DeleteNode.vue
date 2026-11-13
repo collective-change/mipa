@@ -3,22 +3,19 @@
     <q-card v-if="nodeReadyToDelete">
       <q-form @submit.prevent="submitDeleteNode">
         <q-card-section>
-          <div class="text-h6">
-            Really delete "{{node.name}}"?
-            <br />This cannot be undone.
-          </div>
+          <div class="text-h6">{{ $t("deleteFactorConfirm", { name: node.name }) }}</div>
         </q-card-section>
         <modal-cancel-delete-buttons />
       </q-form>
     </q-card>
     <q-card v-else>
       <modal-header>
-        <template v-slot:header>Node not ready to be deleted</template>
+        <template v-slot:header>{{ $t("This factor can't be deleted yet") }}</template>
       </modal-header>
       <q-card-section>
         <div
           class="text-h7"
-        >First delete its link to influencees, its formula, then its link from influencers.</div>
+        >{{ $t("deleteFactorSteps") }}</div>
       </q-card-section>
     </q-card>
   </div>

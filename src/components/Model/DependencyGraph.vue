@@ -8,10 +8,12 @@
       class="all-pointer-events print-hide"
       style="position: absolute; top: 10px; left: 10px; z-index: 2"
       color="primary"
-      label="Add node"
+      icon="add"
+      no-caps
+      :label="$t('Add factor')"
     />
     <q-select
-      label="Search"
+      :label="$t('Find a factor')"
       v-model="nodeToSearch"
       @filter="filterFn"
       @filter-abort="abortFilterFn"
@@ -28,7 +30,7 @@
       hide-selected
       fill-input
       dense
-      style="position: absolute; top: 8px; left: 120px; z-index: 2"
+      style="position: absolute; top: 8px; left: 150px; z-index: 2"
       bg-color="white"
     />
     <div
@@ -41,7 +43,7 @@
         z-index: 2;
       "
     >
-      Right-click on node or link to show menu.
+      {{ $t("graphHint") }}
     </div>
 
     <svg
@@ -930,7 +932,7 @@ export default {
             let linkIsRelaxed = d.strengthFactor < 1;
             const baseLinkContextMenuItems = [
               {
-                label: "Delete link",
+                label: that.$t("Remove this link"),
                 handler: function () {
                   //"this" is the parameter of handler.call(parameter); a link in this case
                   that.deleteLink({
@@ -945,7 +947,7 @@ export default {
             ];
             const unrelaxedLinkContextMenuItems = [
               {
-                label: "Relax link",
+                label: that.$t("Loosen this link (layout only)"),
                 handler: function () {
                   //"this" is the parameter of handler.call(parameter); a link in this case
                   that.relaxLink({
@@ -960,7 +962,7 @@ export default {
             ];
             const relaxedLinkContextMenuItems = [
               {
-                label: "Relax more",
+                label: that.$t("Loosen more"),
                 handler: function () {
                   //"this" is the parameter of handler.call(parameter); a link in this case
                   that.relaxLinkMore({
@@ -973,7 +975,7 @@ export default {
                 },
               },
               {
-                label: "Restore force",
+                label: that.$t("Tighten again"),
                 handler: function () {
                   //"this" is the parameter of handler.call(parameter); a link in this case
                   that.restoreLinkForce({
@@ -1063,7 +1065,7 @@ export default {
 
             const baseNodeContextMenuItems = [
               {
-                label: "Add new influencer",
+                label: that.$t("Add a factor this one uses"),
                 handler: function () {
                   that.showAddNode = true;
                   that.addNodeProps.sourceNodeId = that.selectedNodeId;
@@ -1071,7 +1073,7 @@ export default {
                 },
               },
               {
-                label: "Add new influencee",
+                label: that.$t("Add a factor that uses this one"),
                 handler: function () {
                   that.showAddNode = true;
                   that.addNodeProps.sourceNodeId = that.selectedNodeId;
@@ -1079,7 +1081,7 @@ export default {
                 },
               },
               {
-                label: "Link to influencer",
+                label: that.$t("Link to a factor this one uses"),
                 handler: function () {
                   that.showAddLink = true;
                   that.linkToSubmit.sourceNodeId = that.selectedNodeId;
@@ -1088,7 +1090,7 @@ export default {
                 },
               },
               {
-                label: "Link to influencee",
+                label: that.$t("Link to a factor that uses this one"),
                 handler: function () {
                   that.showAddLink = true;
                   that.linkToSubmit.sourceNodeId = that.selectedNodeId;
@@ -1098,7 +1100,7 @@ export default {
               },
 
               {
-                label: "Delete node",
+                label: that.$t("Delete factor"),
                 handler: function () {
                   that.showDeleteNode = true;
                 },
@@ -1107,7 +1109,7 @@ export default {
 
             const notInNodeGroupContextMenuItems = [
               {
-                label: "Start node group",
+                label: that.$t("Start a group"),
                 handler: async function () {
                   let node = that.storeData.nodes.find(
                     (n) => n.id == that.selectedNodeId
@@ -1127,7 +1129,7 @@ export default {
 
             const addToSelectedNodeGroupMenuItems = [
               {
-                label: "Add to selected group",
+                label: that.$t("Add to the selected group"),
                 handler: async function () {
                   await that.addToNodeGroup({
                     nodeId: that.selectedNodeId,
@@ -1140,7 +1142,7 @@ export default {
 
             const selectedNodeIsGroupNodeMenuItems = [
               {
-                label: "Expand group",
+                label: that.$t("Show the group's factors"),
                 handler: async function () {
                   that.expandGroup(that.selectedNodeId);
                 },
@@ -1149,7 +1151,7 @@ export default {
 
             const selectedInNodeGroupMenuItems = [
               {
-                label: "Remove from group",
+                label: that.$t("Remove from group"),
                 handler: async function () {
                   await that.removeNodeFromGroup({
                     nodeId: that.selectedNodeId,
@@ -1159,7 +1161,7 @@ export default {
                 },
               },
               {
-                label: "Collapse group",
+                label: that.$t("Collapse group"),
                 handler: async function () {
                   let expandedNodeGroups = [...that.expandedNodeGroups];
                   const index = that.expandedNodeGroups.indexOf(
@@ -1172,7 +1174,7 @@ export default {
                 },
               },
               {
-                label: "Disband group",
+                label: that.$t("Ungroup"),
                 handler: async function () {
                   that.$q
                     .dialog({

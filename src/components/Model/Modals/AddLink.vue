@@ -1,7 +1,11 @@
 <template>
   <q-card>
     <modal-header>
-      <template v-slot:header>Link to {{linkToSubmit.targetType}}</template>
+      <template v-slot:header>{{
+        linkToSubmit.targetType == "influencer"
+          ? $t("Link to a factor this one uses")
+          : $t("Link to a factor that uses this one")
+      }}</template>
     </modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>

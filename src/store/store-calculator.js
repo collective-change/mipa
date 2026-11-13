@@ -4,6 +4,17 @@ import { toPlain } from "@/utils/util-toPlain";
 import { i18n } from "@/boot/i18n";
 import { firebaseAuth, firebaseConfig, useEmulators } from "@/boot/firebase";
 
+// Plain-language titles and advice for the calculator's error types
+// (the types themselves stay as the worker sends them).
+const FRIENDLY_ERRORS = {
+  "Unit mismatch": { title: "errUnitTitle", advice: "errUnitAdvice" },
+  "Circular dependency detected": { title: "errLoopTitle", advice: "errLoopAdvice" },
+  "Parse error": { title: "errParseTitle", advice: "errParseAdvice" },
+  "Evaluation error": { title: "errEvalTitle", advice: "errEvalAdvice" },
+  "Unit loading error": { title: "errUnknownUnitTitle", advice: "errUnknownUnitAdvice" },
+  "Latest value loading error": { title: "errValueTitle", advice: "errValueAdvice" }
+};
+
 const state = {
   calculatorIsRunning: false,
   calculationProgress: 0
@@ -72,9 +83,12 @@ const actions = {
         });
       } else if ("errorType" in e.data) {
         let data = e.data;
+        const friendly = FRIENDLY_ERRORS[data.errorType];
         showErrorMessage(
-          data.errorType,
-          data.errorMessage,
+          friendly ? i18n.global.t(friendly.title) : data.errorType,
+          friendly
+            ? `${i18n.global.t(friendly.advice)}<br/><br/><small>${i18n.global.t("Details")}: ${data.errorMessage || ""}</small>`
+            : data.errorMessage,
           true //useHtml
         );
         calcWorker.terminate();
