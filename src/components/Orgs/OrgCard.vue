@@ -80,6 +80,7 @@
 
 <script>
 import { mapState, mapActions, mapGetters } from "vuex";
+import EditOrg from "@/components/Orgs/Modals/EditOrg.vue";
 
 export default {
   props: ["org", "id"],
@@ -111,12 +112,12 @@ export default {
     },
   },
   components: {
-    "edit-org": require("components/Orgs/Modals/EditOrg.vue").default,
+    "edit-org": EditOrg,
   },
 };
 </script>
 
-<style lang="stylus" scoped>
+<style lang="scss" scoped>
 .org-card {
   width: 100%;
   max-width: 260px;

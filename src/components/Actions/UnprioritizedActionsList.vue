@@ -2,12 +2,12 @@
   <div>
     <q-table
       title="Actions"
-      :data="actions"
+      :rows="actions"
       :columns="columns"
       row-key="id"
       :filter="filter"
       :loading="loading"
-      :pagination.sync="pagination"
+      v-model:pagination="pagination"
       @row-click="onRowClick"
     >
       <template v-slot:top>
@@ -54,10 +54,11 @@
 
 <script>
 import { mapGetters, mapState } from "vuex";
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
+import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
+import AddAction from "@/components/Actions/Modals/AddAction.vue";
 export default {
   components: {
-    "add-action": require("components/Actions/Modals/AddAction.vue").default,
+    "add-action": AddAction,
   },
   data() {
     return {

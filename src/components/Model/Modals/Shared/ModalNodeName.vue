@@ -4,8 +4,8 @@
       autofocus
       v-select-all
       clearable
-      :value="name"
-      @input="$emit('update:name', $event)"
+      :model-value="name"
+      @update:model-value="$emit('update:name', $event)"
       :rules="[val => !!val || 'Field is required']"
       ref="name"
       label="Name"
@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import { selectAll } from "src/directives/directive-select-all";
+import { selectAll } from "@/directives/directive-select-all";
 
 export default {
   props: ["name"],

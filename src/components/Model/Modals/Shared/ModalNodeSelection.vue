@@ -5,7 +5,7 @@
       label="Node"
       style="width: 250px"
       autofocus
-      :value="targetNodeId"
+      :model-value="targetNodeId"
       use-input
       input-debounce="0"
       :options="options"
@@ -15,7 +15,7 @@
       :rules="[val => !!val || 'Field is required']"
       emit-value
       map-options
-      @input="$emit('update:targetNodeId', $event)"
+      @update:model-value="$emit('update:targetNodeId', $event)"
       ref="targetNode"
     >
       <template v-slot:no-option>
@@ -34,9 +34,12 @@ export default {
   props: ["targetNodeId"],
   data() {
     return {
-      options: this.nodeOptions,
+      options: [],
       selected: this.targetNodeId,
     };
+  },
+  created() {
+    this.options = this.nodeOptions;
   },
   computed: {
     ...mapState("ui", ["selectedNodeId"]),

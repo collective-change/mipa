@@ -174,9 +174,10 @@
 </template>
 
 <script>
-//import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
+//import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import { mapActions, mapGetters, mapState } from "vuex";
 import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
+import AddActionRelationship from "@/components/Actions/Relationships/AddActionRelationship.vue";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
@@ -187,8 +188,7 @@ export default {
   //props: ["action"],
 
   components: {
-    /*"add-related-action": require("components/Actions/Relationships/AddActionRelationship.vue")
-      .default*/
+    /*"add-related-action": AddActionRelationship*/
   },
 
   data() {

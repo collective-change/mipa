@@ -1,3 +1,4 @@
+import { toPlain } from "@/utils/util-toPlain";
 const DB_NAME = "mipa";
 const DB_VERSION = 3;
 let DB;
@@ -35,7 +36,7 @@ export default {
         let db = event.target.result;
 
         db.onerror = function(errorEvent) {
-          note.innerHTML += "<li>Error loading database.</li>";
+          console.error("Error loading database.", errorEvent);
         };
 
         if (event.oldVersion < 1) {
@@ -131,7 +132,7 @@ export default {
         resultsOfAction = e.target.result;
       };
       entry.onerror = e => {
-        resultOfAction = null;
+        resultsOfAction = null;
       };
     });
   },
@@ -147,7 +148,7 @@ export default {
       };
 
       let store = trans.objectStore("baselines");
-      store.put(baseline, baseline.modelId);
+      store.put(toPlain(baseline), baseline.modelId);
     });
   },
 
@@ -161,7 +162,7 @@ export default {
       };
 
       let store = trans.objectStore("resultsOfActions");
-      store.put(resultsOfActions);
+      store.put(toPlain(resultsOfActions));
     });
   },
 
@@ -174,7 +175,7 @@ export default {
         resolve();
       };
       let store = trans.objectStore("dependencyGraphDisplay");
-      store.put(saveFile);
+      store.put(toPlain(saveFile));
     });
   },
 

@@ -6,10 +6,12 @@
 
 <script>
 import { mapGetters, mapState, mapActions } from "vuex";
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-import { formatNumber } from "src/utils/util-formatNumber";
+import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
+import { formatNumber } from "@/utils/util-formatNumber";
 import * as d3 from "d3";
-import { responsify } from "src/utils/util-responsify-svg";
+import { responsify } from "@/utils/util-responsify-svg";
+import AddAction from "@/components/Actions/Modals/AddAction.vue";
+import CalculatorUi from "@/components/Calc/CalculatorUi.vue";
 
 var svgWidth = 1000,
   svgHeight = 600,
@@ -25,8 +27,8 @@ var maxEstEffortHrs = null,
 
 export default {
   components: {
-    "add-action": require("components/Actions/Modals/AddAction.vue").default,
-    "calculator-ui": require("components/Calc/CalculatorUi.vue").default,
+    "add-action": AddAction,
+    "calculator-ui": CalculatorUi,
   },
   data() {
     return {
@@ -222,7 +224,7 @@ export default {
           sign = 1;
           break;
         default:
-          throw new error(`Direction "${direction}" not supported.`);
+          throw new Error(`Direction "${direction}" not supported.`);
       }
       let action = this.chartableActions.find((a) => a.id == actionId);
       if (action) {

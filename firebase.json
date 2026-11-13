@@ -8,11 +8,16 @@
       "npm --prefix \"$RESOURCE_DIR\" run lint",
       "npm --prefix \"$RESOURCE_DIR\" run build"
     ],
-    "source": "functions"
+    "source": "functions",
+    "runtime": "nodejs22"
   },
   "hosting": {
-    "public": "dist\\pwa",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "public": "dist/pwa",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "rewrites": [
       {
         "source": "**",
@@ -22,7 +27,12 @@
     "headers": [
       {
         "source": "/service-worker.js",
-        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
       }
     ]
   },
@@ -34,7 +44,7 @@
       "port": 5001
     },
     "firestore": {
-      "port": "5002"
+      "port": 5002
     },
     "auth": {
       "port": 9099

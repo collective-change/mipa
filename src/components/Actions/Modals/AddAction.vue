@@ -1,11 +1,11 @@
 <template>
   <q-card>
-    <modal-header v-slot:header>Add Action</modal-header>
+    <modal-header>Add Action</modal-header>
 
     <q-form @submit.prevent="submitForm">
       <q-card-section>
         <modal-action-title
-          :title.sync="actionToSubmit.title"
+          v-model:title="actionToSubmit.title"
           ref="modalActionTitle"
         />
       </q-card-section>
@@ -16,6 +16,9 @@
 
 <script>
 import { mapActions } from "vuex";
+import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
+import ModalActionTitle from "@/components/Actions/Modals/Shared/ModalActionTitle.vue";
+import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
 
 export default {
   data() {
@@ -62,12 +65,9 @@ export default {
     },
   },
   components: {
-    "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
-      .default,
-    "modal-action-title": require("components/Actions/Modals/Shared/ModalActionTitle.vue")
-      .default,
-    "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default,
+    "modal-header": ModalHeader,
+    "modal-action-title": ModalActionTitle,
+    "modal-buttons": ModalButtons,
   },
 };
 </script>

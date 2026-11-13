@@ -3,7 +3,7 @@
     <div class="q-pa-md absolute full-width full-height">
       <template v-if="orgs != null">
         <div class="text-h6">My Organizations</div>
-        <no-orgs v-if="orgs.length == 0" />
+        <no-orgs @add-org="showAddOrg = true" v-if="orgs.length == 0" />
         <orgs :orgs="orgs" />
         <q-page-sticky position="bottom" :offset="[0, 18]">
           <q-btn
@@ -30,7 +30,10 @@
 
 <script>
 import { mapGetters, mapState, mapActions } from "vuex";
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
+import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
+import NoOrgs from "@/components/Orgs/NoOrgs.vue";
+import Orgs from "@/components/Orgs/Orgs.vue";
+import AddOrg from "@/components/Orgs/Modals/AddOrg.vue";
 
 export default {
   data() {
@@ -59,14 +62,8 @@ export default {
     //console.log("above code doesn't block main function stack");
   },
 
-  mounted() {
-    //console.log(firebaseAuth.currentUser.uid);
-    this.$root.$on("showAddOrg", () => {
-      this.showAddOrg = true;
-    });
-  },
 
-  beforeDestroy() {
+  beforeUnmount() {
     this.$store.dispatch("orgs/unbindOrgs");
   },
 
@@ -83,9 +80,9 @@ export default {
   },
 
   components: {
-    "no-orgs": require("components/Orgs/NoOrgs.vue").default,
-    orgs: require("components/Orgs/Orgs.vue").default,
-    "add-org": require("components/Orgs/Modals/AddOrg.vue").default
+    "no-orgs": NoOrgs,
+    orgs: Orgs,
+    "add-org": AddOrg
   }
 };
 </script>

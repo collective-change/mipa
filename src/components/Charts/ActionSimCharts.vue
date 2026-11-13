@@ -4,19 +4,18 @@
       <draggable
         v-model="chartsArr"
         group="charts"
+        item-key="nodeId"
+        tag="transition-group"
+        :component-data="{
+          tag: 'ul',
+          name: 'charts-list',
+          class: 'row q-px-none q-mt-none'
+        }"
         @start="drag = true"
         @end="drag = false"
       >
-        <transition-group
-          name="charts-list"
-          tag="ul"
-          class="row q-px-none q-mt-none"
-        >
-          <li
-            class="column q-gutter-md"
-            v-for="chart in chartsArr"
-            :key="chart.nodeId"
-          >
+        <template #item="{ element: chart }">
+          <li class="column q-gutter-md">
             <q-card class="q-ma-md">
               <div
                 class="row justify-center q-px-md q-pt-md"
@@ -98,6 +97,8 @@
               </div>
             </q-card>
           </li>
+        </template>
+        <template #footer>
           <li class="column q-gutter-md" key="addChart">
             <q-card class="q-ma-md">
               <div
@@ -111,7 +112,7 @@
                     @filter="filterFn"
                     @filter-abort="abortFilterFn"
                     :options="filteredNodeOptions"
-                    @input="
+                    @update:model-value="
                       (nodeId) => {
                         this.$store.dispatch(
                           'uiAction/addNodeIdToChart',
@@ -147,7 +148,7 @@
               </div>
             </q-card>
           </li>
-        </transition-group>
+        </template>
       </draggable>
     </div>
     <div v-else class="row q-pa-xl">
@@ -387,7 +388,7 @@ export default {
     })();
   },
 
-  destroyed() {},
+  unmounted() {},
 
   watch: {
     "uiAction.id": function (newId, oldId) {

@@ -7,7 +7,6 @@
     </q-card-section>
     <q-card-section
       ><q-btn
-        type="a"
         :href="`/org/${currentOrg.nameSlug}/model/${currentOrg.id}/${currentModel.id}`"
         target="model"
         label="see model"
@@ -116,15 +115,15 @@
 
 <script>
 import { mapState } from "vuex";
+import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
+import ModalSaveButton from "@/components/Shared/ModalComponents/ModalSaveButton.vue";
 
 export default {
   props: ["addOrEdit", "impactToEdit", "nodes"],
 
   components: {
-    "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
-      .default,
-    "modal-save-button": require("components/Shared/ModalComponents/ModalSaveButton.vue")
-      .default,
+    "modal-header": ModalHeader,
+    "modal-save-button": ModalSaveButton,
   },
 
   data() {

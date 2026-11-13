@@ -8,8 +8,8 @@
       emit-value
       map-options
       use-input
-      v-bind:value="value"
-      v-on:input="value => $emit('input', value)"
+      :model-value="value"
+      @update:model-value="value => $emit('input', value)"
     />-->
     <div>
       <div class="row items-center">
@@ -49,9 +49,9 @@
             </template>
 
             <template v-slot:option="scope">
-              <q-item v-bind="scope.itemProps" v-on="scope.itemEvents">
+              <q-item v-bind="scope.itemProps">
                 <q-item-section>
-                  <q-item-label v-html="scope.opt.email" />
+                  <q-item-label><span v-html="scope.opt.email" /></q-item-label>
                 </q-item-section>
               </q-item>
             </template>

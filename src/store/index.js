@@ -1,6 +1,5 @@
-import Vue from "vue";
-import Vuex from "vuex";
-import { vuexfireMutations } from "vuexfire";
+import { createStore } from "vuex";
+import { firestoreMutations } from "./firestore-bind";
 
 import actions from "./store-actions";
 import adHocDocs from "./store-adHocDocs";
@@ -15,7 +14,6 @@ import ui from "./store-ui";
 import uiAction from "./store-uiAction";
 import users from "./store-users";
 
-Vue.use(Vuex);
 
 /*
  * If not building with SSR mode, you can
@@ -23,10 +21,10 @@ Vue.use(Vuex);
  */
 
 export default function(/* { ssrContext } */) {
-  const Store = new Vuex.Store({
+  const Store = createStore({
     mutations: {
       // other mutations
-      ...vuexfireMutations
+      ...firestoreMutations
     },
     modules: {
       actions,
@@ -45,7 +43,7 @@ export default function(/* { ssrContext } */) {
 
     // enable strict mode (adds overhead!)
     // for dev mode only
-    strict: process.env.DEV
+    strict: import.meta.env.DEV === true
   });
 
   return Store;

@@ -146,6 +146,7 @@ export default {
               actionId: chat.subjectDocLineage.actionId,
             },
           };
+          break;
         default:
           console.error(
             `Document type "${chat.subjectDocType}" does not exist in getRouteFromChat`

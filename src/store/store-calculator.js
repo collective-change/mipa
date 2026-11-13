@@ -1,7 +1,7 @@
 import { uid, Notify } from "quasar";
-import { showErrorMessage } from "src/utils/util-show-error-message";
-import { /*firebase, firebaseDb,*/ firebaseAuth } from "boot/firebase";
-//import { firestoreAction } from "vuexfire";
+import { showErrorMessage } from "@/utils/util-show-error-message";
+import { toPlain } from "@/utils/util-toPlain";
+import { firebaseAuth, firebaseConfig, useEmulators } from "@/boot/firebase";
 
 const state = {
   calculatorIsRunning: false,
@@ -18,7 +18,7 @@ const mutations = {
 };
 
 const actions = {
-  getNewCalcWorker({ commit }) {
+  getNewCalcWorker({ state, commit }) {
     if (!window.Worker) {
       showErrorMessage(
         "Web worker not supported by browser. Aborting calculations.",
@@ -37,23 +37,17 @@ const actions = {
     commit("setCalculatorIsRunning", true);
     commit("setCalculationProgress", 0);
 
-    return new Worker("js/calcWorker.js");
+    return new Worker(new URL("../workers/calcWorker.js", import.meta.url), {
+      type: "module"
+    });
   },
 
   async calculate({ commit, dispatch }, payload) {
-    let firebaseConfig = {
-      apiKey: process.env.apiKey,
-      authDomain: process.env.authDomain,
-      databaseURL: process.env.databaseURL,
-      projectId: process.env.projectId,
-      storageBucket: process.env.storageBucket,
-      messagingSenderId: process.env.messagingSenderId,
-      appId: process.env.appId
-    };
     let done = false;
     let calcWorker = await dispatch("getNewCalcWorker");
-    calcWorker.postMessage({
+    calcWorker.postMessage(toPlain({
       firebaseConfig,
+      useEmulators,
       calculationType: payload.calculationType,
       orgId: payload.orgId,
       modelId: payload.modelId,
@@ -63,7 +57,7 @@ const actions = {
       roleNodes: payload.roleNodes,
       actions: payload.actions ? payload.actions : null,
       currentUserId: firebaseAuth.currentUser.uid
-    });
+    }));
     //console.log("Message posted to worker");
 
     calcWorker.onmessage = async function(e) {

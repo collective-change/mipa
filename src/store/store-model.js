@@ -1,8 +1,22 @@
 import { uid, Notify } from "quasar";
-import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
-import { firestoreAction } from "vuexfire";
-import { showErrorMessage } from "src/utils/util-show-error-message";
-import { classifyInfluencers } from "src/utils/util-node-operations";
+import { firebaseDb, firebaseAuth } from "@/boot/firebase";
+import {
+  addDoc,
+  arrayRemove,
+  arrayUnion,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  runTransaction,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  writeBatch
+} from "firebase/firestore";
+import { firestoreAction } from "./firestore-bind";
+import { showErrorMessage } from "@/utils/util-show-error-message";
+import { classifyInfluencers } from "@/utils/util-node-operations";
 
 const state = {
   currentModel: null,
@@ -52,10 +66,7 @@ const actions = {
       worldToOrgWeightingRatio: 0.5,
       worldWeightingFactor: 1
     };
-    firebaseDb
-      .collection("models")
-      .doc(payload.modelId) //use orgId as the model's id
-      .set(model)
+    setDoc(doc(firebaseDb, "models", payload.modelId), model)
       .then(function(docRef) {
         //Notify.create("Model added! ");
         dispatch("createInitialNodes", {
@@ -115,22 +126,14 @@ const actions = {
       }
     ];
 
-    let batch = firebaseDb.batch();
+    let batch = writeBatch(firebaseDb);
     nodes.forEach(node => {
-      let nodeRef = firebaseDb
-        .collection("models")
-        .doc(payload.modelId)
-        .collection("nodes")
-        .doc();
+      let nodeRef = doc(collection(firebaseDb, "models", payload.modelId, "nodes"));
       batch.set(nodeRef, Object.assign(Object.assign({}, basicNode), node));
     });
     await batch.commit();
 
-    const snapshot = await firebaseDb
-      .collection("models")
-      .doc(payload.modelId)
-      .collection("nodes")
-      .get();
+    const snapshot = await getDocs(collection(firebaseDb, "models", payload.modelId, "nodes"));
 
     const roleNodesProperties = [
       {
@@ -183,12 +186,12 @@ const actions = {
     let modelId = payload.modelId;
 
     //let formulaChanged = false;
-    payload.updates.updateTime = firebase.firestore.FieldValue.serverTimestamp();
+    payload.updates.updateTime = serverTimestamp();
     payload.updates.updatedBy = firebaseAuth.currentUser.uid;
 
-    let modelRef = firebaseDb.collection("models").doc(modelId);
+    let modelRef = doc(firebaseDb, "models", modelId);
     try {
-      await modelRef.set(payload.updates, { merge: true });
+      await setDoc(modelRef, payload.updates, { merge: true });
       Notify.create("Model updated!");
     } catch (error) {
       console.error("Error updating model", error.message);
@@ -199,9 +202,8 @@ const actions = {
   deleteModel({}, modelId) {
     //let modelId = payload.modelId;
     //let node = payload.node;
-    let modelRef = firebaseDb.collection("models").doc(modelId);
-    modelRef
-      .delete()
+    let modelRef = doc(firebaseDb, "models", modelId);
+    deleteDoc(modelRef)
       .then(function() {
         Notify.create("Model deleted!");
       })
@@ -215,7 +217,7 @@ const actions = {
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "currentModel",
-      firebaseDb.collection("models").doc(modelId),
+      doc(firebaseDb, "models", modelId),
       {
         maxRefDepth: 1,
         wait: false,
@@ -233,10 +235,7 @@ const actions = {
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "nodes",
-      firebaseDb
-        .collection("models")
-        .doc(modelId)
-        .collection("nodes"),
+      collection(firebaseDb, "models", modelId, "nodes"),
       {
         maxRefDepth: 1,
         wait: false,
@@ -252,13 +251,9 @@ const actions = {
   addNode({ dispatch }, payload) {
     //console.log(payload);
     let node = payload.node;
-    node.createTime = firebase.firestore.FieldValue.serverTimestamp();
+    node.createTime = serverTimestamp();
     node.createdBy = firebaseAuth.currentUser.uid;
-    firebaseDb
-      .collection("models")
-      .doc(payload.modelId)
-      .collection("nodes")
-      .add(node)
+    addDoc(collection(firebaseDb, "models", payload.modelId, "nodes"), node)
       .then(function(docRef) {
         //add in default sysFormula
         //docRef.update({ sysFormula: `delay( ${docRef.id} , dt, 0)` });
@@ -293,16 +288,11 @@ const actions = {
     let nodeId = payload.updates.id;
 
     //let formulaChanged = false;
-    payload.updates.updateTime = firebase.firestore.FieldValue.serverTimestamp();
+    payload.updates.updateTime = serverTimestamp();
     payload.updates.updatedBy = firebaseAuth.currentUser.uid;
 
-    let nodesRef = firebaseDb
-      .collection("models")
-      .doc(modelId)
-      .collection("nodes");
-    nodesRef
-      .doc(nodeId)
-      .set(payload.updates, { merge: true })
+    let nodesRef = collection(firebaseDb, "models", modelId, "nodes");
+    setDoc(doc(nodesRef, nodeId), payload.updates, { merge: true })
       .then(function() {
         //let keys = Object.keys(payload.updates);
         Notify.create(
@@ -336,13 +326,8 @@ const actions = {
   deleteNode({}, payload) {
     let modelId = payload.modelId;
     let node = payload.node;
-    let nodeRef = firebaseDb
-      .collection("models")
-      .doc(modelId)
-      .collection("nodes")
-      .doc(node.id);
-    nodeRef
-      .delete()
+    let nodeRef = doc(firebaseDb, "models", modelId, "nodes", node.id);
+    deleteDoc(nodeRef)
       .then(function() {
         Notify.create("Node deleted!");
       })
@@ -356,31 +341,29 @@ const actions = {
     if (link.sourceNodeId == link.targetNodeId) {
       throw new Error("Source node and target node cannot be the same node!");
     }
+    let influencerNodeId, influenceeNodeId;
     switch (link.targetType) {
       case "influencer":
-        var influencerNodeId = link.targetNodeId;
-        var influenceeNodeId = link.sourceNodeId;
+        influencerNodeId = link.targetNodeId;
+        influenceeNodeId = link.sourceNodeId;
         break;
       case "influencee":
-        var influencerNodeId = link.sourceNodeId;
-        var influenceeNodeId = link.targetNodeId;
+        influencerNodeId = link.sourceNodeId;
+        influenceeNodeId = link.targetNodeId;
         break;
       default:
         throw new Error("Link target type not recognized.");
     }
 
-    var nodesRef = firebaseDb
-      .collection("models")
-      .doc(payload.modelId)
-      .collection("nodes");
-    var batch = firebaseDb.batch();
+    var nodesRef = collection(firebaseDb, "models", payload.modelId, "nodes");
+    var batch = writeBatch(firebaseDb);
     if (influencerNodeId)
-      batch.update(nodesRef.doc(influencerNodeId), {
-        influencees: firebase.firestore.FieldValue.arrayUnion(influenceeNodeId)
+      batch.update(doc(nodesRef, influencerNodeId), {
+        influencees: arrayUnion(influenceeNodeId)
       });
     if (influenceeNodeId)
-      batch.update(nodesRef.doc(influenceeNodeId), {
-        influencers: firebase.firestore.FieldValue.arrayUnion(influencerNodeId)
+      batch.update(doc(nodesRef, influenceeNodeId), {
+        influencers: arrayUnion(influencerNodeId)
       });
 
     batch
@@ -415,10 +398,10 @@ const actions = {
       influencerNodeId: payload.link.influencerNodeId,
       strengthFactor: 0.1
     };
-    var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
+    var modelRef = doc(firebaseDb, "models", state.currentModel.id);
     try {
-      const res = await modelRef.update({
-        relaxedLinks: firebase.firestore.FieldValue.arrayUnion(relaxedLink)
+      const res = await updateDoc(modelRef, {
+        relaxedLinks: arrayUnion(relaxedLink)
       });
       success = true;
       Notify.create("Link relaxed!");
@@ -439,9 +422,9 @@ const actions = {
         link.influencerNodeId == payload.link.influencerNodeId
     );
     matchingRelaxedLink.strengthFactor *= 0.1;
-    var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
+    var modelRef = doc(firebaseDb, "models", state.currentModel.id);
     try {
-      const res = await modelRef.update({
+      const res = await updateDoc(modelRef, {
         relaxedLinks: tempRelaxedLinks
       });
       Notify.create("Link relaxed more!");
@@ -461,9 +444,9 @@ const actions = {
           link.influencerNodeId == payload.link.influencerNodeId
         )
     );
-    var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
+    var modelRef = doc(firebaseDb, "models", state.currentModel.id);
     try {
-      const res = await modelRef.update({
+      const res = await updateDoc(modelRef, {
         relaxedLinks: tempRelaxedLinks
       });
       Notify.create("Link force restored!");
@@ -482,16 +465,13 @@ const actions = {
       influenceeId: influenceeNodeId
     });
 
-    var nodesRef = firebaseDb
-      .collection("models")
-      .doc(payload.modelId)
-      .collection("nodes");
-    var batch = firebaseDb.batch();
-    batch.update(nodesRef.doc(influencerNodeId), {
-      influencees: firebase.firestore.FieldValue.arrayRemove(influenceeNodeId)
+    var nodesRef = collection(firebaseDb, "models", payload.modelId, "nodes");
+    var batch = writeBatch(firebaseDb);
+    batch.update(doc(nodesRef, influencerNodeId), {
+      influencees: arrayRemove(influenceeNodeId)
     });
-    batch.update(nodesRef.doc(influenceeNodeId), {
-      influencers: firebase.firestore.FieldValue.arrayRemove(influencerNodeId)
+    batch.update(doc(nodesRef, influenceeNodeId), {
+      influencers: arrayRemove(influencerNodeId)
     });
     batch
       .commit()
@@ -519,17 +499,12 @@ const actions = {
 
   reDetermineNodeClass({}, payload) {
     // Create a reference to the node doc.
-    var nodeDocRef = firebaseDb
-      .collection("models")
-      .doc(payload.modelId)
-      .collection("nodes")
-      .doc(payload.nodeId);
+    var nodeDocRef = doc(firebaseDb, "models", payload.modelId, "nodes", payload.nodeId);
 
-    firebaseDb
-      .runTransaction(function(transaction) {
+    runTransaction(firebaseDb, function(transaction) {
         // This code may get re-run multiple times and generate POST 400 errors if there are conflicts.
         return transaction.get(nodeDocRef).then(function(nodeDoc) {
-          if (!nodeDoc.exists) {
+          if (!nodeDoc.exists()) {
             throw "Node document does not exist!";
           }
           var node = nodeDoc.data();
@@ -622,10 +597,10 @@ const actions = {
       name: payload.groupName,
       nodeIds: [payload.nodeId]
     };
-    var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
+    var modelRef = doc(firebaseDb, "models", state.currentModel.id);
     try {
-      const res = await modelRef.update({
-        nodeGroups: firebase.firestore.FieldValue.arrayUnion(nodeGroup)
+      const res = await updateDoc(modelRef, {
+        nodeGroups: arrayUnion(nodeGroup)
       });
       success = true;
       Notify.create("Node group created!");
@@ -641,10 +616,10 @@ const actions = {
     let nodeGroupId = payload.nodeGroupId;
 
     try {
-      var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
-      await firebaseDb.runTransaction(async t => {
-        const doc = await t.get(modelRef);
-        let nodeGroups = doc.data().nodeGroups;
+      var modelRef = doc(firebaseDb, "models", state.currentModel.id);
+      await runTransaction(firebaseDb, async t => {
+        const modelDoc = await t.get(modelRef);
+        let nodeGroups = modelDoc.data().nodeGroups;
         let nodeGroup = nodeGroups.find(ng => ng.id == nodeGroupId);
         nodeGroup.nodeIds.push(nodeId);
         if (nodeIsGroupNode) {
@@ -665,10 +640,10 @@ const actions = {
     let nodeIsGroupNode = payload.nodeIsGroupNode;
     let nodeGroupId = payload.nodeGroupId;
     try {
-      var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
-      await firebaseDb.runTransaction(async t => {
-        const doc = await t.get(modelRef);
-        let nodeGroups = doc.data().nodeGroups;
+      var modelRef = doc(firebaseDb, "models", state.currentModel.id);
+      await runTransaction(firebaseDb, async t => {
+        const modelDoc = await t.get(modelRef);
+        let nodeGroups = modelDoc.data().nodeGroups;
         let nodeGroup = nodeGroups.find(ng => ng.id == nodeGroupId);
         let index = nodeGroup.nodeIds.indexOf(nodeId);
         if (index !== -1) nodeGroup.nodeIds.splice(index, 1);
@@ -688,10 +663,10 @@ const actions = {
 
   async disbandNodeGroup({}, nodeGroupId) {
     try {
-      var modelRef = firebaseDb.collection("models").doc(state.currentModel.id);
-      await firebaseDb.runTransaction(async t => {
-        const doc = await t.get(modelRef);
-        let nodeGroups = doc.data().nodeGroups;
+      var modelRef = doc(firebaseDb, "models", state.currentModel.id);
+      await runTransaction(firebaseDb, async t => {
+        const modelDoc = await t.get(modelRef);
+        let nodeGroups = modelDoc.data().nodeGroups;
         nodeGroups = nodeGroups.filter(group => group.id != nodeGroupId);
         t.update(modelRef, { nodeGroups: nodeGroups });
       });
@@ -703,26 +678,23 @@ const actions = {
   },
 
   async updateNodes({ dispatch }, payload) {
-    var nodesRef = firebaseDb
-      .collection("models")
-      .doc(payload.modelId)
-      .collection("nodes");
+    var nodesRef = collection(firebaseDb, "models", payload.modelId, "nodes");
 
     const batchArray = [];
-    batchArray.push(firebaseDb.batch());
+    batchArray.push(writeBatch(firebaseDb));
     let operationCounter = 0;
     let batchIndex = 0;
 
     payload.changedNodes.forEach(changedNode => {
-      batchArray[batchIndex].update(nodesRef.doc(changedNode.id), {
+      batchArray[batchIndex].update(doc(nodesRef, changedNode.id), {
         ...changedNode.changes,
-        updateTime: firebase.firestore.FieldValue.serverTimestamp(),
+        updateTime: serverTimestamp(),
         updatedBy: firebaseAuth.currentUser.uid
       });
       operationCounter++;
 
       if (operationCounter === 499) {
-        batchArray.push(firestore.batch());
+        batchArray.push(writeBatch(firebaseDb));
         batchIndex++;
         operationCounter = 0;
       }

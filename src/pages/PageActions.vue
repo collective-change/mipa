@@ -27,15 +27,18 @@
 
 <script>
 import { mapGetters, mapState } from "vuex";
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
+import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
+import ActionsList from "@/components/Actions/ActionsList.vue";
+import ActionsChart from "@/components/Actions/ActionsChart.vue";
+import UnprioritizedActionsList from "@/components/Actions/UnprioritizedActionsList.vue";
+import ActionSummary from "@/components/Actions/ActionSummary.vue";
 
 export default {
   components: {
-    "actions-list": require("components/Actions/ActionsList.vue").default,
-    "actions-chart": require("components/Actions/ActionsChart.vue").default,
-    "unprioritized-actions-list": require("components/Actions/UnprioritizedActionsList.vue")
-      .default,
-    "action-summary": require("components/Actions/ActionSummary.vue").default,
+    "actions-list": ActionsList,
+    "actions-chart": ActionsChart,
+    "unprioritized-actions-list": UnprioritizedActionsList,
+    "action-summary": ActionSummary,
   },
   data() {
     return {
@@ -117,6 +120,6 @@ export default {
     } else next();
   },
 
-  beforeDestroy() {},
+  beforeUnmount() {},
 };
 </script>

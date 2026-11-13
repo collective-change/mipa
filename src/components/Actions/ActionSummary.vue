@@ -57,7 +57,7 @@
             <q-checkbox
               v-model="saveResultsOnDevice"
               label="Save results for charting on this device"
-              @input="
+              @update:model-value="
                 setSaveResultsOnDeviceForAction(action.id, saveResultsOnDevice)
               "
             />
@@ -286,7 +286,7 @@
             />
 
             <q-slider
-              :value="effortCompletionPercentage"
+              :model-value="effortCompletionPercentage"
               @change="
                 (val) => {
                   effortCompletionPercentage = val;
@@ -473,13 +473,22 @@
 </template>
 
 <script>
-import { firebaseAuth } from "boot/firebase";
+import { firebaseAuth } from "@/boot/firebase";
 import { mapActions, mapMutations, mapGetters, mapState } from "vuex";
 import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
 import { interpret } from "xstate";
-import { actionMachine } from "src/state-machines/machine-action";
-import { formatNumber } from "src/utils/util-formatNumber";
-import idb from "src/api/idb";
+import { actionMachine } from "@/state-machines/machine-action";
+import { formatNumber } from "@/utils/util-formatNumber";
+import idb from "@/api/idb";
+import ModalSaveButton from "@/components/Shared/ModalComponents/ModalSaveButton.vue";
+import Impacts from "@/components/Impacts/Impacts.vue";
+import SimpleCostsAndImpacts from "@/components/Impacts/SimpleCostsAndImpacts.vue";
+import CalculatorUi from "@/components/Calc/CalculatorUi.vue";
+import ExportCalcResults from "@/components/Calc/ExportCalcResults.vue";
+import ActionRelationships from "@/components/Actions/Relationships/ActionRelationships.vue";
+import SelectUser from "@/components/Users/SelectUser.vue";
+import ActionSimCharts from "@/components/Charts/ActionSimCharts.vue";
+import Chat from "@/components/Chats/Chat.vue";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
@@ -488,21 +497,17 @@ const { mapFields } = createHelpers({
 
 export default {
   components: {
-    /*"modal-save-button": require("components/Shared/ModalComponents/ModalSaveButton.vue")
-      .default,*/
-    impacts: require("components/Impacts/Impacts.vue").default,
+    /*"modal-save-button": ModalSaveButton,*/
+    impacts: Impacts,
     simpleCostsAndImpacts:
-      require("components/Impacts/SimpleCostsAndImpacts.vue").default,
-    "calculator-ui": require("components/Calc/CalculatorUi.vue").default,
-    "export-calc-results": require("components/Calc/ExportCalcResults.vue")
-      .default,
+      SimpleCostsAndImpacts,
+    "calculator-ui": CalculatorUi,
+    "export-calc-results": ExportCalcResults,
     "action-relationships":
-      require("components/Actions/Relationships/ActionRelationships.vue")
-        .default,
-    "select-user": require("components/Users/SelectUser.vue").default,
-    "action-sim-charts": require("components/Charts/ActionSimCharts.vue")
-      .default,
-    chat: require("components/Chats/Chat.vue").default,
+      ActionRelationships,
+    "select-user": SelectUser,
+    "action-sim-charts": ActionSimCharts,
+    chat: Chat,
   },
 
   props: ["action"],
@@ -719,7 +724,7 @@ export default {
     this.loadAction(this.action);
   },
 
-  destroyed() {
+  unmounted() {
     this.actionService.stop();
   },
   watch: {

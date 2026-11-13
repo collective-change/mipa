@@ -2,8 +2,8 @@
   <div class="row q-mb-sm">
     <q-select
       :options="currencies"
-      :value="currency"
-      @input="$emit('update:currency', $event)"
+      :model-value="currency"
+      @update:model-value="$emit('update:currency', $event)"
       :rules="[val => !!val || 'Field is required']"
       ref="currency"
       label="Currency"
@@ -14,7 +14,7 @@
 
 <script>
 import { mapState } from "vuex";
-//import { selectAll } from "src/directives/directive-select-all";
+//import { selectAll } from "@/directives/directive-select-all";
 
 export default {
   props: ["currency"],

@@ -1,3 +1,7 @@
+import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
+import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
+import ModalOrgName from "@/components/Orgs/Modals/Shared/ModalOrgName.vue";
+import ModalOrgCurrency from "@/components/Orgs/Modals/Shared/ModalOrgCurrency.vue";
 export default {
   methods: {
     submitForm() {
@@ -8,13 +12,9 @@ export default {
     }
   },
   components: {
-    "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
-      .default,
-    "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default,
-    "modal-org-name": require("components/Orgs/Modals/Shared/ModalOrgName.vue")
-      .default,
-    "modal-org-currency": require("components/Orgs/Modals/Shared/ModalOrgCurrency.vue")
-      .default
+    "modal-header": ModalHeader,
+    "modal-buttons": ModalButtons,
+    "modal-org-name": ModalOrgName,
+    "modal-org-currency": ModalOrgCurrency
   }
 };

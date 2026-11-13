@@ -1,8 +1,4 @@
-import { uid, Notify } from "quasar";
-import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
-import { firestoreAction } from "vuexfire";
-import { showErrorMessage } from "src/utils/util-show-error-message";
-import idb from "src/api/idb";
+import idb from "@/api/idb";
 
 const state = {
   baseline: {},

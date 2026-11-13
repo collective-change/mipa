@@ -1,6 +1,14 @@
 import { LocalStorage, Loading, Notify } from "quasar";
-import { firebase, firebaseAuth, firebaseDb } from "src/boot/firebase";
-import { showErrorMessage } from "src/utils/util-show-error-message";
+import { firebaseAuth, firebaseDb } from "@/boot/firebase";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
+  onAuthStateChanged
+} from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { showErrorMessage } from "@/utils/util-show-error-message";
 
 const state = {
   loggedIn: false,
@@ -23,17 +31,13 @@ const mutations = {
 const actions = {
   registerUser({}, payload) {
     Loading.show();
-    firebaseAuth
-      .createUserWithEmailAndPassword(payload.email, payload.password)
+    createUserWithEmailAndPassword(firebaseAuth, payload.email, payload.password)
       .then(cred => {
-        return firebaseDb
-          .collection("users")
-          .doc(cred.user.uid)
-          .set({
-            email: payload.email,
-            displayName: payload.email.split("@")[0],
-            registrationTime: firebase.firestore.FieldValue.serverTimestamp()
-          });
+        return setDoc(doc(firebaseDb, "users", cred.user.uid), {
+          email: payload.email,
+          displayName: payload.email.split("@")[0],
+          registrationTime: serverTimestamp()
+        });
       })
       .catch(error => {
         showErrorMessage("Error", error.message);
@@ -41,8 +45,7 @@ const actions = {
   },
   loginUser({}, payload) {
     Loading.show();
-    firebaseAuth
-      .signInWithEmailAndPassword(payload.email, payload.password)
+    signInWithEmailAndPassword(firebaseAuth, payload.email, payload.password)
       .then(response => {
         //console.log("response: ", response);
         this.$router.push("/");
@@ -55,11 +58,10 @@ const actions = {
   logoutUser({ dispatch }) {
     //this.detachUserTasksListener();
     //dispatch("tasks/detachUserTasksListenerAction", null, { root: true });
-    firebaseAuth.signOut();
+    signOut(firebaseAuth);
   },
   sendPasswordResetEmail({}, payload) {
-    firebaseAuth
-      .sendPasswordResetEmail(payload.email)
+    sendPasswordResetEmail(firebaseAuth, payload.email)
       .then(function() {
         Notify.create("Email sent");
       })
@@ -68,7 +70,7 @@ const actions = {
       });
   },
   handleAuthStateChange({ commit, dispatch }) {
-    firebaseAuth.onAuthStateChanged(user => {
+    onAuthStateChanged(firebaseAuth, user => {
       Loading.hide();
       if (user) {
         // User is signed in.
@@ -92,7 +94,7 @@ const actions = {
           { root: true }
         );
         LocalStorage.set("loggedIn", true);
-        if (this.$router.currentRoute.path == "/auth") {
+        if (this.$router.currentRoute.value.path == "/auth") {
           this.$router.push("/");
         }
       } else {

@@ -2,12 +2,12 @@
   <div>
     <q-table
       title="Actions"
-      :data="matchingActions"
+      :rows="matchingActions"
       :columns="columnsI18n"
       row-key="id"
       :filter="filter"
       :loading="loading"
-      :pagination.sync="pagination"
+      v-model:pagination="pagination"
       :rows-per-page-options="[10, 20, 50, 0]"
       binary-state-sort
       @row-click="onRowClick"
@@ -66,12 +66,16 @@
 
 <script>
 import { mapGetters, mapState } from "vuex";
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-import { formatNumber } from "src/utils/util-formatNumber";
+import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
+import { formatNumber } from "@/utils/util-formatNumber";
 import {
   getUserDisplayNameOrTruncatedEmail,
   getUserPhotoURL,
-} from "src/utils/util-getUserDetails";
+} from "@/utils/util-getUserDetails";
+import AddAction from "@/components/Actions/Modals/AddAction.vue";
+import CalculatorUi from "@/components/Calc/CalculatorUi.vue";
+import SelectUser from "@/components/Users/SelectUser.vue";
+import SelectActionStates from "@/components/Actions/SelectActionStates.vue";
 
 function getRelationshipsDisplay(row) {
   let relationships = [];
@@ -87,11 +91,10 @@ function getRelationshipsDisplay(row) {
 
 export default {
   components: {
-    "add-action": require("components/Actions/Modals/AddAction.vue").default,
-    "calculator-ui": require("components/Calc/CalculatorUi.vue").default,
-    "select-user": require("components/Users/SelectUser.vue").default,
-    "select-action-states": require("components/Actions/SelectActionStates.vue")
-      .default,
+    "add-action": AddAction,
+    "calculator-ui": CalculatorUi,
+    "select-user": SelectUser,
+    "select-action-states": SelectActionStates,
   },
   props: ["options"],
   data() {
@@ -340,10 +343,10 @@ export default {
 </script>
 
 <style scoped>
-div >>> .q-table tbody td {
+div :deep(.q-table tbody td) {
   white-space: normal;
 }
-div >>> .q-table--no-wrap th {
+div :deep(.q-table--no-wrap th) {
   /* override table header wrapping */
   white-space: normal !important;
 }

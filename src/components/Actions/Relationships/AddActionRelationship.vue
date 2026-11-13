@@ -1,7 +1,7 @@
 <template>
   <q-card>
     <q-card-section>
-      <modal-header v-slot:header>Add {{ targetType }}</modal-header>
+      <modal-header>Add {{ targetType }}</modal-header>
     </q-card-section>
 
     <q-form @submit.prevent="submitImpact">
@@ -32,15 +32,15 @@
 
 <script>
 import { mapState } from "vuex";
+import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
+import ModalSaveButton from "@/components/Shared/ModalComponents/ModalSaveButton.vue";
 
 export default {
   props: ["targetType", "impactToEdit", "nodes"],
 
   components: {
-    "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
-      .default,
-    "modal-save-button": require("components/Shared/ModalComponents/ModalSaveButton.vue")
-      .default,
+    "modal-header": ModalHeader,
+    "modal-save-button": ModalSaveButton,
   },
 
   data() {

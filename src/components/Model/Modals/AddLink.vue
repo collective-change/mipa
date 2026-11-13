@@ -6,7 +6,7 @@
     <q-form @submit.prevent="submitForm">
       <q-card-section>
         <modal-node-selection
-          :targetNodeId.sync="linkToSubmit.targetNodeId"
+          v-model:targetNodeId="linkToSubmit.targetNodeId"
           ref="modalNodeSelection"
         />
       </q-card-section>
@@ -17,16 +17,16 @@
 
 <script>
 import { mapState, mapActions } from "vuex";
+import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
+import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
+import ModalNodeSelection from "@/components/Model/Modals/Shared/ModalNodeSelection.vue";
 
 export default {
   props: ["sourceNodeId", "linkToSubmit"],
   components: {
-    "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
-      .default,
-    "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default,
-    "modal-node-selection": require("components/Model/Modals/Shared/ModalNodeSelection.vue")
-      .default,
+    "modal-header": ModalHeader,
+    "modal-buttons": ModalButtons,
+    "modal-node-selection": ModalNodeSelection,
   },
   computed: {
     ...mapState("model", ["selectedNodeId"]),
