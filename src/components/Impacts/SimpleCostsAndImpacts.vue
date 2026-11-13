@@ -73,7 +73,8 @@
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
 import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
-import { formatNumber } from "src/utils/util-formatNumber";
+import { formatNumber } from "@/utils/util-formatNumber";
+import AddEditImpact from "@/components/Impacts/AddEditImpact.vue";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
@@ -82,7 +83,7 @@ const { mapFields } = createHelpers({
 
 export default {
   components: {
-    "add-edit-impact": require("components/Impacts/AddEditImpact.vue").default,
+    "add-edit-impact": AddEditImpact,
   },
 
   props: ["costsAndImpacts"],

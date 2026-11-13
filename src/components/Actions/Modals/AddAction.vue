@@ -16,6 +16,9 @@
 
 <script>
 import { mapActions } from "vuex";
+import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
+import ModalActionTitle from "@/components/Actions/Modals/Shared/ModalActionTitle.vue";
+import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
 
 export default {
   data() {
@@ -62,12 +65,9 @@ export default {
     },
   },
   components: {
-    "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
-      .default,
-    "modal-action-title": require("components/Actions/Modals/Shared/ModalActionTitle.vue")
-      .default,
-    "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default,
+    "modal-header": ModalHeader,
+    "modal-action-title": ModalActionTitle,
+    "modal-buttons": ModalButtons,
   },
 };
 </script>

@@ -26,14 +26,14 @@
 
 <script>
 import { mapActions } from "vuex";
-import { showErrorMessage } from "src/utils/util-show-error-message";
+import { showErrorMessage } from "@/utils/util-show-error-message";
+import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
+import ModalCancelDeleteButtons from "@/components/Shared/ModalComponents/ModalCancelDeleteButtons.vue";
 
 export default {
   components: {
-    "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
-      .default,
-    "modal-cancel-delete-buttons": require("components/Shared/ModalComponents/ModalCancelDeleteButtons.vue")
-      .default,
+    "modal-header": ModalHeader,
+    "modal-cancel-delete-buttons": ModalCancelDeleteButtons,
   },
 
   props: ["node"],

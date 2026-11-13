@@ -12,12 +12,14 @@
       <template
         v-slot:action
       >
-        <q-btn @click="$root.$emit('showAddOrg')" flat color="primary" label="Add organization" />
+        <q-btn @click="$emit('add-org')" flat color="primary" label="Add organization" />
       </template>
     </q-banner>
   </transition>
 </template>
 
 <script>
-export default {};
+export default {
+  emits: ["add-org"]
+};
 </script>

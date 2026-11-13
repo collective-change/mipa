@@ -241,6 +241,9 @@
 
 <script>
 import { mapState, mapActions } from "vuex";
+import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
+import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
+import ModalOrgName from "@/components/Orgs/Modals/Shared/ModalOrgName.vue";
 //import { parse } from "mathjs";
 
 export default {
@@ -267,12 +270,9 @@ export default {
     };
   },
   components: {
-    "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
-      .default,
-    "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default,
-    "modal-org-name": require("components/Orgs/Modals/Shared/ModalOrgName.vue")
-      .default,
+    "modal-header": ModalHeader,
+    "modal-buttons": ModalButtons,
+    "modal-org-name": ModalOrgName,
   },
   computed: {
     ...mapState("orgs", ["currentOrg"]),

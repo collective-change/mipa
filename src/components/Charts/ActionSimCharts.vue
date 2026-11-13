@@ -387,7 +387,7 @@ export default {
     })();
   },
 
-  destroyed() {},
+  unmounted() {},
 
   watch: {
     "uiAction.id": function (newId, oldId) {

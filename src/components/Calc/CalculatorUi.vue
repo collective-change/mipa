@@ -73,6 +73,6 @@ export default {
   },
   created() {},
   mounted() {},
-  beforeDestroy() {},
+  beforeUnmount() {},
 };
 </script>

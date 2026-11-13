@@ -12,6 +12,7 @@
 
 <script>
 import { mapGetters } from "vuex";
+import OrgCard from "@/components/Orgs/OrgCard.vue";
 
 export default {
   props: ["orgs"],
@@ -19,7 +20,7 @@ export default {
     ...mapGetters("settings", ["settings"]),
   },
   components: {
-    orgCard: require("components/Orgs/OrgCard.vue").default,
+    orgCard: OrgCard,
   },
 };
 </script>

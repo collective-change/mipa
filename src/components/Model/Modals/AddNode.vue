@@ -14,17 +14,17 @@
 
 <script>
 import { mapActions } from "vuex";
-import { camelize } from "src/utils/util-camelize";
+import { camelize } from "@/utils/util-camelize";
+import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
+import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
+import ModalNodeName from "@/components/Model/Modals/Shared/ModalNodeName.vue";
 
 export default {
   props: ["sourceNodeId", "newNodeRole"],
   components: {
-    "modal-header": require("components/Shared/ModalComponents/ModalHeader.vue")
-      .default,
-    "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default,
-    "modal-node-name": require("components/Model/Modals/Shared/ModalNodeName.vue")
-      .default,
+    "modal-header": ModalHeader,
+    "modal-buttons": ModalButtons,
+    "modal-node-name": ModalNodeName,
   },
   data() {
     return {

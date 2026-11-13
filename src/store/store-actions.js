@@ -1,7 +1,23 @@
 import { uid, Notify } from "quasar";
-import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
-import { firestoreAction } from "vuexfire";
-import { showErrorMessage } from "src/utils/util-show-error-message";
+import { firebaseDb, firebaseAuth } from "@/boot/firebase";
+import {
+  addDoc,
+  arrayRemove,
+  arrayUnion,
+  collection,
+  deleteDoc,
+  deleteField,
+  doc,
+  getDoc,
+  query,
+  runTransaction,
+  serverTimestamp,
+  setDoc,
+  where,
+  writeBatch
+} from "firebase/firestore";
+import { firestoreAction } from "./firestore-bind";
+import { showErrorMessage } from "@/utils/util-show-error-message";
 
 const state = {
   currentAction: null,
@@ -33,7 +49,7 @@ const actions = {
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "currentAction",
-      firebaseDb.collection("actions").doc(actionId),
+      doc(firebaseDb, "actions", actionId),
       {
         maxRefDepth: 1,
         wait: false,
@@ -51,13 +67,10 @@ const actions = {
     //Clone the original payload so we don't modify it (it's
     //passed by reference) when setting the serverTimestamp.
     let payload = JSON.parse(JSON.stringify(originalPayload));
-    payload.updates.updateTime = firebase.firestore.FieldValue.serverTimestamp();
+    payload.updates.updateTime = serverTimestamp();
     payload.updates.updatedBy = firebaseAuth.currentUser.uid;
     //console.log(payload);
-    firebaseDb
-      .collection("actions")
-      .doc(payload.id)
-      .set(payload.updates, { merge: true })
+    setDoc(doc(firebaseDb, "actions", payload.id), payload.updates, { merge: true })
       .then(function() {
         let keys = Object.keys(payload.updates);
         //console.log("keys: ", keys);
@@ -76,8 +89,8 @@ const actions = {
 
     let matchedStoreAction;
     //console.log(state.actions);
-    let batch = firebaseDb.batch();
-    let actionsRef = firebaseDb.collection("actions");
+    let batch = writeBatch(firebaseDb);
+    let actionsRef = collection(firebaseDb, "actions");
     let batchedWrites = 0;
     actionsResults.forEach(function(actionResults, index, fullArray) {
       matchedStoreAction = state.actions.find(
@@ -95,7 +108,7 @@ const actions = {
         console.log("action results changed significantly: ", actionResults.id);
 
         let actionUpdates = {
-          //resultsNumbers: firebase.firestore.FieldValue.delete(), //delete this field
+          //resultsNumbers: deleteField(), //delete this field
           ...actionResults.effectiveResultsNumbers,
           effectiveResultsNumbers: actionResults.effectiveResultsNumbers,
           branchAndBlockeesResultsNumbers:
@@ -109,10 +122,10 @@ const actions = {
           actionUpdates.inheritedResultsNumbers =
             actionResults.inheritedResultsNumbers;
         } else {
-          actionUpdates.inheritedResultsNumbers = firebase.firestore.FieldValue.delete();
+          actionUpdates.inheritedResultsNumbers = deleteField();
         }
 
-        batch.update(actionsRef.doc(actionResults.id), actionUpdates);
+        batch.update(doc(actionsRef, actionResults.id), actionUpdates);
         batchedWrites++;
       }
       if (
@@ -123,7 +136,7 @@ const actions = {
           .commit()
           .then(function() {
             batchedWrites = 0;
-            batch = firebaseDb.batch();
+            batch = writeBatch(firebaseDb);
             console.log("action results updated");
             Notify.create("Action results updated!");
           })
@@ -136,10 +149,7 @@ const actions = {
 
   deleteAction({ dispatch }, actionId) {
     //let userId = firebaseAuth.currentUser.uid;
-    firebaseDb
-      .collection("actions")
-      .doc(actionId)
-      .delete()
+    deleteDoc(doc(firebaseDb, "actions", actionId))
       .then(function() {
         Notify.create("Action deleted!");
       })
@@ -154,14 +164,12 @@ const actions = {
     action.initiator = firebaseAuth.currentUser.uid;
     action.responsiblePerson = firebaseAuth.currentUser.uid;
     action.accountablePerson = firebaseAuth.currentUser.uid;
-    action.createTime = firebase.firestore.FieldValue.serverTimestamp();
+    action.createTime = serverTimestamp();
     action.createdBy = firebaseAuth.currentUser.uid;
-    action.updateTime = firebase.firestore.FieldValue.serverTimestamp();
+    action.updateTime = serverTimestamp();
     action.updatedBy = firebaseAuth.currentUser.uid;
 
-    firebaseDb
-      .collection("actions")
-      .add(action)
+    addDoc(collection(firebaseDb, "actions"), action)
       .then(function(docRef) {
         Notify.create("Action added!");
         dispatch("ui/setSelectedActionId", docRef.id, { root: true });
@@ -172,13 +180,12 @@ const actions = {
   },
 
   /*async getAction({ dispatch }, actionId) {
-    const actionRef = firebaseDb.collection("actions").doc(actionId);
-    const doc = await actionRef.get();
-    if (!doc.exists) {
+    const actionRef = doc(firebaseDb, "actions", actionId);
+    const actionDoc = await getDoc(actionRef);
+    if (!actionDoc.exists()) {
       console.log("No such action with ID ", actionId);
     } else {
-      //console.log('Document data:', doc.data());
-      return doc.data();
+      return actionDoc.data();
     }
   },*/
 
@@ -187,7 +194,7 @@ const actions = {
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "actions",
-      firebaseDb.collection("actions").where("orgId", "==", orgId),
+      query(collection(firebaseDb, "actions"), where("orgId", "==", orgId)),
       //.where("users", "array-contains", userId)
       //.orderBy("updateTime", "desc"),
       //.orderBy("goal", "asc"),
@@ -205,24 +212,21 @@ const actions = {
 
   bindMatchingActions: firestoreAction(({ bindFirestoreRef }, payload) => {
     //let userId = firebaseAuth.currentUser.uid;
-    let query = firebaseDb
-      .collection("actions")
-      .where("orgId", "==", payload.orgId)
-      .where("actionMchState.value", "in", payload.actionStatesToSearch);
+    const filters = [
+      where("orgId", "==", payload.orgId),
+      where("actionMchState.value", "in", payload.actionStatesToSearch)
+    ];
     if (payload.responsiblePersonToSearch)
-      query = query.where(
-        "responsiblePerson",
-        "==",
-        payload.responsiblePersonToSearch
+      filters.push(
+        where("responsiblePerson", "==", payload.responsiblePersonToSearch)
       );
     if (payload.accountablePersonToSearch)
-      query = query.where(
-        "responsiblePerson",
-        "==",
-        payload.accountablePersonToSearch
+      filters.push(
+        where("accountablePerson", "==", payload.accountablePersonToSearch)
       );
+    const actionsQuery = query(collection(firebaseDb, "actions"), ...filters);
     // return the promise returned by `bindFirestoreRef`
-    return bindFirestoreRef("matchingActions", query, {
+    return bindFirestoreRef("matchingActions", actionsQuery, {
       maxRefDepth: 1,
       reset: true, //reset actions so they don't linger when switching orgs
       wait: false
@@ -442,10 +446,10 @@ function relationshipExists(action, targetActionId) {
 }
 
 async function addNestingRelationship(parentId, childId) {
-  const parentActionRef = firebaseDb.collection("actions").doc(parentId);
-  const childActionRef = firebaseDb.collection("actions").doc(childId);
+  const parentActionRef = doc(firebaseDb, "actions", parentId);
+  const childActionRef = doc(firebaseDb, "actions", childId);
   try {
-    await firebaseDb.runTransaction(async t => {
+    await runTransaction(firebaseDb, async t => {
       const parentActionDoc = await t.get(parentActionRef);
       const childActionDoc = await t.get(childActionRef);
       const parentAction = parentActionDoc.data();
@@ -463,7 +467,7 @@ async function addNestingRelationship(parentId, childId) {
         throw new Error("Parent action already exists.");
       }
       t.update(parentActionRef, {
-        childrenActionIds: firebase.firestore.FieldValue.arrayUnion(childId)
+        childrenActionIds: arrayUnion(childId)
       });
       t.update(childActionRef, {
         parentActionId: parentId
@@ -477,10 +481,10 @@ async function addNestingRelationship(parentId, childId) {
 }
 
 async function addBlockingRelationship(blockerId, blockeeId) {
-  const blockerActionRef = firebaseDb.collection("actions").doc(blockerId);
-  const blockeeActionRef = firebaseDb.collection("actions").doc(blockeeId);
+  const blockerActionRef = doc(firebaseDb, "actions", blockerId);
+  const blockeeActionRef = doc(firebaseDb, "actions", blockeeId);
   try {
-    await firebaseDb.runTransaction(async t => {
+    await runTransaction(firebaseDb, async t => {
       const blockerActionDoc = await t.get(blockerActionRef);
       const blockeeActionDoc = await t.get(blockeeActionRef);
       const blockerAction = blockerActionDoc.data();
@@ -492,10 +496,10 @@ async function addBlockingRelationship(blockerId, blockeeId) {
       )
         throw "A relationship already exists with the target action.";
       t.update(blockerActionRef, {
-        blockeeActionIds: firebase.firestore.FieldValue.arrayUnion(blockeeId)
+        blockeeActionIds: arrayUnion(blockeeId)
       });
       t.update(blockeeActionRef, {
-        blockerActionIds: firebase.firestore.FieldValue.arrayUnion(blockerId)
+        blockerActionIds: arrayUnion(blockerId)
       });
       Notify.create("Relationship added!");
     });
@@ -506,15 +510,15 @@ async function addBlockingRelationship(blockerId, blockeeId) {
 }
 
 async function deleteNestingRelationship(parentId, childId) {
-  const parentActionRef = firebaseDb.collection("actions").doc(parentId);
-  const childActionRef = firebaseDb.collection("actions").doc(childId);
+  const parentActionRef = doc(firebaseDb, "actions", parentId);
+  const childActionRef = doc(firebaseDb, "actions", childId);
   try {
-    await firebaseDb.runTransaction(async t => {
+    await runTransaction(firebaseDb, async t => {
       t.update(parentActionRef, {
-        childrenActionIds: firebase.firestore.FieldValue.arrayRemove(childId)
+        childrenActionIds: arrayRemove(childId)
       });
       t.update(childActionRef, {
-        parentActionId: firebase.firestore.FieldValue.delete()
+        parentActionId: deleteField()
       });
       Notify.create("Relationship removed!");
     });
@@ -525,15 +529,15 @@ async function deleteNestingRelationship(parentId, childId) {
 }
 
 async function deleteBlockingRelationship(blockerId, blockeeId) {
-  const blockerActionRef = firebaseDb.collection("actions").doc(blockerId);
-  const blockeeActionRef = firebaseDb.collection("actions").doc(blockeeId);
+  const blockerActionRef = doc(firebaseDb, "actions", blockerId);
+  const blockeeActionRef = doc(firebaseDb, "actions", blockeeId);
   try {
-    await firebaseDb.runTransaction(async t => {
+    await runTransaction(firebaseDb, async t => {
       t.update(blockerActionRef, {
-        blockeeActionIds: firebase.firestore.FieldValue.arrayRemove(blockeeId)
+        blockeeActionIds: arrayRemove(blockeeId)
       });
       t.update(blockeeActionRef, {
-        blockerActionIds: firebase.firestore.FieldValue.arrayRemove(blockerId)
+        blockerActionIds: arrayRemove(blockerId)
       });
       Notify.create("Relationship removed!");
     });

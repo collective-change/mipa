@@ -20,7 +20,7 @@
 
 <script>
 import { mapActions } from "vuex";
-import mixinAddEditOrg from "src/mixins/mixin-add-edit-org";
+import mixinAddEditOrg from "@/mixins/mixin-add-edit-org";
 
 export default {
   mixins: [mixinAddEditOrg],

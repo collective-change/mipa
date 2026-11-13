@@ -83,7 +83,7 @@ export default {
   },
   created() {},
   mounted() {},
-  beforeDestroy() {}
+  beforeUnmount() {}
 };
 
 function prepBaselineArray(calcResults, nodes) {

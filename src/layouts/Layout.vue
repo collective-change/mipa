@@ -225,13 +225,14 @@
 <script>
 import { mapState, mapActions } from "vuex";
 import { openURL } from "quasar";
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
+import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
+import UnreadMessages from "@/components/Chats/UnreadMessages.vue";
 //import { version } from "../../package.json";
 
 export default {
   name: "MyLayout",
   components: {
-    "unread-messages": require("components/Chats/UnreadMessages.vue").default,
+    "unread-messages": UnreadMessages,
   },
   data() {
     return {
@@ -501,7 +502,7 @@ export default {
       this.lang = this.$q.cookies.get("locale");
     } else this.lang = this.$q.lang.getLocale();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.unbindAllOrgRelatedData();
     this.unbindPublicData();
     this.$store.dispatch("users/unbindCurrentUser");

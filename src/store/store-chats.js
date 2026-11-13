@@ -1,7 +1,19 @@
-import { firebase, firebaseDb, firebaseAuth } from "boot/firebase";
-import { firestoreAction } from "vuexfire";
+import { firebaseDb, firebaseAuth } from "@/boot/firebase";
+import {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  query,
+  where,
+  arrayUnion,
+  arrayRemove,
+  deleteField,
+  serverTimestamp
+} from "firebase/firestore";
+import { firestoreAction } from "./firestore-bind";
 import { Notify } from "quasar";
-import { showErrorMessage } from "src/utils/util-show-error-message";
+import { showErrorMessage } from "@/utils/util-show-error-message";
 
 const state = {
   currentChat: null,
@@ -24,7 +36,7 @@ const actions = {
       newestMessages: []
     };
 
-    let newChatRef = await firebaseDb.collection("chats").add(chat);
+    let newChatRef = await addDoc(collection(firebaseDb, "chats"), chat);
 
     //add chatId to the subject doc
     switch (payload.subjectDocType) {
@@ -58,11 +70,8 @@ const actions = {
   },
 
   fsAddChatMember({ dispatch }, payload) {
-    firebaseDb
-      .collection("chats")
-      .doc(payload.chatId)
-      .update({
-        members: firebase.firestore.FieldValue.arrayUnion(payload.memberId),
+    updateDoc(doc(firebaseDb, "chats", payload.chatId), {
+        members: arrayUnion(payload.memberId),
         [`unreadCounts.${payload.memberId}`]: 0,
         [`unreadBy.${payload.memberId}`]: false
       })
@@ -75,13 +84,10 @@ const actions = {
   },
 
   fsRemoveChatMember({ dispatch }, payload) {
-    firebaseDb
-      .collection("chats")
-      .doc(payload.chatId)
-      .update({
-        members: firebase.firestore.FieldValue.arrayRemove(payload.memberId),
-        [`unreadCounts.${payload.memberId}`]: firebase.firestore.FieldValue.delete(),
-        [`unreadBy.${payload.memberId}`]: firebase.firestore.FieldValue.delete()
+    updateDoc(doc(firebaseDb, "chats", payload.chatId), {
+        members: arrayRemove(payload.memberId),
+        [`unreadCounts.${payload.memberId}`]: deleteField(),
+        [`unreadBy.${payload.memberId}`]: deleteField()
       })
       .then(function() {
         Notify.create("Chat member removed!");
@@ -91,7 +97,7 @@ const actions = {
       });
   },
 
-  fsAddMessage({ dispatch }, payload) {
+  fsAddMessage({ state }, payload) {
     //TODO: if newestMessages is too large, then move old messages to log
 
     let unreadCounts = {};
@@ -111,30 +117,20 @@ const actions = {
         }
       });
     } else unreadCounts = {};
-    firebaseDb
-      .collection("chats")
-      .doc(payload.chatId)
-      .update({
-        members: firebase.firestore.FieldValue.arrayUnion(
-          firebaseAuth.currentUser.uid
-        ),
-        newestMessages: firebase.firestore.FieldValue.arrayUnion(
-          payload.message
-        ),
-        unreadCounts,
-        unreadBy,
-        updateTime: firebase.firestore.FieldValue.serverTimestamp()
-      });
+    updateDoc(doc(firebaseDb, "chats", payload.chatId), {
+      members: arrayUnion(firebaseAuth.currentUser.uid),
+      newestMessages: arrayUnion(payload.message),
+      unreadCounts,
+      unreadBy,
+      updateTime: serverTimestamp()
+    });
   },
 
   fsResetReadCount({}, payload) {
-    firebaseDb
-      .collection("chats")
-      .doc(payload.chatId)
-      .update({
-        [`unreadCounts.${payload.userId}`]: 0,
-        [`unreadBy.${payload.userId}`]: false
-      });
+    updateDoc(doc(firebaseDb, "chats", payload.chatId), {
+      [`unreadCounts.${payload.userId}`]: 0,
+      [`unreadBy.${payload.userId}`]: false
+    });
   },
 
   bindUnreadChats: firestoreAction(({ bindFirestoreRef }, userId) => {
@@ -142,10 +138,11 @@ const actions = {
     return bindFirestoreRef(
       "unreadChats",
       //firebaseDb.collection("chats").where("members", "array-contains", userId),
-      firebaseDb
-        .collection("chats")
-        .where("members", "array-contains", userId)
-        .where(`unreadBy.${userId}`, "==", true),
+      query(
+        collection(firebaseDb, "chats"),
+        where("members", "array-contains", userId),
+        where(`unreadBy.${userId}`, "==", true)
+      ),
       {
         maxRefDepth: 1,
         wait: true //this also forces reset: false
@@ -161,7 +158,7 @@ const actions = {
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "currentChat",
-      firebaseDb.collection("chats").doc(chatId),
+      doc(firebaseDb, "chats", chatId),
       {
         maxRefDepth: 1,
         wait: true //this also forces reset: false

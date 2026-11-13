@@ -74,15 +74,18 @@
 import { mapActions, mapGetters, mapState } from "vuex";
 import * as d3 from "d3";
 import * as sizeof from "object-sizeof";
-import idb from "src/api/idb";
-import { responsify } from "src/utils/util-responsify-svg";
-import { sleep } from "src/utils/util-sleep";
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
+import idb from "@/api/idb";
+import { responsify } from "@/utils/util-responsify-svg";
+import { sleep } from "@/utils/util-sleep";
+import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import {
   getNodeLinkEndPoints,
   getDistance,
-} from "src/utils/util-getNodeLinkEndPoints";
-import { showErrorMessage } from "src/utils/util-show-error-message";
+} from "@/utils/util-getNodeLinkEndPoints";
+import { showErrorMessage } from "@/utils/util-show-error-message";
+import AddNode from "@/components/Model/Modals/AddNode.vue";
+import DeleteNode from "@/components/Model/Modals/DeleteNode.vue";
+import AddLink from "@/components/Model/Modals/AddLink.vue";
 
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
 
@@ -94,9 +97,9 @@ var dragStartTime, dragEndTime;
 export default {
   name: "dependency-graph",
   components: {
-    "add-node": require("components/Model/Modals/AddNode.vue").default,
-    "delete-node": require("components/Model/Modals/DeleteNode.vue").default,
-    "add-link": require("components/Model/Modals/AddLink.vue").default,
+    "add-node": AddNode,
+    "delete-node": DeleteNode,
+    "add-link": AddLink,
   },
   props: ["initialCirclePositions"],
   data() {

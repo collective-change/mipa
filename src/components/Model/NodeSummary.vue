@@ -77,9 +77,9 @@
           ]"
         />
         <div v-if="parserError == '' && latexFormula">
-          <vue-mathjax
-            :formula="'$' + nodeToSubmit.symbol + '=' + latexFormula + '$'"
-          ></vue-mathjax>
+          <latex-formula
+            :formula="nodeToSubmit.symbol + '=' + latexFormula"
+          />
         </div>
         <div v-else class="text-negative">{{ parserError }}</div>
         <q-input
@@ -174,21 +174,22 @@
 
 <script>
 import { mapActions, mapGetters, mapState } from "vuex";
-import { parse, toTex } from "mathjs";
-import { VueMathjax } from "vue-mathjax";
+import { parse } from "mathjs";
+import LatexFormula from "@/components/Shared/LatexFormula.vue";
 import { GChart } from "vue-google-charts";
-import { showErrorMessage } from "src/utils/util-show-error-message";
-import { classifyInfluencers } from "src/utils/util-node-operations";
+import { showErrorMessage } from "@/utils/util-show-error-message";
+import { classifyInfluencers } from "@/utils/util-node-operations";
 import SelectUser from "../Users/SelectUser.vue";
+import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
+import Chat from "@/components/Chats/Chat.vue";
 
 export default {
   components: {
-    "modal-buttons": require("components/Shared/ModalComponents/ModalButtons.vue")
-      .default,
-    "select-user": require("components/Users/SelectUser.vue").default,
-    chat: require("components/Chats/Chat.vue").default,
+    "modal-buttons": ModalButtons,
+    "select-user": SelectUser,
+    chat: Chat,
     gchart: GChart,
-    "vue-mathjax": VueMathjax,
+    "latex-formula": LatexFormula,
   },
 
   data() {
@@ -446,17 +447,6 @@ export default {
       if (found) return found.unit;
       else return "";
     },
-  },
-
-  mounted() {
-    //load mathjax
-    const plugin = document.createElement("script");
-    plugin.setAttribute(
-      "src",
-      "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS_HTML"
-    );
-    plugin.async = true;
-    document.head.appendChild(plugin);
   },
 
   watch: {

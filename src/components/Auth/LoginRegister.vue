@@ -5,7 +5,7 @@
         <template v-slot:avatar>
           <q-icon name="account_circle" color="primary" />
         </template>
-        <span class="tabName">{{ tab | titleCase }}</span> to access mipa from anywhere.
+        <span class="tabName">{{ titleCase(tab) }}</span> to access mipa from anywhere.
       </q-banner>
     </div>
     <div class="row q-mb-md">

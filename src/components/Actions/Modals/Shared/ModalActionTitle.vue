@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import { selectAll } from "src/directives/directive-select-all";
+import { selectAll } from "@/directives/directive-select-all";
 
 export default {
   props: ["title"],

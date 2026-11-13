@@ -1,15 +1,23 @@
-importScripts("https://www.gstatic.com/firebasejs/8.4.1/firebase-app.js");
-importScripts("https://www.gstatic.com/firebasejs/8.4.1/firebase-auth.js");
-importScripts("https://www.gstatic.com/firebasejs/8.4.1/firebase-firestore.js");
-importScripts(
-  "https://cdnjs.cloudflare.com/ajax/libs/mathjs/8.1.1/math.min.js"
-);
+// Calculation web worker (bundled by Vite as an ES module worker).
+import { create, all } from "mathjs";
+import { initializeApp } from "firebase/app";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import {
+  getFirestore,
+  connectFirestoreEmulator,
+  collection,
+  query,
+  where,
+  getDocs
+} from "firebase/firestore";
+
+const math = create(all);
 
 //var idb = {}; //placeholder for IndexedDB
 
 var firebaseApp, firebaseAuth, firebaseDb;
 
-const parser = self.math.parser();
+const parser = math.parser();
 const mipaIdbVersion = 3;
 
 var modelNodes = [];
@@ -45,9 +53,15 @@ function coordinateScenarioSimulations(data) {
   //prep environment, scope, etc
   // Initialize Firebase
   if (!firebaseApp) {
-    firebaseApp = firebase.initializeApp(data.firebaseConfig);
-    firebaseAuth = firebaseApp.auth();
-    firebaseDb = firebaseApp.firestore();
+    firebaseApp = initializeApp(data.firebaseConfig);
+    firebaseAuth = getAuth(firebaseApp);
+    firebaseDb = getFirestore(firebaseApp);
+    if (data.useEmulators) {
+      connectAuthEmulator(firebaseAuth, "http://localhost:9099", {
+        disableWarnings: true
+      });
+      connectFirestoreEmulator(firebaseDb, "localhost", 5002);
+    }
   }
 
   sim = prepSim(data);
@@ -665,11 +679,14 @@ async function getActionsFromFirestore(actionIds) {
     "Getting actions from Firestore for org " + orgId + " with ids " + actionIds
   );
   console.log(actionIds);
-  const actionsRef = firebaseDb.collection("actions");
-  const snapshot = await actionsRef
-    .where("id", "in", actionIds)
-    .where("orgId", "==", orgId)
-    .get();
+  await firebaseAuth.authStateReady();
+  const snapshot = await getDocs(
+    query(
+      collection(firebaseDb, "actions"),
+      where("id", "in", actionIds),
+      where("orgId", "==", orgId)
+    )
+  );
   if (snapshot.size == 0) {
     console.log("No matching actions in Firestore.");
     return [];
@@ -1149,18 +1166,16 @@ function prepEnvironment(data) {
   modelNodes = data.modelNodes; //make modelNodes globally accessible
 
   //import custom functions
-  delay.rawArgs = true;
-  getSimDayOfWeek.rawArgs = true;
-  getSimMonth.rawArgs = true;
-  getSimCalendarMonth.rawArgs = true;
-  getSimYear.rawArgs = true;
-  math.import({
-    delay,
-    getSimDayOfWeek,
-    getSimMonth,
-    getSimCalendarMonth,
-    getSimYear
-  });
+  math.import(
+    {
+      delay: rawArgsFunction(delay),
+      getSimDayOfWeek: rawArgsFunction(getSimDayOfWeek),
+      getSimMonth: rawArgsFunction(getSimMonth),
+      getSimCalendarMonth: rawArgsFunction(getSimCalendarMonth),
+      getSimYear: rawArgsFunction(getSimYear)
+    },
+    { override: true }
+  );
 
   //create currency units
   math.createUnit(data.exchangeRates.base);
@@ -1596,6 +1611,28 @@ function getSimYear(args, math, scope) {
   return adjustedDate.getFullYear();
 }
 
+// Since mathjs 9+, functions with `rawArgs` receive the scope as a Map rather
+// than a plain object. This wrapper gives the custom functions below an
+// object-style view (scope.timeS, scope[$nodeId]) over that Map. Use
+// `scope.__map` when passing the scope back into mathjs (e.g. evaluate()).
+function rawArgsFunction(fn) {
+  const wrapped = (args, mathInstance, scopeMap) =>
+    fn(args, mathInstance, scopeView(scopeMap));
+  wrapped.rawArgs = true;
+  return wrapped;
+}
+
+function scopeView(scopeMap) {
+  return new Proxy(scopeMap, {
+    get(target, key) {
+      if (key === "__map") return target;
+      return typeof key === "string" && target.has(key)
+        ? target.get(key)
+        : undefined;
+    }
+  });
+}
+
 function getAdjustedDate(args, math, scope, caller) {
   switch (true) {
     case args.length == 0:
@@ -1609,7 +1646,7 @@ function getAdjustedDate(args, math, scope, caller) {
         //user wrapped argument to caller in quotation marks
         var n = math.parse(args[0].value);
       }
-      var timeAdjustment = n.compile().evaluate(scope);
+      var timeAdjustment = n.compile().evaluate(scope.__map);
       return new Date(
         (scope.timeS + timeAdjustment.toNumber("seconds")) * 1000
       );
@@ -1631,7 +1668,7 @@ function delay(args, math, scope) {
 
   // Ted: The following statement is actually faster than caching the
   // compiled args[1], because toString() and stringify() are slow.
-  const delayTime = args[1].compile().evaluate(scope);
+  const delayTime = args[1].compile().evaluate(scope.__map);
   const t1 = performance.now();
   perf.compileEvalTimeInDelayFunc += t1 - t0;
 

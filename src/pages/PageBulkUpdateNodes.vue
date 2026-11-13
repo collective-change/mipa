@@ -57,13 +57,13 @@
 
 <script>
 import { mapGetters, mapState } from "vuex";
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-//import idb from "src/api/idb";
+import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
+//import idb from "@/api/idb";
 import { copyToClipboard } from "quasar";
-import { showErrorMessage } from "src/utils/util-show-error-message";
-import { stripScriptTags } from "src/utils/util-stripTags";
+import { showErrorMessage } from "@/utils/util-show-error-message";
+import { stripScriptTags } from "@/utils/util-stripTags";
 
-const parse = require("csv-parse/lib/sync");
+import { parse } from "csv-parse/browser/esm/sync";
 
 export default {
   components: {},

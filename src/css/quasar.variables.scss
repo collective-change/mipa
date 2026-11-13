@@ -1,7 +1,7 @@
-// Quasar Stylus Variables
+// Quasar Sass Variables
 // --------------------------------------------------
 // To customize the look and feel of this app, you can override
-// the Stylus variables found in Quasar's source Stylus files.
+// the Sass variables found in Quasar's source Sass files.
 
 // Check documentation for full list of Quasar variables
 
@@ -10,11 +10,11 @@
 // Tip: Use the "Theme Builder" on Quasar's documentation website.
 
 
-$primary   = #4682b4
-$secondary = #26A69A
-$accent    = #9C27B0
+$primary : #4682b4;
+$secondary : #26A69A;
+$accent : #9C27B0;
 
-$positive  = #21BA45
-$negative  = #C10015
-$info      = #31CCEC
-$warning   = #F2C037
+$positive : #21BA45;
+$negative : #C10015;
+$info : #31CCEC;
+$warning : #F2C037;

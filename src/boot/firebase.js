@@ -1,14 +1,17 @@
-// Firebase App (the core Firebase SDK) is always required and must be listed first
-import firebase from "firebase/app";
+// Firebase (modular SDK) initialization.
+// Import Firestore/Auth functions directly from "firebase/firestore" and
+// "firebase/auth" where needed; this module only provides the instances.
+import { initializeApp } from "firebase/app";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import {
+  initializeFirestore,
+  connectFirestoreEmulator,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  memoryLocalCache
+} from "firebase/firestore";
 
-// Add the Firebase products that you want to use
-require("firebase/auth").default;
-require("firebase/firestore").default;
-
-import { showErrorMessage } from "src/utils/util-show-error-message";
-
-// Your web app's Firebase configuration
-var firebaseConfig = {
+const firebaseConfig = {
   apiKey: process.env.apiKey,
   authDomain: process.env.authDomain,
   databaseURL: process.env.databaseURL,
@@ -18,55 +21,35 @@ var firebaseConfig = {
   appId: process.env.appId
 };
 
-// in test environment, .env is not loaded, so the properties
-// in firebaseConfig are all undefined. To initialize firebase
-// we need to put in at least a fake api key and fake project id.
-if (process.env.NODE_ENV == "test") {
+const isTest = process.env.NODE_ENV === "test";
+const useEmulators = isTest || process.env.useEmulators === "true";
+
+// In tests .env is not loaded; Firebase needs at least an api key and project id.
+if (isTest) {
   firebaseConfig.apiKey = "fake-api-key";
   firebaseConfig.projectId = "fake-project-id";
 }
 
-// Initialize Firebase
-let firebaseApp = firebase.initializeApp(firebaseConfig);
-let firebaseAuth = firebaseApp.auth();
-let firebaseDb = firebaseApp.firestore();
+const firebaseApp = initializeApp(firebaseConfig);
+const firebaseAuth = getAuth(firebaseApp);
 
-// Use Firebase emulator for testing
-if (process.env.NODE_ENV == "test") {
-  console.log("process.env.NODE_ENV", process.env.NODE_ENV);
+// Offline persistence (shared across tabs) in production builds.
+const firebaseDb = initializeFirestore(firebaseApp, {
+  localCache:
+    process.env.PROD && !useEmulators
+      ? persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+      : memoryLocalCache()
+});
+
+if (useEmulators) {
   console.log("Using Firebase emulators");
-  firebaseApp.auth().useEmulator("http://localhost:9099/");
-  firebaseDb.useEmulator("localhost", 5002);
+  connectAuthEmulator(firebaseAuth, "http://localhost:9099", {
+    disableWarnings: true
+  });
+  connectFirestoreEmulator(firebaseDb, "localhost", 5002);
 }
 
-// set unlimited cache size
-/* firebase.firestore().settings({
-  cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED
-}); */
+export { firebaseApp, firebaseAuth, firebaseDb, firebaseConfig, useEmulators };
 
-// enable offline persistence for production environment
-if (process.env.NODE_ENV == "production") {
-  firebase
-    .firestore()
-    .enablePersistence({ synchronizeTabs: true })
-    .catch(function(err) {
-      if (err.code == "failed-precondition") {
-        showErrorMessage(
-          "Error enabling persistence (failed precondition)",
-          error.message
-        );
-      } else if (err.code == "unimplemented") {
-        showErrorMessage(
-          "Error enabling persistence (unimplemented)",
-          error.message
-        );
-      }
-    });
-}
-
-// Export types that exists in Firestore
-// This is not always necessary, but it's used in other examples in Vuexfire docs
-const { TimeStamp, GeoPoint } = firebase.firestore;
-export { TimeStamp, GeoPoint };
-
-export { firebase, firebaseApp, firebaseAuth, firebaseDb };
+// Quasar boot entry (instances are created on import above).
+export default () => {};

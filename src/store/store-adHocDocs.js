@@ -1,5 +1,6 @@
-import { firebaseDb, firebaseAuth } from "boot/firebase";
-import { firestoreAction } from "vuexfire";
+import { firebaseDb } from "@/boot/firebase";
+import { doc } from "firebase/firestore";
+import { firestoreAction } from "./firestore-bind";
 
 const state = {
   appSummary: null,
@@ -12,7 +13,7 @@ const actions = {
   bindAppSummary: firestoreAction(({ bindFirestoreRef }) => {
     return bindFirestoreRef(
       "appSummary",
-      firebaseDb.collection("adHocDocs").doc("appSummary"),
+      doc(firebaseDb, "adHocDocs", "appSummary"),
       {
         maxRefDepth: 1,
         wait: true //this also forces reset: false
@@ -26,7 +27,7 @@ const actions = {
   bindExchangeRates: firestoreAction(({ bindFirestoreRef }) => {
     return bindFirestoreRef(
       "exchangeRates",
-      firebaseDb.collection("adHocDocs").doc("exchangeRates"),
+      doc(firebaseDb, "adHocDocs", "exchangeRates"),
       {
         maxRefDepth: 1,
         wait: true //this also forces reset: false

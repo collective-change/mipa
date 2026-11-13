@@ -8,21 +8,24 @@
 
 <script>
 import { mapGetters, mapState } from "vuex";
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
+import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
+import ActionsList from "@/components/Actions/ActionsList.vue";
+import UnprioritizedActionsList from "@/components/Actions/UnprioritizedActionsList.vue";
+import ActionSummary from "@/components/Actions/ActionSummary.vue";
 
 export default {
   name: "app",
   components: {
-    //"no-actions": require("components/Actions/NoActions.vue").default,
-    //"actions-todo": require("components/Actions/ActionsTodo.vue").default,
-    //"actions-completed": require("components/Actions/ActionsCompleted.vue").default,
-    "actions-list": require("components/Actions/ActionsList.vue").default,
+    //"no-actions": NoActions,
+    //"actions-todo": ActionsTodo,
+    //"actions-completed": ActionsCompleted,
+    "actions-list": ActionsList,
     "unprioritized-actions-list":
-      require("components/Actions/UnprioritizedActionsList.vue").default,
-    //"add-action": require("components/Actions/Modals/AddAction.vue").default,
-    "action-summary": require("components/Actions/ActionSummary.vue").default,
-    //search: require("components/Actions/Tools/Search.vue").default,
-    //sort: require("components/Actions/Tools/Sort.vue").default
+      UnprioritizedActionsList,
+    //"add-action": AddAction,
+    "action-summary": ActionSummary,
+    //search: Search,
+    //sort: Sort
   },
   data() {
     return {
@@ -66,7 +69,7 @@ export default {
     } else next();
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     //if the new route does not need actions, then unbind
     if (!this.$route.name in ["actionDetails"]) {
       this.$store.dispatch("actions/unbindCurrentAction");

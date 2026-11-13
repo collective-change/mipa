@@ -14,7 +14,7 @@
 
 <script>
 import { mapState } from "vuex";
-//import { selectAll } from "src/directives/directive-select-all";
+//import { selectAll } from "@/directives/directive-select-all";
 
 export default {
   props: ["currency"],

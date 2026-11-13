@@ -1,8 +1,19 @@
 import { uid, Notify } from "quasar";
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-import { firestoreAction } from "vuexfire";
-import { showErrorMessage } from "src/utils/util-show-error-message";
-import { slugify } from "src/utils/util-slugify";
+import { firebaseDb, firebaseAuth } from "@/boot/firebase";
+import {
+  collection,
+  doc,
+  setDoc,
+  addDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  serverTimestamp
+} from "firebase/firestore";
+import { firestoreAction } from "./firestore-bind";
+import { showErrorMessage } from "@/utils/util-show-error-message";
+import { slugify } from "@/utils/util-slugify";
 
 const state = {
   currentOrg: null,
@@ -20,10 +31,9 @@ const actions = {
     if (payload.updates.name) {
       payload.updates.nameSlug = slugify(payload.updates.name);
     }
-    firebaseDb
-      .collection("orgs")
-      .doc(payload.id)
-      .set(payload.updates, { merge: true })
+    setDoc(doc(firebaseDb, "orgs", payload.id), payload.updates, {
+      merge: true
+    })
       .then(function() {
         let keys = Object.keys(payload.updates);
         //console.log("keys: ", keys);
@@ -35,10 +45,7 @@ const actions = {
   },
   async deleteOrg({ dispatch }, orgId) {
     //let userId = firebaseAuth.currentUser.uid;
-    await firebaseDb
-      .collection("orgs")
-      .doc(orgId)
-      .delete()
+    await deleteDoc(doc(firebaseDb, "orgs", orgId))
       .then(function() {
         Notify.create("Org deleted!");
       })
@@ -54,12 +61,10 @@ const actions = {
     org.users = [firebaseAuth.currentUser.uid];
     org.superAdmins = [firebaseAuth.currentUser.uid];
     //let timestampNow = firebase.firestore.FieldValue.serverTimestamp();
-    org.createTime = firebase.firestore.FieldValue.serverTimestamp();
+    org.createTime = serverTimestamp();
     org.createdBy = firebaseAuth.currentUser.uid;
     org.nameSlug = slugify(org.name);
-    firebaseDb
-      .collection("orgs")
-      .add(org)
+    addDoc(collection(firebaseDb, "orgs"), org)
       .then(function(docRef) {
         //console.log(docRef.id);
         dispatch(
@@ -78,11 +83,12 @@ const actions = {
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "orgs",
-      firebaseDb
-        .collection("orgs")
-        .where("users", "array-contains", userId)
-        .orderBy("name", "asc")
-        .orderBy("goal", "asc"),
+      query(
+        collection(firebaseDb, "orgs"),
+        where("users", "array-contains", userId),
+        orderBy("name", "asc"),
+        orderBy("goal", "asc")
+      ),
       {
         maxRefDepth: 1,
         wait: true //this also forces reset: false
@@ -97,7 +103,7 @@ const actions = {
     // return the promise returned by `bindFirestoreRef`
     return bindFirestoreRef(
       "currentOrg",
-      firebaseDb.collection("orgs").doc(orgId),
+      doc(firebaseDb, "orgs", orgId),
       {
         maxRefDepth: 1,
         wait: true //this also forces reset: false

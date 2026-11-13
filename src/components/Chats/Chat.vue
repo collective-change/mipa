@@ -97,15 +97,19 @@
 
 <script>
 import { mapState, mapActions, mapGetters } from "vuex";
-import { firebase, firebaseAuth } from "boot/firebase";
+import { firebaseAuth } from "@/boot/firebase";
+import {
+  Timestamp
+} from "firebase/firestore";
 import {
   getUserDisplayNameOrTruncatedEmail,
   getUserPhotoURL,
-} from "src/utils/util-getUserDetails";
+} from "@/utils/util-getUserDetails";
+import ChatMembers from "@/components/Chats/ChatMembers.vue";
 
 export default {
   components: {
-    "chat-members": require("components/Chats/ChatMembers.vue").default,
+    "chat-members": ChatMembers,
   },
   props: [
     "title",
@@ -171,7 +175,7 @@ export default {
             this.currentOrgUsers,
             firebaseAuth.currentUser.uid
           ),
-          timestamp: firebase.firestore.Timestamp.now(),
+          timestamp: Timestamp.now(),
         },
       });
       this.clearMessage();
@@ -257,14 +261,14 @@ export default {
     if (this.chatId) this.bindCurrentChat(this.chatId);
     /*this.firebaseGetMessages(this.$route.params.otherUserId)*/
   },
-  destroyed() {
+  unmounted() {
     this.unbindCurrentChat();
     /*this.firebaseStopGettingMessages()*/
   },
 };
 </script>
 
-<style lang="stylus">
+<style lang="scss">
 .component-chat {
 }
 

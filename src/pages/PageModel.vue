@@ -116,8 +116,13 @@
 
 <script>
 import { mapGetters, mapState, mapActions } from "vuex";
-import { firebase, firebaseApp, firebaseDb, firebaseAuth } from "boot/firebase";
-import idb from "src/api/idb";
+import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
+import idb from "@/api/idb";
+import ConfigOrgModel from "@/components/Model/Modals/ConfigOrgModel.vue";
+import CalculatorUi from "@/components/Calc/CalculatorUi.vue";
+import ExportCalcResults from "@/components/Calc/ExportCalcResults.vue";
+import DependencyGraph from "@/components/Model/DependencyGraph.vue";
+import NodeSummary from "@/components/Model/NodeSummary.vue";
 //import ExportCalcResults from "../components/Calc/ExportCalcResults.vue";
 
 const nest = (items, id = null, link = "parentId") => {
@@ -131,13 +136,11 @@ const nest = (items, id = null, link = "parentId") => {
 
 export default {
   components: {
-    "config-org-model": require("components/Model/Modals/ConfigOrgModel.vue")
-      .default,
-    "calculator-ui": require("components/Calc/CalculatorUi.vue").default,
-    "export-calc-results": require("components/Calc/ExportCalcResults.vue")
-      .default,
-    "dependency-graph": require("components/Model/DependencyGraph.vue").default,
-    "node-summary": require("components/Model/NodeSummary.vue").default,
+    "config-org-model": ConfigOrgModel,
+    "calculator-ui": CalculatorUi,
+    "export-calc-results": ExportCalcResults,
+    "dependency-graph": DependencyGraph,
+    "node-summary": NodeSummary,
   },
 
   data() {
@@ -316,7 +319,7 @@ export default {
     } else next();
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     // don't unbind firestore refs here; leave it until org change in Layout.vue
   },
 };
