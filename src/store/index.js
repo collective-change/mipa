@@ -43,7 +43,7 @@ export default function(/* { ssrContext } */) {
 
     // enable strict mode (adds overhead!)
     // for dev mode only
-    strict: process.env.DEV === true
+    strict: import.meta.env.DEV === true
   });
 
   return Store;

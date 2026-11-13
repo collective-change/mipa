@@ -1,5 +1,6 @@
 import { uid, Notify } from "quasar";
 import { showErrorMessage } from "@/utils/util-show-error-message";
+import { toPlain } from "@/utils/util-toPlain";
 import { firebaseAuth, firebaseConfig, useEmulators } from "@/boot/firebase";
 
 const state = {
@@ -44,7 +45,7 @@ const actions = {
   async calculate({ commit, dispatch }, payload) {
     let done = false;
     let calcWorker = await dispatch("getNewCalcWorker");
-    calcWorker.postMessage({
+    calcWorker.postMessage(toPlain({
       firebaseConfig,
       useEmulators,
       calculationType: payload.calculationType,
@@ -56,7 +57,7 @@ const actions = {
       roleNodes: payload.roleNodes,
       actions: payload.actions ? payload.actions : null,
       currentUserId: firebaseAuth.currentUser.uid
-    });
+    }));
     //console.log("Message posted to worker");
 
     calcWorker.onmessage = async function(e) {

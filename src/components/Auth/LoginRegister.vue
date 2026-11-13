@@ -89,8 +89,6 @@ export default {
         this.sendPasswordResetEmail(this.formData);
       }
     },
-  },
-  filters: {
     titleCase(value) {
       return value.charAt(0).toUpperCase() + value.slice(1);
     },

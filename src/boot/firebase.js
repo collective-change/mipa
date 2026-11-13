@@ -12,17 +12,17 @@ import {
 } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: process.env.apiKey,
-  authDomain: process.env.authDomain,
-  databaseURL: process.env.databaseURL,
-  projectId: process.env.projectId,
-  storageBucket: process.env.storageBucket,
-  messagingSenderId: process.env.messagingSenderId,
-  appId: process.env.appId
+  apiKey: import.meta.env.apiKey,
+  authDomain: import.meta.env.authDomain,
+  databaseURL: import.meta.env.databaseURL,
+  projectId: import.meta.env.projectId,
+  storageBucket: import.meta.env.storageBucket,
+  messagingSenderId: import.meta.env.messagingSenderId,
+  appId: import.meta.env.appId
 };
 
-const isTest = process.env.NODE_ENV === "test";
-const useEmulators = isTest || process.env.useEmulators === "true";
+const isTest = import.meta.env.MODE === "test";
+const useEmulators = isTest || import.meta.env.useEmulators === "true";
 
 // In tests .env is not loaded; Firebase needs at least an api key and project id.
 if (isTest) {
@@ -36,17 +36,17 @@ const firebaseAuth = getAuth(firebaseApp);
 // Offline persistence (shared across tabs) in production builds.
 const firebaseDb = initializeFirestore(firebaseApp, {
   localCache:
-    process.env.PROD && !useEmulators
+    import.meta.env.PROD && !useEmulators
       ? persistentLocalCache({ tabManager: persistentMultipleTabManager() })
       : memoryLocalCache()
 });
 
 if (useEmulators) {
   console.log("Using Firebase emulators");
-  connectAuthEmulator(firebaseAuth, "http://localhost:9099", {
+  connectAuthEmulator(firebaseAuth, "http://127.0.0.1:9099", {
     disableWarnings: true
   });
-  connectFirestoreEmulator(firebaseDb, "localhost", 5002);
+  connectFirestoreEmulator(firebaseDb, "127.0.0.1", 5002);
 }
 
 export { firebaseApp, firebaseAuth, firebaseDb, firebaseConfig, useEmulators };

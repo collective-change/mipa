@@ -62,10 +62,10 @@ function coordinateScenarioSimulations(data) {
     firebaseAuth = getAuth(firebaseApp);
     firebaseDb = getFirestore(firebaseApp);
     if (data.useEmulators) {
-      connectAuthEmulator(firebaseAuth, "http://localhost:9099", {
+      connectAuthEmulator(firebaseAuth, "http://127.0.0.1:9099", {
         disableWarnings: true
       });
-      connectFirestoreEmulator(firebaseDb, "localhost", 5002);
+      connectFirestoreEmulator(firebaseDb, "127.0.0.1", 5002);
     }
   }
 

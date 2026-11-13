@@ -1710,7 +1710,7 @@ export default {
         // only findNodeGroupAndExpand if not contextMenuClick and selectedNode is not a groupNode
         if (
           this.lastClickType != "contextMenuClick" &&
-          this.currentModel.nodeGroups.find(
+          (this.currentModel.nodeGroups || []).find(
             (ng) => ng.id == this.selectedNodeId
           ) == undefined
           //selectedNodeId.length < 36

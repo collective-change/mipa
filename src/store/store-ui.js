@@ -51,7 +51,7 @@ const actions = {
   setSelectedNodeId({ commit, rootState }, nodeId) {
     if (
       state.selectedNodeId != null &&
-      this.$router.currentRoute.params.nodeId != nodeId &&
+      this.$router.currentRoute.value.params.nodeId != nodeId &&
       state.selectedNodeId != nodeId
     )
       this.$router.replace({

@@ -4,7 +4,7 @@ import { defineConfig } from "@quasar/app-vite";
 import { loadEnv } from "vite";
 
 // Firebase credentials and app settings live in .env (see .env_sample).
-// They are exposed to the app as process.env.<name>, as before.
+// They are exposed to the app as import.meta.env.<name>.
 const ENV_KEYS = [
   "apiKey",
   "authDomain",
@@ -34,11 +34,13 @@ export default defineConfig(ctx => {
         node: "node22"
       },
       vueRouterMode: "history",
-      env
+      // The app is written with the Options API (Quasar CLI now disables it by default).
+      vueOptionsAPI: true,
+      defineEnv: env
     },
 
     devServer: {
-      open: true
+      open: false
     },
 
     framework: {
@@ -47,6 +49,7 @@ export default defineConfig(ctx => {
       plugins: [
         "Notify",
         "Dialog",
+        "Loading",
         "LocalStorage",
         "SessionStorage",
         "Cookies",

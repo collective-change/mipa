@@ -236,7 +236,7 @@ export default {
   data() {
     return {
       //packageJsonBuildNumber: buildNumber,
-      envPromptToReloadNumber: process.env.promptToReloadNumber,
+      envPromptToReloadNumber: import.meta.env.promptToReloadNumber,
       lang: this.$i18n.locale,
       langOptions: [
         { value: "en-us", label: "English" },
@@ -462,8 +462,13 @@ export default {
       console.log("currentroute", this.$route);
     },
     bindPublicData() {
-      this.$store.dispatch("adHocDocs/bindAppSummary");
-      this.$store.dispatch("adHocDocs/bindExchangeRates");
+      // These docs require a signed-in user; listeners started while signed
+      // out fail, so they are (re)bound whenever the user signs in.
+      if (!this.loggedIn) return;
+      const warn = (error) =>
+        console.warn("Could not load shared data:", error.message);
+      this.$store.dispatch("adHocDocs/bindAppSummary").catch(warn);
+      this.$store.dispatch("adHocDocs/bindExchangeRates").catch(warn);
     },
     unbindPublicData() {
       this.$store.dispatch("adHocDocs/unbindAppSummary");
@@ -507,6 +512,10 @@ export default {
     this.$store.dispatch("users/unbindCurrentUser");
   },
   watch: {
+    loggedIn(isLoggedIn) {
+      if (isLoggedIn) this.bindPublicData();
+    },
+
     $route(newRoute, oldRoute) {
       let newOrgId = "orgId" in newRoute.params ? newRoute.params.orgId : "";
       let oldOrgId = "orgId" in oldRoute.params ? oldRoute.params.orgId : "";
@@ -534,13 +543,13 @@ export default {
       //in Firestore, then the running code is old and the page should be refreshed.
       /*console.log(
         "promptToReloadNumber from app: " +
-          process.env.promptToReloadNumber +
+          import.meta.env.promptToReloadNumber +
           "; from db: " +
           newSummary.promptToReloadNumber
       );*/
       if (
         newSummary.promptToReloadNumber &&
-        newSummary.promptToReloadNumber > process.env.promptToReloadNumber
+        newSummary.promptToReloadNumber > import.meta.env.promptToReloadNumber
       ) {
         if ("serviceWorker" in navigator) {
           navigator.serviceWorker
