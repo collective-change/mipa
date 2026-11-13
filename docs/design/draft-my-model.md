@@ -132,10 +132,9 @@ Decisions behind this shape:
   cost monitoring, and is deleted after 30 days.
 - **The trial calculation runs in the browser** with the existing calc worker:
   a baseline calculation only needs the nodes, parameters and exchange rates
-  passed in its message, which is exactly what the calc tests do. This avoids
-  moving the engine into the functions package for the first version. Later,
-  extracting the engine into a module shared with Cloud Functions would let the
-  repair loop run entirely on the server.
+  passed in its message, which is exactly what the calc tests do.
+  Calculations stay on the user's device (see ai-roadmap.md, "Calculations
+  stay on the user's device"), which keeps mipa's running costs low.
 - **Writes happen in the browser** after the user accepts, so the existing
   Firestore rules (only model editors may write nodes) apply unchanged.
 
@@ -277,8 +276,10 @@ agreement with it. Before launch:
 - an organization setting "Allow AI features", on by default, so an
   organization whose own policy doesn't allow sending data to AI services can
   turn it off for all its members;
-- confirming Anthropic's current commercial terms on data retention and
-  training for API inputs, and summarizing them in the policy.
+- no promise about providers' data use: the policy says that retention and
+  training depend on each provider's terms, and that organizations should
+  choose a provider compatible with their own policies. The AI settings tab
+  links to the chosen provider's terms.
 
 ## Quality
 
