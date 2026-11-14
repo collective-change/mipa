@@ -88,6 +88,30 @@
           </q-icon>
         </q-th>
       </template>
+      <template v-slot:body-cell-title="props">
+        <q-td :props="props">
+          <div class="row items-center no-wrap">
+            <span class="text-weight-medium">{{ props.value }}</span>
+            <q-badge
+              v-if="props.row.guardrailViolations && props.row.guardrailViolations.length"
+              color="negative"
+              text-color="white"
+              dense
+              class="q-ml-sm cursor-pointer guardrail-breach-badge"
+            >
+              <q-icon name="warning" size="xs" class="q-mr-xs" />
+              {{ $t("guardrailBreachBadge") }}
+              <q-tooltip max-width="320px">
+                <div class="text-weight-bold q-mb-xs">{{ $t("guardrailBreachWarningTitle") }}</div>
+                <div v-for="(v, idx) in props.row.guardrailViolations" :key="idx" class="q-mb-xs">
+                  • {{ v.factorName }}: {{ $t(v.boundType === 'min' ? 'belowMinimum' : 'exceedsMaximum') }}
+                  ({{ v.worstValue }} {{ v.unit }} vs {{ v.threshold }} {{ v.unit }})
+                </div>
+              </q-tooltip>
+            </q-badge>
+          </div>
+        </q-td>
+      </template>
       <template v-slot:body-cell-actionLeverage="props">
         <q-td :props="props">
           <div class="row items-center justify-end no-wrap">

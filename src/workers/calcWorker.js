@@ -1,5 +1,6 @@
 // Calculation web worker (bundled by Vite as an ES module worker).
 import { create, all } from "mathjs";
+import { evaluateGuardrailViolations } from "@/utils/guardrails";
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import {
@@ -162,6 +163,15 @@ async function calculateResultsOfActions(
         //yearlyDiscountRate
       );
 
+      // Evaluate guardrail violations across trajectories
+      const guardrailViolations = evaluateGuardrailViolations(
+        sim.data.modelNodes,
+        branchAndBlockeesResults.ifDoneNodesValues,
+        branchAndBlockeesResults.ifNotDoneNodesValues,
+        sim.scope.timeSeries.timeSPoints
+      );
+      branchAndBlockeesResults.actionResultsNumbers.guardrailViolations = guardrailViolations;
+
       let actionEffectiveResults = branchAndBlockeesResults;
 
       actionResults = {
@@ -173,6 +183,7 @@ async function calculateResultsOfActions(
           branchAndBlockeesResults.effectiveChainedCostsAndImpacts,
         effectiveChainedCostsAndImpactsExcludingSelf:
           branchAndBlockeesResults.effectiveChainedCostsAndImpactsExcludingSelf,
+        guardrailViolations,
         calcDate: sim.scope.calcDate,
         startTimeS: sim.scope.initialTimeS
         //calcTimeMs: calcTimeMs,

@@ -58,6 +58,27 @@ export default {
   authVerifyToken: "Verify & Sign In",
   authCancelledByUser: "Sign-in was cancelled.",
 
+  // Organizational Guardrails & Negative Side-Effect Detection
+  factorGuardrailSection: "Organizational Guardrail & Operating Limits",
+  isGuardrailFactor: "Designate as guardrail metric",
+  guardrailMin: "Minimum Safe Bound",
+  guardrailMinHint: "Lower bound (e.g. min reserve cash)",
+  guardrailMax: "Maximum Safe Bound",
+  guardrailMaxHint: "Upper bound (e.g. max staff burnout)",
+  guardrailBreachMessage: "Breach Consequence Note",
+  guardrailBreachMessageHint: "Warning displayed if an action violates this bound",
+  guardrailBreachBadge: "Guardrail Breach",
+  guardrailBreachWarningTitle: "Organizational Guardrails Breached",
+  belowMinimum: "dropped below safe minimum",
+  exceedsMaximum: "exceeded safe maximum",
+  guardrailSectionTitle: "Organizational Guardrails & Side-Effect Safety",
+  guardrailsAllSafe: "All organizational guardrails and vital health metrics remain safely within bounds.",
+  guardrailBreachDetected: "Warning: This initiative causes one or more secondary organizational guardrails to be breached.",
+  guardrailThreshold: "Safe Threshold",
+  projectedWorstValue: "Projected Extreme",
+  breachMagnitudeLabel: "Breach Margin",
+  actionCausedSideEffect: "Action-caused negative side-effect (baseline was compliant)",
+
   // for PageModel.vue
   Calculate: "Calculate",
   "Model settings": "Model settings",

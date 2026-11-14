@@ -409,6 +409,45 @@
                 </template>
               </q-table>
             </div>
+
+            <!-- Organizational Guardrails Safety Card -->
+            <div class="q-mt-md">
+              <div class="row items-center q-mb-xs">
+                <div class="text-subtitle2 text-grey-8 row items-center">
+                  <q-icon name="shield" class="q-mr-xs" color="primary" />
+                  {{ $t("guardrailSectionTitle") }}
+                </div>
+              </div>
+
+              <div
+                v-if="briefData.section4.guardrailViolations && briefData.section4.guardrailViolations.length"
+                class="bg-red-1 border-negative rounded-borders q-pa-sm q-mb-md"
+              >
+                <div class="row items-center text-negative text-weight-bold q-mb-xs">
+                  <q-icon name="warning" class="q-mr-xs" size="sm" />
+                  {{ $t("guardrailBreachDetected") }}
+                </div>
+                <q-table
+                  flat
+                  bordered
+                  dense
+                  :rows="briefData.section4.guardrailViolations"
+                  :columns="guardrailColumns"
+                  row-key="factorId"
+                  hide-pagination
+                  :pagination="{ rowsPerPage: 0 }"
+                  class="bg-white"
+                />
+              </div>
+
+              <div
+                v-else
+                class="bg-green-1 text-positive rounded-borders q-pa-sm q-mb-md row items-center"
+              >
+                <q-icon name="verified_user" class="q-mr-sm" size="sm" />
+                <span class="text-body2">{{ $t("guardrailsAllSafe") }}</span>
+              </div>
+            </div>
           </div>
 
           <!-- SECTION 5: What the Brief Does Not Cover (Unmodeled Considerations) -->
@@ -587,6 +626,30 @@ export default {
         { name: "turningPoint", label: this.$t("flippingThreshold"), field: (row) => `${formatNumber(row.turningPoint, 2)} ${row.unit || ''}`.trim(), align: "right" },
         { name: "percentShift", label: this.$t("requiredShift"), field: "percentShift", align: "right" },
         { name: "robustness", label: this.$t("statusCol"), field: "robustness", align: "center" }
+      ];
+    },
+    guardrailColumns() {
+      return [
+        { name: "actionTitle", label: this.$t("Title"), field: "actionTitle", align: "left" },
+        { name: "factorName", label: this.$t("factorName"), field: "factorName", align: "left" },
+        {
+          name: "threshold",
+          label: this.$t("guardrailThreshold"),
+          field: (row) => `${this.$t(row.boundType === "min" ? "guardrailMin" : "guardrailMax")}: ${row.threshold} ${row.unit}`,
+          align: "right"
+        },
+        {
+          name: "worstValue",
+          label: this.$t("projectedWorstValue"),
+          field: (row) => `${row.worstValue} ${row.unit}`,
+          align: "right"
+        },
+        {
+          name: "breachMagnitude",
+          label: this.$t("breachMagnitudeLabel"),
+          field: (row) => `+${row.breachMagnitude} ${row.unit}`,
+          align: "right"
+        }
       ];
     }
   },

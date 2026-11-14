@@ -362,6 +362,62 @@
             </div>
           </div>
         </q-expansion-item>
+
+        <!-- Organizational Guardrails & Boundaries Section -->
+        <q-expansion-item
+          dense
+          dense-toggle
+          icon="shield"
+          :label="$t('factorGuardrailSection')"
+          header-class="text-caption text-primary q-px-none q-mt-xs"
+        >
+          <div class="row items-center justify-between q-my-xs">
+            <span class="text-caption text-grey-7">{{ $t("isGuardrailFactor") }}</span>
+            <q-toggle
+              v-model="nodeToSubmit.isGuardrail"
+              dense
+              color="primary"
+            />
+          </div>
+
+          <div v-if="nodeToSubmit.isGuardrail" class="q-gutter-y-xs q-mt-xs">
+            <div class="row q-col-gutter-xs">
+              <div class="col-12 col-sm-6">
+                <q-input
+                  v-model.number="nodeToSubmit.guardrailMin"
+                  dense
+                  outlined
+                  type="number"
+                  step="any"
+                  :label="$t('guardrailMin')"
+                  :hint="$t('guardrailMinHint')"
+                  :suffix="nodeToSubmit.unit"
+                />
+              </div>
+              <div class="col-12 col-sm-6">
+                <q-input
+                  v-model.number="nodeToSubmit.guardrailMax"
+                  dense
+                  outlined
+                  type="number"
+                  step="any"
+                  :label="$t('guardrailMax')"
+                  :hint="$t('guardrailMaxHint')"
+                  :suffix="nodeToSubmit.unit"
+                />
+              </div>
+            </div>
+
+            <q-input
+              v-model="nodeToSubmit.guardrailBreachMessage"
+              dense
+              outlined
+              class="q-mt-xs"
+              :label="$t('guardrailBreachMessage')"
+              :hint="$t('guardrailBreachMessageHint')"
+            />
+          </div>
+        </q-expansion-item>
         <div style="height: 15px"></div>
         <select-user
           :label="$t('Responsible person')"
