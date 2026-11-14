@@ -721,5 +721,25 @@ export default {
 
   // Sensitivity Stress Testing
   perturbationRangeLabel: "情境壓力測試幅度",
-  perturbationHint: "測試關鍵假設在不同波動幅度下之排序穩定度"
+  perturbationHint: "測試關鍵假設在不同波動幅度下之排序穩定度",
+
+  // Formula Helpers & Autocomplete
+  formulaChipsLabel: "常用公式積木：",
+  formulaChipDelayDesc: "隨時間累積之存量：前一時間點的值加上淨流入",
+  formulaChipTernaryDesc: "條件判斷：若條件成立取前者，否則取後者",
+  formulaChipMinDesc: "取兩數中較小值（數值上限／防爆限額）",
+  formulaChipMaxDesc: "取兩數中較大值（數值下限／最低門檻）",
+  formulaChipAbsDesc: "取絕對值（非負數值大小）",
+  formulaChipRoundDesc: "四捨五入至整數",
+  insertFactor: "插入變數",
+  insertFactorHint: "選擇模型中的變數插入公式",
+  formulaErrorParenthesis: "公式中的括弧未閉合或不成對。",
+  formulaErrorIncomplete: "數學運算式未完成或運算子懸空。",
+  formulaUnlinkedWarning: "公式中引用了尚未建立關聯的因素：",
+  formulaUnknownSymbols: "公式中包含未定義的符號",
+  linkFactorButton: "建立關聯「{name}」",
+  linkedInfluencer: "已關聯變數",
+  unlinkedFactor: "模型其他變數",
+  linkFactorSuccess: "已成功建立因素關聯",
+  formulaSyntaxErrorBlock: "請先修正公式語法錯誤後再儲存。"
 };

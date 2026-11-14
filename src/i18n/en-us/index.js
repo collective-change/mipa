@@ -740,5 +740,25 @@ export default {
 
   // Sensitivity Stress Testing
   perturbationRangeLabel: "Scenario shock range",
-  perturbationHint: "Test ranking stability under assumption variances"
+  perturbationHint: "Test ranking stability under assumption variances",
+
+  // Formula Helpers & Autocomplete
+  formulaChipsLabel: "Quick insert:",
+  formulaChipDelayDesc: "Stock accumulation over time: previous value plus flows",
+  formulaChipTernaryDesc: "Conditional choice: if condition is true use A, otherwise B",
+  formulaChipMinDesc: "Takes the smaller of two values (ceiling / upper cap)",
+  formulaChipMaxDesc: "Takes the larger of two values (floor / lower threshold)",
+  formulaChipAbsDesc: "Absolute value (non-negative magnitude)",
+  formulaChipRoundDesc: "Rounds to nearest integer",
+  insertFactor: "Insert factor",
+  insertFactorHint: "Choose a factor to insert into the formula",
+  formulaErrorParenthesis: "Unclosed or mismatched parentheses in formula.",
+  formulaErrorIncomplete: "Incomplete mathematical expression or dangling operator.",
+  formulaUnlinkedWarning: "This formula uses factors that are not yet linked as inputs:",
+  formulaUnknownSymbols: "Unrecognized symbols in formula",
+  linkFactorButton: "Link {name}",
+  linkedInfluencer: "Linked factor",
+  unlinkedFactor: "Available in model",
+  linkFactorSuccess: "Factor linked successfully",
+  formulaSyntaxErrorBlock: "Please fix formula syntax errors before saving."
 };
