@@ -49,7 +49,25 @@ rules and indexes, a scheduled Cloud Function (`updateExchangeRates`) and
 callable functions for membership and AI drafting.
 Cloud Functions need the project on the Blaze plan.
 
-### First deploy of the 2026 version (manual, by a project owner)
+### First deploy of the 2026 version
+
+The simplest way is the **Production setup** workflow (Actions tab > Production
+setup > Run workflow), after setting the repository secret and variables
+listed under "Automatic deploys" below:
+
+1. Run it with mode `check`. It changes nothing: it lists the project's Cloud
+   Functions and secrets, the formulas whose meaning changes under the new
+   mathjs version, and which members it would copy.
+2. If the project has no `FIXER_IO_ACCESS_KEY` secret yet, add the fixer.io
+   key as a repository secret with that name.
+3. Run it with mode `migrate`. It creates missing secrets (generating
+   `AI_KEY_ENCRYPTION_KEY` itself), deletes the old 1st-generation
+   `updateExchangeRates`, runs lint, tests and the build, deploys, and copies
+   members into each organization's member list.
+
+After that, every push to `master` deploys through `deploy.yml`.
+
+The same steps by hand, for a project owner with the Firebase CLI:
 
 1. Merge into `master` and check it out. Create `.env` from `.env_sample` with
    the production web app config (Firebase console > Project settings > Your
