@@ -66,6 +66,34 @@
           </q-item-section>
         </q-item>
       </q-list>
+
+      <div class="row items-center justify-between q-px-md q-pt-xs q-pb-sm bg-grey-1 border-top">
+        <div class="text-caption text-grey-7">
+          {{ $t("gsStarterTemplatesPrompt") }}
+        </div>
+        <div class="row q-gutter-xs">
+          <q-btn
+            flat
+            dense
+            color="primary"
+            size="sm"
+            no-caps
+            icon="hub"
+            :label="$t('templateLibraryBtn')"
+            @click="$emit('open-templates')"
+          />
+          <q-btn
+            flat
+            dense
+            color="grey-8"
+            size="sm"
+            no-caps
+            icon="help_outline"
+            :label="$t('guidedTourBtn')"
+            @click="$emit('open-tour')"
+          />
+        </div>
+      </div>
     </q-expansion-item>
   </q-card>
 </template>
@@ -81,7 +109,7 @@ const STARTER_FACTOR_COUNT = 7;
 
 export default {
   components: { "calculator-ui": CalculatorUi },
-  emits: ["add-factor"],
+  emits: ["add-factor", "open-templates", "open-tour"],
   data() {
     return {
       expanded: true,
