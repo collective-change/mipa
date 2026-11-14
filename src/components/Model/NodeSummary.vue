@@ -466,6 +466,13 @@
       <p>nodeToSubmit</p>
       <pre>{{ nodeToSubmit }}</pre>-->
     </div>
+    <empty-state
+      v-else
+      icon="touch_app"
+      icon-color="primary"
+      :title="$t('noFactorSelectedTitle')"
+      :description="$t('noFactorSelectedHint')"
+    />
   </div>
 </template>
 
@@ -488,6 +495,7 @@ import {
 } from "@/utils/dataIngestion";
 import SelectUser from "../Users/SelectUser.vue";
 import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
+import EmptyState from "@/components/Shared/EmptyState.vue";
 import Chat from "@/components/Chats/Chat.vue";
 import AddNode from "@/components/Model/Modals/AddNode.vue";
 import AddLink from "@/components/Model/Modals/AddLink.vue";
@@ -500,6 +508,7 @@ export default {
     "delete-node": DeleteNode,
     "modal-buttons": ModalButtons,
     "select-user": SelectUser,
+    "empty-state": EmptyState,
     chat: Chat,
     gchart: GChart,
     "latex-formula": LatexFormula,

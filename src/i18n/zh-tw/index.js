@@ -840,5 +840,14 @@ export default {
   sroiReportCopiedToast: "SROI 決策報告已複製至剪貼簿",
   sroiCardTitle: "社會投資報酬率（SROI）",
   sroiCardSubtitle: "量化社會效益、扣除無謂損失與歸因，評估淨社會投資回報",
-  viewSroiImpactMap: "檢視 SROI 影響力地圖"
+  viewSroiImpactMap: "檢視 SROI 影響力地圖",
+
+  // UI & UX Modernization
+  zoomIn: "放大視野",
+  zoomOut: "縮小視野",
+  resetZoom: "重設視野",
+  noFactorSelectedTitle: "尚未選取任何因素",
+  noFactorSelectedHint: "點選圖表中的因素，即可檢視並編輯其計算公式、數值出處與關聯。",
+  noActionSelectedTitle: "尚未選取任何方案",
+  noActionSelectedHint: "點選清單中的方案，即可檢視進度、投入成本與 SROI 社會價值評估。"
 };
