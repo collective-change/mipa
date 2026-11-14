@@ -308,6 +308,21 @@ export default {
   toastRelationshipRemoved: "已移除相關行動",
   toastUserUpdated: "已儲存個人資料",
 
+  // first-run checklist (GettingStarted.vue)
+  "Getting started": "開始使用",
+  gsIntro: "六個步驟，完成你的第一次行動比較。每完成一步會自動打勾。",
+  gsAllDoneTitle: "全部完成了",
+  gsAllDoneText: "你的模型已經連結好，行動也比較過了。你可以隱藏這份清單。",
+  Hide: "隱藏",
+  gs: {
+    hourlyCost: { title: "設定每小時工作成本", text: "開啟標示 (new) 的因素，輸入組織每小時工作的成本，然後儲存。", button: "開啟" },
+    addFactors: { title: "加入對你重要的事物", text: "新增銷售額、服務人數或排放量等因素，並為每個因素寫公式。", button: "新增因素" },
+    linkFactors: { title: "把它們連結到效益與成本", text: "把你的因素連結到效益和成本因素，讓 mipa 知道每個因素對組織和世界的價值。", button: "開啟世界的效益" },
+    calculate: { title: "計算", text: "mipa 會往未來計算你的模型。修正它回報的問題後，再計算一次。" },
+    addAction: { title: "新增第一個行動", text: "描述組織可以做的一件事，以及它需要的工時、金錢和它的影響。", button: "前往行動" },
+    compare: { title: "比較行動", text: "在「行動」頁按「重新計算」，就能看到每個行動的效益、成本和效應比。", button: "前往行動" }
+  },
+
   // for PageOrgs.vue
   "My organizations": "我的組織",
   "Add organization": "新增組織",

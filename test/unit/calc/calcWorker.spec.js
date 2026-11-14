@@ -129,6 +129,18 @@ describe("baseline: formulas", () => {
     expect(r.nodesValues.half).toEqual(steps(-5));
   });
 
+  it("treats a factor without a formula yet as 0", async () => {
+    // a factor just added with "Add factor" has no calculator formula yet
+    const r = await baseline([
+      node("fresh", ""),
+      node("freshMoney", "", { unit: "USD" }),
+      node("uses", "$fresh + 1", { blockingInfluencers: ["fresh"] })
+    ]);
+    expect(r.nodesValues.fresh).toEqual(steps(0));
+    expect(r.nodesValues.freshMoney).toEqual(steps(0));
+    expect(r.nodesValues.uses).toEqual(steps(1));
+  });
+
   it("supports conditionals and built-in functions", async () => {
     const r = await baseline([
       node("a", "-3"),

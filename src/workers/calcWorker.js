@@ -1323,6 +1323,8 @@ function prepExpressionsArray(sim) {
   sim.sortedNodes.forEach(function(node) {
     if (!sim.errorOccurred)
       try {
+        // A factor just added has no formula yet; it counts as 0.
+        if (node.sysFormula.trim() === "") node.sysFormula = "0";
         //if formula includes a variable then save it
         if (node.sysFormula.includes("$")) {
           expressionsArray.push("$" + node.id + " = " + node.sysFormula);
