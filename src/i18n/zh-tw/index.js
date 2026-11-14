@@ -717,5 +717,9 @@ export default {
   errAuthAdvice: "API 金鑰驗證未通過，請確認金鑰字串是否完整且無多餘空格。",
   errModelAdvice: "找不到指定的模型名稱，或該模型尚未對您的帳號開放存取權限。",
   errQuotaAdvice: "供應商帳號之調用額度可能已用罄或受到頻率限制，請至供應商帳務中心確認。",
-  errNetworkAdvice: "無法連線至供應商端點，請確認網路環境或端點網址。"
+  errNetworkAdvice: "無法連線至供應商端點，請確認網路環境或端點網址。",
+
+  // Sensitivity Stress Testing
+  perturbationRangeLabel: "情境壓力測試幅度",
+  perturbationHint: "測試關鍵假設在不同波動幅度下之排序穩定度"
 };

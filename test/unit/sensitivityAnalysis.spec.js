@@ -145,4 +145,24 @@ describe("Feature 3: Sensitivity & Turning-Point Analysis Engine", () => {
     expect(report.narrative).toContain("決策翻轉臨界值");
     expect(report.narrative).toContain("效應比");
   });
+
+  it("supports configurable perturbation range (e.g. 10%, 25%, 50%) for dynamic scenario testing", () => {
+    const report10 = generateSensitivityReport(mockActionA, mockActionB, mockNodes, {}, {
+      locale: "en-us",
+      currency: "USD",
+      perturbationRange: 0.10
+    });
+    expect(report10.perturbationRange).toBe(0.10);
+    expect(report10.perturbationPct).toBe(10);
+    expect(report10.narrative).toContain("+/- 10% range");
+
+    const report50 = generateSensitivityReport(mockActionA, mockActionB, mockNodes, {}, {
+      locale: "zh-tw",
+      currency: "TWD",
+      perturbationRange: 0.50
+    });
+    expect(report50.perturbationRange).toBe(0.50);
+    expect(report50.perturbationPct).toBe(50);
+    expect(report50.narrative).toContain("±50% 區間");
+  });
 });

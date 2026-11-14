@@ -319,10 +319,16 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
   const estimatedFactors = modelFactors.filter((n) => n.isEstimate || (n.notes && n.notes.toLowerCase().includes("estimate")));
   const topDrivers = extractActionDrivers(topAction, nodes);
 
+  const perturbationRange = typeof options.perturbationRange === "number" && options.perturbationRange > 0
+    ? options.perturbationRange
+    : 0.30;
+  verifiedNumbers.add(Math.round(perturbationRange * 100));
+
   const sensitivity = runnerUp
     ? generateSensitivityReport(topAction, runnerUp, nodes, options.simulationParams || {}, {
         locale: isZh ? "zh-tw" : "en-us",
-        currency
+        currency,
+        perturbationRange
       })
     : null;
 

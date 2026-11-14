@@ -311,8 +311,13 @@ export function generateSensitivityReport(actionA, actionB, nodes = [], simulati
     return null;
   }
 
+  const perturbationRange = typeof options.perturbationRange === "number" && options.perturbationRange > 0
+    ? options.perturbationRange
+    : 0.30;
+  const perturbationPct = Math.round(perturbationRange * 100);
+
   const inputs = listSensitivityInputs(actionA, actionB, nodes, simulationParams);
-  const screened = inputs.map((inp) => screenInputSensitivity(actionA, actionB, inp));
+  const screened = inputs.map((inp) => screenInputSensitivity(actionA, actionB, inp, perturbationRange));
 
   // Sort: inputs that flip ranking first, then by sensitivity score descending
   screened.sort((a, b) => {
@@ -378,7 +383,7 @@ export function generateSensitivityReport(actionA, actionB, nodes = [], simulati
 
       narrative = `決策穩健性與關鍵假設評估：\n\n` +
         `一、決策抗風險能力評估：\n` +
-        `在常態性運作波動（±30% 區間）下，「${titleA}」之效應比均穩健高於「${titleB}」。整體決策品質被評定為 ${robustnessBadge}。\n\n` +
+        `在情境壓力測試（±${perturbationPct}% 區間）下，「${titleA}」之效應比均穩健高於「${titleB}」。整體決策品質被評定為 ${robustnessBadge}。\n\n` +
         `二、關鍵假設翻轉點分析：\n` +
         `「${titleB}」若擬反超首選方案，主要取決於關鍵變數「${topTp.name}」：\n` +
         `• 基準假設值：${baseFormatted}\n` +
@@ -408,7 +413,7 @@ export function generateSensitivityReport(actionA, actionB, nodes = [], simulati
 
       narrative = `Decision Robustness & Sensitivity Findings:\n\n` +
         `1. Risk Tolerance & Ranking Stability:\n` +
-        `Under baseline operational fluctuations (+/- 30% range), "${titleA}" consistently outranks "${titleB}". Overall decision robustness is rated ${robustnessBadge}.\n\n` +
+        `Under scenario stress testing (+/- ${perturbationPct}% range), "${titleA}" consistently outranks "${titleB}". Overall decision robustness is rated ${robustnessBadge}.\n\n` +
         `2. Critical Turning-Point Threshold:\n` +
         `For "${titleB}" to overturn the ranking, the pivotal assumption is "${topTp.name}":\n` +
         `- Baseline assumption: ${baseFormatted}\n` +
@@ -426,6 +431,8 @@ export function generateSensitivityReport(actionA, actionB, nodes = [], simulati
     actionA: { id: actionA.id, title: titleA },
     actionB: { id: actionB.id, title: titleB },
     overallRobustness,
+    perturbationRange,
+    perturbationPct,
     screenedCount: screened.length,
     flippingInputsCount: screened.filter((s) => s.flipsRanking).length,
     turningPoints,
