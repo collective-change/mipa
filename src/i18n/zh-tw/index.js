@@ -1057,5 +1057,19 @@ export default {
   earlyAccessSuccessDesc: "感謝您對系統動力學策略決策的關注。團隊每週審閱申請，並在先導梯次開放時立即以郵件通知您。",
   earlyAccessSignIn: "登入既有帳號",
   earlyAccessSubmitAnother: "填寫另一份申請",
-  earlyAccessErrorGeneral: "無法提交申請，請檢查網路連線後重試。"
+  earlyAccessErrorGeneral: "無法提交申請，請檢查網路連線後重試。",
+
+  // Workspace Tier Governance & Multi-Seat Meter
+  tierCommunity: "公益普及方案",
+  tierStarter: "啟航先鋒方案",
+  tierGrowth: "成長深耕方案",
+  tierPro: "專業旗艦方案",
+  tierEnterprise: "組織旗艦客製方案",
+  statusActive: "有效生效中",
+  manageBilling: "帳務管理入口",
+  upgradeTier: "升級方案",
+  seatUsageCounter: "已配置 {used} / {limit} 個成員席位",
+  membersAndInvitesCount: "{members} 位正式成員 · {invites} 份待回覆邀請",
+  freeStakeholderViewersNotice: "免費提供不限人數之外部利益關係人唯讀檢視",
+  seatLimitReachedNotice: "您的組織已達到方案席位上限（{limit} 位成員）。請升級方案或撤回待回覆邀請，以邀請更多工作夥伴。"
 };

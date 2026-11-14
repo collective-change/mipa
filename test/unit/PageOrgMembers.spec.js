@@ -119,4 +119,20 @@ describe("PageOrgMembers.vue - Role Explanations & Invitation Resend", () => {
     const chineseRegex = /[\u4e00-\u9fff]/;
     expect(chineseRegex.test(html)).toBe(false);
   });
+
+  it("renders workspace tier and seat meter for organization members", () => {
+    const { wrapper } = mountPageOrgMembers();
+    const text = wrapper.text();
+    expect(text).toContain("Community Tier");
+    expect(text).toContain("seats committed");
+    expect(text).toContain("Unlimited read-only stakeholder viewers included");
+    expect(text).toContain("Upgrade Tier");
+  });
+
+  it("displays seat limit reached banner when capacity is reached", () => {
+    // Current org has default 1 seat limit, and there are 2 users + 2 invitations = 4 committed seats >= 1
+    const { wrapper } = mountPageOrgMembers();
+    expect(wrapper.vm.isSeatFull).toBe(true);
+    expect(wrapper.text()).toContain("reached its seat limit");
+  });
 });
