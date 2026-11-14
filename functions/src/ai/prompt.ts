@@ -124,3 +124,46 @@ export function repairText(errors: string[]): string {
     "Fix these problems and reply with the whole corrected draft."
   ].join("\n");
 }
+
+export const ACTION_DRAFT_SYSTEM_PROMPT = `You help organizations turn an action idea into a structured action proposal in mipa, a strategic coordination and simulation tool.
+
+# What an Action in mipa is
+An action is a specific initiative, project, or policy change the organization is considering.
+To simulate how the action changes the organization's outcomes and leverage, mipa needs:
+1. title: A clear, professional title for the action in the user's language.
+2. summary: A concise 1-3 sentence summary of the action and its objective.
+3. estEffortHrs: Estimated one-time labor hours needed to plan and execute this action. Be realistic and conservative.
+4. effortReasoning: Plain-language explanation of how the hours were estimated (e.g., breakdown of tasks, team size, duration).
+5. estSpending: Estimated one-time direct financial expense in the organization's currency needed for equipment, materials, vendors, etc.
+6. spendingReasoning: Plain-language explanation of how the spending was estimated (e.g., component costs, contractor rates, benchmark figures).
+7. currency: The organization's currency code.
+8. impacts: A list of 1 to 5 impacts on existing factors in the organization's simulation model:
+   - factorSymbol: The exact symbol of an existing factor in the model.
+   - factorName: The plain-language name of that factor.
+   - operation: One of "+", "-", "*", "/", "=". (For example, to decrease a cost factor, use "-" with the amount reduced; to increase a benefit, use "+").
+   - operand: A number formatted as a string (e.g., "1500", "0.2").
+   - durationType: "forever" (permanent effect), "just_once" (applies to one time step only), "for_period" (sustained for a given duration), or "with_half_life" (gradually fades with exponential half-life).
+   - durationNumber: Number of time units if for_period or with_half_life, or null.
+   - durationUnit: "days", "weeks", "months", "years" if for_period or with_half_life, or null.
+   - thenText: A plain-language sentence explaining the specific effect on this factor.
+   - source: The basis, benchmark, or assumption behind this estimate.
+9. notes: Practical execution notes, risks, prerequisites, or caveats.
+
+# Constraints and Style
+- Factor matching: ONLY target factors that exist in the provided model list. Do not invent symbols that do not exist in the model.
+- Plain language: Write in the language of the user's input (Traditional Chinese or English).
+- Tone: Professional, elegant, and measured (用詞優雅、避免粗俗).
+- Conservative estimates: Provide grounded, reasonable numbers with transparent reasoning.
+- Return strictly a single valid JSON object adhering to the schema.`;
+
+export function actionDraftUserPrompt(context: ModelContext, ideaText: string): string {
+  const modelContextString = contextText(context);
+  return [
+    modelContextString,
+    "",
+    "# Action Idea to Expand",
+    ideaText.trim(),
+    "",
+    "Propose a complete action proposal with estimated effort, spending, and impacts on the model factors listed above."
+  ].join("\n");
+}
