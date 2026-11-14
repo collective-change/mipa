@@ -399,6 +399,20 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
       `3. Qualitative Brand & Stakeholder Equity: Intangible reputation impacts and trust dimensions not captured in numerical indicators.`;
   }
 
+  // Section 4 Guardrail Violations
+  const allGuardrailViolations = [];
+  sortedActions.forEach((act) => {
+    if (Array.isArray(act.guardrailViolations) && act.guardrailViolations.length) {
+      act.guardrailViolations.forEach((v) => {
+        allGuardrailViolations.push({
+          actionId: act.id,
+          actionTitle: act.title,
+          ...v
+        });
+      });
+    }
+  });
+
   return {
     metadata: {
       orgName,
@@ -428,7 +442,8 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
     section4: {
       title: isZh ? "核心模型假設與評估基礎" : "Key Simulation Assumptions & Estimates",
       narrative: section4Assumptions,
-      sensitivity
+      sensitivity,
+      guardrailViolations: allGuardrailViolations
     },
     section5: {
       title: isZh ? "模型未涵蓋之外部考量" : "Unmodeled Considerations & Scope Limitations",
@@ -524,7 +539,27 @@ export function formatBriefAsMarkdown(brief) {
     "",
     `## 4. ${brief.section4.title}`,
     "",
-    brief.section4.narrative,
+    brief.section4.narrative
+  );
+
+  if (brief.section4.guardrailViolations && brief.section4.guardrailViolations.length) {
+    lines.push(
+      "",
+      isZh ? "### 4.1 組織護欄與副作用安全檢視" : "### 4.1 Organizational Guardrails & Side-Effect Safety",
+      "",
+      isZh
+        ? "⚠️ **警示**：以下方案在模擬推演中突破了預設之組織安全護欄限制："
+        : "⚠️ **Warning**: The following initiatives breach designated organizational safety boundaries:",
+      "",
+      `| ${isZh ? "方案" : "Initiative"} | ${isZh ? "指標" : "Factor"} | ${isZh ? "安全門檻" : "Threshold"} | ${isZh ? "預測極值" : "Projected Extreme"} | ${isZh ? "影響說明" : "Consequence Note"} |`,
+      "|---|---|---|---|---|",
+      ...brief.section4.guardrailViolations.map(
+        (v) => `| ${v.actionTitle} | ${v.factorName} | ${v.threshold} ${v.unit} | ${v.worstValue} ${v.unit} | ${v.message || "-"} |`
+      )
+    );
+  }
+
+  lines.push(
     "",
     `## 5. ${brief.section5.title}`,
     "",

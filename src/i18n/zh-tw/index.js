@@ -54,6 +54,27 @@ export default {
   authVerifyToken: "驗證並登入",
   authCancelledByUser: "登入作業已取消。",
 
+  // Organizational Guardrails & Negative Side-Effect Detection
+  factorGuardrailSection: "組織護欄與營運限制",
+  isGuardrailFactor: "設為組織護欄指標",
+  guardrailMin: "安全下限門檻",
+  guardrailMinHint: "不得低於此數值（例：最低儲備金）",
+  guardrailMax: "安全上限門檻",
+  guardrailMaxHint: "不得高於此數值（例：離職倦怠上限）",
+  guardrailBreachMessage: "超標後果與影響說明",
+  guardrailBreachMessageHint: "當行動突破限制時所顯示的警示訊息",
+  guardrailBreachBadge: "觸碰護欄限制",
+  guardrailBreachWarningTitle: "已觸碰組織護欄限制",
+  belowMinimum: "低於安全下限",
+  exceedsMaximum: "高於安全上限",
+  guardrailSectionTitle: "組織護欄與副作用安全檢視",
+  guardrailsAllSafe: "所有組織護欄與關鍵健康指標皆維持在安全營運範圍內。",
+  guardrailBreachDetected: "注意：此行動將導致一個或多個次要組織護欄指標遭受突破。",
+  guardrailThreshold: "安全門檻",
+  projectedWorstValue: "預測極值",
+  breachMagnitudeLabel: "超標幅度",
+  actionCausedSideEffect: "行動衍生副作用（基準線原處於安全範圍）",
+
   // for PageModel.vue
   Calculate: "計算",
   "Model settings": "模型設定",
