@@ -531,6 +531,24 @@
                 </div>
               </div>
 
+              <!-- Department / Resource Role Tag -->
+              <div class="row q-col-gutter-sm items-center q-mb-sm">
+                <div class="col-12">
+                  <q-select
+                    v-model="departmentTag"
+                    dense
+                    filled
+                    emit-value
+                    map-options
+                    clearable
+                    options-dense
+                    :options="departmentOptions"
+                    :label="$t('departmentTag')"
+                    :hint="$t('departmentTagHint')"
+                  />
+                </div>
+              </div>
+
               <!-- Cost Summary Chips -->
               <div class="row q-gutter-sm items-center bg-white q-pa-sm rounded-borders border">
                 <div class="col text-caption">
@@ -931,6 +949,7 @@ export default {
       "uiAction.notes",
       "uiAction.responsiblePerson",
       "uiAction.accountablePerson",
+      "uiAction.departmentTag",
       "uiAction.chatId",
     ]),
     ...mapMultiRowFields(["uiAction.impacts"]),
@@ -1023,6 +1042,15 @@ export default {
           value: "factor:" + node.id,
         })),
         { label: this.$t("Use a different hourly cost"), value: "use_custom" },
+      ];
+    },
+    departmentOptions() {
+      return [
+        { value: "executive", label: this.$t("deptExecutive") },
+        { value: "operations", label: this.$t("deptOperations") },
+        { value: "fieldwork", label: this.$t("deptFieldwork") },
+        { value: "engineering", label: this.$t("deptEngineering") },
+        { value: "finance", label: this.$t("deptFinance") }
       ];
     },
     // One menu for the three ways to cost an hour of work.

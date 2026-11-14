@@ -34,6 +34,15 @@
             no-caps
           />
           <q-btn
+            color="secondary"
+            icon="hub"
+            outline
+            no-caps
+            :disable="loading || !matchingActions || !matchingActions.length"
+            :label="$t('optimizePortfolio')"
+            @click="showPortfolioOptimizer = true"
+          />
+          <q-btn
             color="primary"
             icon="description"
             outline
@@ -164,6 +173,11 @@
       :action="actionToExplain"
       @open-full-brief="openBriefWithActions"
     />
+    <portfolio-optimizer-modal
+      v-model="showPortfolioOptimizer"
+      :actions="matchingActions"
+      @open-brief="openBriefWithActions"
+    />
   </div>
 </template>
 
@@ -179,6 +193,7 @@ import {
 import AddAction from "@/components/Actions/Modals/AddAction.vue";
 import DecisionBriefModal from "@/components/Actions/Modals/DecisionBriefModal.vue";
 import ExplainRankingModal from "@/components/Actions/Modals/ExplainRankingModal.vue";
+import PortfolioOptimizerModal from "@/components/Actions/Modals/PortfolioOptimizerModal.vue";
 import CalculatorUi from "@/components/Calc/CalculatorUi.vue";
 import SelectUser from "@/components/Users/SelectUser.vue";
 import SelectActionStates from "@/components/Actions/SelectActionStates.vue";
@@ -201,6 +216,7 @@ export default {
     "add-action": AddAction,
     "decision-brief-modal": DecisionBriefModal,
     "explain-ranking-modal": ExplainRankingModal,
+    "portfolio-optimizer-modal": PortfolioOptimizerModal,
     "empty-state": EmptyState,
     "calculator-ui": CalculatorUi,
     "select-user": SelectUser,
@@ -212,6 +228,7 @@ export default {
       showAddAction: false,
       showDecisionBrief: false,
       showExplainRanking: false,
+      showPortfolioOptimizer: false,
       actionToExplain: null,
       selectedActionsForBrief: [],
       loading: false,
