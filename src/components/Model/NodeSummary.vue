@@ -2,13 +2,44 @@
   <div>
     <div v-if="selectedNode">
       <q-form @submit.prevent="submitForm">
-        <q-input
-          class="text-h6"
-          v-model="nodeToSubmit.name"
-          :placeholder="$t('Name of the factor')"
-          :rules="[(val) => !!val || $t('Required')]"
-          ref="nodeName"
-        />
+        <div class="row items-start no-wrap">
+          <q-input
+            class="text-h6 col"
+            v-model="nodeToSubmit.name"
+            :placeholder="$t('Name of the factor')"
+            :rules="[(val) => !!val || $t('Required')]"
+            ref="nodeName"
+          />
+          <q-btn flat round icon="more_horiz" class="q-mt-sm" :aria-label="$t('More options')">
+            <q-tooltip>{{ $t("More options") }}</q-tooltip>
+            <q-menu auto-close>
+              <q-list style="min-width: 260px">
+                <q-item clickable @click="openAddFactor('influencer')">
+                  <q-item-section avatar><q-icon name="add_circle_outline" /></q-item-section>
+                  <q-item-section>{{ $t("Add a factor this one uses") }}</q-item-section>
+                </q-item>
+                <q-item clickable @click="openAddFactor('influencee')">
+                  <q-item-section avatar><q-icon name="add_circle_outline" /></q-item-section>
+                  <q-item-section>{{ $t("Add a factor that uses this one") }}</q-item-section>
+                </q-item>
+                <q-separator />
+                <q-item clickable @click="openAddLink('influencer')">
+                  <q-item-section avatar><q-icon name="link" /></q-item-section>
+                  <q-item-section>{{ $t("Link to a factor this one uses") }}</q-item-section>
+                </q-item>
+                <q-item clickable @click="openAddLink('influencee')">
+                  <q-item-section avatar><q-icon name="link" /></q-item-section>
+                  <q-item-section>{{ $t("Link to a factor that uses this one") }}</q-item-section>
+                </q-item>
+                <q-separator />
+                <q-item clickable @click="showDeleteFactor = true">
+                  <q-item-section avatar><q-icon name="delete_outline" color="negative" /></q-item-section>
+                  <q-item-section class="text-negative">{{ $t("Delete factor") }}</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
+        </div>
         <div class="row justify-between">
           <div class="col-8">
             <q-input
@@ -174,6 +205,24 @@
       </div>
 
       <p class="text-caption text-grey-6 q-mt-md">ID: {{ nodeToSubmit.id }}</p>
+
+      <q-dialog v-model="showAddFactor">
+        <add-node
+          :sourceNodeId="selectedNode.id"
+          :newNodeRole="addFactorRole"
+          @close="showAddFactor = false"
+        />
+      </q-dialog>
+      <q-dialog v-model="showAddLink">
+        <add-link
+          :sourceNodeId="selectedNode.id"
+          :linkToSubmit="linkToSubmit"
+          @close="showAddLink = false"
+        />
+      </q-dialog>
+      <q-dialog v-model="showDeleteFactor">
+        <delete-node :node="selectedNode" @close="showDeleteFactor = false" />
+      </q-dialog>
       <!--
       <p>symbolFormula</p>
       <pre>{{ nodeToSubmit.symbolFormula }}</pre>
@@ -197,9 +246,15 @@ import { classifyInfluencers } from "@/utils/util-node-operations";
 import SelectUser from "../Users/SelectUser.vue";
 import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
 import Chat from "@/components/Chats/Chat.vue";
+import AddNode from "@/components/Model/Modals/AddNode.vue";
+import AddLink from "@/components/Model/Modals/AddLink.vue";
+import DeleteNode from "@/components/Model/Modals/DeleteNode.vue";
 
 export default {
   components: {
+    "add-node": AddNode,
+    "add-link": AddLink,
+    "delete-node": DeleteNode,
     "modal-buttons": ModalButtons,
     "select-user": SelectUser,
     chat: Chat,
@@ -211,6 +266,12 @@ export default {
     return {
       nodeToSubmit: {},
       oldNodeToSubmit: {}, //used for comparing changes to nodeToSubmit
+      // "⋯" menu (same actions as right-clicking the factor in the graph)
+      showAddFactor: false,
+      addFactorRole: "",
+      showAddLink: false,
+      linkToSubmit: { sourceNodeId: "", targetNodeId: "", targetType: "" },
+      showDeleteFactor: false,
       nodeToSubmitIsFreshlyAssigned: false,
       model: null,
       parserError: "",
@@ -299,6 +360,18 @@ export default {
   },
 
   methods: {
+    openAddFactor(role) {
+      this.addFactorRole = role;
+      this.showAddFactor = true;
+    },
+    openAddLink(targetType) {
+      this.linkToSubmit = {
+        sourceNodeId: this.selectedNode.id,
+        targetNodeId: "",
+        targetType
+      };
+      this.showAddLink = true;
+    },
     ...mapActions("model", ["updateNode"]),
     ...mapActions("ui", ["setSelectedNodeId"]),
 

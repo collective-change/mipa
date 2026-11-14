@@ -126,7 +126,7 @@ export default {
   unitHint: "例如 USD、kg、people；純數字請留空",
   "Uses these factors": "使用的因素",
   noInfluencersHint:
-    "目前沒有。要在公式中使用其他因素，請在圖上對這個因素按右鍵，選擇「連結到這個因素使用的因素」。",
+    "目前沒有。要在公式中使用其他因素，請開啟上方的 ⋯（或在圖上對這個因素按右鍵），選擇「連結到這個因素使用的因素」。",
   "Formula: how this factor is calculated": "公式：這個因素怎麼計算",
   formulaCharacters: "公式中不能使用這個字元",
   "How to write formulas": "如何寫公式",
@@ -141,7 +141,8 @@ export default {
   Open: "開啟",
   "Add factor": "新增因素",
   "Find a factor": "尋找因素",
-  graphHint: "點選因素即可查看和編輯。對因素或連結按右鍵可看到更多選項。",
+  graphHint: "點選因素即可查看和編輯。要看更多選項，請對因素或連結按右鍵，或使用因素面板中的 ⋯。",
+  "More options": "更多選項",
   "Remove this link": "移除這個連結",
   "Loosen this link (layout only)": "放鬆這個連結（只影響排列）",
   "Loosen more": "再放鬆一些",
