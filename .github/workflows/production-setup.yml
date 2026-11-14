@@ -1,0 +1,198 @@
+# One-time setup for the first production deploy of the 2026 version. Run it
+# by hand from the Actions tab (Production setup > Run workflow):
+#
+#   mode "check"   - read-only. Shows the project's Cloud Functions and which
+#                    secrets exist, lists formulas whose meaning changes under
+#                    the new mathjs version, and does a dry run of copying
+#                    members into each organization's member list.
+#   mode "migrate" - creates missing secrets, deletes the old 1st-generation
+#                    updateExchangeRates function, deploys everything, then
+#                    copies members into each organization's member list.
+#
+# Uses the same settings as deploy.yml (secret FIREBASE_SERVICE_ACCOUNT,
+# variable APP_ENV_FILE, optional variable FUNCTIONS_ENV_FILE), plus the
+# secret FIXER_IO_ACCESS_KEY when the project has no such secret yet.
+# AI_KEY_ENCRYPTION_KEY is generated inside the job if it is missing, so
+# nobody ever sees it.
+
+name: Production setup
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "check (read-only) or migrate (deploys)"
+        required: true
+        default: check
+        type: choice
+        options: [check, migrate]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check configuration
+        id: config
+        env:
+          HAS_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+          APP_ENV_FILE: ${{ vars.APP_ENV_FILE }}
+        run: |
+          if [ "$HAS_KEY" != "true" ] || [ -z "$APP_ENV_FILE" ]; then
+            echo "::error::Set the FIREBASE_SERVICE_ACCOUNT secret and the APP_ENV_FILE variable first (README, Deploying)."
+            exit 1
+          fi
+          project=$(printf '%s\n' "$APP_ENV_FILE" | sed -n 's/^projectId=//p' | tr -d '[:space:]')
+          if [ -z "$project" ]; then
+            echo "::error::APP_ENV_FILE has no projectId= line."
+            exit 1
+          fi
+          if printf '%s\n' "$APP_ENV_FILE" | grep -qi '^useEmulators=true'; then
+            echo "::error::APP_ENV_FILE sets useEmulators=true; production must not use the emulators."
+            exit 1
+          fi
+          echo "project=$project" >> "$GITHUB_OUTPUT"
+          echo "Project: $project"
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+            scripts/formula-check/package-lock.json
+            scripts/backfill-org-members/package-lock.json
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Cloud Functions in the project
+        env:
+          PROJECT: ${{ steps.config.outputs.project }}
+        run: |
+          npx --yes firebase-tools@15.36.0 functions:list --project "$PROJECT" || true
+          npx --yes firebase-tools@15.36.0 functions:list --project "$PROJECT" --json > functions.json 2>/dev/null || echo '{}' > functions.json
+
+      - name: Secrets in the project
+        env:
+          PROJECT: ${{ steps.config.outputs.project }}
+        run: |
+          for name in FIXER_IO_ACCESS_KEY AI_KEY_ENCRYPTION_KEY; do
+            if gcloud secrets describe "$name" --project "$PROJECT" >/dev/null 2>&1; then
+              echo "$name: exists"
+            else
+              echo "$name: missing"
+            fi
+          done
+
+      - name: Formulas whose meaning changes (read-only)
+        if: inputs.mode == 'check'
+        env:
+          PROJECT: ${{ steps.config.outputs.project }}
+        run: |
+          cd scripts/formula-check
+          npm ci
+          # exits 1 when it finds formulas to review; the report is what matters
+          node check.mjs --project "$PROJECT" || echo "::warning::Some formulas change meaning; see the list above."
+
+      - name: Members to copy (dry run)
+        if: inputs.mode == 'check'
+        env:
+          PROJECT: ${{ steps.config.outputs.project }}
+        run: |
+          cd scripts/backfill-org-members
+          npm ci
+          node backfill.mjs --project "$PROJECT" --dry-run
+
+      # ---- migrate ----
+
+      - name: Create missing secrets
+        if: inputs.mode == 'migrate'
+        env:
+          PROJECT: ${{ steps.config.outputs.project }}
+          FIXER_IO_ACCESS_KEY: ${{ secrets.FIXER_IO_ACCESS_KEY }}
+        run: |
+          if ! gcloud secrets describe AI_KEY_ENCRYPTION_KEY --project "$PROJECT" >/dev/null 2>&1; then
+            openssl rand -base64 32 | tr -d '\n' | gcloud secrets create AI_KEY_ENCRYPTION_KEY \
+              --project "$PROJECT" --replication-policy=automatic --data-file=-
+            echo "Created AI_KEY_ENCRYPTION_KEY."
+          fi
+          if ! gcloud secrets describe FIXER_IO_ACCESS_KEY --project "$PROJECT" >/dev/null 2>&1; then
+            if [ -z "$FIXER_IO_ACCESS_KEY" ]; then
+              echo "::error::The project has no FIXER_IO_ACCESS_KEY secret. Add it as a repository secret (Settings > Secrets and variables > Actions) and run again."
+              exit 1
+            fi
+            printf '%s' "$FIXER_IO_ACCESS_KEY" | gcloud secrets create FIXER_IO_ACCESS_KEY \
+              --project "$PROJECT" --replication-policy=automatic --data-file=-
+            echo "Created FIXER_IO_ACCESS_KEY."
+          fi
+
+      - name: Delete the old 1st-generation updateExchangeRates
+        if: inputs.mode == 'migrate'
+        env:
+          PROJECT: ${{ steps.config.outputs.project }}
+        run: |
+          old=$(jq -r '[.result[]? | select((.id // .name // "" | tostring | test("updateExchangeRates$")) and ((.platform // .environment // "") | tostring | test("gcfv1|GEN_1"; "i")))][0] // empty | .region // empty' functions.json)
+          if [ -n "$old" ]; then
+            echo "Deleting 1st-generation updateExchangeRates in $old"
+            npx --yes firebase-tools@15.36.0 functions:delete updateExchangeRates \
+              --region "$old" --project "$PROJECT" --force
+          else
+            echo "No 1st-generation updateExchangeRates found."
+          fi
+
+      - name: Write configuration files
+        if: inputs.mode == 'migrate'
+        env:
+          APP_ENV_FILE: ${{ vars.APP_ENV_FILE }}
+          FUNCTIONS_ENV_FILE: ${{ vars.FUNCTIONS_ENV_FILE }}
+        run: |
+          printf '%s\n' "$APP_ENV_FILE" > .env
+          if [ -n "$FUNCTIONS_ENV_FILE" ]; then
+            printf '%s\n' "$FUNCTIONS_ENV_FILE" > functions/.env
+          else
+            cp functions/.env.example functions/.env
+          fi
+
+      - name: Build and test the app
+        if: inputs.mode == 'migrate'
+        run: |
+          npm ci
+          npm ci --prefix src-pwa
+          npm run lint
+          npm test
+          npm run build
+          npm ci --prefix functions
+          npm test --prefix functions
+
+      - name: Deploy to Firebase
+        if: inputs.mode == 'migrate'
+        env:
+          PROJECT: ${{ steps.config.outputs.project }}
+        run: >
+          npx --yes firebase-tools@15.36.0 deploy
+          --project "$PROJECT"
+          --only firestore:rules,firestore:indexes,functions,hosting
+          --non-interactive
+
+      - name: Copy members into each organization's member list
+        if: inputs.mode == 'migrate'
+        env:
+          PROJECT: ${{ steps.config.outputs.project }}
+        run: |
+          cd scripts/backfill-org-members
+          npm ci
+          node backfill.mjs --project "$PROJECT"
