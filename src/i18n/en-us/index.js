@@ -669,5 +669,20 @@ export default {
   hoursCol: "Effort (Hrs)",
   statusCol: "Status",
   targetAction: "Target action",
-  comparisonAction: "Comparison option"
+  comparisonAction: "Comparison option",
+
+  // Feature 3: Sensitivity & Turning-Point Analysis
+  sensitivityAnalysis: "Sensitivity analysis",
+  turningPointAnalysis: "Turning-point analysis",
+  robustnessScore: "Decision robustness",
+  highlyRobust: "Highly robust",
+  moderatelyRobust: "Moderately robust",
+  sensitiveAssumption: "Sensitive assumption",
+  flippingThreshold: "Flipping threshold",
+  requiredShift: "Shift required to flip",
+  baseEstimate: "Baseline estimate",
+  assumptionName: "Assumption / Factor",
+  robustnessFinding: "Robustness findings",
+  tabComparison: "Comparison overview",
+  tabRobustness: "Robustness & Turning points"
 };

@@ -342,6 +342,48 @@
               rows="5"
               class="q-mb-md"
             />
+
+            <!-- Sensitivity Turning Points Table (Feature 3) -->
+            <div
+              v-if="briefData.section4.sensitivity && briefData.section4.sensitivity.turningPoints && briefData.section4.sensitivity.turningPoints.length"
+              class="q-mt-md"
+            >
+              <div class="text-subtitle2 text-grey-8 q-mb-xs row items-center">
+                <q-icon name="crisis_alert" class="q-mr-xs" color="primary" />
+                {{ $t("turningPointAnalysis") }}
+              </div>
+              <q-table
+                flat
+                bordered
+                dense
+                :rows="briefData.section4.sensitivity.turningPoints"
+                :columns="turningPointColumns"
+                row-key="id"
+                hide-pagination
+                :pagination="{ rowsPerPage: 0 }"
+                class="brief-table q-mb-md"
+              >
+                <template v-slot:body-cell-percentShift="props">
+                  <q-td :props="props" class="text-weight-bold">
+                    <span :class="Math.abs(props.value) < 20 ? 'text-negative' : 'text-positive'">
+                      {{ props.row.direction === 'decrease' ? '-' : '+' }}{{ Math.abs(props.value).toFixed(1) }}%
+                    </span>
+                  </q-td>
+                </template>
+                <template v-slot:body-cell-robustness="props">
+                  <q-td :props="props">
+                    <q-chip
+                      dense
+                      size="sm"
+                      :color="props.value === 'sensitive' ? 'negative' : (props.value === 'moderate' ? 'warning' : 'positive')"
+                      text-color="white"
+                    >
+                      {{ formatRobustnessBadge(props.value) }}
+                    </q-chip>
+                  </q-td>
+                </template>
+              </q-table>
+            </div>
           </div>
 
           <!-- SECTION 5: What the Brief Does Not Cover (Unmodeled Considerations) -->
@@ -503,6 +545,15 @@ export default {
         { name: "estEffortHrs", label: this.$t("hoursCol"), field: "estEffortHrs", align: "right", sortable: true },
         { name: "uncertaintySummary", label: this.$t("statusCol"), field: "uncertaintySummary", align: "center" }
       ];
+    },
+    turningPointColumns() {
+      return [
+        { name: "name", label: this.$t("assumptionName"), field: "name", align: "left" },
+        { name: "baseValue", label: this.$t("baseEstimate"), field: (row) => `${formatNumber(row.baseValue, 2)} ${row.unit || ''}`.trim(), align: "right" },
+        { name: "turningPoint", label: this.$t("flippingThreshold"), field: (row) => `${formatNumber(row.turningPoint, 2)} ${row.unit || ''}`.trim(), align: "right" },
+        { name: "percentShift", label: this.$t("requiredShift"), field: "percentShift", align: "right" },
+        { name: "robustness", label: this.$t("statusCol"), field: "robustness", align: "center" }
+      ];
     }
   },
   watch: {
@@ -531,6 +582,11 @@ export default {
     formatAmount(val) {
       const cur = this.currentOrg ? this.currentOrg.currency : "";
       return formatCurrencyValue(val, cur);
+    },
+    formatRobustnessBadge(val) {
+      if (val === "sensitive") return this.$t("sensitiveAssumption");
+      if (val === "moderate") return this.$t("moderatelyRobust");
+      return this.$t("highlyRobust");
     },
     selectTopN(n) {
       if (!this.matchingActions) return;
