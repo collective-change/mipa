@@ -650,5 +650,20 @@ export default {
   hoursCol: "投入工時",
   statusCol: "數據依據",
   targetAction: "核心評估方案",
-  comparisonAction: "對照比較方案"
+  comparisonAction: "對照比較方案",
+
+  // Feature 3: Sensitivity & Turning-Point Analysis
+  sensitivityAnalysis: "敏感度與穩健性分析",
+  turningPointAnalysis: "關鍵翻轉點推演",
+  robustnessScore: "決策穩健性評級",
+  highlyRobust: "高度穩健",
+  moderatelyRobust: "中度穩健",
+  sensitiveAssumption: "高度敏感假設",
+  flippingThreshold: "反超翻轉門檻",
+  requiredShift: "翻轉所需變動幅度",
+  baseEstimate: "基準估算值",
+  assumptionName: "關鍵假設 / 要素",
+  robustnessFinding: "穩健性分析結論",
+  tabComparison: "方案對照總覽",
+  tabRobustness: "穩健性與翻轉點"
 };

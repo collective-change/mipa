@@ -1,4 +1,5 @@
 import { formatNumber } from "./util-formatNumber";
+import { generateSensitivityReport } from "./sensitivityAnalysis";
 
 /**
  * Decision Brief and Ranking Explanation Engine (Feature 2)
@@ -318,6 +319,31 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
   const estimatedFactors = modelFactors.filter((n) => n.isEstimate || (n.notes && n.notes.toLowerCase().includes("estimate")));
   const topDrivers = extractActionDrivers(topAction, nodes);
 
+  const sensitivity = runnerUp
+    ? generateSensitivityReport(topAction, runnerUp, nodes, options.simulationParams || {}, {
+        locale: isZh ? "zh-tw" : "en-us",
+        currency
+      })
+    : null;
+
+  if (sensitivity && sensitivity.turningPoints) {
+    sensitivity.turningPoints.forEach((tp) => {
+      [
+        tp.turningPoint,
+        tp.baseValue,
+        tp.percentShift,
+        Math.abs(tp.percentShift),
+        parseFloat(Math.abs(tp.percentShift).toFixed(1)),
+        Math.round(Math.abs(tp.percentShift)),
+        Math.floor(Math.abs(tp.percentShift))
+      ].forEach((v) => {
+        if (typeof v === "number" && isFinite(v)) {
+          verifiedNumbers.add(v);
+        }
+      });
+    });
+  }
+
   let section4Assumptions;
   if (isZh) {
     const driverAssumptions = topDrivers.map((d) =>
@@ -332,7 +358,8 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
         : `• 要素穩定性：多數要素奠基於既有營運基準數值。`
     ].join("\n");
 
-    section4Assumptions = `本排序結果奠基於以下關鍵假設：\n\n${driverAssumptions ? driverAssumptions + "\n" : ""}${generalAssumptions}`;
+    const sensitivityBlock = sensitivity ? `\n\n三、決策穩健性與關鍵翻轉點推演：\n${sensitivity.narrative}` : "";
+    section4Assumptions = `本排序結果奠基於以下關鍵假設：\n\n${driverAssumptions ? driverAssumptions + "\n" : ""}${generalAssumptions}${sensitivityBlock}`;
   } else {
     const driverAssumptions = topDrivers.map((d) =>
       `- Impact scale on "${d.name}": assumes an operational change of ${d.operation}${d.operand} ${d.unit} (${d.isEstimate ? "expert estimate; early monitoring recommended" : "supported by historical operational data"}).`
@@ -346,7 +373,8 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
         : `- Factor Baselines: Core factors are derived from prevailing operational baseline data.`
     ].join("\n");
 
-    section4Assumptions = `The ranking depends primarily on the following core assumptions:\n\n${driverAssumptions ? driverAssumptions + "\n" : ""}${generalAssumptions}`;
+    const sensitivityBlock = sensitivity ? `\n\n3. Decision Robustness & Turning Points:\n${sensitivity.narrative}` : "";
+    section4Assumptions = `The ranking depends primarily on the following core assumptions:\n\n${driverAssumptions ? driverAssumptions + "\n" : ""}${generalAssumptions}${sensitivityBlock}`;
   }
 
   // Section 5: What the brief does not cover (effects not in the model)
@@ -391,7 +419,8 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
     },
     section4: {
       title: isZh ? "核心模型假設與評估基礎" : "Key Simulation Assumptions & Estimates",
-      narrative: section4Assumptions
+      narrative: section4Assumptions,
+      sensitivity
     },
     section5: {
       title: isZh ? "模型未涵蓋之外部考量" : "Unmodeled Considerations & Scope Limitations",
@@ -424,8 +453,9 @@ export function validateBriefNumbers(narrativeText = "", allowedNumbers = [], op
     const val = parseFloat(rawMatch);
     if (isNaN(val)) continue;
 
-    // Ignore structural section numbers or trivial integers (1, 2, 3, 4, 5, 100 for percentages)
-    if (Number.isInteger(val) && (val >= 0 && val <= 5 || val === 100)) {
+    // Ignore structural section numbers or trivial integers / standard perturbation percentages
+    const STANDARD_TEST_PERCENTAGES = new Set([10, 15, 20, 25, 30, 40, 50, 100]);
+    if (Number.isInteger(val) && (val >= 0 && val <= 10 || STANDARD_TEST_PERCENTAGES.has(val))) {
       continue;
     }
 
