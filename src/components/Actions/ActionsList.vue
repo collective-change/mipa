@@ -225,7 +225,7 @@ export default {
           name: "benefit",
           help: "helpBenefit",
           align: "right",
-          label: this.$t("marginalTotalBenefitNpv"),
+          label: this.withCurrency(this.$t("marginalTotalBenefitNpv")),
           field: "marginalTotalBenefitNpv",
           format: (val) => `${formatNumber(val, 3)}`,
           sortable: true,
@@ -234,7 +234,7 @@ export default {
           name: "cost",
           help: "helpCost",
           align: "right",
-          label: this.$t("marginalTotalCostNpv"),
+          label: this.withCurrency(this.$t("marginalTotalCostNpv")),
           field: "marginalTotalCostNpv",
           format: (val) => `${formatNumber(val, 3)}`,
           sortable: true,
@@ -243,7 +243,7 @@ export default {
           name: "netBenefit",
           help: "helpNetBenefit",
           align: "right",
-          label: this.$t("marginalNetTotalBenefitNpv"),
+          label: this.withCurrency(this.$t("marginalNetTotalBenefitNpv")),
           field: "marginalNetTotalBenefitNpv",
           format: (val) => `${formatNumber(val, 3)}`,
           sortable: true,
@@ -252,7 +252,7 @@ export default {
           name: "outstandingDirectCost",
           help: "helpRemainingCost",
           align: "right",
-          label: this.$t("outstandingDirectCost"),
+          label: this.withCurrency(this.$t("outstandingDirectCost")),
           // Recalculate saves outstandingDirectCosts; saving an action by
           // hand saves outstandingDirectCost.
           field: (row) => row.outstandingDirectCosts ?? row.outstandingDirectCost,
@@ -312,6 +312,11 @@ export default {
 
   methods: {
     formatNumber,
+    // Amounts are in the organization's currency.
+    withCurrency(label) {
+      const currency = this.currentOrg && this.currentOrg.currency;
+      return currency ? `${label} (${currency})` : label;
+    },
     onRowClick(evt, row) {
       if (this.selectedActionId == row.id) {
         if (!this.uiActionChanged) {

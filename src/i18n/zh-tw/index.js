@@ -463,12 +463,24 @@ export default {
       foodAvailableInMeals: { name: "可用食物（餐數）", notes: "捐贈的食物可做成多少餐。" },
       mealsServed: { name: "每月供應餐數", notes: "可用食物與志工可包裝餐數中較小的一個：先用完的那個限制了供應的餐數。" },
       valueOfAMeal: { name: "每餐價值", notes: "一餐對受助家庭的價值。這是估計值：試著修改後重新計算。" },
-      monthlyRunningCosts: { name: "每月營運成本", notes: "租金、水電和貨車。" }
+      monthlyRunningCosts: { name: "每月營運成本", notes: "租金、水電和貨車。" },
+      coordinatorPerHour: { name: "協調員每小時成本", notes: "我們的兼職受薪協調員，每小時成本高於平均。與超市合作的行動以這個費率計算。" }
     },
     actions: {
       recruit: { title: "舉辦志工招募活動", notes: "到學校和宗教場所演講，並在社區張貼海報。預計每月多帶來 2 位新志工。" },
       supermarkets: { title: "與超市合作取得剩餘食物", notes: "預計每月多 800 公斤食物。但目前限制供應餐數的是志工時數，不是食物。打開模型，比較「可用食物（餐數）」和「志工每月可包裝餐數」，就會明白為什麼這個行動單獨做效果不大。" },
       report: { title: "印製精美年報", notes: "看起來很好，但不會改變模型中的任何東西，所以只有成本。並非每個感覺有用的行動都能帶來好處。" }
     }
-  }
+  },
+
+  // hourly costs of roles and people (ActionSummary.vue, NodeSummary.vue)
+  "Add a role or person's hourly cost": "新增角色或人員的每小時成本",
+  roleCostHint:
+    "組織的每小時工作成本只是粗略的平均值。若行動由時間成本明顯較高或較低的人執行，請在此新增其角色或姓名。它會成為模型中的一個因素，其他行動也可以使用。",
+  roleCostName: "角色或人員",
+  roleCostNameExample: "例如：醫師、志工、林小姐",
+  roleCostPerHour: "每小時成本",
+  isHourlyCostLabel: "這是某個角色或人員的每小時成本",
+  isHourlyCostHint:
+    "行動就能以這個因素的值計算工時成本，而不是用組織的平均值。可在行動的「成本與進度」中的每小時成本選單找到。"
 };

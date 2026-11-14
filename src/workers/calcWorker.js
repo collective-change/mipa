@@ -106,10 +106,18 @@ async function calculateResultsOfActions(
 
   let calcTimeMs = 0;
 
+  // Hourly costs of work come from the baseline: the organization's average
+  // and any factor an action names as the hourly cost of a role or person.
+  const hourlyCostOfNode = nodeId => {
+    const values = nodeId && defaultBaseline.nodesValues[nodeId];
+    return values && typeof values[0] == "number" ? values[0] : NaN;
+  };
   let averageEffortCostPerHourNode = modelNodes.find(
     node => node.id == sim.roleNodes.averageEffortCostPerHour
   );
-  let averageEffortCostPerHour = averageEffortCostPerHourNode.symbolFormula;
+  let average = hourlyCostOfNode(sim.roleNodes.averageEffortCostPerHour);
+  if (isNaN(average)) average = Number(averageEffortCostPerHourNode.symbolFormula);
+  let averageEffortCostPerHour = { average, ofNode: hourlyCostOfNode };
 
   //simulate each action
   let completedLoops = 0;
@@ -398,10 +406,14 @@ async function simulateActionWithDependencies(
 }
 
 function composeCostsAndImpactsOfSelf(action, averageEffortCostPerHour) {
-  let effortCostPerHour =
-    action.effortCostPerHrType == "use_custom"
-      ? action.customEffortCostPerHr
-      : averageEffortCostPerHour;
+  // averageEffortCostPerHour: { average, ofNode(nodeId) }
+  let effortCostPerHour = averageEffortCostPerHour.average;
+  if (action.effortCostPerHrType == "use_custom") {
+    effortCostPerHour = action.customEffortCostPerHr;
+  } else if (action.effortCostPerHrType == "use_factor") {
+    const ofNode = averageEffortCostPerHour.ofNode(action.effortCostNodeId);
+    if (!isNaN(ofNode)) effortCostPerHour = ofNode;
+  }
   let estEffortHrs = isNaN(action.estEffortHrs) ? 0 : 0 + action.estEffortHrs;
   let estEffortCosts = estEffortHrs * effortCostPerHour;
   let outstandingDirectEffortHrs =

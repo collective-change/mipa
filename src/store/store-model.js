@@ -18,6 +18,7 @@ import { firestoreAction } from "./firestore-bind";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { classifyInfluencers } from "@/utils/util-node-operations";
 import { i18n } from "@/boot/i18n";
+import { camelize } from "@/utils/util-camelize";
 
 // Starter factors are named in the user's current language.
 const t = key => i18n.global.t(key);
@@ -253,6 +254,37 @@ const actions = {
   unbindNodes: firestoreAction(({ unbindFirestoreRef }) => {
     unbindFirestoreRef("nodes", true);
   }),
+
+  // Adds a factor holding the hourly cost of a role or person, which actions
+  // can then use instead of the organization's average. Returns its id.
+  async addHourlyCostFactor({ state }, payload) {
+    const taken = new Set(state.nodes.map(n => n.symbol));
+    let base = camelize(payload.name || "");
+    base = /^[A-Za-z_][A-Za-z0-9_]*$/.test(base) ? base + "PerHour" : "hourlyCost";
+    let symbol = base;
+    for (let i = 2; taken.has(symbol); i++) symbol = base + i;
+    const cost = String(Number(payload.cost) || 0);
+    const docRef = await addDoc(collection(firebaseDb, "models", payload.modelId, "nodes"), {
+      class: "unlinked",
+      isNew: false,
+      isSelfBlocking: false,
+      isHourlyCost: true,
+      name: payload.name,
+      symbol,
+      symbolFormula: cost,
+      sysFormula: cost,
+      unit: payload.unit || "",
+      influencers: [],
+      influencees: [],
+      blockingInfluencers: [],
+      unusedInfluencers: [],
+      notes: "",
+      createTime: serverTimestamp(),
+      createdBy: firebaseAuth.currentUser.uid
+    });
+    Notify.create(i18n.global.t("toastFactorAdded"));
+    return docRef.id;
+  },
 
   addNode({ dispatch }, payload) {
     //console.log(payload);

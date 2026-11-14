@@ -142,6 +142,14 @@
           :label="$t('Responsible person')"
           v-model="nodeToSubmit.responsiblePerson"
         />
+        <q-toggle
+          v-if="selectedNode.id != currentModel.roleNodes?.averageEffortCostPerHour"
+          v-model="nodeToSubmit.isHourlyCost"
+          :label="$t('isHourlyCostLabel')"
+          class="q-mt-sm"
+        >
+          <q-tooltip max-width="300px">{{ $t("isHourlyCostHint") }}</q-tooltip>
+        </q-toggle>
         <q-input v-model="nodeToSubmit.notes" :label="$t('Notes')" autogrow />
         <modal-buttons />
       </q-form>

@@ -59,7 +59,7 @@ function classOf(node) {
   return "unlinked";
 }
 
-// draft.factors: [{ symbol, name, formula, unit?, notes? }]
+// draft.factors: [{ symbol, name, formula, unit?, notes?, isHourlyCost? }]
 // idFor(symbol): the document id to give that factor.
 // Returns factor documents with an `id` field, in draft order. Throws an
 // Error listing every problem found, so a draft is used whole or not at all.
@@ -110,6 +110,7 @@ export function compileDraftNodes(draft, idFor) {
       unit: factor.unit || "",
       notes: factor.notes || "",
       isNew: false,
+      ...(factor.isHourlyCost ? { isHourlyCost: true } : {}),
       influencers: influencers.map(s => ids.get(s)),
       influencees: []
     };

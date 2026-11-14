@@ -477,12 +477,24 @@ export default {
       foodAvailableInMeals: { name: "food available, in meals", notes: "How many meals the donated food makes." },
       mealsServed: { name: "meals served per month", notes: "The smaller of the food available and the meals volunteers can pack: whichever runs out first limits the meals served." },
       valueOfAMeal: { name: "value of a meal", notes: "What one meal is worth to the family that receives it. An estimate: try changing it and recalculating." },
-      monthlyRunningCosts: { name: "running costs per month", notes: "Rent, utilities and the van." }
+      monthlyRunningCosts: { name: "running costs per month", notes: "Rent, utilities and the van." },
+      coordinatorPerHour: { name: "coordinator's hourly cost", notes: "Our part-time paid coordinator, who costs more per hour than the average. The supermarket partnership is priced at this rate." }
     },
     actions: {
       recruit: { title: "Run a volunteer recruitment drive", notes: "Talks at schools and places of worship, and posters around the neighbourhood. Expected to bring 2 more new volunteers each month." },
       supermarkets: { title: "Partner with supermarkets for surplus food", notes: "Expected to bring 800 kg more food each month. But volunteer hours, not food, limit the meals served right now. Open the model and compare \"food available, in meals\" with \"meals volunteers can pack per month\" to see why this action does little on its own." },
       report: { title: "Print a glossy annual report", notes: "It looks good, but it changes nothing in the model, so it only costs. Not every action that feels useful does good." }
     }
-  }
+  },
+
+  // hourly costs of roles and people (ActionSummary.vue, NodeSummary.vue)
+  "Add a role or person's hourly cost": "Add a role or person's hourly cost",
+  roleCostHint:
+    "The organization's hourly cost of work is a rough average. For actions done by someone whose time costs noticeably more or less, add their role or name here. It becomes a factor in the model that other actions can use too.",
+  roleCostName: "Role or person",
+  roleCostNameExample: "e.g. Doctor, Volunteer, Ms. Lin",
+  roleCostPerHour: "Cost per hour",
+  isHourlyCostLabel: "This is the hourly cost of a role or person",
+  isHourlyCostHint:
+    "Actions can then price their work hours at this factor's value instead of the organization's average. Find it under Costs and progress, in the action's hourly cost menu."
 };
