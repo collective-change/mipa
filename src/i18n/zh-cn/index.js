@@ -1091,5 +1091,9 @@ export default {
   dossierSandboxDesc: "拖曳因素微扰滑块（±50%）即可在本地内存进行情景压力测试，观察系统转折点，完全不影响原模型数据。",
   dossierFeedbackTitle: "系统结构动力学与基模诊断",
   dossierFeedbackDesc: "检测到 {reinforcing} 个增强型飞轮回路与 {balancing} 个调节型平衡回路。",
-  shareLinkCopiedToast: "公开决策档案链接已复制至剪贴板。"
+  shareLinkCopiedToast: "公开决策档案链接已复制至剪贴板。",
+
+  // Starter AI Allowance
+  aiStarterAllowanceTitle: "已启用先导 AI 免费额度",
+  aiStarterAllowanceDesc: "包含 10 次免费 AI 建模生成额度（由 Claude 3.5 Haiku / GPT-4o-mini 驱动）。您随时可在下方连接自备 API 密钥以享有无限使用次数。"
 };

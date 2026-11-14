@@ -28,9 +28,16 @@
               · {{ $t("API key") }} ••••{{ settings.keyLast4 }}
             </div>
           </div>
-          <div v-else class="row items-center q-gutter-sm q-mt-sm">
-            <q-icon name="power_off" color="grey-6" size="sm" />
-            <div class="text-body2">{{ $t("aiNotConnected") }}</div>
+          <div v-else class="column q-gutter-xs q-mt-sm">
+            <div class="row items-center q-gutter-sm">
+              <q-icon name="auto_awesome" color="primary" size="sm" />
+              <div class="text-body2 text-weight-medium text-primary">
+                {{ $t("aiStarterAllowanceTitle") }}
+              </div>
+            </div>
+            <div class="text-caption text-grey-8 q-ml-lg">
+              {{ $t("aiStarterAllowanceDesc") }}
+            </div>
           </div>
           <div v-if="!canManage && settingsLoaded" class="text-body2 text-grey-8 q-mt-md">
             {{ $t("aiAskAdmin", { admins: adminNames }) }}

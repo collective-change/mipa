@@ -6,6 +6,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
 import { aiKeyEncryptionKey } from "./keyBox";
 import { loadProvider } from "./aiSettings";
+import { getSystemAiProvider, verifyAndConsumeAiCredit, AllowanceResult } from "./starterAllowance";
 import { adapterFor, ProviderReplyError } from "./providers";
 import { ACTION_DRAFT_SYSTEM_PROMPT, actionDraftUserPrompt, ModelContext } from "./prompt";
 import { DraftActionReply } from "./schema";
@@ -45,7 +46,7 @@ async function getModelContext(orgId: string, modelId: string): Promise<ModelCon
 
 export const draftAction = onCall(
   { secrets: [aiKeyEncryptionKey], timeoutSeconds: 300, memory: "512MiB" },
-  async (request): Promise<{ proposal: DraftActionReply; usage: { inputTokens: number; outputTokens: number } }> => {
+  async (request): Promise<{ proposal: DraftActionReply; usage: { inputTokens: number; outputTokens: number }; allowance?: AllowanceResult | null }> => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Please sign in.");
     const uid = request.auth.uid;
     const { orgId, modelId, ideaText } = request.data || {};
@@ -80,11 +81,16 @@ export const draftAction = onCall(
       throw new HttpsError("permission-denied", "You must be a member of this organization to draft actions.");
     }
 
-    const provider = await loadProvider(orgId);
+    let provider = await loadProvider(orgId);
+    let allowance: AllowanceResult | null = null;
     if (!provider) {
-      throw new HttpsError("failed-precondition", "This organization hasn't connected an AI provider.", {
-        reason: "no-provider"
-      });
+      allowance = await verifyAndConsumeAiCredit(db, uid, orgId, request.auth);
+      provider = getSystemAiProvider();
+      if (!provider) {
+        throw new HttpsError("failed-precondition", "This organization hasn't connected an AI provider and no system AI fallback is configured.", {
+          reason: "no-provider"
+        });
+      }
     }
 
     const context = await getModelContext(orgId, modelId);
@@ -103,7 +109,8 @@ export const draftAction = onCall(
         usage: {
           inputTokens: result.usage.inputTokens,
           outputTokens: result.usage.outputTokens
-        }
+        },
+        allowance
       };
     } catch (error) {
       if (error instanceof ProviderReplyError) {

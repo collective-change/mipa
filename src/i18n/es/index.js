@@ -1113,5 +1113,9 @@ export default {
   "dossierSandboxDesc": "Ajuste los controles deslizantes de perturbación (+/-50%) para realizar pruebas de estrés de la dinámica del sistema en la memoria del cliente sin mutar el modelo de origen.",
   "dossierFeedbackTitle": "Dinámica de Sistemas Estructural y Arquetipos",
   "dossierFeedbackDesc": "Se identificaron {reinforcing} bucles de retroalimentación de refuerzo y {balancing} bucles de equilibrio.",
-  "shareLinkCopiedToast": "Enlace del informe público copiado al portapapeles."
+  "shareLinkCopiedToast": "Enlace del informe público copiado al portapapeles.",
+
+  // Starter AI Allowance
+  "aiStarterAllowanceTitle": "Créditos iniciales de IA activos",
+  "aiStarterAllowanceDesc": "Incluye 10 operaciones gratuitas de redacción de IA (Claude 3.5 Haiku / GPT-4o-mini). Conecte su propia clave de API abajo para uso ilimitado."
 };
