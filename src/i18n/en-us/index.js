@@ -131,7 +131,7 @@ export default {
   unitHint: "e.g. USD, kg, people; empty for plain numbers",
   "Uses these factors": "Uses these factors",
   noInfluencersHint:
-    "None yet. To use another factor in this formula, right-click this factor in the graph and choose \"Link to a factor this one uses\".",
+    "None yet. To use another factor in this formula, open ⋯ above (or right-click this factor in the graph) and choose \"Link to a factor this one uses\".",
   "Formula: how this factor is calculated": "Formula: how this factor is calculated",
   formulaCharacters: "This character can't be used in a formula",
   "How to write formulas": "How to write formulas",
@@ -147,7 +147,8 @@ export default {
   Open: "Open",
   "Add factor": "Add factor",
   "Find a factor": "Find a factor",
-  graphHint: "Click a factor to see and edit it. Right-click a factor or a link for more options.",
+  graphHint: "Click a factor to see and edit it. For more options, right-click a factor or a link, or use ⋯ in the factor's panel.",
+  "More options": "More options",
   "Remove this link": "Remove this link",
   "Loosen this link (layout only)": "Loosen this link (layout only)",
   "Loosen more": "Loosen more",

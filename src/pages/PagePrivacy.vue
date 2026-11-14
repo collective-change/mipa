@@ -14,8 +14,10 @@
         that helps organizations model how they work, compare possible actions
         by their benefits and costs to the organization and the world, and
         track who is doing what. This policy explains what information mipa
-        collects, why, who can see it, and the choices you have. Questions:
-        <a :href="`mailto:${contact}`">{{ contact }}</a>.
+        collects, why, who can see it, and the choices you have. Questions
+        are welcome on
+        <a :href="issuesUrl" target="_blank" rel="noopener">mipa's GitHub issues</a>
+        (see Contact below).
       </p>
 
       <section v-for="section in sections" :key="section.title">
@@ -28,8 +30,14 @@
 
       <h2 class="text-h6 q-mt-lg q-mb-sm">Contact</h2>
       <p>
-        For questions, requests about your data, or to report a privacy or
-        security problem, email
+        For questions about this policy, problems or suggestions, please open
+        an issue on
+        <a :href="issuesUrl" target="_blank" rel="noopener">mipa's GitHub issues</a>.
+        Issues are public, so don't include personal information in them.
+      </p>
+      <p>
+        For requests about your own data (a copy, a correction or deleting your
+        account), or to report a privacy or security problem privately, email
         <a :href="`mailto:${contact}`">{{ contact }}</a>.
       </p>
     </article>
@@ -37,14 +45,17 @@
 </template>
 
 <script>
+import { ISSUES_URL } from "@/utils/util-links";
+
 // Keep this in step with what the app actually does. If you add a service
 // that receives personal data, or a new kind of data, update this page.
-const CONTACT = "tedhwang@tzuchi.org.tw";
+const CONTACT = "tedchwang@gmail.com";
 
 export default {
   data() {
     return {
       contact: CONTACT,
+      issuesUrl: ISSUES_URL,
       sections: [
         {
           title: "Information we collect",
