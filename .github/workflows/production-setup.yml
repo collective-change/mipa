@@ -98,6 +98,19 @@ jobs:
             fi
           done
 
+      - name: Old exchange-rate key in the 1st-generation config
+        if: inputs.mode == 'check'
+        env:
+          PROJECT: ${{ steps.config.outputs.project }}
+        run: |
+          key=$(npx --yes firebase-tools@15.36.0 functions:config:get fixer_io --project "$PROJECT" 2>/dev/null | jq -r '.access_key // empty' 2>/dev/null || true)
+          if [ -n "$key" ]; then
+            echo "::add-mask::$key"
+            echo "The old config has a fixer.io key; migrate copies it into Secret Manager."
+          else
+            echo "No fixer.io key found in the old config."
+          fi
+
       - name: Formulas whose meaning changes (read-only)
         if: inputs.mode == 'check'
         env:
@@ -132,7 +145,12 @@ jobs:
           fi
           if ! gcloud secrets describe FIXER_IO_ACCESS_KEY --project "$PROJECT" >/dev/null 2>&1; then
             if [ -z "$FIXER_IO_ACCESS_KEY" ]; then
-              echo "::error::The project has no FIXER_IO_ACCESS_KEY secret. Add it as a repository secret (Settings > Secrets and variables > Actions) and run again."
+              # The old 1st-generation function kept the key in runtime config.
+              FIXER_IO_ACCESS_KEY=$(npx --yes firebase-tools@15.36.0 functions:config:get fixer_io --project "$PROJECT" 2>/dev/null | jq -r '.access_key // empty' 2>/dev/null || true)
+              [ -n "$FIXER_IO_ACCESS_KEY" ] && echo "::add-mask::$FIXER_IO_ACCESS_KEY"
+            fi
+            if [ -z "$FIXER_IO_ACCESS_KEY" ]; then
+              echo "::error::The project has no FIXER_IO_ACCESS_KEY secret and the old config has none. Add it as a repository secret (Settings > Secrets and variables > Actions) and run again."
               exit 1
             fi
             printf '%s' "$FIXER_IO_ACCESS_KEY" | gcloud secrets create FIXER_IO_ACCESS_KEY \
