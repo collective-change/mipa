@@ -101,7 +101,7 @@ const actions = {
         );
         LocalStorage.set("loggedIn", true);
         if (this.$router.currentRoute.value.path == "/auth") {
-          this.$router.push("/");
+          this.$router.push("/orgs");
         }
       } else {
         commit("setLoggedIn", false);

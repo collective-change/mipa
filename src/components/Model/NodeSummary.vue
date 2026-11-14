@@ -55,6 +55,9 @@
                 (val) =>
                   this.isAlphanumeric(val) ||
                   $t('shortNameCharacters'),
+                (val) =>
+                  this.isSymbolUnique(val) ||
+                  $t('shortNameUnique'),
               ]"
             />
           </div>
@@ -384,7 +387,13 @@ export default {
     ...mapActions("ui", ["setSelectedNodeId"]),
 
     isAlphanumeric(str) {
-      return str.match(/^[a-z0-9_]+$/i) !== null;
+      return str ? str.match(/^[a-z0-9_]+$/i) !== null : false;
+    },
+    isSymbolUnique(val) {
+      if (!val || !this.nodes) return true;
+      return !this.nodes.some(
+        (node) => node.id !== this.nodeToSubmit.id && node.symbol === val
+      );
     },
     isAllowedInFormula(str) {
       return str.match(/^[a-z0-9 _,=<>/:%\-\(\)\+\^\.\?\*]+$/i) !== null;

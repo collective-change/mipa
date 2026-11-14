@@ -7,5 +7,8 @@ export default ({ router }) => {
     if (!loggedIn && !PUBLIC_PATHS.includes(to.path)) {
       return "/auth";
     }
+    if (loggedIn && (to.path === "/" || to.path === "/auth")) {
+      return "/orgs";
+    }
   });
 };

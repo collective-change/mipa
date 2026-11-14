@@ -1,0 +1,16 @@
+{
+  "name": "mipa-fix-chinese-symbols",
+  "private": true,
+  "description": "Find factors with non-ASCII symbols in Firestore and migrate them to meaningful English ASCII symbols",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "migrate": "node migrate.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.1"
+  }
+}

@@ -15,7 +15,12 @@
       outlined
       v-model="formData.password"
       ref="password"
-      :rules="[(val) => val.length >= 8 || $t('Please enter at least 8 characters.')]"
+      :rules="[
+        (val) =>
+          tab == 'login'
+            ? !!val || $t('Required')
+            : (val && val.length >= 8) || $t('Please enter at least 8 characters.')
+      ]"
       lazy-rules
       :type="showPassword ? 'text' : 'password'"
       :label="$t('Password')"

@@ -26,6 +26,10 @@ ui-debug.log
 # Environment variables for each instance
 .env
 .firebaserc
+*.local
+*.secret*
+*service-account*.json
+*-firebase-adminsdk-*.json
 
 
 
