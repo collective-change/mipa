@@ -70,6 +70,10 @@ test("endpoints must use https outside the emulator", () => {
   assert.ok(isAllowedEndpoint("https://openrouter.ai/api/v1"));
   assert.ok(!isAllowedEndpoint("http://127.0.0.1:8787/v1"));
   assert.ok(!isAllowedEndpoint("ftp://example.org"));
+  assert.ok(!isAllowedEndpoint("https://169.254.169.254/computeMetadata/v1/"));
+  assert.ok(!isAllowedEndpoint("https://metadata.google.internal/"));
+  assert.ok(!isAllowedEndpoint("https://192.168.1.1/api"));
+  assert.ok(!isAllowedEndpoint("https://10.0.0.1/"));
 });
 
 const actionReply = {
