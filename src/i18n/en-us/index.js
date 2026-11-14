@@ -760,5 +760,19 @@ export default {
   linkedInfluencer: "Linked factor",
   unlinkedFactor: "Available in model",
   linkFactorSuccess: "Factor linked successfully",
-  formulaSyntaxErrorBlock: "Please fix formula syntax errors before saving."
+  formulaSyntaxErrorBlock: "Please fix formula syntax errors before saving.",
+
+  // Execution Progress & Actuals Tracker
+  progressAndActualsTitle: "Execution Progress & Actuals",
+  progressAndActualsSubtitle: "Track work hours, spending, progress milestones, and remaining commitments",
+  hoursProgressLabel: "Work hours completed",
+  spendingProgressLabel: "Budget spent",
+  remainingBudget: "Remaining budget",
+  budgetOverrun: "Budget exceeded",
+  completedHours: "Hours logged",
+  remainingHours: "Hours remaining",
+  setCompletionPreset: "Set completion",
+  sunkenCostLabel: "Incurred cost to date",
+  outstandingCostLabel: "Outstanding direct cost",
+  targetDueDate: "Target completion date"
 };
