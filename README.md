@@ -36,10 +36,17 @@ Cloud Functions live in `functions/` (Node 22, TypeScript). Configure them with
 `functions/.env` (see `.env.example`) and the `FIXER_IO_ACCESS_KEY` secret
 (`firebase functions:secrets:set FIXER_IO_ACCESS_KEY`).
 
+To try AI drafting locally, build the functions (`cd functions && npm run
+build`), add `AI_KEY_ENCRYPTION_KEY=<openssl rand -base64 32>` to
+`functions/.secret.local` (not committed), and start the emulators with
+`functions` too. In the emulator only, an OpenAI-compatible endpoint may be a
+mock server on `http://127.0.0.1`; deployed functions accept https only.
+
 ## Deploying
 
 The live app is a Firebase project: Hosting serves `dist/pwa`, plus Firestore
-rules and indexes and one scheduled Cloud Function (`updateExchangeRates`).
+rules and indexes, a scheduled Cloud Function (`updateExchangeRates`) and
+callable functions for membership and AI drafting.
 Cloud Functions need the project on the Blaze plan.
 
 ### First deploy of the 2026 version (manual, by a project owner)
@@ -50,6 +57,10 @@ Cloud Functions need the project on the Blaze plan.
 2. Create `functions/.env` from `functions/.env.example`. The values the old
    deployment used are shown by `firebase functions:config:get`.
 3. Store the exchange-rate API key: `firebase functions:secrets:set FIXER_IO_ACCESS_KEY`.
+   Create the key that encrypts organizations' AI provider keys (32 random
+   bytes; keep it, because changing it makes stored provider keys unreadable
+   and organizations would have to reconnect):
+   `openssl rand -base64 32 | firebase functions:secrets:set AI_KEY_ENCRYPTION_KEY --data-file -`
 4. Delete the old 1st-generation function once; Firebase can't convert it to
    2nd generation in place (use the region from step 2):
    `firebase functions:delete updateExchangeRates --region us-central1`

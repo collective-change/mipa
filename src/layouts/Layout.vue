@@ -426,6 +426,14 @@ export default {
               disable: false,
             },
             {
+              text: this.$t("AI"),
+              to: {
+                name: "ai-settings",
+                params: { orgNameSlug: this.orgNameSlug, orgId: this.orgId },
+              },
+              disable: false,
+            },
+            {
               text: this.$t("Structure"),
               to: "/organizations/structure",
               disable: true,

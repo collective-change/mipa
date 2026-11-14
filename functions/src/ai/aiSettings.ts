@@ -12,7 +12,7 @@
 import { onCall, HttpsError, CallableRequest } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { aiKeyEncryptionKey, seal, open } from "./keyBox";
-import { adapterFor, ProviderId, ProviderReplyError, ProviderSettings } from "./providers";
+import { adapterFor, isAllowedEndpoint, ProviderId, ProviderReplyError, ProviderSettings } from "./providers";
 
 const PROVIDERS: ProviderId[] = ["anthropic", "openai-compatible"];
 
@@ -81,7 +81,7 @@ export const setAiSettings = onCall({ secrets: [aiKeyEncryptionKey] }, async (re
   const model = requireString(request.data?.model, "model", 200);
   const baseUrl =
     provider == "openai-compatible" ? requireString(request.data?.baseUrl, "baseUrl", 500) : "";
-  if (baseUrl && !/^https:\/\/[^\s]+$/.test(baseUrl)) {
+  if (baseUrl && !isAllowedEndpoint(baseUrl)) {
     throw new HttpsError("invalid-argument", "The endpoint must be an https:// address.");
   }
 

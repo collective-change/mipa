@@ -176,7 +176,7 @@ function anthropicError(error: unknown): Error {
 
 class OpenAiCompatibleAdapter implements Adapter {
   constructor(private model: string, private apiKey: string, private baseUrl: string) {
-    if (!/^https:\/\//.test(baseUrl)) {
+    if (!isAllowedEndpoint(baseUrl)) {
       throw new ProviderReplyError("The endpoint must be an https:// address.", "unavailable");
     }
   }
@@ -244,6 +244,13 @@ class OpenAiCompatibleAdapter implements Adapter {
 }
 
 // ---------------------------------------------------------------------------
+
+// Endpoints must use https. Only in the local emulator, a mock provider on
+// this machine may use http (for end-to-end tests).
+export function isAllowedEndpoint(url: string): boolean {
+  if (/^https:\/\/\S+$/.test(url)) return true;
+  return process.env.FUNCTIONS_EMULATOR === "true" && /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\//.test(url);
+}
 
 export function parseReply(text: string): DraftReply {
   // Some endpoints wrap JSON in a code fence despite the format.

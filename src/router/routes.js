@@ -40,6 +40,11 @@ const routes = [
         component: () => import("@/pages/PageOrgMembers.vue")
       },
       {
+        path: "/org/:orgNameSlug/organization/ai/:orgId",
+        name: "ai-settings",
+        component: () => import("@/pages/PageOrgAi.vue")
+      },
+      {
         path: "/org/:orgNameSlug/achieve/my-todo/:orgId",
         name: "my-todo",
         component: () => import("@/pages/PageMyTodo.vue")

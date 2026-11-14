@@ -1,6 +1,10 @@
 # Design: "Draft my model" with AI
 
-Status: proposal, November 2026. Available to all organizations at launch (no
+Status: first version built, November 2026: the dialog, the draftModel
+function, AI settings with the Anthropic and OpenAI-compatible adapters,
+undo, English and Chinese. Still to do: Gemini and OpenAI adapters, the
+evaluation set and cost measurements, and a review of the privacy policy.
+Originally a proposal, November 2026. Available to all organizations at launch (no
 feature flag), once the organization connects its own AI provider. mipa does
 not provide or pay for AI itself.
 

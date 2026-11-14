@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { seal, open } from "./keyBox";
-import { parseReply, ProviderReplyError } from "./providers";
+import { isAllowedEndpoint, parseReply, ProviderReplyError } from "./providers";
 import { contextText, SYSTEM_PROMPT } from "./prompt";
 
 const secret = randomBytes(32).toString("base64");
@@ -64,4 +64,10 @@ test("the context lists the organization and every factor", () => {
 
 test("the fixed instructions hold nothing that varies per request", () => {
   assert.doesNotMatch(SYSTEM_PROMPT, /\d{4}-\d{2}-\d{2}/); // no dates
+});
+
+test("endpoints must use https outside the emulator", () => {
+  assert.ok(isAllowedEndpoint("https://openrouter.ai/api/v1"));
+  assert.ok(!isAllowedEndpoint("http://127.0.0.1:8787/v1"));
+  assert.ok(!isAllowedEndpoint("ftp://example.org"));
 });
