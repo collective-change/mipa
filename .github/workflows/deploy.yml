@@ -117,6 +117,15 @@ jobs:
         if: steps.migrated.outputs.ready == 'true'
         run: npm ci --prefix functions
 
+      - name: Keep only recent container images of functions (cleanup policy)
+        if: steps.migrated.outputs.ready == 'true'
+        env:
+          PROJECT: ${{ steps.config.outputs.project }}
+        run: >
+          npx --yes firebase-tools@15.36.0 functions:artifacts:setpolicy
+          --project "$PROJECT" --location us-central1 --non-interactive --force
+          || echo "::warning::Couldn't set the cleanup policy for function images."
+
       - name: Deploy to Firebase
         if: steps.migrated.outputs.ready == 'true'
         run: >
