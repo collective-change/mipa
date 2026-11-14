@@ -437,6 +437,20 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
     }
   });
 
+  const provenance = options.snapshot || options.provenanceSnapshot
+    ? {
+        isFrozen: true,
+        snapshotId: (options.snapshot || options.provenanceSnapshot).id,
+        contentHash: (options.snapshot || options.provenanceSnapshot).contentHash,
+        createdAt: (options.snapshot || options.provenanceSnapshot).createdAt,
+        note: (options.snapshot || options.provenanceSnapshot).note,
+        author: (options.snapshot || options.provenanceSnapshot).author
+      }
+    : {
+        isFrozen: false,
+        status: isZh ? "即時工作草稿（未鎖定）" : "Live Working Draft (Unfrozen)"
+      };
+
   return {
     metadata: {
       orgName,
@@ -446,7 +460,8 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
       currency,
       locale: isZh ? "zh-tw" : "en-us",
       optionsCount: sortedActions.length,
-      verifiedNumbersCount: verifiedNumbers.size
+      verifiedNumbersCount: verifiedNumbers.size,
+      provenance
     },
     section1: {
       title: isZh ? "決策主旨與備選方案" : "Decision Summary & Options Evaluated",
@@ -543,6 +558,9 @@ export function formatBriefAsMarkdown(brief) {
     `# ${isZh ? "決策備忘錄" : "Executive Decision Brief"}: ${brief.section1.decisionQuestion}`,
     "",
     `> **${isZh ? "組織" : "Organization"}:** ${brief.metadata.orgName} | **${isZh ? "模型" : "Model"}:** ${brief.metadata.modelName} | **${isZh ? "日期" : "Date"}:** ${new Date(brief.metadata.generatedAt).toLocaleDateString()} | **${isZh ? "製作者" : "Prepared by"}:** ${brief.metadata.authorName}`,
+    brief.metadata.provenance && brief.metadata.provenance.isFrozen
+      ? `> 🔒 **${isZh ? "決策基準快照" : "Decision Baseline Snapshot"}**: ${brief.metadata.provenance.snapshotId} (\`SHA-256: ${brief.metadata.provenance.contentHash ? brief.metadata.provenance.contentHash.slice(0, 10) + "..." : ""}\`) | ${isZh ? "鎖定時間" : "Frozen at"}: ${brief.metadata.provenance.createdAt ? new Date(brief.metadata.provenance.createdAt).toLocaleString() : ""} | ${isZh ? "備註" : "Note"}: "${brief.metadata.provenance.note || ""}"`
+      : `> ⚠️ **${isZh ? "草稿提示" : "Draft Notice"}**: ${isZh ? "本簡報產自即時變動之模型草稿。若需作為正式董事會或決策備查，建議建立不可篡改之模型快照（Model Snapshot）。" : "Generated from a mutable working draft. Capture an immutable Model Snapshot for formal governance and decision provenance."}`,
     "",
     `## 1. ${brief.section1.title}`,
     "",
