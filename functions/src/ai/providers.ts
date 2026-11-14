@@ -6,7 +6,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
-import { DraftReply, DraftReplySchema } from "./schema";
+import { DraftReply, DraftReplySchema, DraftActionReply, DraftActionReplySchema } from "./schema";
 
 export type ProviderId = "anthropic" | "openai-compatible";
 
@@ -39,6 +39,11 @@ export interface AdapterResult {
   usage: Usage;
 }
 
+export interface ActionAdapterResult {
+  reply: DraftActionReply;
+  usage: Usage;
+}
+
 // A reply the provider declined to give, or couldn't give in the format.
 export class ProviderReplyError extends Error {
   constructor(
@@ -51,6 +56,7 @@ export class ProviderReplyError extends Error {
 
 export interface Adapter {
   draft(request: AdapterRequest): Promise<AdapterResult>;
+  draftAction(request: { system: string; turns: Turn[] }): Promise<ActionAdapterResult>;
   test(): Promise<void>;
 }
 
@@ -131,6 +137,53 @@ class AnthropicAdapter implements Adapter {
     const usage = message.usage;
     return {
       reply: parseReply(text),
+      usage: {
+        inputTokens: usage.input_tokens,
+        outputTokens: usage.output_tokens,
+        cacheReadTokens: usage.cache_read_input_tokens || 0,
+        cacheWriteTokens: usage.cache_creation_input_tokens || 0
+      }
+    };
+  }
+
+  async draftAction(request: { system: string; turns: Turn[] }): Promise<ActionAdapterResult> {
+    const withFallbacks = CLAUDE_FALLBACK_MODELS.has(this.model);
+    let message;
+    try {
+      const stream = this.client.beta.messages.stream({
+        model: this.model,
+        max_tokens: 16000,
+        system: [{ type: "text", text: request.system, cache_control: { type: "ephemeral" } }],
+        cache_control: { type: "ephemeral" },
+        messages: request.turns.map((t) => ({ role: t.role, content: t.text })),
+        output_config: {
+          format: zodOutputFormat(DraftActionReplySchema)
+        },
+        ...(withFallbacks
+          ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const }
+          : {})
+      });
+      message = await stream.finalMessage();
+    } catch (error) {
+      throw anthropicError(error);
+    }
+
+    if (message.stop_reason == "refusal") {
+      throw new ProviderReplyError(
+        message.stop_details?.explanation || "The model declined this request.",
+        "refusal"
+      );
+    }
+    if (message.stop_reason == "max_tokens") {
+      throw new ProviderReplyError("The reply was too long.", "too-long");
+    }
+    const text = message.content
+      .filter((b) => b.type == "text")
+      .map((b) => (b as { text: string }).text)
+      .join("");
+    const usage = message.usage;
+    return {
+      reply: parseActionReply(text),
       usage: {
         inputTokens: usage.input_tokens,
         outputTokens: usage.output_tokens,
@@ -234,6 +287,34 @@ class OpenAiCompatibleAdapter implements Adapter {
     };
   }
 
+  async draftAction(request: { system: string; turns: Turn[] }): Promise<ActionAdapterResult> {
+    const body = {
+      model: this.model,
+      messages: [
+        { role: "system", content: request.system },
+        ...request.turns.map((t) => ({ role: t.role, content: t.text }))
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "action_draft_reply", strict: true, schema: z.toJSONSchema(DraftActionReplySchema) }
+      }
+    };
+    const json = await this.post("/chat/completions", body);
+    const choice = json.choices?.[0];
+    if (choice?.message?.refusal) throw new ProviderReplyError(choice.message.refusal, "refusal");
+    if (choice?.finish_reason == "length") throw new ProviderReplyError("The reply was too long.", "too-long");
+    const cached = json.usage?.prompt_tokens_details?.cached_tokens || 0;
+    return {
+      reply: parseActionReply(choice?.message?.content || ""),
+      usage: {
+        inputTokens: (json.usage?.prompt_tokens || 0) - cached,
+        outputTokens: json.usage?.completion_tokens || 0,
+        cacheReadTokens: cached,
+        cacheWriteTokens: 0
+      }
+    };
+  }
+
   async test(): Promise<void> {
     await this.post("/chat/completions", {
       model: this.model,
@@ -262,6 +343,24 @@ export function parseReply(text: string): DraftReply {
     throw new ProviderReplyError("The reply wasn't valid JSON.", "invalid-reply");
   }
   const parsed = DraftReplySchema.safeParse(json);
+  if (!parsed.success) {
+    throw new ProviderReplyError(
+      `The reply didn't match the format: ${parsed.error.issues[0]?.message || "unknown"}`,
+      "invalid-reply"
+    );
+  }
+  return parsed.data;
+}
+
+export function parseActionReply(text: string): DraftActionReply {
+  const trimmed = text.trim().replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+  let json: unknown;
+  try {
+    json = JSON.parse(trimmed);
+  } catch {
+    throw new ProviderReplyError("The reply wasn't valid JSON.", "invalid-reply");
+  }
+  const parsed = DraftActionReplySchema.safeParse(json);
   if (!parsed.success) {
     throw new ProviderReplyError(
       `The reply didn't match the format: ${parsed.error.issues[0]?.message || "unknown"}`,

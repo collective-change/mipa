@@ -28,6 +28,33 @@ export const ChangeToExistingSchema = z.object({
   explanation: z.string()
 });
 
+export const ActionImpactProposalSchema = z.object({
+  factorSymbol: z.string(),
+  factorName: z.string(),
+  operation: z.enum(["+", "-", "*", "/", "="]),
+  operand: z.string(),
+  durationType: z.enum(["forever", "just_once", "for_period", "with_half_life"]),
+  durationNumber: z.number().nullable(),
+  durationUnit: z.enum(["days", "weeks", "months", "years"]).nullable(),
+  thenText: z.string(),
+  source: z.string()
+});
+
+export const DraftActionReplySchema = z.object({
+  title: z.string(),
+  summary: z.string(),
+  estEffortHrs: z.number().nullable(),
+  effortReasoning: z.string(),
+  estSpending: z.number().nullable(),
+  spendingReasoning: z.string(),
+  currency: z.string(),
+  impacts: z.array(ActionImpactProposalSchema),
+  notes: z.string()
+});
+
+export type ActionImpactProposal = z.infer<typeof ActionImpactProposalSchema>;
+export type DraftActionReply = z.infer<typeof DraftActionReplySchema>;
+
 export const DraftReplySchema = z.object({
   kind: z.enum(["questions", "draft"]),
   message: z.string(),
