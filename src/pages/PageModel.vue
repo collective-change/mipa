@@ -50,6 +50,15 @@
               :label="$t('Draft with AI')"
             />
             <q-btn
+              @click="showIngestData = true"
+              class="full-width print-hide"
+              color="primary"
+              outline
+              no-caps
+              icon="cloud_upload"
+              :label="$t('ingestDataBtn')"
+            />
+            <q-btn
               v-if="latestAiDraft"
               @click="confirmRemoveDraft"
               class="full-width print-hide"
@@ -156,6 +165,7 @@
     <q-dialog v-model="showConfigOrgModel">
       <config-org-model @close="showConfigOrgModel = false" />
     </q-dialog>
+    <ingest-data-dialog v-model="showIngestData" />
   </q-page>
 </template>
 
@@ -171,6 +181,7 @@ import NodeSummary from "@/components/Model/NodeSummary.vue";
 import GettingStarted from "@/components/Model/GettingStarted.vue";
 import AddNode from "@/components/Model/Modals/AddNode.vue";
 import DraftModelDialog from "@/components/Model/Modals/DraftModelDialog.vue";
+import IngestDataDialog from "@/components/Model/Modals/IngestDataDialog.vue";
 import { planDraftRemoval, removeDraft } from "@/utils/util-aiDraft";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 //import ExportCalcResults from "../components/Calc/ExportCalcResults.vue";
@@ -190,6 +201,7 @@ export default {
     "getting-started": GettingStarted,
     "add-node": AddNode,
     "draft-model-dialog": DraftModelDialog,
+    "ingest-data-dialog": IngestDataDialog,
     "calculator-ui": CalculatorUi,
     "export-calc-results": ExportCalcResults,
     "dependency-graph": DependencyGraph,
@@ -202,6 +214,7 @@ export default {
       showConfigOrgModel: false,
       showAddNode: false,
       showDraftModel: false,
+      showIngestData: false,
       models: null,
       //selectedNodeGroupId: null,
       expanded: [],

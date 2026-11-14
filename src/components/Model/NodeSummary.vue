@@ -289,6 +289,79 @@
           :hint="$t('currentValueHint')"
           debounce="300"
         />
+
+        <!-- Data Provenance & Freshness section -->
+        <q-expansion-item
+          dense
+          dense-toggle
+          icon="verified"
+          :label="$t('factorProvenanceSection')"
+          header-class="text-caption text-primary q-px-none q-mt-xs"
+          default-opened
+        >
+          <div class="row items-center justify-between q-my-xs">
+            <span class="text-caption text-grey-7">{{ $t('freshnessStatus') }}:</span>
+            <q-chip
+              dense
+              size="sm"
+              :color="factorFreshness.color"
+              text-color="white"
+              class="text-weight-medium"
+            >
+              {{ $t(factorFreshness.labelKey) }}
+              <span v-if="factorFreshness.daysElapsed !== null" class="q-ml-xs">
+                ({{ factorFreshness.daysElapsed }}d)
+              </span>
+            </q-chip>
+          </div>
+
+          <div class="row q-col-gutter-xs">
+            <div class="col-12 col-sm-6">
+              <q-select
+                v-model="nodeToSubmit.costCategory"
+                dense
+                outlined
+                options-dense
+                emit-value
+                map-options
+                clearable
+                :options="accountingCategoryOptions"
+                :label="$t('costCategory')"
+              />
+            </div>
+            <div class="col-12 col-sm-6">
+              <q-input
+                v-model="nodeToSubmit.reportingPeriod"
+                dense
+                outlined
+                :label="$t('reportingPeriod')"
+                :hint="$t('reportingPeriodHint')"
+              />
+            </div>
+          </div>
+
+          <div class="row q-col-gutter-xs q-mt-xs">
+            <div class="col-12 col-sm-6">
+              <q-input
+                v-model="nodeToSubmit.effectiveDate"
+                dense
+                outlined
+                type="date"
+                :label="$t('effectiveDate')"
+                :hint="$t('effectiveDateHint')"
+              />
+            </div>
+            <div class="col-12 col-sm-6">
+              <q-input
+                v-model="nodeToSubmit.sourceCitation"
+                dense
+                outlined
+                :label="$t('sourceCitation')"
+                :hint="$t('sourceCitationHint')"
+              />
+            </div>
+          </div>
+        </q-expansion-item>
         <div style="height: 15px"></div>
         <select-user
           :label="$t('Responsible person')"
@@ -409,6 +482,10 @@ import {
   getFactorSuggestions,
   insertSnippetIntoFormula
 } from "@/utils/formulaHelper";
+import {
+  ACCOUNTING_CATEGORIES,
+  evaluateFactorFreshness
+} from "@/utils/dataIngestion";
 import SelectUser from "../Users/SelectUser.vue";
 import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
 import Chat from "@/components/Chats/Chat.vue";
@@ -440,6 +517,7 @@ export default {
       showDeleteFactor: false,
       nodeToSubmitIsFreshlyAssigned: false,
       model: null,
+      accountingCategories: ACCOUNTING_CATEGORIES,
       formulaPrimitives: FORMULA_PRIMITIVES,
       formulaCursorPos: 0,
       currentFormulaToken: "",
@@ -470,6 +548,17 @@ export default {
       return this.nodes.find(function (node) {
         return node.id == that.selectedNodeId;
       });
+    },
+
+    accountingCategoryOptions() {
+      return this.accountingCategories.map((c) => ({
+        value: c.value,
+        label: this.$t(c.labelKey)
+      }));
+    },
+
+    factorFreshness() {
+      return evaluateFactorFreshness(this.nodeToSubmit);
     },
 
     influencerNodesInfo() {
