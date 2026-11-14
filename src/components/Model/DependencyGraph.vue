@@ -1,49 +1,79 @@
 <template>
-  <div style="position: relative">
-    <q-btn
-      @click="
-        showAddNode = true;
-        addNodeProps.newNodeRole = '';
-      "
-      class="all-pointer-events print-hide"
-      style="position: absolute; top: 10px; left: 10px; z-index: 2"
-      color="primary"
-      icon="add"
-      no-caps
-      :label="$t('Add factor')"
-    />
-    <q-select
-      :label="$t('Find a factor')"
-      v-model="nodeToSearch"
-      @filter="filterFn"
-      @filter-abort="abortFilterFn"
-      :options="filteredNodeOptions"
-      @update:model-value="
-        (nodeId) => {
-          searchNodeId(nodeId);
-        }
-      "
-      emit-value
-      map-options
-      outlined
-      use-input
-      hide-selected
-      fill-input
-      dense
-      style="position: absolute; top: 8px; left: 150px; z-index: 2"
-      bg-color="white"
-    />
-    <div
-      class="text-body1"
-      style="
-        background-color: rgba(255, 255, 255, 0.5);
-        position: absolute;
-        top: 48px;
-        left: 10px;
-        z-index: 2;
-      "
-    >
-      {{ $t("graphHint") }}
+  <div style="position: relative" class="full-width full-height">
+    <!-- Floating Graph Controls Toolbar -->
+    <div class="graph-floating-toolbar glass-panel print-hide" style="top: 12px; left: 12px">
+      <q-btn
+        @click="
+          showAddNode = true;
+          addNodeProps.newNodeRole = '';
+        "
+        color="primary"
+        icon="add"
+        no-caps
+        unelevated
+        dense
+        class="q-px-sm"
+        :label="$t('Add factor')"
+      />
+      <q-select
+        :label="$t('Find a factor')"
+        v-model="nodeToSearch"
+        @filter="filterFn"
+        @filter-abort="abortFilterFn"
+        :options="filteredNodeOptions"
+        @update:model-value="
+          (nodeId) => {
+            searchNodeId(nodeId);
+          }
+        "
+        emit-value
+        map-options
+        outlined
+        use-input
+        hide-selected
+        fill-input
+        dense
+        options-dense
+        style="width: 200px"
+        bg-color="white"
+      />
+      <q-separator vertical class="q-mx-xs" />
+      <q-btn
+        flat
+        round
+        dense
+        size="sm"
+        icon="zoom_in"
+        color="grey-8"
+        :aria-label="$t('zoomIn')"
+        @click="zoomIn"
+      >
+        <q-tooltip>{{ $t("zoomIn") }}</q-tooltip>
+      </q-btn>
+      <q-btn
+        flat
+        round
+        dense
+        size="sm"
+        icon="zoom_out"
+        color="grey-8"
+        :aria-label="$t('zoomOut')"
+        @click="zoomOut"
+      >
+        <q-tooltip>{{ $t("zoomOut") }}</q-tooltip>
+      </q-btn>
+      <q-btn
+        flat
+        round
+        dense
+        size="sm"
+        icon="filter_center_focus"
+        color="grey-8"
+        :aria-label="$t('resetZoom')"
+        @click="resetZoom"
+      >
+        <q-tooltip>{{ $t("resetZoom") }}</q-tooltip>
+      </q-btn>
     </div>
 
     <svg
@@ -1350,6 +1380,27 @@ export default {
     zoomed(event, d) {
       const transform = event.transform;
       this.selections.graph.attr("transform", transform);
+    },
+    zoomIn() {
+      if (!this.zoom) return;
+      d3.select("#dependencyGraph")
+        .transition()
+        .duration(300)
+        .call(this.zoom.scaleBy, 1.3);
+    },
+    zoomOut() {
+      if (!this.zoom) return;
+      d3.select("#dependencyGraph")
+        .transition()
+        .duration(300)
+        .call(this.zoom.scaleBy, 0.7);
+    },
+    resetZoom() {
+      if (!this.zoom) return;
+      d3.select("#dependencyGraph")
+        .transition()
+        .duration(400)
+        .call(this.zoom.transform, d3.zoomIdentity);
     },
     nodeDragStarted(event, d) {
       if (!event.active) {

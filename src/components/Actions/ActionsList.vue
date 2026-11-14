@@ -116,22 +116,16 @@
         </q-td>
       </template>
       <template v-slot:no-data>
-        <div class="full-width column items-center q-pa-lg text-center">
-          <q-icon name="wb_incandescent" color="primary" size="48px" class="flip-vertical" />
-          <div class="text-subtitle1 q-mt-sm">{{ $t("noActionsTitle") }}</div>
-          <div class="text-body2 text-grey-8 q-mt-xs" style="max-width: 520px">
-            {{ $t("noActionsText") }}
-          </div>
-          <q-btn
-            class="q-mt-md"
-            color="primary"
-            icon="add"
-            unelevated
-            no-caps
-            :label="$t('Add an action')"
-            @click="showAddAction = true"
-          />
-        </div>
+        <empty-state
+          class="full-width"
+          icon="wb_incandescent"
+          icon-color="primary"
+          :title="$t('noActionsTitle')"
+          :description="$t('noActionsText')"
+          :action-label="$t('Add an action')"
+          action-icon="add"
+          @action="showAddAction = true"
+        />
       </template>
     </q-table>
     <q-dialog v-model="showAddAction">
@@ -164,6 +158,7 @@ import ExplainRankingModal from "@/components/Actions/Modals/ExplainRankingModal
 import CalculatorUi from "@/components/Calc/CalculatorUi.vue";
 import SelectUser from "@/components/Users/SelectUser.vue";
 import SelectActionStates from "@/components/Actions/SelectActionStates.vue";
+import EmptyState from "@/components/Shared/EmptyState.vue";
 
 function getRelationshipsDisplay(row) {
   let relationships = [];
@@ -182,6 +177,7 @@ export default {
     "add-action": AddAction,
     "decision-brief-modal": DecisionBriefModal,
     "explain-ranking-modal": ExplainRankingModal,
+    "empty-state": EmptyState,
     "calculator-ui": CalculatorUi,
     "select-user": SelectUser,
     "select-action-states": SelectActionStates,

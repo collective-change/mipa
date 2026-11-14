@@ -859,5 +859,14 @@ export default {
   sroiReportCopiedToast: "SROI executive report copied to clipboard",
   sroiCardTitle: "Social Return on Investment (SROI)",
   sroiCardSubtitle: "Quantify intangible social value, deadweight, attribution, and net social return",
-  viewSroiImpactMap: "View SROI Impact Map"
+  viewSroiImpactMap: "View SROI Impact Map",
+
+  // UI & UX Modernization
+  zoomIn: "Zoom in",
+  zoomOut: "Zoom out",
+  resetZoom: "Reset zoom",
+  noFactorSelectedTitle: "No factor selected",
+  noFactorSelectedHint: "Click a factor in the graph to view and edit its formulas, value, and provenance.",
+  noActionSelectedTitle: "No action selected",
+  noActionSelectedHint: "Click an action in the list to review progress, direct costs, and SROI social returns."
 };

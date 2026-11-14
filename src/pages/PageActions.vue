@@ -25,6 +25,13 @@
         </div>
         <div class="col-12 col-md-4">
           <action-summary v-if="selectedAction" :action="selectedAction" />
+          <empty-state
+            v-else
+            icon="touch_app"
+            icon-color="primary"
+            :title="$t('noActionSelectedTitle')"
+            :description="$t('noActionSelectedHint')"
+          />
         </div>
       </div>
     </div>
@@ -38,6 +45,7 @@ import ActionsList from "@/components/Actions/ActionsList.vue";
 import ActionsChart from "@/components/Actions/ActionsChart.vue";
 import UnprioritizedActionsList from "@/components/Actions/UnprioritizedActionsList.vue";
 import ActionSummary from "@/components/Actions/ActionSummary.vue";
+import EmptyState from "@/components/Shared/EmptyState.vue";
 
 export default {
   components: {
@@ -45,6 +53,7 @@ export default {
     "actions-chart": ActionsChart,
     "unprioritized-actions-list": UnprioritizedActionsList,
     "action-summary": ActionSummary,
+    "empty-state": EmptyState,
   },
   data() {
     return {
