@@ -114,9 +114,15 @@ skips the deploy until these are set in the repository settings
 - Secret `FIREBASE_SERVICE_ACCOUNT`: a JSON key for a service account in the
   Firebase project (Google Cloud console > IAM > Service accounts). It needs
   permission to deploy Hosting, Firestore rules and indexes, and 2nd-gen
-  Cloud Functions with a secret and a schedule. Granting it *Editor* and
-  *Secret Manager Admin* is the simple option; if a deploy fails with a
-  permission error, the log names the missing permission.
+  Cloud Functions with a secret and a schedule: grant it *Editor*,
+  *Service Account User*, *Secret Manager Admin*, *Cloud Functions Admin*
+  and *Cloud Run Admin* (the last two let the deploy make callable
+  functions reachable from the app). If a deploy fails with a permission
+  error, the log names the missing permission.
+- In projects created or updated since 2024, Cloud Build runs as the
+  default compute service account (`<project number>-compute@developer.gserviceaccount.com`).
+  Grant it *Cloud Build Service Account*, or building functions fails with
+  "missing permission on the build service account".
 - Variable `APP_ENV_FILE`: the full contents of the production `.env`. Its
   `projectId` is the project deployed to. (This config is public: it ships
   in the app.)
