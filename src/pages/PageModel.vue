@@ -59,6 +59,15 @@
               :label="$t('ingestDataBtn')"
             />
             <q-btn
+              @click="showModelSnapshots = true"
+              class="full-width print-hide"
+              color="primary"
+              outline
+              no-caps
+              icon="history_edu"
+              :label="$t('modelSnapshotsBtn')"
+            />
+            <q-btn
               v-if="latestAiDraft"
               @click="confirmRemoveDraft"
               class="full-width print-hide"
@@ -166,6 +175,11 @@
       <config-org-model @close="showConfigOrgModel = false" />
     </q-dialog>
     <ingest-data-dialog v-model="showIngestData" />
+    <model-snapshots-modal
+      v-model="showModelSnapshots"
+      :model="currentModel"
+      :nodes="nodes"
+    />
   </q-page>
 </template>
 
@@ -182,6 +196,7 @@ import GettingStarted from "@/components/Model/GettingStarted.vue";
 import AddNode from "@/components/Model/Modals/AddNode.vue";
 import DraftModelDialog from "@/components/Model/Modals/DraftModelDialog.vue";
 import IngestDataDialog from "@/components/Model/Modals/IngestDataDialog.vue";
+import ModelSnapshotsModal from "@/components/Model/Modals/ModelSnapshotsModal.vue";
 import { planDraftRemoval, removeDraft } from "@/utils/util-aiDraft";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 //import ExportCalcResults from "../components/Calc/ExportCalcResults.vue";
@@ -202,6 +217,7 @@ export default {
     "add-node": AddNode,
     "draft-model-dialog": DraftModelDialog,
     "ingest-data-dialog": IngestDataDialog,
+    "model-snapshots-modal": ModelSnapshotsModal,
     "calculator-ui": CalculatorUi,
     "export-calc-results": ExportCalcResults,
     "dependency-graph": DependencyGraph,
@@ -215,6 +231,7 @@ export default {
       showAddNode: false,
       showDraftModel: false,
       showIngestData: false,
+      showModelSnapshots: false,
       models: null,
       //selectedNodeGroupId: null,
       expanded: [],

@@ -198,6 +198,46 @@
                 </div>
               </div>
             </div>
+
+            <!-- Provenance / Snapshot Status -->
+            <div class="row items-center justify-between q-mt-sm q-pt-xs border-top">
+              <div class="row items-center q-gutter-xs">
+                <q-chip
+                  v-if="briefData.metadata.provenance && briefData.metadata.provenance.isFrozen"
+                  dense
+                  color="green-1"
+                  text-color="positive"
+                  icon="lock"
+                >
+                  {{ $t("decisionProvenanceBadge") }}: {{ briefData.metadata.provenance.snapshotId }}
+                  <q-tooltip>SHA-256: {{ briefData.metadata.provenance.contentHash }}</q-tooltip>
+                </q-chip>
+                <q-chip
+                  v-else
+                  dense
+                  color="amber-2"
+                  text-color="amber-10"
+                  icon="edit_note"
+                >
+                  {{ $t("liveDraftBadge") }}
+                </q-chip>
+              </div>
+
+              <div class="print-hide">
+                <q-btn
+                  v-if="!briefData.metadata.provenance?.isFrozen"
+                  flat
+                  dense
+                  size="sm"
+                  color="primary"
+                  icon="camera_alt"
+                  :label="$t('takeSnapshotBtn')"
+                  @click="openSnapshotModal = true"
+                >
+                  <q-tooltip>{{ $t("freezeSnapshotNotice") }}</q-tooltip>
+                </q-btn>
+              </div>
+            </div>
           </div>
 
           <!-- SECTION 1: The Decision in One Sentence & Options Compared -->
@@ -534,6 +574,13 @@
           </div>
         </div>
       </q-card-section>
+
+      <!-- Snapshot Modal Triggered from Brief -->
+      <model-snapshots-modal
+        v-model="openSnapshotModal"
+        :model="currentModel"
+        :nodes="nodes"
+      />
     </q-card>
   </q-dialog>
 </template>
@@ -543,6 +590,7 @@ import { mapState, mapGetters } from "vuex";
 import { exportFile, Notify } from "quasar";
 import { firebaseAuth } from "@/boot/firebase";
 import { formatNumber } from "@/utils/util-formatNumber";
+import ModelSnapshotsModal from "@/components/Model/Modals/ModelSnapshotsModal.vue";
 import {
   generateDecisionBrief,
   validateBriefNumbers,
@@ -554,6 +602,9 @@ import {
 
 export default {
   name: "DecisionBriefModal",
+  components: {
+    "model-snapshots-modal": ModelSnapshotsModal
+  },
   props: {
     modelValue: {
       type: Boolean,
@@ -568,6 +619,7 @@ export default {
   data() {
     return {
       selectedActionIds: [],
+      openSnapshotModal: false,
       isEditing: false,
       editableSection1Decision: "",
       editableSection3Narrative: "",
