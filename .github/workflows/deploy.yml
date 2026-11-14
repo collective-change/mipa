@@ -109,13 +109,10 @@ jobs:
         run: |
           npm ci
           npm ci --prefix src-pwa
+          npm ci --prefix functions
           npm run lint
           npm test
           npm run build
-
-      - name: Install Cloud Functions dependencies
-        if: steps.migrated.outputs.ready == 'true'
-        run: npm ci --prefix functions
 
       - name: Keep only recent container images of functions (cleanup policy)
         if: steps.migrated.outputs.ready == 'true'

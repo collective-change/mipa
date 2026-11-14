@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import fs from "fs";
 import path from "path";
 import { parse } from "mathjs";
-import { isAllowedEndpoint } from "../../functions/src/ai/providers";
+import { isAllowedEndpoint } from "../../functions/src/ai/endpointValidator";
 
 describe("Security Audit & Hardening", () => {
   describe("Firestore Security Rules Verification", () => {
