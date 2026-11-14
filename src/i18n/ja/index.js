@@ -1052,5 +1052,32 @@ export default {
   "previousStepBtn": "前へ",
   "nextStepBtn": "次へ",
   "finishTourBtn": "探索を開始",
-  "openTemplateLibraryBtn": "テンプレートライブラリを見る"
+  "openTemplateLibraryBtn": "テンプレートライブラリを見る",
+
+  // Early Access & Private Preview
+  "authPrivatePreviewBadge": "プライベートプレビュー",
+  "authPrivatePreviewNotice": "Mipa は現在、戦略的組織を対象としたパイロット運用を実施しております。招待状をお持ちの方はログインしてください。新規のご利用は下記より事前登録をお申し込みいただけます。",
+  "earlyAccessTab": "早期アクセスを申請",
+  "landingRequestAccess": "早期アクセスを申請",
+  "earlyAccessFormSubtitle": "財団、非営利組織、社会的機関向けの優先アクセス先行登録にご参加ください。",
+  "earlyAccessName": "お名前",
+  "earlyAccessEmail": "所属機関のメールアドレス",
+  "earlyAccessOrgName": "ご所属組織・機関名",
+  "earlyAccessSector": "活動分野・組織種別",
+  "sectorNgo": "非営利組織・NPO / NGO",
+  "sectorFoundation": "慈善財団・助成財団",
+  "sectorAcademic": "大学・学術研究機関",
+  "sectorGovernment": "公共部門・行政機関",
+  "sectorSocialEnterprise": "社会的企業・インパクト事業",
+  "sectorConsulting": "戦略コンサルティング・助言",
+  "sectorOther": "その他の社会貢献分野",
+  "earlyAccessNote": "主な戦略的課題または活用目的",
+  "earlyAccessNoteHint": "シミュレーションを予定されているシステムの意思決定や影響モデルについて簡潔にご記入ください。",
+  "earlyAccessSubmitBtn": "申請を送信する",
+  "earlyAccessAlreadyInvited": "すでに招待をお受け取りですか？",
+  "earlyAccessSuccessTitle": "早期アクセス申請を受け付けました",
+  "earlyAccessSuccessDesc": "システム・ダイナミクスによる戦略的意思決定に関心をお寄せいただきありがとうございます。審査の上、受け入れ枠が拡大し次第ご案内をお送りいたします。",
+  "earlyAccessSignIn": "既存のアカウントでログイン",
+  "earlyAccessSubmitAnother": "別の申請を送信する",
+  "earlyAccessErrorGeneral": "申請を送信できませんでした。通信環境をご確認の上、再度お試しください。"
 };

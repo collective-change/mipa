@@ -1052,5 +1052,32 @@ export default {
   "previousStepBtn": "Anterior",
   "nextStepBtn": "Siguiente",
   "finishTourBtn": "Listo para Explorar",
-  "openTemplateLibraryBtn": "Explorar Plantillas"
+  "openTemplateLibraryBtn": "Explorar Plantillas",
+
+  // Early Access & Private Preview
+  "authPrivatePreviewBadge": "Vista previa privada",
+  "authPrivatePreviewNotice": "Mipa se encuentra actualmente en un piloto selectivo para organizaciones estratégicas. Si su equipo ha recibido una invitación, inicie sesión. De lo contrario, solicite acceso anticipado a continuación.",
+  "earlyAccessTab": "Solicitar acceso anticipado",
+  "landingRequestAccess": "Solicitar acceso anticipado",
+  "earlyAccessFormSubtitle": "Únase a nuestra lista de espera de incorporación prioritaria para fundaciones, ONGs e instituciones con una misión social.",
+  "earlyAccessName": "Su nombre",
+  "earlyAccessEmail": "Correo institucional o de trabajo",
+  "earlyAccessOrgName": "Organización o institución",
+  "earlyAccessSector": "Sector / Ámbito",
+  "sectorNgo": "Organización sin fines de lucro / ONG",
+  "sectorFoundation": "Fundación filantrópica",
+  "sectorAcademic": "Institución académica y de investigación",
+  "sectorGovernment": "Sector público / Organismo gubernamental",
+  "sectorSocialEnterprise": "Empresa social / Emprendimiento de impacto",
+  "sectorConsulting": "Consultoría estratégica y asesoría",
+  "sectorOther": "Otro campo con impacto social",
+  "earlyAccessNote": "Desafío estratégico principal o intención de uso",
+  "earlyAccessNoteHint": "Describa brevemente las decisiones sistémicas o modelos de impacto que su equipo planea simular.",
+  "earlyAccessSubmitBtn": "Enviar solicitud",
+  "earlyAccessAlreadyInvited": "¿Ya ha recibido una invitación?",
+  "earlyAccessSuccessTitle": "Solicitud de acceso anticipado recibida",
+  "earlyAccessSuccessDesc": "Gracias por su interés en el modelado de impacto sistémico. Nuestro equipo revisa las solicitudes semanalmente y le notificará a medida que se abra la capacidad del piloto.",
+  "earlyAccessSignIn": "Iniciar sesión con cuenta existente",
+  "earlyAccessSubmitAnother": "Enviar otra solicitud",
+  "earlyAccessErrorGeneral": "No se pudo enviar su solicitud. Compruebe su conexión de red e inténtelo de nuevo."
 };

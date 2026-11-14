@@ -1049,5 +1049,32 @@ export default {
   previousStepBtn: "Previous",
   nextStepBtn: "Next",
   finishTourBtn: "Ready to Explore",
-  openTemplateLibraryBtn: "Explore Starter Templates"
+  openTemplateLibraryBtn: "Explore Starter Templates",
+
+  // Early Access & Private Preview
+  authPrivatePreviewBadge: "Private Preview",
+  authPrivatePreviewNotice: "Mipa is currently in selective pilot for strategic organizations. If your team has received an invitation, please Sign In. Otherwise, please apply for early access below.",
+  earlyAccessTab: "Request Early Access",
+  landingRequestAccess: "Request Early Access",
+  earlyAccessFormSubtitle: "Join our priority onboarding waitlist for foundations, NGOs, and mission-driven institutions.",
+  earlyAccessName: "Your Name",
+  earlyAccessEmail: "Work or Institutional Email",
+  earlyAccessOrgName: "Organization or Institution",
+  earlyAccessSector: "Sector / Domain",
+  sectorNgo: "Non-Profit / NGO",
+  sectorFoundation: "Philanthropic Foundation",
+  sectorAcademic: "Academic & Research Institution",
+  sectorGovernment: "Public Sector / Government Agency",
+  sectorSocialEnterprise: "Social Enterprise / Impact Venture",
+  sectorConsulting: "Strategy & Advisory Consulting",
+  sectorOther: "Other Mission-Driven Field",
+  earlyAccessNote: "Primary Strategic Challenge or Intent",
+  earlyAccessNoteHint: "Briefly describe the systemic decisions or impact models your team plans to simulate.",
+  earlyAccessSubmitBtn: "Submit Request",
+  earlyAccessAlreadyInvited: "Already received an invitation?",
+  earlyAccessSuccessTitle: "Early Access Request Received",
+  earlyAccessSuccessDesc: "Thank you for your interest in systemic impact modeling. Our team reviews applications weekly and will notify you as pilot capacity expands.",
+  earlyAccessSignIn: "Sign In to Existing Account",
+  earlyAccessSubmitAnother: "Submit Another Request",
+  earlyAccessErrorGeneral: "Unable to submit your application. Please check your network connection and try again."
 };

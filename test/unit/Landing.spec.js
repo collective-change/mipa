@@ -38,7 +38,7 @@ describe("PageLanding.vue", () => {
   it("renders the English hero headline and CTAs", () => {
     const wrapper = mountLanding("en-us");
     expect(wrapper.text()).toContain("Find the highest-leverage actions for your organization");
-    expect(wrapper.text()).toContain("Get started free");
+    expect(wrapper.text()).toContain("Request Early Access");
     expect(wrapper.text()).toContain("Map your system");
     expect(wrapper.text()).toContain("Simulate interventions");
     expect(wrapper.text()).toContain("Rank by leverage");
@@ -47,7 +47,7 @@ describe("PageLanding.vue", () => {
   it("renders the Traditional Chinese hero headline and Chinese leverage term", () => {
     const wrapper = mountLanding("zh-tw");
     expect(wrapper.text()).toContain("為您的組織找出最高效應比的關鍵行動");
-    expect(wrapper.text()).toContain("免費開始使用");
+    expect(wrapper.text()).toContain("申請先導體驗");
     expect(wrapper.text()).toContain("建立系統模型");
     expect(wrapper.text()).toContain("模擬行動方案");
     expect(wrapper.text()).toContain("依效應比排序");

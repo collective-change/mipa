@@ -1030,5 +1030,32 @@ export default {
   previousStepBtn: "上一步",
   nextStepBtn: "下一步",
   finishTourBtn: "开始体验",
-  openTemplateLibraryBtn: "探索模型范本库"
+  openTemplateLibraryBtn: "探索模型范本库",
+
+  // Early Access & Private Preview
+  authPrivatePreviewBadge: "先导体验",
+  authPrivatePreviewNotice: "Mipa 目前正针对战略组织进行先导体验。若您的团队已收到邀请，请直接登录；如欲参与后续先导批次，欢迎在下方登记候补。",
+  earlyAccessTab: "申请先导体验",
+  landingRequestAccess: "申请先导体验",
+  earlyAccessFormSubtitle: "诚挚邀请愿景基金会、非营利组织与使命导向机构加入优先先导体验名单。",
+  earlyAccessName: "您的姓名",
+  earlyAccessEmail: "公务或机构电子邮箱",
+  earlyAccessOrgName: "所属机构或组织名称",
+  earlyAccessSector: "领域类别",
+  sectorNgo: "非营利组织 / NGO",
+  sectorFoundation: "慈善 / 愿景基金会",
+  sectorAcademic: "高等院校与学术研究机构",
+  sectorGovernment: "公共部门与政府机关",
+  sectorSocialEnterprise: "社会企业与影响力倡议",
+  sectorConsulting: "战略咨询与专业顾问",
+  sectorOther: "其他公益或使命导向领域",
+  earlyAccessNote: "核心战略挑战或预期应用场景",
+  earlyAccessNoteHint: "简要描述您团队计划模拟的系统决策或影响力模型。",
+  earlyAccessSubmitBtn: "提交先导体验申请",
+  earlyAccessAlreadyInvited: "已有邀请信函？",
+  earlyAccessSuccessTitle: "已收到您的先导体验申请",
+  earlyAccessSuccessDesc: "感谢您对系统动力学战略决策的关注。团队每周审阅申请，并在先导批次开放时立即以邮件通知您。",
+  earlyAccessSignIn: "登录现有账号",
+  earlyAccessSubmitAnother: "填写另一份申请",
+  earlyAccessErrorGeneral: "无法提交申请，请检查网络连接后重试。"
 };
