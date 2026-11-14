@@ -152,6 +152,16 @@ export default {
   liveDraftBadge: "Live Working Draft",
   freezeSnapshotNotice: "Freeze this decision baseline as a formal immutable snapshot.",
 
+  // Multi-Language Expansion & Cross-Lingual Collaboration
+  multilingualTitles: "Multilingual Factor Titles",
+  multilingualTitlesHint: "Define factor names in other languages for global team alignment.",
+  translateWithAi: "Translate with AI",
+  inlineTranslationNotice: "Translated from original text",
+  langTraditionalChinese: "Traditional Chinese",
+  langSimplifiedChinese: "Simplified Chinese",
+  langSpanish: "Spanish",
+  langJapanese: "Japanese",
+
   // for PageModel.vue
   Calculate: "Calculate",
   "Model settings": "Model settings",

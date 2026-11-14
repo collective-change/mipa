@@ -120,7 +120,7 @@
             emit-value
             map-options
             options-dense
-            style="min-width: 80px"
+            style="min-width: 100px"
           >
             <template v-slot:prepend>
               <q-icon name="language" />
@@ -266,7 +266,10 @@ export default {
       lang: this.$i18n.locale,
       langOptions: [
         { value: "en-us", label: "English" },
-        { value: "zh-tw", label: "中文" },
+        { value: "zh-tw", label: "繁體中文" },
+        { value: "zh-cn", label: "简体中文" },
+        { value: "es", label: "Español" },
+        { value: "ja", label: "日本語" },
       ],
 
       rightDrawerOpen: false, //this.$q.platform.is.desktop,
@@ -571,12 +574,25 @@ export default {
   },
   mounted() {
     window.addEventListener("mipa-update-available", this.notifyUpdateAvailable);
-    // The browser says "zh-TW" or "en-US"; mipa's languages are "zh-tw" and
-    // "en-us". Any Chinese gets Traditional Chinese, anything else English.
     const wanted = this.$q.cookies.has("locale")
       ? this.$q.cookies.get("locale")
       : this.$q.lang.getLocale();
-    this.lang = /^zh/i.test(wanted || "") ? "zh-tw" : "en-us";
+    if (wanted) {
+      const lower = wanted.toLowerCase();
+      if (lower.startsWith("zh-cn") || lower.startsWith("zh-sg")) {
+        this.lang = "zh-cn";
+      } else if (lower.startsWith("zh")) {
+        this.lang = "zh-tw";
+      } else if (lower.startsWith("es")) {
+        this.lang = "es";
+      } else if (lower.startsWith("ja")) {
+        this.lang = "ja";
+      } else {
+        this.lang = "en-us";
+      }
+    } else {
+      this.lang = "en-us";
+    }
   },
   beforeUnmount() {
     window.removeEventListener("mipa-update-available", this.notifyUpdateAvailable);
@@ -604,11 +620,25 @@ export default {
     lang(lang) {
       this.$i18n.locale = lang;
       // Quasar's own texts (table pagination, date pickers...)
-      const quasarLang =
-        lang == "zh-tw"
-          ? import("quasar/lang/zh-TW.js")
-          : import("quasar/lang/en-US.js");
-      quasarLang.then((pack) => this.$q.lang.set(pack.default));
+      let quasarPromise;
+      switch (lang) {
+        case "zh-tw":
+          quasarPromise = import("quasar/lang/zh-TW.js");
+          break;
+        case "zh-cn":
+          quasarPromise = import("quasar/lang/zh-CN.js");
+          break;
+        case "es":
+          quasarPromise = import("quasar/lang/es.js");
+          break;
+        case "ja":
+          quasarPromise = import("quasar/lang/ja.js");
+          break;
+        default:
+          quasarPromise = import("quasar/lang/en-US.js");
+          break;
+      }
+      quasarPromise.then((pack) => this.$q.lang.set(pack.default));
       this.$q.cookies.set("locale", lang, {
         sameSite: "None",
         secure: true,
