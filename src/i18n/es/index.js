@@ -1093,5 +1093,25 @@ export default {
   "seatUsageCounter": "{used} de {limit} asientos de miembros utilizados",
   "membersAndInvitesCount": "{members} miembros activos · {invites} invitaciones pendientes",
   "freeStakeholderViewersNotice": "Visualizadores de partes interesadas de solo lectura ilimitados incluidos",
-  "seatLimitReachedNotice": "Su organización ha alcanzado su límite de asientos ({limit} miembros). Mejore su nivel o retire invitaciones pendientes para invitar a más colaboradores."
+  "seatLimitReachedNotice": "Su organización ha alcanzado su límite de asientos ({limit} miembros). Mejore su nivel o retire invitaciones pendientes para invitar a más colaboradores.",
+
+  // Public Model Dossier & PDF Export
+  "loadingDossier": "Cargando informe del modelo ejecutivo...",
+  "publicDossierBadge": "Dossier Estratégico Público",
+  "readOnlySandboxNotice": "Modo de simulación de solo lectura para invitados",
+  "shareDossierBtn": "Compartir Informe",
+  "exportPdfBtn": "Imprimir / Exportar PDF",
+  "generatedTimestamp": "Informe Generado",
+  "dossierFactorsMetric": "Factores del Sistema",
+  "dossierActionsMetric": "Acciones Estratégicas",
+  "dossierFeedbackLoopsMetric": "Bucles de Retroalimentación",
+  "dossierMaxLeverageMetric": "Apalancamiento Máximo",
+  "dossierActionsRankTitle": "Intervenciones Estratégicas de Alto Apalancamiento",
+  "rankedByLeverageDesc": "Clasificado por índice de apalancamiento sistémico neto",
+  "dossierSandboxTitle": "Sandbox Interactivo de Sensibilidad y Perturbación",
+  "resetPerturbationsBtn": "Restablecer Líneas Base",
+  "dossierSandboxDesc": "Ajuste los controles deslizantes de perturbación (+/-50%) para realizar pruebas de estrés de la dinámica del sistema en la memoria del cliente sin mutar el modelo de origen.",
+  "dossierFeedbackTitle": "Dinámica de Sistemas Estructural y Arquetipos",
+  "dossierFeedbackDesc": "Se identificaron {reinforcing} bucles de retroalimentación de refuerzo y {balancing} bucles de equilibrio.",
+  "shareLinkCopiedToast": "Enlace del informe público copiado al portapapeles."
 };

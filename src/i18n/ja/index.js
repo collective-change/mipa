@@ -1093,5 +1093,25 @@ export default {
   "seatUsageCounter": "{limit} 枠中 {used} 枠のメンバー枠を使用中",
   "membersAndInvitesCount": "アクティブメンバー {members} 名 · 保留中の招待 {invites} 件",
   "freeStakeholderViewersNotice": "外部ステークホルダー向け無制限の閲覧専用リンク付属",
-  "seatLimitReachedNotice": "ご所属組織の利用枠上限（{limit} 名）に達しました。追加でメンバーを招待するには、プランをアップグレードするか、保留中の招待を取り消してください。"
+  "seatLimitReachedNotice": "ご所属組織の利用枠上限（{limit} 名）に達しました。追加でメンバーを招待するには、プランをアップグレードするか、保留中の招待を取り消してください。",
+
+  // Public Model Dossier & PDF Export
+  "loadingDossier": "エグゼクティブ向けモデルファイルを読み込み中...",
+  "publicDossierBadge": "公開戦略ブリーフ",
+  "readOnlySandboxNotice": "ゲスト専用読み取り専用シミュレーションサンドボックス",
+  "shareDossierBtn": "ファイルを共有",
+  "exportPdfBtn": "印刷 / PDF出力",
+  "generatedTimestamp": "レポート生成日時",
+  "dossierFactorsMetric": "システム要因",
+  "dossierActionsMetric": "戦略的アクション",
+  "dossierFeedbackLoopsMetric": "フィードバックループ",
+  "dossierMaxLeverageMetric": "最高效應比（レバレッジ）",
+  "dossierActionsRankTitle": "高レバレッジ戦略的介入アクション順位",
+  "rankedByLeverageDesc": "総合的システム純レバレッジ（效應比）順",
+  "dossierSandboxTitle": "インタラクティブ感度分析・変動サンドボックス",
+  "resetPerturbationsBtn": "基準値にリセット",
+  "dossierSandboxDesc": "変動スライダー（+/-50%）を動かして、端末のメモリ上で安全にストレステストを実施できます。元のモデルデータは一切変更されません。",
+  "dossierFeedbackTitle": "システム構造ダイナミクスとアーキタイプ診断",
+  "dossierFeedbackDesc": "{reinforcing} 個の自己強化型フライホイールと {balancing} 個の自己調整型ループを検出しました。",
+  "shareLinkCopiedToast": "公開ファイルのリンクをクリップボードにコピーしました。"
 };

@@ -1071,5 +1071,25 @@ export default {
   seatUsageCounter: "已配置 {used} / {limit} 个成员席位",
   membersAndInvitesCount: "{members} 位正式成员 · {invites} 份待回复邀请",
   freeStakeholderViewersNotice: "免费提供不限人数之外部利益相关者只读检视",
-  seatLimitReachedNotice: "您的组织已达到方案席位上限（{limit} 位成员）。请升级方案或撤回待回复邀请，以邀请更多工作伙伴。"
+  seatLimitReachedNotice: "您的组织已达到方案席位上限（{limit} 位成员）。请升级方案或撤回待回复邀请，以邀请更多工作伙伴。",
+
+  // Public Model Dossier & PDF Export
+  loadingDossier: "正在加载高阶战略决策档案...",
+  publicDossierBadge: "公开战略决策档案",
+  readOnlySandboxNotice: "访客只读模拟沙盒",
+  shareDossierBtn: "分享决策档案",
+  exportPdfBtn: "打印 / 导出 PDF",
+  generatedTimestamp: "报告生成时间",
+  dossierFactorsMetric: "系统因素",
+  dossierActionsMetric: "战略行动方案",
+  dossierFeedbackLoopsMetric: "反馈回路",
+  dossierMaxLeverageMetric: "最高效应比",
+  dossierActionsRankTitle: "高效应比战略介入行动排序",
+  rankedByLeverageDesc: "依整体系统净效应比精确排序",
+  dossierSandboxTitle: "互动式灵敏度与情景微扰沙盒",
+  resetPerturbationsBtn: "重置回基准值",
+  dossierSandboxDesc: "拖曳因素微扰滑块（±50%）即可在本地内存进行情景压力测试，观察系统转折点，完全不影响原模型数据。",
+  dossierFeedbackTitle: "系统结构动力学与基模诊断",
+  dossierFeedbackDesc: "检测到 {reinforcing} 个增强型飞轮回路与 {balancing} 个调节型平衡回路。",
+  shareLinkCopiedToast: "公开决策档案链接已复制至剪贴板。"
 };
