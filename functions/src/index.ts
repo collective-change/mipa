@@ -10,3 +10,8 @@ export { draftAction } from "./ai/draftAction";
 export { getAiAllowanceStatus } from "./ai/starterAllowance";
 export { exchangeWeChatCode } from "./wechatAuth";
 export { lemonSqueezyWebhook, getCheckoutUrl, getCustomerPortalUrl } from "./billing/lemonSqueezy";
+export {
+  sendWeeklyStrategicDigest,
+  triggerStrategicDigestNow,
+  unsubscribeWeeklyDigest
+} from "./notifications/weeklyDigest";
