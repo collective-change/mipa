@@ -1113,5 +1113,9 @@ export default {
   "dossierSandboxDesc": "変動スライダー（+/-50%）を動かして、端末のメモリ上で安全にストレステストを実施できます。元のモデルデータは一切変更されません。",
   "dossierFeedbackTitle": "システム構造ダイナミクスとアーキタイプ診断",
   "dossierFeedbackDesc": "{reinforcing} 個の自己強化型フライホイールと {balancing} 個の自己調整型ループを検出しました。",
-  "shareLinkCopiedToast": "公開ファイルのリンクをクリップボードにコピーしました。"
+  "shareLinkCopiedToast": "公開ファイルのリンクをクリップボードにコピーしました。",
+
+  // Starter AI Allowance
+  "aiStarterAllowanceTitle": "スターターAIクレジットが有効です",
+  "aiStarterAllowanceDesc": "10回の無料AIドラフト操作が含まれています（Claude 3.5 Haiku / GPT-4o-mini）。無制限に利用するには、以下から独自のAPIキーを接続してください。"
 };

@@ -1110,5 +1110,9 @@ export default {
   dossierSandboxDesc: "Adjust factor perturbation sliders (+/-50%) to stress-test system dynamics and observe turning points in client memory without mutating the source model.",
   dossierFeedbackTitle: "Structural System Dynamics & Archetypes",
   dossierFeedbackDesc: "Identified {reinforcing} reinforcing flywheels and {balancing} balancing regulatory loops.",
-  shareLinkCopiedToast: "Public dossier link copied to clipboard."
+  shareLinkCopiedToast: "Public dossier link copied to clipboard.",
+
+  // Starter AI Allowance
+  aiStarterAllowanceTitle: "Complimentary Starter AI Active",
+  aiStarterAllowanceDesc: "10 free AI drafting operations included (Claude 3.5 Haiku / GPT-4o-mini). Connect your own API key below anytime for unlimited operations."
 };

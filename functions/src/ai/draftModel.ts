@@ -8,6 +8,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
 import { aiKeyEncryptionKey } from "./keyBox";
 import { loadProvider } from "./aiSettings";
+import { getSystemAiProvider, verifyAndConsumeAiCredit, AllowanceResult } from "./starterAllowance";
 import { adapterFor, ProviderReplyError, Turn, Usage } from "./providers";
 import { SYSTEM_PROMPT, contextText, repairText, ModelContext } from "./prompt";
 import { DraftReply } from "./schema";
@@ -85,11 +86,16 @@ export const draftModel = onCall(
       throw new HttpsError("permission-denied", "Only the model's editors can draft it.");
     }
 
-    const provider = await loadProvider(orgId);
+    let provider = await loadProvider(orgId);
+    let allowance: AllowanceResult | null = null;
     if (!provider) {
-      throw new HttpsError("failed-precondition", "This organization hasn't connected an AI provider.", {
-        reason: "no-provider"
-      });
+      allowance = await verifyAndConsumeAiCredit(db, uid, orgId, request.auth);
+      provider = getSystemAiProvider();
+      if (!provider) {
+        throw new HttpsError("failed-precondition", "This organization hasn't connected an AI provider and no system AI fallback is configured.", {
+          reason: "no-provider"
+        });
+      }
     }
 
     // Load or start the conversation.
@@ -179,6 +185,6 @@ export const draftModel = onCall(
       { merge: true }
     );
 
-    return { draftId: sessionRef.id, reply };
+    return { draftId: sessionRef.id, reply, allowance };
   }
 );

@@ -1091,5 +1091,9 @@ export default {
   dossierSandboxDesc: "拖曳因素微擾滑桿（±50%）即可於本機記憶體進行情境壓力測試，觀察系統轉折點，完全不影響原模型數據。",
   dossierFeedbackTitle: "系統結構動力學與基模診斷",
   dossierFeedbackDesc: "偵測到 {reinforcing} 個增強型飛輪迴路與 {balancing} 個調節型平衡迴路。",
-  shareLinkCopiedToast: "公開決策檔案連結已複製至剪貼簿。"
+  shareLinkCopiedToast: "公開決策檔案連結已複製至剪貼簿。",
+
+  // Starter AI Allowance
+  aiStarterAllowanceTitle: "已啟用先導 AI 免費額度",
+  aiStarterAllowanceDesc: "包含 10 次免費 AI 建模生成額度（由 Claude 3.5 Haiku / GPT-4o-mini 驅動）。您隨時可在下方連接自備 API 金鑰以享有無限使用次數。"
 };
