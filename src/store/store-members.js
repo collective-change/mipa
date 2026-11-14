@@ -13,6 +13,7 @@ import {
   doc,
   query,
   serverTimestamp,
+  updateDoc,
   where
 } from "firebase/firestore";
 import { firebaseAuth, firebaseDb, firebaseFunctions } from "@/boot/firebase";
@@ -64,6 +65,22 @@ const actions = {
       await deleteDoc(doc(firebaseDb, "orgs", orgId, "invitations", invitationId));
     } catch (error) {
       showErrorMessage(t("Something went wrong"), error.message);
+    }
+  },
+
+  async resendInvitation({}, { orgId, invitationId, email }) {
+    try {
+      await updateDoc(doc(firebaseDb, "orgs", orgId, "invitations", invitationId), {
+        lastSentTime: serverTimestamp()
+      });
+      Notify.create({
+        type: "positive",
+        message: t("toastInvitationResent", { email })
+      });
+      return true;
+    } catch (error) {
+      showErrorMessage(t("Something went wrong"), error.message);
+      return false;
     }
   },
 

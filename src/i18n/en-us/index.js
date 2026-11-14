@@ -774,5 +774,14 @@ export default {
   setCompletionPreset: "Set completion",
   sunkenCostLabel: "Incurred cost to date",
   outstandingCostLabel: "Outstanding direct cost",
-  targetDueDate: "Target completion date"
+  targetDueDate: "Target completion date",
+
+  // Role Explanations & Invitation Resend
+  resendInvitation: "Resend",
+  toastInvitationResent: "Invitation re-sent to {email}",
+  roleAdminTooltip: "SuperAdmin: full organization control, member management, AI provider setup, models and calculations.",
+  roleMemberTooltip: "Member: build and edit models, formulas, and actions, run simulations, participate in chats.",
+  roleAdminDesc: "SuperAdmins can invite and remove members, change roles, and configure organization settings and AI providers.",
+  roleMemberDesc: "Members can collaborate on models and factors, propose actions, and run calculations.",
+  roleExplanationsTitle: "Organization Roles & Permissions"
 };
