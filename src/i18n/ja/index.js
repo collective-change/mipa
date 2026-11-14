@@ -1079,5 +1079,19 @@ export default {
   "earlyAccessSuccessDesc": "システム・ダイナミクスによる戦略的意思決定に関心をお寄せいただきありがとうございます。審査の上、受け入れ枠が拡大し次第ご案内をお送りいたします。",
   "earlyAccessSignIn": "既存のアカウントでログイン",
   "earlyAccessSubmitAnother": "別の申請を送信する",
-  "earlyAccessErrorGeneral": "申請を送信できませんでした。通信環境をご確認の上、再度お試しください。"
+  "earlyAccessErrorGeneral": "申請を送信できませんでした。通信環境をご確認の上、再度お試しください。",
+
+  // Workspace Tier Governance & Multi-Seat Meter
+  "tierCommunity": "コミュニティプラン",
+  "tierStarter": "スタータープラン",
+  "tierGrowth": "グロースプラン",
+  "tierPro": "プロフェッショナルプラン",
+  "tierEnterprise": "エンタープライズプラン",
+  "statusActive": "有効",
+  "manageBilling": "お支払い管理ポータル",
+  "upgradeTier": "プランをアップグレード",
+  "seatUsageCounter": "{limit} 枠中 {used} 枠のメンバー枠を使用中",
+  "membersAndInvitesCount": "アクティブメンバー {members} 名 · 保留中の招待 {invites} 件",
+  "freeStakeholderViewersNotice": "外部ステークホルダー向け無制限の閲覧専用リンク付属",
+  "seatLimitReachedNotice": "ご所属組織の利用枠上限（{limit} 名）に達しました。追加でメンバーを招待するには、プランをアップグレードするか、保留中の招待を取り消してください。"
 };

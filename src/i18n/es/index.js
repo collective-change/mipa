@@ -1079,5 +1079,19 @@ export default {
   "earlyAccessSuccessDesc": "Gracias por su interés en el modelado de impacto sistémico. Nuestro equipo revisa las solicitudes semanalmente y le notificará a medida que se abra la capacidad del piloto.",
   "earlyAccessSignIn": "Iniciar sesión con cuenta existente",
   "earlyAccessSubmitAnother": "Enviar otra solicitud",
-  "earlyAccessErrorGeneral": "No se pudo enviar su solicitud. Compruebe su conexión de red e inténtelo de nuevo."
+  "earlyAccessErrorGeneral": "No se pudo enviar su solicitud. Compruebe su conexión de red e inténtelo de nuevo.",
+
+  // Workspace Tier Governance & Multi-Seat Meter
+  "tierCommunity": "Nivel Comunitario",
+  "tierStarter": "Nivel Inicial",
+  "tierGrowth": "Nivel de Crecimiento",
+  "tierPro": "Nivel Profesional",
+  "tierEnterprise": "Nivel Empresarial",
+  "statusActive": "Activo",
+  "manageBilling": "Portal de Facturación",
+  "upgradeTier": "Mejorar Nivel",
+  "seatUsageCounter": "{used} de {limit} asientos de miembros utilizados",
+  "membersAndInvitesCount": "{members} miembros activos · {invites} invitaciones pendientes",
+  "freeStakeholderViewersNotice": "Visualizadores de partes interesadas de solo lectura ilimitados incluidos",
+  "seatLimitReachedNotice": "Su organización ha alcanzado su límite de asientos ({limit} miembros). Mejore su nivel o retire invitaciones pendientes para invitar a más colaboradores."
 };

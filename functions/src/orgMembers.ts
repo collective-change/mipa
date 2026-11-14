@@ -44,6 +44,15 @@ async function orgModelRefs(tx: Transaction, orgId: string) {
   return models.docs.map((d) => d.ref);
 }
 
+export function checkSeatCapacity(usersCount: number, pendingInvitesCount: number, seatLimit: number): { allowed: boolean; remaining: number } {
+  const effectiveLimit = seatLimit > 0 ? seatLimit : 1;
+  const used = usersCount + pendingInvitesCount;
+  return {
+    allowed: used < effectiveLimit,
+    remaining: Math.max(0, effectiveLimit - used)
+  };
+}
+
 /** The signed-in user accepts an invitation addressed to their email. */
 export const acceptInvitation = onCall(async (request) => {
   const auth = requireAuth(request);
@@ -75,6 +84,16 @@ export const acceptInvitation = onCall(async (request) => {
         "This invitation is for a different email address."
       );
     }
+
+    const currentUsers = (org.get("users") as string[]) || [];
+    const seatLimit = Number(org.get("seatLimit")) || 1;
+    if (!currentUsers.includes(auth.uid) && currentUsers.length >= seatLimit) {
+      throw new HttpsError(
+        "failed-precondition",
+        `The organization has reached its seat limit (${seatLimit}). Please ask an administrator to upgrade the workspace tier.`
+      );
+    }
+
     const modelRefs = await orgModelRefs(tx, orgId);
 
     const role: Role = invitation.get("role") === "admin" ? "admin" : "member";
@@ -94,6 +113,58 @@ export const acceptInvitation = onCall(async (request) => {
     tx.delete(invitationRef);
   });
   return { orgId };
+});
+
+/** An administrator invites someone by email, enforcing tier seat limit. */
+export const createInvitation = onCall(async (request) => {
+  const auth = requireAuth(request);
+  const orgId = requireString(request.data?.orgId, "orgId");
+  const email = requireString(request.data?.email, "email").trim().toLowerCase();
+  const role = requireRole(request.data?.role);
+
+  const db = getFirestore();
+  const orgRef = db.doc(`orgs/${orgId}`);
+  const invitationsCol = orgRef.collection("invitations");
+
+  const invitationId = await db.runTransaction(async (tx) => {
+    const org = await tx.get(orgRef);
+    if (!org.exists) {
+      throw new HttpsError("not-found", "Organization does not exist.");
+    }
+    const superAdmins = (org.get("superAdmins") as string[]) || [];
+    if (!superAdmins.includes(auth.uid)) {
+      throw new HttpsError("permission-denied", "Only administrators can invite new members.");
+    }
+
+    const currentUsers = (org.get("users") as string[]) || [];
+    const seatLimit = Number(org.get("seatLimit")) || 1;
+
+    // Check pending invitations
+    const pendingInvites = await tx.get(invitationsCol);
+    const capacity = checkSeatCapacity(currentUsers.length, pendingInvites.docs.length, seatLimit);
+
+    if (!capacity.allowed) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Seat limit (${seatLimit}) reached for this organization tier. Please upgrade your tier or remove inactive members to invite more teammates.`
+      );
+    }
+
+    const newDocRef = invitationsCol.doc();
+    tx.set(newDocRef, {
+      email,
+      role,
+      orgId,
+      orgName: org.get("name") || "",
+      invitedBy: auth.uid,
+      invitedByName: auth.token.name || auth.token.email || "",
+      createTime: FieldValue.serverTimestamp()
+    });
+
+    return newDocRef.id;
+  });
+
+  return { success: true, invitationId };
 });
 
 /**

@@ -4,12 +4,90 @@
       <div class="text-h5">{{ $t("Members") }}</div>
       <div v-if="currentOrg" class="text-subtitle1 text-grey-8 q-mb-md">{{ currentOrg.name }}</div>
 
+      <!-- Workspace Tier & Seat Capacity Meter -->
+      <q-card flat bordered class="q-mb-lg bg-grey-1" data-test="seat-usage-card">
+        <q-card-section class="q-pb-sm">
+          <div class="row items-center justify-between no-wrap">
+            <div class="row items-center q-gutter-sm">
+              <q-avatar size="36px" color="blue-1" text-color="primary" icon="workspace_premium" />
+              <div>
+                <div class="text-subtitle1 text-weight-bold row items-center q-gutter-xs">
+                  <span>{{ tierDisplayTitle }}</span>
+                  <q-badge
+                    :color="currentOrg && currentOrg.subscriptionStatus === 'active' ? 'positive' : 'grey-7'"
+                    class="q-ml-xs text-caption"
+                  >
+                    {{ currentOrg && currentOrg.subscriptionStatus === 'active' ? $t("statusActive") : $t("tierCommunity") }}
+                  </q-badge>
+                </div>
+                <div class="text-caption text-grey-8">
+                  {{ seatsUsageText }}
+                </div>
+              </div>
+            </div>
+
+            <div class="row items-center q-gutter-xs">
+              <q-btn
+                v-if="isAdmin && currentOrg && currentOrg.customerPortalUrl"
+                flat
+                dense
+                no-caps
+                color="primary"
+                icon="credit_card"
+                :label="$t('manageBilling')"
+                :href="currentOrg.customerPortalUrl"
+                target="_blank"
+                rel="noopener"
+              />
+              <q-btn
+                v-if="isAdmin && tierKey !== 'enterprise'"
+                unelevated
+                dense
+                no-caps
+                color="primary"
+                class="q-px-sm"
+                icon="upgrade"
+                :label="$t('upgradeTier')"
+                :loading="upgrading"
+                @click="onUpgradeClick"
+              />
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none q-pb-sm">
+          <q-linear-progress
+            :value="seatUsageRatio"
+            :color="seatMeterColor"
+            size="8px"
+            rounded
+            class="q-my-xs"
+          />
+          <div class="row items-center justify-between text-caption text-grey-7 q-mt-xs">
+            <span>{{ $t("membersAndInvitesCount", { members: currentOrgUsers.length, invites: orgInvitations.length }) }}</span>
+            <span class="text-caption text-primary">
+              <q-icon name="visibility" size="14px" class="q-mr-xs" />
+              {{ $t("freeStakeholderViewersNotice") }}
+            </span>
+          </div>
+        </q-card-section>
+      </q-card>
+
+      <!-- Member Invitation Section (Admins only) -->
       <q-card v-if="isAdmin" flat bordered class="q-mb-lg">
         <q-card-section>
           <div class="text-subtitle1 text-weight-medium">{{ $t("Invite someone") }}</div>
           <div class="text-body2 text-grey-8">{{ $t("inviteHelp") }}</div>
         </q-card-section>
+
         <q-card-section class="q-pt-none">
+          <q-banner v-if="isSeatFull" dense rounded class="bg-amber-1 text-grey-9 q-mb-md text-caption">
+            <template v-slot:avatar>
+              <q-icon name="warning" color="warning" />
+            </template>
+            {{ $t("seatLimitReachedNotice", { limit: seatLimit }) }}
+          </q-banner>
+
           <q-form @submit.prevent="invite" class="row q-col-gutter-sm items-start">
             <q-input
               v-model="inviteEmail"
@@ -20,6 +98,7 @@
               type="email"
               :label="$t('Email')"
               lazy-rules
+              :disable="isSeatFull"
               :rules="[(val) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val || '') || $t('Please enter a valid email address.')]"
             />
             <q-select
@@ -31,6 +110,7 @@
               map-options
               :options="roleOptions"
               :label="$t('Role')"
+              :disable="isSeatFull"
             >
               <template v-slot:append>
                 <q-icon name="info_outline" class="cursor-pointer" size="18px">
@@ -41,10 +121,20 @@
               </template>
             </q-select>
             <div class="col-6 col-sm-auto">
-              <q-btn type="submit" unelevated no-caps color="primary" icon="send" :label="$t('Invite')" :loading="inviting" />
+              <q-btn
+                type="submit"
+                unelevated
+                no-caps
+                color="primary"
+                icon="send"
+                :label="$t('Invite')"
+                :loading="inviting"
+                :disable="isSeatFull"
+              />
             </div>
           </q-form>
         </q-card-section>
+
         <template v-if="orgInvitations.length">
           <q-separator />
           <q-list dense>
@@ -96,6 +186,7 @@
         </template>
       </q-card>
 
+      <!-- Active Members List -->
       <q-list bordered separator class="rounded-borders">
         <q-item v-for="member in sortedMembers" :key="member.id">
           <q-item-section avatar>
@@ -159,6 +250,7 @@
 
 <script>
 import { mapState, mapGetters, mapActions } from "vuex";
+import { requestCheckoutUrl } from "@/utils/billing";
 
 export default {
   data() {
@@ -166,6 +258,7 @@ export default {
       inviteEmail: "",
       inviteRole: "member",
       inviting: false,
+      upgrading: false,
       resendingId: null
     };
   },
@@ -182,6 +275,45 @@ export default {
     },
     isAdmin() {
       return this.adminIds.includes(this.userId);
+    },
+    seatLimit() {
+      return (this.currentOrg && Number(this.currentOrg.seatLimit)) || 1;
+    },
+    tierKey() {
+      return (this.currentOrg && this.currentOrg.subscriptionTier) || "community";
+    },
+    tierDisplayTitle() {
+      const titles = {
+        community: this.$t("tierCommunity"),
+        starter: this.$t("tierStarter"),
+        growth: this.$t("tierGrowth"),
+        pro: this.$t("tierPro"),
+        enterprise: this.$t("tierEnterprise")
+      };
+      return titles[this.tierKey] || this.$t("tierCommunity");
+    },
+    totalCommittedSeats() {
+      const activeCount = (this.currentOrgUsers && this.currentOrgUsers.length) || 0;
+      const inviteCount = (this.orgInvitations && this.orgInvitations.length) || 0;
+      return activeCount + inviteCount;
+    },
+    seatsUsageText() {
+      return this.$t("seatUsageCounter", {
+        used: this.totalCommittedSeats,
+        limit: this.seatLimit
+      });
+    },
+    seatUsageRatio() {
+      if (!this.seatLimit) return 1;
+      return Math.min(1, this.totalCommittedSeats / this.seatLimit);
+    },
+    seatMeterColor() {
+      if (this.seatUsageRatio >= 1) return "negative";
+      if (this.seatUsageRatio >= 0.8) return "warning";
+      return "positive";
+    },
+    isSeatFull() {
+      return this.totalCommittedSeats >= this.seatLimit;
     },
     roleOptions() {
       return [
@@ -205,6 +337,28 @@ export default {
       "bindOrgInvitations",
       "unbindOrgInvitations"
     ]),
+    async onUpgradeClick() {
+      this.upgrading = true;
+      try {
+        const nextTier = this.tierKey === "community" ? "starter" : this.tierKey === "starter" ? "growth" : "pro";
+        const result = await requestCheckoutUrl({
+          orgId: this.orgId,
+          tier: nextTier,
+          billingCycle: "monthly"
+        });
+        if (result && result.checkoutUrl) {
+          window.open(result.checkoutUrl, "_blank");
+        }
+      } catch (err) {
+        console.error("Upgrade checkout error:", err);
+        this.$q.notify({
+          type: "negative",
+          message: err.message || this.$t("Something went wrong")
+        });
+      } finally {
+        this.upgrading = false;
+      }
+    },
     async resend(invitation) {
       this.resendingId = invitation.id;
       await this.resendInvitation({

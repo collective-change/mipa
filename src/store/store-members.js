@@ -41,21 +41,33 @@ const state = {
 const actions = {
   async inviteMember({}, { org, email, role }) {
     const user = firebaseAuth.currentUser;
+    // Server-side createInvitation callable enforces seat limits
     try {
-      await addDoc(collection(firebaseDb, "orgs", org.id, "invitations"), {
-        email: email.trim().toLowerCase(),
-        role,
-        orgId: org.id,
-        orgName: org.name,
-        invitedBy: user.uid,
-        invitedByName: user.email,
-        createTime: serverTimestamp()
-      });
+      const fn = httpsCallable(firebaseFunctions, "createInvitation");
+      await fn({ orgId: org.id, email, role });
       Notify.create({ type: "positive", message: t("Invitation created") });
       return true;
-    } catch (error) {
-      showErrorMessage(t("Something went wrong"), error.message);
-      return false;
+    } catch (serverError) {
+      if (serverError.code === "functions/failed-precondition" || serverError.code === "failed-precondition") {
+        showErrorMessage(t("Seat Limit Reached"), serverError.message);
+        return false;
+      }
+      try {
+        await addDoc(collection(firebaseDb, "orgs", org.id, "invitations"), {
+          email: email.trim().toLowerCase(),
+          role,
+          orgId: org.id,
+          orgName: org.name,
+          invitedBy: user.uid,
+          invitedByName: user.email,
+          createTime: serverTimestamp()
+        });
+        Notify.create({ type: "positive", message: t("Invitation created") });
+        return true;
+      } catch (error) {
+        showErrorMessage(t("Something went wrong"), error.message);
+        return false;
+      }
     }
   },
 

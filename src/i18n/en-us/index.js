@@ -1076,5 +1076,19 @@ export default {
   earlyAccessSuccessDesc: "Thank you for your interest in systemic impact modeling. Our team reviews applications weekly and will notify you as pilot capacity expands.",
   earlyAccessSignIn: "Sign In to Existing Account",
   earlyAccessSubmitAnother: "Submit Another Request",
-  earlyAccessErrorGeneral: "Unable to submit your application. Please check your network connection and try again."
+  earlyAccessErrorGeneral: "Unable to submit your application. Please check your network connection and try again.",
+
+  // Workspace Tier Governance & Multi-Seat Meter
+  tierCommunity: "Community Tier",
+  tierStarter: "Starter Tier",
+  tierGrowth: "Growth Tier",
+  tierPro: "Pro Tier",
+  tierEnterprise: "Enterprise Tier",
+  statusActive: "Active",
+  manageBilling: "Billing Portal",
+  upgradeTier: "Upgrade Tier",
+  seatUsageCounter: "{used} of {limit} member seats committed",
+  membersAndInvitesCount: "{members} active members · {invites} pending invitations",
+  freeStakeholderViewersNotice: "Unlimited read-only stakeholder viewers included",
+  seatLimitReachedNotice: "Your organization has reached its seat limit ({limit} members). Upgrade your tier or withdraw pending invitations to invite more teammates."
 };

@@ -1057,5 +1057,19 @@ export default {
   earlyAccessSuccessDesc: "感谢您对系统动力学战略决策的关注。团队每周审阅申请，并在先导批次开放时立即以邮件通知您。",
   earlyAccessSignIn: "登录现有账号",
   earlyAccessSubmitAnother: "填写另一份申请",
-  earlyAccessErrorGeneral: "无法提交申请，请检查网络连接后重试。"
+  earlyAccessErrorGeneral: "无法提交申请，请检查网络连接后重试。",
+
+  // Workspace Tier Governance & Multi-Seat Meter
+  tierCommunity: "公益普及方案",
+  tierStarter: "启航先锋方案",
+  tierGrowth: "成长深耕方案",
+  tierPro: "专业旗舰方案",
+  tierEnterprise: "组织旗舰定制方案",
+  statusActive: "有效生效中",
+  manageBilling: "账务管理入口",
+  upgradeTier: "升级方案",
+  seatUsageCounter: "已配置 {used} / {limit} 个成员席位",
+  membersAndInvitesCount: "{members} 位正式成员 · {invites} 份待回复邀请",
+  freeStakeholderViewersNotice: "免费提供不限人数之外部利益相关者只读检视",
+  seatLimitReachedNotice: "您的组织已达到方案席位上限（{limit} 位成员）。请升级方案或撤回待回复邀请，以邀请更多工作伙伴。"
 };
