@@ -72,7 +72,7 @@ const actions = {
     };
     setDoc(doc(firebaseDb, "models", payload.modelId), model)
       .then(function(docRef) {
-        //Notify.create("Model added! ");
+        //Notify.create(i18n.global.t("toastModelAdded"));
         dispatch("createInitialNodes", {
           modelId: payload.modelId,
           currency: payload.currency
@@ -197,7 +197,7 @@ const actions = {
     let modelRef = doc(firebaseDb, "models", modelId);
     try {
       await setDoc(modelRef, payload.updates, { merge: true });
-      if (!payload.silent) Notify.create("Model updated!");
+      if (!payload.silent) Notify.create(i18n.global.t("toastModelUpdated"));
     } catch (error) {
       console.error("Error updating model", error.message);
       showErrorMessage("Error updating model", error.message);
@@ -210,7 +210,7 @@ const actions = {
     let modelRef = doc(firebaseDb, "models", modelId);
     deleteDoc(modelRef)
       .then(function() {
-        Notify.create("Model deleted!");
+        Notify.create(i18n.global.t("toastModelDeleted"));
       })
       .catch(function(error) {
         showErrorMessage("Error deleting model", error.message);
@@ -262,7 +262,7 @@ const actions = {
       .then(function(docRef) {
         //add in default sysFormula
         //docRef.update({ sysFormula: `delay( ${docRef.id} , dt, 0)` });
-        Notify.create("Node added! ");
+        Notify.create(i18n.global.t("toastFactorAdded"));
         if (payload.newNodeRole == "influencer") {
           dispatch("addLink", {
             modelId: payload.modelId,
@@ -301,7 +301,7 @@ const actions = {
       .then(function() {
         //let keys = Object.keys(payload.updates);
         Notify.create(
-          payload.successNotice ? payload.successNotice : "Node updated!"
+          payload.successNotice ? payload.successNotice : t("toastFactorSaved")
         );
         //if existence of latestValue changed, then update this nodes'
         //classification in its influencees
@@ -334,7 +334,7 @@ const actions = {
     let nodeRef = doc(firebaseDb, "models", modelId, "nodes", node.id);
     deleteDoc(nodeRef)
       .then(function() {
-        Notify.create("Node deleted!");
+        Notify.create(i18n.global.t("toastFactorDeleted"));
       })
       .catch(function(error) {
         showErrorMessage("Error deleting node", error.message);
@@ -374,7 +374,7 @@ const actions = {
     batch
       .commit()
       .then(function() {
-        Notify.create("Link added!");
+        Notify.create(i18n.global.t("toastLinkAdded"));
         //update class of source and target nodes
         dispatch("reDetermineNodeClass", {
           modelId: payload.modelId,
@@ -409,7 +409,7 @@ const actions = {
         relaxedLinks: arrayUnion(relaxedLink)
       });
       success = true;
-      Notify.create("Link relaxed!");
+      Notify.create(i18n.global.t("toastLinkLoosened"));
     } catch (error) {
       showErrorMessage("Error relaxing link", error.message);
     }
@@ -432,7 +432,7 @@ const actions = {
       const res = await updateDoc(modelRef, {
         relaxedLinks: tempRelaxedLinks
       });
-      Notify.create("Link relaxed more!");
+      Notify.create(i18n.global.t("toastLinkLoosenedMore"));
     } catch (error) {
       showErrorMessage("Error relaxing link", error.message);
     }
@@ -454,7 +454,7 @@ const actions = {
       const res = await updateDoc(modelRef, {
         relaxedLinks: tempRelaxedLinks
       });
-      Notify.create("Link force restored!");
+      Notify.create(i18n.global.t("toastLinkTightened"));
     } catch (error) {
       showErrorMessage("Error restoring link force", error.message);
     }
@@ -481,7 +481,7 @@ const actions = {
     batch
       .commit()
       .then(function() {
-        Notify.create("Link deleted!");
+        Notify.create(i18n.global.t("toastLinkDeleted"));
         //update class of influencer and influencee nodes
         dispatch("reDetermineNodeClass", {
           modelId: payload.modelId,
@@ -556,7 +556,7 @@ const actions = {
     dispatch("updateClassifiedInfluencersOf", {
       modelId: payload.modelId,
       influenceeIds: influenceeIds,
-      successNotice: `Reclassified "${node.name}" in its influencees.`,
+      successNotice: t("toastFactorSaved"),
       errorTitle: `Error reclassifying "${node.name}" in its influencees.`
     });
   },
@@ -608,7 +608,7 @@ const actions = {
         nodeGroups: arrayUnion(nodeGroup)
       });
       success = true;
-      Notify.create("Node group created!");
+      Notify.create(i18n.global.t("toastGroupCreated"));
     } catch (error) {
       showErrorMessage("Error creating node group", error.message);
     }
@@ -633,9 +633,9 @@ const actions = {
         }
         t.update(modelRef, { nodeGroups: nodeGroups });
       });
-      Notify.create("Node added to group");
+      Notify.create(i18n.global.t("toastAddedToGroup"));
     } catch (e) {
-      Notify.create("Failed to add node to group");
+      Notify.create(i18n.global.t("toastAddToGroupFailed"));
       console.log("Add node to group transaction failure:", e);
     }
   },
@@ -659,9 +659,9 @@ const actions = {
         }
         t.update(modelRef, { nodeGroups: nodeGroups });
       });
-      Notify.create("Node removed from group");
+      Notify.create(i18n.global.t("toastRemovedFromGroup"));
     } catch (e) {
-      Notify.create("Failed to frmove node from group");
+      Notify.create(i18n.global.t("toastRemoveFromGroupFailed"));
       console.log("removeNodeFromGroup transaction failure:", e);
     }
   },
@@ -675,9 +675,9 @@ const actions = {
         nodeGroups = nodeGroups.filter(group => group.id != nodeGroupId);
         t.update(modelRef, { nodeGroups: nodeGroups });
       });
-      Notify.create("Group disbanded");
+      Notify.create(i18n.global.t("toastUngrouped"));
     } catch (e) {
-      Notify.create("Failed disband group");
+      Notify.create(i18n.global.t("toastUngroupFailed"));
       console.log("disbandNodeGroup transaction failure:", e);
     }
   },
@@ -711,7 +711,7 @@ const actions = {
       })
     )
       .then(function() {
-        Notify.create("Nodes updated!");
+        Notify.create(i18n.global.t("toastFactorsUpdated"));
       })
       .catch(function(error) {
         console.error("Error updating nodes", error.message);

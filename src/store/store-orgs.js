@@ -14,6 +14,7 @@ import {
 import { firestoreAction } from "./firestore-bind";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { slugify } from "@/utils/util-slugify";
+import { i18n } from "@/boot/i18n";
 
 const state = {
   currentOrg: null,
@@ -37,7 +38,7 @@ const actions = {
       .then(function() {
         let keys = Object.keys(payload.updates);
         //console.log("keys: ", keys);
-        Notify.create("Organization updated!");
+        Notify.create(i18n.global.t("toastOrgUpdated"));
       })
       .catch(function(error) {
         showErrorMessage("Error updating organization", error.message);
@@ -47,7 +48,7 @@ const actions = {
     //let userId = firebaseAuth.currentUser.uid;
     await deleteDoc(doc(firebaseDb, "orgs", orgId))
       .then(function() {
-        Notify.create("Org deleted!");
+        Notify.create(i18n.global.t("toastOrgDeleted"));
       })
       .catch(function(error) {
         showErrorMessage("Error deleting organization", error.message);
@@ -76,7 +77,7 @@ const actions = {
           { orgId: docRef.id, modelId: docRef.id, currency: org.currency },
           { root: true }
         );
-        Notify.create("Organization added!");
+        Notify.create(i18n.global.t("toastOrgAdded"));
       })
       .catch(function(error) {
         showErrorMessage("Error adding organization", error.message);

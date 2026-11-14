@@ -19,7 +19,7 @@
             <template v-slot:after v-if="embedded">
               <q-btn
                 dense
-                label="details"
+                :label="$t('Details')"
                 color="primary"
                 @click="
                   $router.push(
@@ -36,10 +36,10 @@
         >
           <div class="q-px-xs q-gutter-xs">
             <q-chip outline color="primary"
-              >Leverage {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip
+              >{{ $t("Leverage") }} {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip
             >
             <q-chip outline color="primary"
-              >Total ROI {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip
+              >{{ $t("totalRoi") }} {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip
             >
           </div>
         </div>
@@ -50,27 +50,31 @@
           <div class="row q-pa-sm q-gutter-sm">
             <calculator-ui
               calculationType="uiAction"
-              buttonLabel="Recalculate"
+              :buttonLabel="$t('Recalculate')"
+              unelevated
+              no-caps
               :uiAction="{ ...uiAction, saveFullResults, saveResultsOnDevice }"
             />
 
             <q-checkbox
               v-model="saveResultsOnDevice"
-              label="Save results for charting on this device"
+              :label="$t('Save results for charts on this device')"
               @update:model-value="
                 setSaveResultsOnDeviceForAction(action.id, saveResultsOnDevice)
               "
             />
             <q-checkbox
               v-model="saveFullResults"
-              label="Save full results for export (next run only)"
+              :label="$t('Save full results for download (next calculation only)')"
             />
 
             <export-calc-results
               data-source="resultsOfAction"
               :actionId="uiAction.id"
               :actionTitle="uiAction.title"
-              buttonLabel="Export results TSV"
+              :buttonLabel="$t('Download results')"
+              flat
+              no-caps
             />
             <q-btn-group v-if="uiAction.actionMchState.value == 'initiating'">
               <q-btn
@@ -189,15 +193,15 @@
         >
           <q-input v-model="notes" :label="$t('Notes')" filled autogrow />
           <q-card-actions align="right">
-            <q-btn label="Save" color="primary" type="submit" />
+            <q-btn :label="$t('Save')" color="primary" type="submit" unelevated no-caps />
           </q-card-actions>
 
-          <div class="text-h6 q-mt-md">Impact estimates</div>
+          <div class="text-h6 q-mt-md">{{ $t("Impact estimates") }}</div>
           <!--
           <div class="q-gutter-sm">
             <q-checkbox
               v-model="useSimpleEstimateMethod"
-              label="Use simple method"
+              :label="$t('Use a simple estimate')"
             />
           </div>
 
@@ -232,7 +236,7 @@
           <impacts v-else /> -->
           <impacts />
 
-          <div class="text-h6 q-mt-md">Action costs and progress</div>
+          <div class="text-h6 q-mt-md">{{ $t("Costs and progress") }}</div>
           <div class="row q-gutter-md items-start">
             <q-select
               v-model="effortCostPerHrType"
@@ -327,20 +331,20 @@
             />
           </div>
           <q-card-actions align="right">
-            <q-btn label="Save" color="primary" type="submit" />
+            <q-btn :label="$t('Save')" color="primary" type="submit" unelevated no-caps />
           </q-card-actions>
         </div>
 
         <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
           <!-- middle column -->
-          <div class="text-h6">Relationships</div>
+          <div class="text-h6">{{ $t("Related actions") }}</div>
           <div class="q-pa-sm q-gutter-sm">
             <action-relationships></action-relationships>
           </div>
-          <div class="text-h6">Computed</div>
+          <div class="text-h6">{{ $t("Calculated results") }}</div>
           <q-list bordered separator class="rounded-borders">
             <q-expansion-item
-              label="Impacts from related actions"
+              :label="$t('Impacts from related actions')"
               header-class="text-weight-medium"
             >
               <simpleCostsAndImpacts
@@ -352,7 +356,7 @@
               </simpleCostsAndImpacts>
             </q-expansion-item>
             <q-expansion-item
-              label="Aggregated results"
+              :label="$t('Combined results')"
               header-class="text-weight-medium"
             >
               <q-markup-table flat separator="none">
@@ -445,15 +449,15 @@
         </div>
         <div v-bind:class="{ 'col-6 col-md-3': !embedded, 'col-12': embedded }">
           <select-user
-            label="Responsible"
+            :label="$t('Responsible')"
             v-model="uiAction.responsiblePerson"
           />
           <select-user
-            label="Accountable"
+            :label="$t('Accountable')"
             v-model="uiAction.accountablePerson"
           />
           <q-card-actions align="right">
-            <q-btn label="Save" color="primary" type="submit" />
+            <q-btn :label="$t('Save')" color="primary" type="submit" unelevated no-caps />
           </q-card-actions>
           <div class="text-h6">Chat</div>
           <chat
@@ -520,11 +524,11 @@ export default {
       saveResultsOnDevice: false,
       effortCostPerHrTypeOptions: [
         {
-          label: "use average effort cost per hour",
+          label: this.$t("Use the organization's hourly cost of work"),
           value: "use_average",
         },
         {
-          label: "use custom effort cost per hour",
+          label: this.$t("Use a different hourly cost"),
           value: "use_custom",
         },
       ],

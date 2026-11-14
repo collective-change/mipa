@@ -119,7 +119,7 @@ export default {
       .attr("text-anchor", "end")
       .attr("x", width)
       .attr("y", height + 40)
-      .text("Outstanding direct effort hrs");
+      .text(this.$t("Remaining work hours"));
 
     // Add Y axis
     var y = d3
@@ -137,7 +137,7 @@ export default {
       .attr("text-anchor", "middle")
       .attr("x", 0)
       .attr("y", -20)
-      .text("Leverage");
+      .text(this.$t("Leverage"));
     // end initialize axis
 
     this.updateActionsChart();

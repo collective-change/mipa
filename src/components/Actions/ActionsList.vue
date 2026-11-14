@@ -9,6 +9,7 @@
       :loading="loading"
       v-model:pagination="pagination"
       :rows-per-page-options="[10, 20, 50, 0]"
+      :rows-per-page-label="$t('Records per page')"
       binary-state-sort
       @row-click="onRowClick"
     >
@@ -18,29 +19,35 @@
         <div class="row q-gutter-sm">
           <q-btn
             color="primary"
+            icon="add"
+            unelevated
+            no-caps
             :disable="loading"
-            :label="$t('Add')"
+            :label="$t('Add action')"
             @click="showAddAction = true"
           />
           <calculator-ui
             calculationType="actions"
             :buttonLabel="$t('Recalculate')"
+            icon="calculate"
+            outline
+            no-caps
           />
         </div>
         <div class="row q-gutter-sm">
           <select-action-states
             class="q-pl-sm"
-            label="States"
+            :label="$t('States')"
             v-model="actionStatesToSearch"
           />
           <select-user
             class="q-pl-sm"
-            label="Responsible"
+            :label="$t('Responsible')"
             v-model="responsiblePersonToSearch"
           />
           <select-user
             class="q-pl-sm"
-            label="Accountable"
+            :label="$t('Accountable')"
             v-model="accountablePersonToSearch"
           />
           <q-input
@@ -49,12 +56,45 @@
             color="primary"
             v-model="filter"
             clearable
+            :placeholder="$t('Search actions')"
             class="q-pl-sm"
           >
             <template v-slot:append>
               <q-icon name="search" />
             </template>
           </q-input>
+        </div>
+      </template>
+      <template v-slot:header-cell="props">
+        <q-th :props="props">
+          {{ props.col.label }}
+          <q-icon
+            v-if="props.col.help"
+            name="help_outline"
+            size="xs"
+            color="grey-6"
+            class="q-ml-xs"
+          >
+            <q-tooltip max-width="280px">{{ $t(props.col.help) }}</q-tooltip>
+          </q-icon>
+        </q-th>
+      </template>
+      <template v-slot:no-data>
+        <div class="full-width column items-center q-pa-lg text-center">
+          <q-icon name="wb_incandescent" color="primary" size="48px" class="flip-vertical" />
+          <div class="text-subtitle1 q-mt-sm">{{ $t("noActionsTitle") }}</div>
+          <div class="text-body2 text-grey-8 q-mt-xs" style="max-width: 520px">
+            {{ $t("noActionsText") }}
+          </div>
+          <q-btn
+            class="q-mt-md"
+            color="primary"
+            icon="add"
+            unelevated
+            no-caps
+            :label="$t('Add an action')"
+            @click="showAddAction = true"
+          />
         </div>
       </template>
     </q-table>
@@ -127,6 +167,7 @@ export default {
       let columns = [
         {
           name: "actionLeverage",
+          help: "helpLeverage",
           required: true,
           align: "right",
           label: this.$t("Leverage"),
@@ -137,6 +178,7 @@ export default {
         },
         {
           name: "state",
+          help: "helpState",
           align: "center",
           label: this.$t("State"),
           field: "actionMchState",
@@ -155,6 +197,7 @@ export default {
         },
         {
           name: "responsible-accountable",
+          help: "helpResponsibleAccountable",
           required: true,
           label: this.$t("Responsible, accountable"),
           align: "left",
@@ -180,6 +223,7 @@ export default {
         },*/
         {
           name: "benefit",
+          help: "helpBenefit",
           align: "right",
           label: this.$t("marginalTotalBenefitNpv"),
           field: "marginalTotalBenefitNpv",
@@ -188,6 +232,7 @@ export default {
         },
         {
           name: "cost",
+          help: "helpCost",
           align: "right",
           label: this.$t("marginalTotalCostNpv"),
           field: "marginalTotalCostNpv",
@@ -196,6 +241,7 @@ export default {
         },
         {
           name: "netBenefit",
+          help: "helpNetBenefit",
           align: "right",
           label: this.$t("marginalNetTotalBenefitNpv"),
           field: "marginalNetTotalBenefitNpv",
@@ -204,6 +250,7 @@ export default {
         },
         {
           name: "outstandingDirectCost",
+          help: "helpRemainingCost",
           align: "right",
           label: this.$t("outstandingDirectCost"),
           field: "outstandingDirectCost",
@@ -212,6 +259,7 @@ export default {
         },
         {
           name: "totalRoi",
+          help: "helpRoi",
           required: true,
           align: "right",
           label: this.$t("totalRoi"),
@@ -222,6 +270,7 @@ export default {
         },
         {
           name: "effortCompletionRate",
+          help: "helpWorkDone",
           align: "right",
           label: this.$t("effortCompletionPercentage"),
           field: "effortCompletionPercentage",
@@ -231,6 +280,7 @@ export default {
         },
         {
           name: "relationships",
+          help: "helpRelated",
           align: "left",
           label: this.$t("relationships"),
           field: "childrenIds",

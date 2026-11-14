@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { firestoreAction } from "./firestore-bind";
 import { showErrorMessage } from "@/utils/util-show-error-message";
+import { i18n } from "@/boot/i18n";
 
 const state = {
   currentAction: null,
@@ -75,7 +76,7 @@ const actions = {
         let keys = Object.keys(payload.updates);
         //console.log("keys: ", keys);
         if (!(keys.includes("completed") && keys.length == 1))
-          Notify.create("Action updated!");
+          Notify.create(i18n.global.t("toastActionUpdated"));
       })
       .catch(function(error) {
         showErrorMessage("Error updating action", error.message);
@@ -138,7 +139,7 @@ const actions = {
             batchedWrites = 0;
             batch = writeBatch(firebaseDb);
             console.log("action results updated");
-            Notify.create("Action results updated!");
+            Notify.create(i18n.global.t("toastActionResults"));
           })
           .catch(function(error) {
             showErrorMessage("Error updating actions results", error.message);
@@ -151,7 +152,7 @@ const actions = {
     //let userId = firebaseAuth.currentUser.uid;
     deleteDoc(doc(firebaseDb, "actions", actionId))
       .then(function() {
-        Notify.create("Action deleted!");
+        Notify.create(i18n.global.t("toastActionDeleted"));
       })
       .catch(function(error) {
         showErrorMessage("Error removing action", error.message);
@@ -171,7 +172,7 @@ const actions = {
 
     addDoc(collection(firebaseDb, "actions"), action)
       .then(function(docRef) {
-        Notify.create("Action added!");
+        Notify.create(i18n.global.t("toastActionAdded"));
         dispatch("ui/setSelectedActionId", docRef.id, { root: true });
       })
       .catch(function(error) {
@@ -472,7 +473,7 @@ async function addNestingRelationship(parentId, childId) {
       t.update(childActionRef, {
         parentActionId: parentId
       });
-      Notify.create("Relationship added!");
+      Notify.create(i18n.global.t("toastRelationshipAdded"));
     });
   } catch (error) {
     console.log("Transaction failure:", error);
@@ -501,7 +502,7 @@ async function addBlockingRelationship(blockerId, blockeeId) {
       t.update(blockeeActionRef, {
         blockerActionIds: arrayUnion(blockerId)
       });
-      Notify.create("Relationship added!");
+      Notify.create(i18n.global.t("toastRelationshipAdded"));
     });
   } catch (error) {
     console.log("Transaction failure:", error);
@@ -520,7 +521,7 @@ async function deleteNestingRelationship(parentId, childId) {
       t.update(childActionRef, {
         parentActionId: deleteField()
       });
-      Notify.create("Relationship removed!");
+      Notify.create(i18n.global.t("toastRelationshipRemoved"));
     });
   } catch (error) {
     console.log("Transaction failure:", error);
@@ -539,7 +540,7 @@ async function deleteBlockingRelationship(blockerId, blockeeId) {
       t.update(blockeeActionRef, {
         blockerActionIds: arrayRemove(blockerId)
       });
-      Notify.create("Relationship removed!");
+      Notify.create(i18n.global.t("toastRelationshipRemoved"));
     });
   } catch (error) {
     console.log("Transaction failure:", error);

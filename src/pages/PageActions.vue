@@ -13,7 +13,13 @@
         </div>
         -->
         <div class="col-12 col-md-8">
-          <actions-chart></actions-chart>
+          <actions-chart v-if="hasChartableActions"></actions-chart>
+          <q-banner v-else class="bg-blue-1 q-mb-md" rounded>
+            <template v-slot:avatar>
+              <q-icon name="scatter_plot" color="primary" />
+            </template>
+            {{ $t("actionsChartHint") }}
+          </q-banner>
           <actions-list :options="actionsListOptions"></actions-list>
           <!-- <pre>{{ actions}}</pre> -->
         </div>
@@ -56,6 +62,12 @@ export default {
     };
   },
   computed: {
+    // The chart plots actions with a positive, finite leverage.
+    hasChartableActions() {
+      return (this.matchingActions || []).some(
+        (a) => a.actionLeverage > 0 && isFinite(a.actionLeverage)
+      );
+    },
     ...mapState("actions", ["matchingActions"]),
     ...mapState("ui", ["selectedActionId"]),
     ...mapState("uiAction", ["uiActionChanged"]),
