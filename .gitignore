@@ -41,3 +41,10 @@ ui-debug.log
 # Local developer backlog
 docs/BACKLOG.md
 docs/BACKLOG*.md
+
+# Local service operations - not part of the product.
+.agents/skills/
+.agents/rules/ops-private.md
+scripts/mipa-bridge.js
+scripts/mipa-mcp-config.json
+
