@@ -15,6 +15,11 @@ const routes = [
       { path: "/auth", component: () => import("@/pages/PageAuth.vue") },
       { path: "/privacy", component: () => import("@/pages/PagePrivacy.vue") },
       {
+        path: "/m/:modelId",
+        name: "public-dossier",
+        component: () => import("@/pages/PageModelDossier.vue")
+      },
+      {
         path: "/placeholder",
         component: () => import("@/pages/PagePlaceholder.vue")
       },

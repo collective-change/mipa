@@ -1090,5 +1090,25 @@ export default {
   seatUsageCounter: "{used} of {limit} member seats committed",
   membersAndInvitesCount: "{members} active members · {invites} pending invitations",
   freeStakeholderViewersNotice: "Unlimited read-only stakeholder viewers included",
-  seatLimitReachedNotice: "Your organization has reached its seat limit ({limit} members). Upgrade your tier or withdraw pending invitations to invite more teammates."
+  seatLimitReachedNotice: "Your organization has reached its seat limit ({limit} members). Upgrade your tier or withdraw pending invitations to invite more teammates.",
+
+  // Public Model Dossier & PDF Export
+  loadingDossier: "Loading executive model dossier...",
+  publicDossierBadge: "Public Strategic Dossier",
+  readOnlySandboxNotice: "Guest Read-Only Simulation Sandbox",
+  shareDossierBtn: "Share Dossier",
+  exportPdfBtn: "Print / Export PDF",
+  generatedTimestamp: "Report Generated",
+  dossierFactorsMetric: "System Factors",
+  dossierActionsMetric: "Strategic Actions",
+  dossierFeedbackLoopsMetric: "Feedback Loops",
+  dossierMaxLeverageMetric: "Peak Leverage",
+  dossierActionsRankTitle: "High-Leverage Strategic Interventions",
+  rankedByLeverageDesc: "Ranked by net systemic leverage ratio",
+  dossierSandboxTitle: "Interactive Sensitivity & Perturbation Sandbox",
+  resetPerturbationsBtn: "Reset Baselines",
+  dossierSandboxDesc: "Adjust factor perturbation sliders (+/-50%) to stress-test system dynamics and observe turning points in client memory without mutating the source model.",
+  dossierFeedbackTitle: "Structural System Dynamics & Archetypes",
+  dossierFeedbackDesc: "Identified {reinforcing} reinforcing flywheels and {balancing} balancing regulatory loops.",
+  shareLinkCopiedToast: "Public dossier link copied to clipboard."
 };

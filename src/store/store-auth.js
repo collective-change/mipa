@@ -15,7 +15,7 @@ import {
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { showErrorMessage } from "@/utils/util-show-error-message";
-import { PUBLIC_PATHS } from "@/router/public-paths";
+import { isPublicPath } from "@/router/public-paths";
 import { i18n } from "@/boot/i18n";
 import { checkEmailHasPendingInvitation } from "@/utils/earlyAccess";
 
@@ -239,7 +239,7 @@ const actions = {
         LocalStorage.set("loggedIn", false);
         // window.location: at startup the router hasn't resolved the first
         // route yet, so currentRoute would still be "/"
-        if (!PUBLIC_PATHS.includes(window.location.pathname)) {
+        if (!isPublicPath(window.location.pathname)) {
           this.$router.replace("/auth");
         }
         //commit("tasks/clearTasks", null, { root: true });

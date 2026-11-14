@@ -1,10 +1,10 @@
 import { LocalStorage } from "quasar";
-import { PUBLIC_PATHS } from "@/router/public-paths";
+import { isPublicPath } from "@/router/public-paths";
 
 export default ({ router }) => {
   router.beforeEach(to => {
     const loggedIn = LocalStorage.getItem("loggedIn");
-    if (!loggedIn && !PUBLIC_PATHS.includes(to.path)) {
+    if (!loggedIn && !isPublicPath(to.path)) {
       return "/auth";
     }
     if (loggedIn && (to.path === "/" || to.path === "/auth")) {

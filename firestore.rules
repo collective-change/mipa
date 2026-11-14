@@ -61,7 +61,9 @@ service cloud.firestore {
     
       // Match any document in a model's nodes collection
       match /nodes/{node} {
-        allow read, write: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/models/$(model)).data.editors.users;
+        allow read: if (request.auth != null && request.auth.uid in get(/databases/$(database)/documents/models/$(model)).data.editors.users)
+          || get(/databases/$(database)/documents/models/$(model)).data.isPublic == true;
+        allow write: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/models/$(model)).data.editors.users;
       }
 
       // Immutable model snapshots for decision provenance & governance

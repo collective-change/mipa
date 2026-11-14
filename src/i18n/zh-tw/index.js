@@ -1071,5 +1071,25 @@ export default {
   seatUsageCounter: "已配置 {used} / {limit} 個成員席位",
   membersAndInvitesCount: "{members} 位正式成員 · {invites} 份待回覆邀請",
   freeStakeholderViewersNotice: "免費提供不限人數之外部利益關係人唯讀檢視",
-  seatLimitReachedNotice: "您的組織已達到方案席位上限（{limit} 位成員）。請升級方案或撤回待回覆邀請，以邀請更多工作夥伴。"
+  seatLimitReachedNotice: "您的組織已達到方案席位上限（{limit} 位成員）。請升級方案或撤回待回覆邀請，以邀請更多工作夥伴。",
+
+  // Public Model Dossier & PDF Export
+  loadingDossier: "正在載入高階策略決策檔案...",
+  publicDossierBadge: "公開策略決策檔案",
+  readOnlySandboxNotice: "訪客唯讀模擬沙盒",
+  shareDossierBtn: "分享決策檔案",
+  exportPdfBtn: "列印 / 匯出 PDF",
+  generatedTimestamp: "報告產出時間",
+  dossierFactorsMetric: "系統因素",
+  dossierActionsMetric: "策略行動方案",
+  dossierFeedbackLoopsMetric: "反饋迴路",
+  dossierMaxLeverageMetric: "最高效應比",
+  dossierActionsRankTitle: "高效應比策略介入行動排序",
+  rankedByLeverageDesc: "依整體系統淨效應比精確排序",
+  dossierSandboxTitle: "互動式靈敏度與情境微擾沙盒",
+  resetPerturbationsBtn: "重設回基準值",
+  dossierSandboxDesc: "拖曳因素微擾滑桿（±50%）即可於本機記憶體進行情境壓力測試，觀察系統轉折點，完全不影響原模型數據。",
+  dossierFeedbackTitle: "系統結構動力學與基模診斷",
+  dossierFeedbackDesc: "偵測到 {reinforcing} 個增強型飛輪迴路與 {balancing} 個調節型平衡迴路。",
+  shareLinkCopiedToast: "公開決策檔案連結已複製至剪貼簿。"
 };
