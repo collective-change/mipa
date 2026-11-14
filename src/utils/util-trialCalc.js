@@ -48,10 +48,12 @@ export function trialCalculate({ nodes, simulationParams, roleNodes, exchangeRat
   });
 }
 
-function plain(html) {
-  return String(html || "")
+// The worker's messages use <br/> as line breaks and no other markup. The
+// result is shown as text (escaped by Vue) and sent to the AI as text, never
+// inserted as HTML.
+function plain(message) {
+  return String(message || "")
     .replace(/<br\s*\/?>/gi, " ")
-    .replace(/<[^>]+>/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
