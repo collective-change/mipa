@@ -1030,5 +1030,32 @@ export default {
   previousStepBtn: "上一步",
   nextStepBtn: "下一步",
   finishTourBtn: "開始體驗",
-  openTemplateLibraryBtn: "探索模型範本庫"
+  openTemplateLibraryBtn: "探索模型範本庫",
+
+  // Early Access & Private Preview
+  authPrivatePreviewBadge: "先導體驗",
+  authPrivatePreviewNotice: "Mipa 目前正針對策略組織進行先導體驗。若您的團隊已收到邀請，請直接登入；如欲參與後續先導梯次，歡迎於下方登記候補。",
+  earlyAccessTab: "申請先導體驗",
+  landingRequestAccess: "申請先導體驗",
+  earlyAccessFormSubtitle: "誠摯邀請願景基金會、非營利組織與使命導向機構加入優先先導體驗名單。",
+  earlyAccessName: "您的姓名",
+  earlyAccessEmail: "公務或機構電子郵件",
+  earlyAccessOrgName: "所屬機構或組織名稱",
+  earlyAccessSector: "領域類別",
+  sectorNgo: "非營利組織 / NGO",
+  sectorFoundation: "慈善 / 願景基金會",
+  sectorAcademic: "大專院校與學術研究機構",
+  sectorGovernment: "公共部門與政府機關",
+  sectorSocialEnterprise: "社會企業與影響力倡議",
+  sectorConsulting: "策略諮詢與專業顧問",
+  sectorOther: "其他公益或使命導向領域",
+  earlyAccessNote: "核心策略挑戰或預期應用情境",
+  earlyAccessNoteHint: "簡要描述您團隊計畫模擬的系統決策或影響力模型。",
+  earlyAccessSubmitBtn: "送出先導體驗申請",
+  earlyAccessAlreadyInvited: "已有邀請信函？",
+  earlyAccessSuccessTitle: "已收到您的先導體驗申請",
+  earlyAccessSuccessDesc: "感謝您對系統動力學策略決策的關注。團隊每週審閱申請，並在先導梯次開放時立即以郵件通知您。",
+  earlyAccessSignIn: "登入既有帳號",
+  earlyAccessSubmitAnother: "填寫另一份申請",
+  earlyAccessErrorGeneral: "無法提交申請，請檢查網路連線後重試。"
 };

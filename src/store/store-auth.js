@@ -10,12 +10,38 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   OAuthProvider,
-  signInWithCustomToken
+  signInWithCustomToken,
+  getAdditionalUserInfo
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { PUBLIC_PATHS } from "@/router/public-paths";
 import { i18n } from "@/boot/i18n";
+import { checkEmailHasPendingInvitation } from "@/utils/earlyAccess";
+
+async function verifyAccessOrGate(result, router) {
+  const additional = getAdditionalUserInfo(result);
+  if (additional && additional.isNewUser) {
+    const email = result.user && result.user.email;
+    const hasInvite = await checkEmailHasPendingInvitation(email);
+    if (!hasInvite) {
+      await signOut(firebaseAuth);
+      Notify.create({
+        message: i18n.global.t("authPrivatePreviewNotice"),
+        type: "info",
+        timeout: 7000
+      });
+      if (router) {
+        router.push({
+          path: "/auth",
+          query: { tab: "waitlist", email: email || "" }
+        });
+      }
+      return false;
+    }
+  }
+  return true;
+}
 
 const state = {
   loggedIn: false,
@@ -36,8 +62,24 @@ const mutations = {
 };
 
 const actions = {
-  registerUser({}, payload) {
+  async registerUser({}, payload) {
     Loading.show();
+    const hasInvite = await checkEmailHasPendingInvitation(payload.email);
+    if (!hasInvite) {
+      Loading.hide();
+      Notify.create({
+        message: i18n.global.t("authPrivatePreviewNotice"),
+        type: "info",
+        timeout: 7000
+      });
+      if (this.$router) {
+        this.$router.push({
+          path: "/auth",
+          query: { tab: "waitlist", email: payload.email || "" }
+        });
+      }
+      return;
+    }
     createUserWithEmailAndPassword(firebaseAuth, payload.email, payload.password)
       .then(cred => {
         sendEmailVerification(cred.user).catch(error =>
@@ -72,7 +114,9 @@ const actions = {
       provider.addScope("profile");
       provider.addScope("email");
       const result = await signInWithPopup(firebaseAuth, provider);
+      const allowed = await verifyAccessOrGate(result, this.$router);
       Loading.hide();
+      if (!allowed) return null;
       return result.user;
     } catch (error) {
       Loading.hide();
@@ -93,7 +137,9 @@ const actions = {
       const provider = new OAuthProvider("microsoft.com");
       provider.setCustomParameters({ prompt: "select_account" });
       const result = await signInWithPopup(firebaseAuth, provider);
+      const allowed = await verifyAccessOrGate(result, this.$router);
       Loading.hide();
+      if (!allowed) return null;
       return result.user;
     } catch (error) {
       Loading.hide();
@@ -115,7 +161,9 @@ const actions = {
       provider.addScope("email");
       provider.addScope("name");
       const result = await signInWithPopup(firebaseAuth, provider);
+      const allowed = await verifyAccessOrGate(result, this.$router);
       Loading.hide();
+      if (!allowed) return null;
       return result.user;
     } catch (error) {
       Loading.hide();

@@ -83,6 +83,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Early access waitlist applications (public submit-only, client-side read/update/delete prohibited)
+    match /earlyAccessRequests/{requestId} {
+      allow create: if request.resource.data.email is string
+        && request.resource.data.email.size() > 3
+        && request.resource.data.email.size() < 256;
+      allow read, update, delete: if false;
+    }
+
     match /actions/{action}  {
       allow create: if userInOrg(request.resource.data.orgId);
       allow update: if userInOrg(resource.data.orgId) && userInOrg(request.resource.data.orgId);

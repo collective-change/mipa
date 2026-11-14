@@ -22,17 +22,17 @@
 
         <div class="row items-center justify-center q-gutter-md q-mb-xl">
           <q-btn
-            to="/auth"
+            to="/auth?tab=waitlist"
             color="primary"
             unelevated
             size="lg"
             no-caps
             icon-right="arrow_forward"
-            :label="$t('landingGetStarted')"
+            :label="$t('landingRequestAccess')"
             class="cta-btn"
           />
           <q-btn
-            to="/auth"
+            to="/auth?tab=login"
             color="primary"
             flat
             size="lg"
@@ -246,13 +246,13 @@
         </p>
         <div class="row justify-center q-gutter-md">
           <q-btn
-            to="/auth"
+            to="/auth?tab=waitlist"
             color="primary"
             unelevated
             size="lg"
             no-caps
             icon-right="arrow_forward"
-            :label="$t('landingCtaBtn')"
+            :label="$t('landingRequestAccess')"
             class="cta-btn"
           />
           <q-btn
