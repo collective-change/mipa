@@ -37,3 +37,7 @@ ui-debug.log
 # Emulator data for each instance
 /my-firestore-emulator-data/src-pwa/node_modules
 /.quasar
+
+# Local developer backlog
+docs/BACKLOG.md
+docs/BACKLOG*.md
