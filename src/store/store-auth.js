@@ -6,7 +6,11 @@ import {
   signOut,
   sendPasswordResetEmail,
   onAuthStateChanged,
-  sendEmailVerification
+  sendEmailVerification,
+  signInWithPopup,
+  GoogleAuthProvider,
+  OAuthProvider,
+  signInWithCustomToken
 } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { showErrorMessage } from "@/utils/util-show-error-message";
@@ -60,6 +64,83 @@ const actions = {
       .catch(error => {
         showErrorMessage("Error", error.message);
       });
+  },
+  async loginWithGoogle() {
+    Loading.show();
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.addScope("profile");
+      provider.addScope("email");
+      const result = await signInWithPopup(firebaseAuth, provider);
+      Loading.hide();
+      return result.user;
+    } catch (error) {
+      Loading.hide();
+      if (error && error.code === "auth/popup-closed-by-user") {
+        return null;
+      }
+      if (error && error.code === "auth/account-exists-with-different-credential") {
+        showErrorMessage("Account Exists", i18n.global.t("authAccountCollisionMsg"));
+        return null;
+      }
+      showErrorMessage("Error", error.message);
+      throw error;
+    }
+  },
+  async loginWithMicrosoft() {
+    Loading.show();
+    try {
+      const provider = new OAuthProvider("microsoft.com");
+      provider.setCustomParameters({ prompt: "select_account" });
+      const result = await signInWithPopup(firebaseAuth, provider);
+      Loading.hide();
+      return result.user;
+    } catch (error) {
+      Loading.hide();
+      if (error && error.code === "auth/popup-closed-by-user") {
+        return null;
+      }
+      if (error && error.code === "auth/account-exists-with-different-credential") {
+        showErrorMessage("Account Exists", i18n.global.t("authAccountCollisionMsg"));
+        return null;
+      }
+      showErrorMessage("Error", error.message);
+      throw error;
+    }
+  },
+  async loginWithApple() {
+    Loading.show();
+    try {
+      const provider = new OAuthProvider("apple.com");
+      provider.addScope("email");
+      provider.addScope("name");
+      const result = await signInWithPopup(firebaseAuth, provider);
+      Loading.hide();
+      return result.user;
+    } catch (error) {
+      Loading.hide();
+      if (error && error.code === "auth/popup-closed-by-user") {
+        return null;
+      }
+      if (error && error.code === "auth/account-exists-with-different-credential") {
+        showErrorMessage("Account Exists", i18n.global.t("authAccountCollisionMsg"));
+        return null;
+      }
+      showErrorMessage("Error", error.message);
+      throw error;
+    }
+  },
+  async loginWithCustomToken({}, token) {
+    Loading.show();
+    try {
+      const result = await signInWithCustomToken(firebaseAuth, token);
+      Loading.hide();
+      return result.user;
+    } catch (error) {
+      Loading.hide();
+      showErrorMessage("Error", error.message);
+      throw error;
+    }
   },
   logoutUser({ dispatch }) {
     //this.detachUserTasksListener();

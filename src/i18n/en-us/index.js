@@ -43,6 +43,20 @@ export default {
   "Forgot password?": "Forgot password?",
   "Please enter a valid email address.": "Please enter a valid email address.",
   "Please enter at least 8 characters.": "Please enter at least 8 characters.",
+  orContinueWith: "Or continue with",
+  signInWithGoogle: "Google",
+  signInWithMicrosoft: "Microsoft",
+  signInWithApple: "Apple",
+  signInWithWeChat: "WeChat",
+  authAccountCollisionMsg:
+    "An account already exists with this email address under a different sign-in method. Please sign in using your original method.",
+  weChatSignInTitle: "WeChat / Regional Sign-In",
+  weChatSignInDesc:
+    "For team members in regions where Google services are inaccessible, sign in using an authorized token provided by your administrator.",
+  enterCustomToken: "Paste Auth Token",
+  tokenPlaceholder: "Enter token provided by your organization",
+  authVerifyToken: "Verify & Sign In",
+  authCancelledByUser: "Sign-in was cancelled.",
 
   // for PageModel.vue
   Calculate: "Calculate",
