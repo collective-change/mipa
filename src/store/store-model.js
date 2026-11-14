@@ -705,7 +705,20 @@ const actions = {
       await runTransaction(firebaseDb, async t => {
         const modelDoc = await t.get(modelRef);
         let nodeGroups = modelDoc.data().nodeGroups;
-        nodeGroups = nodeGroups.filter(group => group.id != nodeGroupId);
+        // Child groups stay in the model. Re-attach them to the disbanded group's
+        // own parent (or the top level if it has none) so they keep their place
+        // in the hierarchy.
+        const disbanded = nodeGroups.find(group => group.id == nodeGroupId);
+        const grandparentId = disbanded?.parentId ?? null;
+        nodeGroups = nodeGroups
+          .filter(group => group.id != nodeGroupId)
+          .map(group => {
+            if (group.parentId == nodeGroupId) {
+              if (grandparentId) group.parentId = grandparentId;
+              else delete group.parentId;
+            }
+            return group;
+          });
         t.update(modelRef, { nodeGroups: nodeGroups });
       });
       Notify.create(i18n.global.t("toastUngrouped"));
