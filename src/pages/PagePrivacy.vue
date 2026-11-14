@@ -36,26 +36,23 @@
         Issues are public, so don't include personal information in them.
       </p>
       <p>
-        For requests about your own data (a copy, a correction or deleting your
-        account), or to report a privacy or security problem privately, email
-        <a :href="`mailto:${contact}`">{{ contact }}</a>.
+        To report a security or privacy vulnerability privately, please submit a report via
+        <a :href="securityAdvisoryUrl" target="_blank" rel="noopener">GitHub Private Vulnerability Reporting</a>.
       </p>
     </article>
   </q-page>
 </template>
 
 <script>
-import { ISSUES_URL } from "@/utils/util-links";
+import { ISSUES_URL, SECURITY_ADVISORY_URL } from "@/utils/util-links";
 
 // Keep this in step with what the app actually does. If you add a service
 // that receives personal data, or a new kind of data, update this page.
-const CONTACT = "tedchwang@gmail.com";
-
 export default {
   data() {
     return {
-      contact: CONTACT,
       issuesUrl: ISSUES_URL,
+      securityAdvisoryUrl: SECURITY_ADVISORY_URL,
       sections: [
         {
           title: "Information we collect",
