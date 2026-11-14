@@ -3,7 +3,12 @@
     <div v-if="currentOrg && currentOrg.goal" class="q-px-md q-pt-sm text-subtitle1 text-grey-8">
       {{ currentOrg.goal }}
     </div>
-    <getting-started class="q-mt-sm print-hide" @add-factor="showAddNode = true" />
+    <getting-started
+      class="q-mt-sm print-hide"
+      @add-factor="showAddNode = true"
+      @open-templates="showTemplateLibrary = true"
+      @open-tour="showOnboardingTour = true"
+    />
     <q-banner
       v-if="showDraftInvite"
       rounded
@@ -75,6 +80,24 @@
               no-caps
               icon="all_inclusive"
               :label="$t('systemDynamicsBtn')"
+            />
+            <q-btn
+              @click="showTemplateLibrary = true"
+              class="full-width print-hide"
+              color="primary"
+              outline
+              no-caps
+              icon="hub"
+              :label="$t('templateLibraryBtn')"
+            />
+            <q-btn
+              @click="showOnboardingTour = true"
+              class="full-width print-hide"
+              color="grey-8"
+              flat
+              no-caps
+              icon="help_outline"
+              :label="$t('guidedTourBtn')"
             />
             <q-btn
               v-if="latestAiDraft"
@@ -194,6 +217,16 @@
       :model="currentModel"
       :nodes="nodes"
     />
+    <model-template-library-modal
+      v-model="showTemplateLibrary"
+      :model="currentModel"
+      :nodes="nodes"
+      :actions="actions"
+    />
+    <onboarding-tour-modal
+      v-model="showOnboardingTour"
+      @open-templates="showTemplateLibrary = true"
+    />
   </q-page>
 </template>
 
@@ -212,6 +245,8 @@ import DraftModelDialog from "@/components/Model/Modals/DraftModelDialog.vue";
 import IngestDataDialog from "@/components/Model/Modals/IngestDataDialog.vue";
 import ModelSnapshotsModal from "@/components/Model/Modals/ModelSnapshotsModal.vue";
 import SystemDynamicsModal from "@/components/Model/Modals/SystemDynamicsModal.vue";
+import ModelTemplateLibraryModal from "@/components/Model/Modals/ModelTemplateLibraryModal.vue";
+import OnboardingTourModal from "@/components/Model/Modals/OnboardingTourModal.vue";
 import { planDraftRemoval, removeDraft } from "@/utils/util-aiDraft";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 //import ExportCalcResults from "../components/Calc/ExportCalcResults.vue";
@@ -234,6 +269,8 @@ export default {
     "ingest-data-dialog": IngestDataDialog,
     "model-snapshots-modal": ModelSnapshotsModal,
     "system-dynamics-modal": SystemDynamicsModal,
+    "model-template-library-modal": ModelTemplateLibraryModal,
+    "onboarding-tour-modal": OnboardingTourModal,
     "calculator-ui": CalculatorUi,
     "export-calc-results": ExportCalcResults,
     "dependency-graph": DependencyGraph,
@@ -249,6 +286,8 @@ export default {
       showIngestData: false,
       showModelSnapshots: false,
       showSystemDynamics: false,
+      showTemplateLibrary: false,
+      showOnboardingTour: false,
       models: null,
       //selectedNodeGroupId: null,
       expanded: [],
@@ -273,6 +312,7 @@ export default {
     },
     ...mapState("orgs", ["currentOrg"]),
     ...mapState("model", ["currentModel"]),
+    ...mapState("actions", ["actions"]),
     ...mapState("ui", [
       "uiNodeChanged",
       "uiNodeChangedFields",
