@@ -106,6 +106,21 @@ export default {
   lower_relative_leverage: "Lower marginal leverage than selected bundle",
   applyToDecisionBrief: "Generate Brief for Optimal Bundle",
 
+  // Monte Carlo Uncertainty Distributions & Downside Risk Scoring
+  monteCarloSectionTitle: "Monte Carlo Uncertainty & Downside Risk Analysis",
+  monteCarloSubtitle: "300 stochastic iterations testing parametric cost overruns (-10% to +40%) and benefit variance (±25%).",
+  p10Pessimistic: "P10 (Downside)",
+  p50Median: "P50 (Median)",
+  p90Optimistic: "P90 (Upside)",
+  confidenceInterval: "Confidence Interval (P10 - P90)",
+  downsideRisk: "Downside Risk",
+  probLossLabel: "Risk of Loss",
+  riskAdjustedLeverage: "Risk-Adjusted Leverage",
+  var95Label: "Downside VaR (95%)",
+  riskLow: "Low Downside Risk",
+  riskModerate: "Moderate Variance",
+  riskHigh: "High Downside Risk",
+
   // for PageModel.vue
   Calculate: "Calculate",
   "Model settings": "Model settings",

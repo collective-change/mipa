@@ -1,6 +1,7 @@
 import { formatNumber } from "./util-formatNumber";
 import { generateSensitivityReport } from "./sensitivityAnalysis";
 import { calculateSroiMetrics } from "./sroi";
+import { runMonteCarloSimulation } from "./monteCarlo";
 
 /**
  * Decision Brief and Ranking Explanation Engine (Feature 2)
@@ -217,6 +218,7 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
     const outstandingDirectCosts = action.outstandingDirectCosts ?? action.outstandingDirectCost ?? action.estSpending ?? 0;
     const drivers = extractActionDrivers(action, nodes);
     const hasUncertainInputs = drivers.some((d) => d.isEstimate) || action.hasUncertainty;
+    const monteCarlo = runMonteCarloSimulation(action, options.monteCarloOptions || {});
 
     return {
       id: action.id,
@@ -240,7 +242,8 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
       hasUncertainInputs,
       uncertaintySummary: hasUncertainInputs
         ? (isZh ? "包含估算參數" : "Contains estimates")
-        : (isZh ? "基於實證基準" : "Empirical baseline")
+        : (isZh ? "基於實證基準" : "Empirical baseline"),
+      monteCarlo
     };
   });
 
@@ -265,6 +268,27 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
         verifiedNumbers.add(val);
       }
     });
+
+    if (row.monteCarlo) {
+      const mc = row.monteCarlo;
+      [
+        mc.leverage?.p10,
+        mc.leverage?.p50,
+        mc.leverage?.p90,
+        mc.leverage?.var95,
+        mc.leverage?.riskAdjusted,
+        mc.netBenefit?.p10,
+        mc.netBenefit?.p50,
+        mc.netBenefit?.p90,
+        mc.netBenefit?.var95,
+        mc.downsideRisk?.probLossPercent,
+        mc.downsideRisk?.confidenceSpreadPercent
+      ].forEach((val) => {
+        if (typeof val === "number" && isFinite(val)) {
+          verifiedNumbers.add(val);
+        }
+      });
+    }
   });
 
   // Section 1: The decision in one sentence and options compared
@@ -443,7 +467,12 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
       title: isZh ? "核心模型假設與評估基礎" : "Key Simulation Assumptions & Estimates",
       narrative: section4Assumptions,
       sensitivity,
-      guardrailViolations: allGuardrailViolations
+      guardrailViolations: allGuardrailViolations,
+      monteCarloAnalysis: optionsTable.map((opt) => ({
+        id: opt.id,
+        title: opt.title,
+        monteCarlo: opt.monteCarlo
+      }))
     },
     section5: {
       title: isZh ? "模型未涵蓋之外部考量" : "Unmodeled Considerations & Scope Limitations",
@@ -556,6 +585,27 @@ export function formatBriefAsMarkdown(brief) {
       ...brief.section4.guardrailViolations.map(
         (v) => `| ${v.actionTitle} | ${v.factorName} | ${v.threshold} ${v.unit} | ${v.worstValue} ${v.unit} | ${v.message || "-"} |`
       )
+    );
+  }
+
+  if (brief.section4.monteCarloAnalysis && brief.section4.monteCarloAnalysis.length) {
+    lines.push(
+      "",
+      isZh ? "### 4.2 蒙地卡羅不確定性與下檔風險推演（P10 / P50 / P90）" : "### 4.2 Monte Carlo Uncertainty & Downside Risk Profile (P10 / P50 / P90)",
+      "",
+      isZh
+        ? "本模型進行 300 次隨機試驗，推演潛在成本超支（-10% 至 +40%）與效益波動（±25%）對效應比之衝擊："
+        : "Based on 300 stochastic trials simulating cost variance (-10% to +40%) and benefit fluctuations (±25%):",
+      "",
+      `| ${isZh ? "方案名稱" : "Option"} | ${isZh ? "基準效應比" : "Base Leverage"} | ${isZh ? "P10 保守" : "P10 (Downside)"} | ${isZh ? "P50 中位數" : "P50 (Median)"} | ${isZh ? "P90 樂觀" : "P90 (Upside)"} | ${isZh ? "下檔風險值 (VaR95)" : "Downside VaR95"} | ${isZh ? "虧損機率" : "Risk of Loss"} | ${isZh ? "下檔風險評級" : "Risk Rating"} |`,
+      "|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|",
+      ...brief.section4.monteCarloAnalysis.map((item) => {
+        const mc = item.monteCarlo || {};
+        const lev = mc.leverage || {};
+        const dr = mc.downsideRisk || {};
+        const baseOpt = (brief.section2.options || []).find((o) => o.id === item.id) || {};
+        return `| **${item.title}** | ${formatRatioValue(baseOpt.actionLeverage)} | ${formatRatioValue(lev.p10)} | ${formatRatioValue(lev.p50)} | ${formatRatioValue(lev.p90)} | ${formatRatioValue(lev.var95)} | ${dr.probLossPercent ?? 0}% | ${dr.riskRating ? dr.riskRating.toUpperCase() : "-"} |`;
+      })
     );
   }
 

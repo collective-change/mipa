@@ -448,6 +448,60 @@
                 <span class="text-body2">{{ $t("guardrailsAllSafe") }}</span>
               </div>
             </div>
+
+            <!-- Monte Carlo Uncertainty & Downside Risk Profile (P10 / P50 / P90) -->
+            <div class="q-mt-lg">
+              <div class="row items-center justify-between q-mb-xs">
+                <div class="text-subtitle2 text-grey-8 row items-center">
+                  <q-icon name="casino" class="q-mr-xs" color="primary" />
+                  {{ $t("monteCarloSectionTitle") }}
+                </div>
+                <div class="text-caption text-grey-6">
+                  {{ $t("monteCarloSubtitle") }}
+                </div>
+              </div>
+
+              <q-table
+                flat
+                bordered
+                dense
+                :rows="monteCarloRows"
+                :columns="monteCarloColumns"
+                row-key="id"
+                hide-pagination
+                :pagination="{ rowsPerPage: 0 }"
+                class="brief-table bg-white"
+              >
+                <template v-slot:body-cell-confidenceInterval="props">
+                  <q-td :props="props">
+                    <span class="text-weight-bold text-grey-9">
+                      {{ formatRatio(props.row.p10) }}
+                    </span>
+                    <span class="text-grey-5 q-px-xs">→</span>
+                    <span class="text-weight-bold text-primary">
+                      {{ formatRatio(props.row.p50) }}
+                    </span>
+                    <span class="text-grey-5 q-px-xs">→</span>
+                    <span class="text-weight-bold text-grey-9">
+                      {{ formatRatio(props.row.p90) }}
+                    </span>
+                  </q-td>
+                </template>
+
+                <template v-slot:body-cell-riskRating="props">
+                  <q-td :props="props">
+                    <q-chip
+                      dense
+                      size="sm"
+                      :color="props.value === 'low' ? 'green-1' : (props.value === 'moderate' ? 'amber-2' : 'red-1')"
+                      :text-color="props.value === 'low' ? 'positive' : (props.value === 'moderate' ? 'amber-10' : 'negative')"
+                    >
+                      {{ formatRiskBadge(props.value) }}
+                    </q-chip>
+                  </q-td>
+                </template>
+              </q-table>
+            </div>
           </div>
 
           <!-- SECTION 5: What the Brief Does Not Cover (Unmodeled Considerations) -->
@@ -651,6 +705,40 @@ export default {
           align: "right"
         }
       ];
+    },
+    monteCarloRows() {
+      if (!this.briefData || !this.briefData.section4 || !Array.isArray(this.briefData.section4.monteCarloAnalysis)) {
+        return [];
+      }
+      return this.briefData.section4.monteCarloAnalysis.map((item) => {
+        const mc = item.monteCarlo || {};
+        const lev = mc.leverage || {};
+        const dr = mc.downsideRisk || {};
+        const baseOpt = (this.briefData.section2.options || []).find((o) => o.id === item.id) || {};
+        return {
+          id: item.id,
+          title: item.title,
+          baseLeverage: baseOpt.actionLeverage ?? null,
+          p10: lev.p10 ?? 0,
+          p50: lev.p50 ?? 0,
+          p90: lev.p90 ?? 0,
+          var95: lev.var95 ?? 0,
+          riskAdjusted: lev.riskAdjusted ?? 0,
+          probLossPercent: dr.probLossPercent ?? 0,
+          riskRating: dr.riskRating || "low"
+        };
+      });
+    },
+    monteCarloColumns() {
+      return [
+        { name: "title", label: this.$t("Title") || "Option", field: "title", align: "left" },
+        { name: "baseLeverage", label: this.$t("Leverage"), field: "baseLeverage", align: "right", format: (val) => formatRatioValue(val) },
+        { name: "confidenceInterval", label: this.$t("confidenceInterval"), align: "center" },
+        { name: "var95", label: this.$t("var95Label"), field: "var95", align: "right", format: (val) => formatRatioValue(val) },
+        { name: "probLossPercent", label: this.$t("probLossLabel"), field: (row) => `${row.probLossPercent}%`, align: "right" },
+        { name: "riskAdjusted", label: this.$t("riskAdjustedLeverage"), field: "riskAdjusted", align: "right", format: (val) => formatRatioValue(val) },
+        { name: "riskRating", label: this.$t("downsideRisk"), field: "riskRating", align: "center" }
+      ];
     }
   },
   watch: {
@@ -684,6 +772,11 @@ export default {
       if (val === "sensitive") return this.$t("sensitiveAssumption");
       if (val === "moderate") return this.$t("moderatelyRobust");
       return this.$t("highlyRobust");
+    },
+    formatRiskBadge(val) {
+      if (val === "high") return this.$t("riskHigh");
+      if (val === "moderate") return this.$t("riskModerate");
+      return this.$t("riskLow");
     },
     selectTopN(n) {
       if (!this.matchingActions) return;

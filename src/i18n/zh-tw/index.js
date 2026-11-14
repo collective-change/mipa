@@ -102,6 +102,21 @@ export default {
   lower_relative_leverage: "邊際效應比低於已入選方案",
   applyToDecisionBrief: "為此最佳組合產生決策簡報",
 
+  // Monte Carlo Uncertainty Distributions & Downside Risk Scoring
+  monteCarloSectionTitle: "蒙地卡羅不確定性與下檔風險推演",
+  monteCarloSubtitle: "以 300 次隨機試驗模擬成本追加（-10% 至 +40%）與效益波動（±25%）之後果。",
+  p10Pessimistic: "P10（保守下檔）",
+  p50Median: "P50（中位數）",
+  p90Optimistic: "P90（樂觀上檔）",
+  confidenceInterval: "信賴區間（P10 - P90）",
+  downsideRisk: "下檔風險等級",
+  probLossLabel: "虧損機率",
+  riskAdjustedLeverage: "風險調整後效應比",
+  var95Label: "下檔極端風險值（VaR 95%）",
+  riskLow: "低下檔風險",
+  riskModerate: "中度波動風險",
+  riskHigh: "高度下檔風險",
+
   // for PageModel.vue
   Calculate: "計算",
   "Model settings": "模型設定",
