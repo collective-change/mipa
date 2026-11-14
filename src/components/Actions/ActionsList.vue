@@ -33,6 +33,15 @@
             outline
             no-caps
           />
+          <q-btn
+            color="primary"
+            icon="description"
+            outline
+            no-caps
+            :disable="loading || !matchingActions || !matchingActions.length"
+            :label="$t('decisionBrief')"
+            @click="selectedActionsForBrief = []; showDecisionBrief = true"
+          />
         </div>
         <div class="row q-gutter-sm">
           <select-action-states
@@ -79,6 +88,25 @@
           </q-icon>
         </q-th>
       </template>
+      <template v-slot:body-cell-actionLeverage="props">
+        <q-td :props="props">
+          <div class="row items-center justify-end no-wrap">
+            <q-btn
+              flat
+              round
+              dense
+              size="xs"
+              icon="psychology"
+              color="primary"
+              class="q-mr-xs"
+              @click.stop="openExplainRanking(props.row)"
+            >
+              <q-tooltip>{{ $t("explainRankingShort") }}</q-tooltip>
+            </q-btn>
+            <span>{{ props.value }}</span>
+          </div>
+        </q-td>
+      </template>
       <template v-slot:no-data>
         <div class="full-width column items-center q-pa-lg text-center">
           <q-icon name="wb_incandescent" color="primary" size="48px" class="flip-vertical" />
@@ -101,6 +129,15 @@
     <q-dialog v-model="showAddAction">
       <add-action @close="showAddAction = false" />
     </q-dialog>
+    <decision-brief-modal
+      v-model="showDecisionBrief"
+      :initialActions="selectedActionsForBrief"
+    />
+    <explain-ranking-modal
+      v-model="showExplainRanking"
+      :action="actionToExplain"
+      @open-full-brief="openBriefWithActions"
+    />
   </div>
 </template>
 
@@ -113,6 +150,8 @@ import {
   getUserPhotoURL,
 } from "@/utils/util-getUserDetails";
 import AddAction from "@/components/Actions/Modals/AddAction.vue";
+import DecisionBriefModal from "@/components/Actions/Modals/DecisionBriefModal.vue";
+import ExplainRankingModal from "@/components/Actions/Modals/ExplainRankingModal.vue";
 import CalculatorUi from "@/components/Calc/CalculatorUi.vue";
 import SelectUser from "@/components/Users/SelectUser.vue";
 import SelectActionStates from "@/components/Actions/SelectActionStates.vue";
@@ -132,6 +171,8 @@ function getRelationshipsDisplay(row) {
 export default {
   components: {
     "add-action": AddAction,
+    "decision-brief-modal": DecisionBriefModal,
+    "explain-ranking-modal": ExplainRankingModal,
     "calculator-ui": CalculatorUi,
     "select-user": SelectUser,
     "select-action-states": SelectActionStates,
@@ -140,6 +181,10 @@ export default {
   data() {
     return {
       showAddAction: false,
+      showDecisionBrief: false,
+      showExplainRanking: false,
+      actionToExplain: null,
+      selectedActionsForBrief: [],
       loading: false,
       filter: "",
       actionStatesToSearch: this.options.actionStatesToSearch,
@@ -316,6 +361,14 @@ export default {
     withCurrency(label) {
       const currency = this.currentOrg && this.currentOrg.currency;
       return currency ? `${label} (${currency})` : label;
+    },
+    openExplainRanking(row) {
+      this.actionToExplain = row;
+      this.showExplainRanking = true;
+    },
+    openBriefWithActions(actions) {
+      this.selectedActionsForBrief = actions;
+      this.showDecisionBrief = true;
     },
     onRowClick(evt, row) {
       if (this.selectedActionId == row.id) {

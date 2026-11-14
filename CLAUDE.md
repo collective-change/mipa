@@ -2,7 +2,7 @@
 
 Repository: https://github.com/collective-change/mipa
 Working branch: `modernize-2026`
-Production: Firebase project `mipa-2` → https://mipa.collective-change.org
+Production: Firebase project `mipa-2` → https://collective-change.org (canonical) / https://mipa.collective-change.org
 
 ---
 

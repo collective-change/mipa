@@ -6,7 +6,7 @@ trigger: always_on
 
 Repository: https://github.com/collective-change/mipa
 Working branch: `modernize-2026`
-Production: Firebase project `mipa-2` → https://mipa.collective-change.org
+Production: Firebase project `mipa-2` → https://collective-change.org (canonical) / https://mipa.collective-change.org
 
 ## Core System & Domain
 - **What mipa is**: A strategic coordination web application for collective-change.org. Organizations build a system-dynamics model of how they work (factors + formulas), add actions with their impacts, and mipa simulates them to rank actions by leverage.
