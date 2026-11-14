@@ -58,7 +58,8 @@ function compileSample(messages = enUs, currency = "USD") {
     outstandingSpending: a.estSpending,
     spentAmount: 0,
     effortCompletionPercentage: 0,
-    effortCostPerHrType: "use_average",
+    effortCostPerHrType: a.effortCostSymbol ? "use_factor" : "use_average",
+    effortCostNodeId: a.effortCostSymbol ? "id_" + a.effortCostSymbol : null,
     impacts: a.impacts.map(({ symbol, ...rest }) => ({ ...rest, nodeId: "id_" + symbol }))
   }));
   return { sample, nodes, roleNodes, actions };
@@ -97,6 +98,10 @@ describe("sample organization", () => {
     expect(leverage.recruit).toBeGreaterThan(0);
     expect(leverage.supermarkets).toBeLessThan(0);
     expect(leverage.report).toBeLessThan(0);
+
+    // the supermarket partnership is run by the coordinator: 60 h at 25/h
+    const supermarkets = actionResults.actionsResults.find(r => r.id == "supermarkets");
+    expect(supermarkets.effectiveChainedCostsAndImpacts.estEffortCosts).toBe(1500);
   });
 
   it("calculates in Taiwan dollars too", async () => {

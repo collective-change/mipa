@@ -16,10 +16,11 @@ export function sampleCurrencyFor(locale) {
 export function buildSampleOrg(t, currency) {
   const scale = MONEY_SCALE[currency] || 1;
   const money = amount => String(amount * scale);
-  const f = (symbol, formula, unit = "") => ({
+  const f = (symbol, formula, unit = "", extra = {}) => ({
     symbol,
     formula,
     unit,
+    ...extra,
     name: t(`sample.factors.${symbol}.name`),
     notes: t(`sample.factors.${symbol}.notes`)
   });
@@ -50,7 +51,9 @@ export function buildSampleOrg(t, currency) {
     f("foodAvailableInMeals", "foodDonatedKg * mealsPerKg"),
     f("mealsServed", "min(packingCapacity, foodAvailableInMeals)"),
     f("valueOfAMeal", money(3), currency),
-    f("monthlyRunningCosts", money(1200), currency)
+    f("monthlyRunningCosts", money(1200), currency),
+    // the hourly cost of a role, which some actions use instead of the average
+    f("coordinatorPerHour", money(25), currency, { isHourlyCost: true })
   ];
 
   const impact = (symbol, operation, operand) => ({
@@ -70,6 +73,7 @@ export function buildSampleOrg(t, currency) {
     {
       key: "supermarkets",
       estEffortHrs: 60,
+      effortCostSymbol: "coordinatorPerHour",
       estSpending: 0,
       impacts: [impact("foodDonatedKg", "+", 800)]
     },

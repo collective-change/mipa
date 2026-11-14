@@ -4,6 +4,20 @@
       {{ currentOrg.goal }}
     </div>
     <getting-started class="q-mt-sm print-hide" @add-factor="showAddNode = true" />
+    <q-banner
+      v-if="showDraftInvite"
+      rounded
+      class="bg-blue-1 q-mx-sm q-mb-sm print-hide"
+    >
+      <template v-slot:avatar>
+        <q-icon name="auto_awesome" color="primary" />
+      </template>
+      <div class="text-body1">{{ $t("aiInviteTitle") }}</div>
+      <div class="text-body2 text-grey-8">{{ $t("aiInviteText") }}</div>
+      <template v-slot:action>
+        <q-btn unelevated no-caps color="primary" :label="$t('Draft with AI')" @click="showDraftModel = true" />
+      </template>
+    </q-banner>
 
     <div class="row">
       <div class="col-12 col-md-2 print-hide q-px-sm">
@@ -25,6 +39,25 @@
               no-caps
               icon="tune"
               :label="$t('Model settings')"
+            />
+            <q-btn
+              @click="showDraftModel = true"
+              class="full-width print-hide"
+              color="primary"
+              outline
+              no-caps
+              icon="auto_awesome"
+              :label="$t('Draft with AI')"
+            />
+            <q-btn
+              v-if="latestAiDraft"
+              @click="confirmRemoveDraft"
+              class="full-width print-hide"
+              color="grey-8"
+              flat
+              no-caps
+              icon="undo"
+              :label="$t('Remove AI draft')"
             />
             <export-calc-results
               data-source="baseline"
@@ -117,6 +150,9 @@
     <q-dialog v-model="showAddNode">
       <add-node newNodeRole="" @close="showAddNode = false" />
     </q-dialog>
+    <q-dialog v-model="showDraftModel" persistent>
+      <draft-model-dialog @accepted="onDraftAccepted" />
+    </q-dialog>
     <q-dialog v-model="showConfigOrgModel">
       <config-org-model @close="showConfigOrgModel = false" />
     </q-dialog>
@@ -134,6 +170,9 @@ import DependencyGraph from "@/components/Model/DependencyGraph.vue";
 import NodeSummary from "@/components/Model/NodeSummary.vue";
 import GettingStarted from "@/components/Model/GettingStarted.vue";
 import AddNode from "@/components/Model/Modals/AddNode.vue";
+import DraftModelDialog from "@/components/Model/Modals/DraftModelDialog.vue";
+import { planDraftRemoval, removeDraft } from "@/utils/util-aiDraft";
+import { showErrorMessage } from "@/utils/util-show-error-message";
 //import ExportCalcResults from "../components/Calc/ExportCalcResults.vue";
 
 const nest = (items, id = null, link = "parentId") => {
@@ -150,6 +189,7 @@ export default {
     "config-org-model": ConfigOrgModel,
     "getting-started": GettingStarted,
     "add-node": AddNode,
+    "draft-model-dialog": DraftModelDialog,
     "calculator-ui": CalculatorUi,
     "export-calc-results": ExportCalcResults,
     "dependency-graph": DependencyGraph,
@@ -161,6 +201,7 @@ export default {
       //dependencyGraphSavefile: null,
       showConfigOrgModel: false,
       showAddNode: false,
+      showDraftModel: false,
       models: null,
       //selectedNodeGroupId: null,
       expanded: [],
@@ -168,6 +209,21 @@ export default {
     };
   },
   computed: {
+    ...mapGetters("model", ["nodes"]),
+    // Offer AI drafting while the model has only its starter factors.
+    showDraftInvite() {
+      return (
+        !!this.currentModel &&
+        this.currentModel.isOrgMainModel &&
+        this.nodes.length > 0 &&
+        this.nodes.length <= 7 &&
+        !(this.currentModel.appliedAiDrafts || []).length
+      );
+    },
+    latestAiDraft() {
+      const drafts = (this.currentModel && this.currentModel.appliedAiDrafts) || [];
+      return drafts.length ? drafts[drafts.length - 1] : null;
+    },
     ...mapState("orgs", ["currentOrg"]),
     ...mapState("model", ["currentModel"]),
     ...mapState("ui", [
@@ -212,6 +268,40 @@ export default {
   },
 
   methods: {
+    onDraftAccepted() {
+      this.showDraftModel = false;
+      // Calculate once the new factors have arrived.
+      setTimeout(() => {
+        this.$store.dispatch("calculator/calculate", {
+          calculationType: "baseline",
+          orgId: this.$route.params.orgId,
+          modelId: this.$route.params.modelId || this.$route.params.orgId,
+          nodes: this.nodes,
+          exchangeRates: this.$store.state.adHocDocs.exchangeRates,
+          simulationParams: this.currentModel.simulationParams,
+          roleNodes: this.currentModel.roleNodes,
+        });
+      }, 1500);
+    },
+    confirmRemoveDraft() {
+      const draft = this.latestAiDraft;
+      const plan = planDraftRemoval(this.nodes, draft.draftId);
+      let message = this.$t("aiRemoveConfirm", { count: plan.deletes.length });
+      if (plan.conflicts.length)
+        message += "\n\n" + this.$t("aiRemoveConflicts", { names: plan.conflicts.join(", ") });
+      if (plan.kept.length)
+        message += "\n\n" + this.$t("aiRemoveKept", { names: plan.kept.join(", ") });
+      this.$q
+        .dialog({ title: this.$t("Remove AI draft"), message, cancel: true, persistent: true, style: "white-space: pre-line" })
+        .onOk(async () => {
+          try {
+            await removeDraft({ model: this.currentModel, nodes: this.nodes, draftId: draft.draftId });
+            this.$q.notify(this.$t("aiDraftRemoved"));
+          } catch (error) {
+            showErrorMessage(this.$t("Remove AI draft"), error.message);
+          }
+        });
+    },
     ...mapActions("ui", ["setSelectedNodeId"]),
 
     saveNodeGroupName(groupId, name) {

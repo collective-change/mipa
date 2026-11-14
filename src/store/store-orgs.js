@@ -1,4 +1,5 @@
 import { uid, Notify } from "quasar";
+import { unref } from "vue";
 import { firebaseDb, firebaseAuth } from "@/boot/firebase";
 import {
   collection,
@@ -91,7 +92,9 @@ const actions = {
   async createSampleOrg({ dispatch }) {
     const user = firebaseAuth.currentUser;
     const t = key => i18n.global.t(key);
-    const sample = buildSampleOrg(t, sampleCurrencyFor(i18n.global.locale));
+    // In the app bundle the global locale is a ref, not a plain string.
+    const locale = unref(i18n.global.locale);
+    const sample = buildSampleOrg(t, sampleCurrencyFor(locale));
     const nodesRef = modelId => collection(firebaseDb, "models", modelId, "nodes");
 
     const org = {
@@ -144,7 +147,8 @@ const actions = {
         })),
         estEffortHrs: action.estEffortHrs,
         effortCompletionPercentage: 0,
-        effortCostPerHrType: "use_average",
+        effortCostPerHrType: action.effortCostSymbol ? "use_factor" : "use_average",
+        effortCostNodeId: action.effortCostSymbol ? idOf[action.effortCostSymbol] : null,
         customEffortCostPerHr: null,
         estSpending: action.estSpending,
         spentAmount: 0,

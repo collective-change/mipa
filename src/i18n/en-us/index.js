@@ -477,12 +477,113 @@ export default {
       foodAvailableInMeals: { name: "food available, in meals", notes: "How many meals the donated food makes." },
       mealsServed: { name: "meals served per month", notes: "The smaller of the food available and the meals volunteers can pack: whichever runs out first limits the meals served." },
       valueOfAMeal: { name: "value of a meal", notes: "What one meal is worth to the family that receives it. An estimate: try changing it and recalculating." },
-      monthlyRunningCosts: { name: "running costs per month", notes: "Rent, utilities and the van." }
+      monthlyRunningCosts: { name: "running costs per month", notes: "Rent, utilities and the van." },
+      coordinatorPerHour: { name: "coordinator's hourly cost", notes: "Our part-time paid coordinator, who costs more per hour than the average. The supermarket partnership is priced at this rate." }
     },
     actions: {
       recruit: { title: "Run a volunteer recruitment drive", notes: "Talks at schools and places of worship, and posters around the neighbourhood. Expected to bring 2 more new volunteers each month." },
       supermarkets: { title: "Partner with supermarkets for surplus food", notes: "Expected to bring 800 kg more food each month. But volunteer hours, not food, limit the meals served right now. Open the model and compare \"food available, in meals\" with \"meals volunteers can pack per month\" to see why this action does little on its own." },
       report: { title: "Print a glossy annual report", notes: "It looks good, but it changes nothing in the model, so it only costs. Not every action that feels useful does good." }
     }
-  }
+  },
+
+  // hourly costs of roles and people (ActionSummary.vue, NodeSummary.vue)
+  "Add a role or person's hourly cost": "Add a role or person's hourly cost",
+  roleCostHint:
+    "The organization's hourly cost of work is a rough average. For actions done by someone whose time costs noticeably more or less, add their role or name here. It becomes a factor in the model that other actions can use too.",
+  roleCostName: "Role or person",
+  roleCostNameExample: "e.g. Doctor, Volunteer, Ms. Lin",
+  roleCostPerHour: "Cost per hour",
+  isHourlyCostLabel: "This is the hourly cost of a role or person",
+  isHourlyCostHint:
+    "Actions can then price their work hours at this factor's value instead of the organization's average. Find it under Costs and progress, in the action's hourly cost menu.",
+
+  // AI (PageOrgAi.vue, DraftModelDialog.vue, PageModel.vue)
+  AI: "AI",
+  "Privacy policy": "Privacy policy",
+  Model: "Model",
+  Saved: "Saved",
+  Close: "Close",
+  Other: "Other",
+  Answer: "Answer",
+  Recommended: "Recommended",
+  Disconnect: "Disconnect",
+  "API key": "API key",
+  "Test and save": "Test and save",
+  "Endpoint address": "Endpoint address",
+  "AI settings managers": "AI settings managers",
+  "Anthropic (Claude)": "Anthropic (Claude)",
+  "OpenAI-compatible endpoint": "OpenAI-compatible endpoint",
+  "Create an API key": "Create an API key",
+  "Set a spending limit": "Set a spending limit",
+  "Provider's terms": "Provider's terms",
+  "Draft with AI": "Draft with AI",
+  "Draft my model": "Draft my model",
+  "Draft now": "Draft now",
+  "Open AI settings": "Open AI settings",
+  "Back to the draft": "Back to the draft",
+  "Start again": "Start again",
+  "Remove AI draft": "Remove AI draft",
+  estimate: "estimate",
+  "hourly cost": "hourly cost",
+  aiWhatTitle: "What AI can do in mipa",
+  aiWhatText:
+    "AI can draft a model of your organization from a description in your own words: the factors that matter, how they connect, and first estimates, each explained. You review the draft before anything is added, and can remove it again in one step.",
+  aiOwnProviderText:
+    "mipa doesn't provide AI itself. Your organization connects its own account with an AI provider and pays the provider directly. Drafting a model usually costs about US$0.40 to 0.70.",
+  aiDataText:
+    "When someone uses AI, their description and the model's factors (names, formulas, units) are sent to the provider. Members, emails, chats, actions and notes are not. Whether the provider keeps or trains on this data depends on its terms, so choose one that fits your organization's policies.",
+  aiStatusTitle: "Provider",
+  aiNotConnected: "No AI provider is connected, so AI features are off for this organization.",
+  aiAskAdmin: "Only admins and AI settings managers can change this. Ask {admins}.",
+  aiConnectTitle: "Connect a provider",
+  aiChangeTitle: "Change the provider",
+  aiAnthropicHelp:
+    "Create an API key in the Anthropic Console, and set a monthly spending limit there so costs stay predictable.",
+  aiCompatibleHelp:
+    "Any service that offers the OpenAI chat completions API, such as OpenRouter, Azure OpenAI, Mistral or a self-hosted model. Enter its address, a model name and an API key.",
+  aiHttpsOnly: "The address must start with https://",
+  aiModelHint: "Recommended models are tested with mipa. Others may give less reliable drafts.",
+  aiCompatibleModelHint: "The model name exactly as the provider spells it.",
+  aiKeepKeyHint: "Leave empty to keep the current key.",
+  aiConnected: "AI provider connected",
+  aiConnectFailed: "The provider couldn't be connected",
+  aiDisconnectConfirm:
+    "AI features will be off for the organization until a provider is connected again. The stored API key is deleted.",
+  aiDisconnected: "AI provider disconnected",
+  aiManagersTitle: "Who can change the provider",
+  aiManagersHelp:
+    "Admins can always change the AI settings. Choose other members who may change them too.",
+  aiNoProviderTitle: "Connect an AI provider to draft models",
+  aiDescribeIntro:
+    "Describe your organization in your own words: what it does, for whom, what it spends on and what it wants to achieve. A few sentences are enough.",
+  aiDescribePlaceholder:
+    "We are a bakery with 6 staff. We sell bread in our shop and to two cafés. Our biggest costs are flour, butter, energy for the ovens and wages. We want to reach net-zero emissions by 2030.",
+  aiSentNotice:
+    "Your description and this model's factors are sent to {provider}, the AI provider your organization connected, to prepare the draft.",
+  aiDrafting: "Drafting your model…",
+  aiFixing: "Fixing a problem the calculation found…",
+  aiUsuallyUnderAMinute: "This usually takes under a minute.",
+  aiQuestionsIntro: "A few questions first. Skip any you like.",
+  aiAnswerPlaceholder: "Your answer (optional)",
+  aiSkipped: "(skipped)",
+  aiTrialRunning: "Test-calculating the draft…",
+  aiTrialOk: "The draft calculates without errors.",
+  aiTrialFailed: "The draft doesn't calculate yet.",
+  aiDraftProblem: "Problem in the draft",
+  aiUsedBy: "Used by {names}",
+  aiEstimateNote: "Estimate: {reasoning}",
+  aiDraftedNote: "Drafted with AI.",
+  aiChangesTitle: "Changes to existing factors",
+  aiAskForChanges: "Ask for changes",
+  aiAskForChangesExample: "e.g. leave out deliveries, add solar panels",
+  aiAddToModel: "Add {count} factors to the model",
+  aiDraftAdded: "{count} factors added. Calculating…",
+  aiErrorTitle: "Something went wrong",
+  aiInviteTitle: "Not sure where to start?",
+  aiInviteText: "Describe your organization and AI drafts a model you can review and edit.",
+  aiRemoveConfirm: "This deletes the {count} factors the AI draft added and restores the factors it changed.",
+  aiRemoveConflicts: "These factors use drafted factors and will need their formulas fixed: {names}",
+  aiRemoveKept: "These factors were edited after the draft, so their current formulas are kept: {names}",
+  aiDraftRemoved: "AI draft removed"
 };

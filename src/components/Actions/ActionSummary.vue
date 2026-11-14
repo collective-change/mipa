@@ -237,15 +237,65 @@
           <impacts />
 
           <div class="text-h6 q-mt-md">{{ $t("Costs and progress") }}</div>
+          <q-dialog v-model="showAddRoleCost">
+            <q-card style="width: 420px; max-width: 90vw">
+              <q-card-section>
+                <div class="text-h6">{{ $t("Add a role or person's hourly cost") }}</div>
+                <div class="text-body2 text-grey-8 q-mt-xs">{{ $t("roleCostHint") }}</div>
+              </q-card-section>
+              <q-card-section class="q-gutter-md">
+                <q-input
+                  v-model="newRoleCost.name"
+                  :label="$t('roleCostName')"
+                  :placeholder="$t('roleCostNameExample')"
+                  autofocus
+                  filled
+                />
+                <q-input
+                  v-model.number="newRoleCost.cost"
+                  :label="$t('roleCostPerHour')"
+                  type="number"
+                  step="any"
+                  :suffix="averageEffortCostPerHourNode ? averageEffortCostPerHourNode.unit : ''"
+                  filled
+                />
+              </q-card-section>
+              <q-card-actions align="right">
+                <q-btn flat no-caps :label="$t('Cancel')" v-close-popup />
+                <q-btn
+                  unelevated
+                  no-caps
+                  color="primary"
+                  :label="$t('Add')"
+                  :loading="addingRoleCost"
+                  :disable="!newRoleCost.name || !(newRoleCost.cost >= 0)"
+                  @click="addRoleCost"
+                />
+              </q-card-actions>
+            </q-card>
+          </q-dialog>
           <div class="row q-gutter-md items-start">
             <q-select
-              v-model="effortCostPerHrType"
+              ref="effortCostSelect"
+              v-model="effortCostChoice"
               :label="$t('effortCostPerHour')"
-              :options="effortCostPerHrTypeOptions"
+              :options="effortCostOptions"
               emit-value
               map-options
               filled
-            />
+              style="min-width: 260px"
+            >
+              <template v-slot:after-options>
+                <q-item clickable @click="openAddRoleCost">
+                  <q-item-section avatar>
+                    <q-icon name="add" color="primary" />
+                  </q-item-section>
+                  <q-item-section class="text-primary">
+                    {{ $t("Add a role or person's hourly cost") }}
+                  </q-item-section>
+                </q-item>
+              </template>
+            </q-select>
             <q-input
               v-if="effortCostPerHrType == 'use_custom'"
               v-model.number="customEffortCostPerHr"
@@ -483,6 +533,7 @@ import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
 import { interpret } from "xstate";
 import { actionMachine } from "@/state-machines/machine-action";
 import { formatNumber } from "@/utils/util-formatNumber";
+import { showErrorMessage } from "@/utils/util-show-error-message";
 import idb from "@/api/idb";
 import ModalSaveButton from "@/components/Shared/ModalComponents/ModalSaveButton.vue";
 import Impacts from "@/components/Impacts/Impacts.vue";
@@ -522,16 +573,9 @@ export default {
       actionId: null,
       saveFullResults: false,
       saveResultsOnDevice: false,
-      effortCostPerHrTypeOptions: [
-        {
-          label: this.$t("Use the organization's hourly cost of work"),
-          value: "use_average",
-        },
-        {
-          label: this.$t("Use a different hourly cost"),
-          value: "use_custom",
-        },
-      ],
+      showAddRoleCost: false,
+      addingRoleCost: false,
+      newRoleCost: { name: "", cost: null },
       actionService: interpret(actionMachine),
       actionStateContext: null,
     };
@@ -542,7 +586,7 @@ export default {
     ...mapState("ui", ["selectedActionId"]),
     ...mapState("model", ["currentModel"]),
     ...mapGetters("model", ["nodes"]),
-    ...mapState("calcResults", ["resultsOfAction"]),
+    ...mapState("calcResults", ["resultsOfAction", "baseline"]),
     //...mapState("actions", ["currentAction"]),
     ...mapState("actions", ["matchingActions"]),
     //fields calculated in the uiAction store, for display only
@@ -565,6 +609,7 @@ export default {
       "uiAction.effortCompletionPercentage",
       "uiAction.effortCostPerHrType",
       "uiAction.customEffortCostPerHr",
+      "uiAction.effortCostNodeId",
       "uiAction.estSpending",
       "uiAction.spentAmount",
       "uiAction.ownDirectCost",
@@ -590,6 +635,64 @@ export default {
       }
     },
 
+    // Factors that hold the hourly cost of a role or person.
+    roleCostNodes() {
+      return this.nodes
+        .filter((node) => node.isHourlyCost)
+        .sort((a, b) => a.name.localeCompare(b.name));
+    },
+    effortCostOptions() {
+      const unit = this.averageEffortCostPerHourNode
+        ? this.averageEffortCostPerHourNode.unit
+        : "";
+      const amount = (node) => {
+        const value = this.hourlyCostOf(node);
+        return isNaN(value) ? "" : ` (${formatNumber(value, 3)} ${node.unit || unit})`;
+      };
+      return [
+        {
+          label:
+            this.$t("Use the organization's hourly cost of work") +
+            (this.averageEffortCostPerHourNode ? amount(this.averageEffortCostPerHourNode) : ""),
+          value: "use_average",
+        },
+        ...this.roleCostNodes.map((node) => ({
+          label: node.name + amount(node),
+          value: "factor:" + node.id,
+        })),
+        { label: this.$t("Use a different hourly cost"), value: "use_custom" },
+      ];
+    },
+    // One menu for the three ways to cost an hour of work.
+    effortCostChoice: {
+      get() {
+        if (this.effortCostPerHrType == "use_factor" && this.effortCostNodeId)
+          return "factor:" + this.effortCostNodeId;
+        return this.effortCostPerHrType || "use_average";
+      },
+      set(choice) {
+        if (choice.startsWith("factor:")) {
+          this.effortCostPerHrType = "use_factor";
+          this.effortCostNodeId = choice.slice("factor:".length);
+        } else {
+          this.effortCostPerHrType = choice;
+          this.effortCostNodeId = null;
+        }
+      },
+    },
+    // The hourly cost the action's effort is priced at, as the calculation
+    // will use it.
+    effortCostPerHourInUse() {
+      if (this.effortCostPerHrType == "use_custom")
+        return Number(this.customEffortCostPerHr) || 0;
+      if (this.effortCostPerHrType == "use_factor") {
+        const node = this.nodes.find((n) => n.id == this.effortCostNodeId);
+        const value = this.hourlyCostOf(node);
+        if (!isNaN(value)) return value;
+      }
+      return this.hourlyCostOf(this.averageEffortCostPerHourNode);
+    },
+
     averageEffortCostPerHourNode() {
       return this.nodes.find(
         (node) =>
@@ -599,11 +702,7 @@ export default {
 
     directCost() {
       if (this.currentModel == null || this.nodes.length == 0) return;
-      let averageEffortCostPerHourNode = this.nodes.find(
-        (node) =>
-          node.id == this.currentModel.roleNodes.averageEffortCostPerHour
-      );
-      let effortCostPerHour = averageEffortCostPerHourNode.symbolFormula;
+      let effortCostPerHour = this.effortCostPerHourInUse;
       let directEffortCost =
         (isNaN(this.estEffortHrs) ? 0 : this.estEffortHrs) * effortCostPerHour;
       let outstandingDirectEffortHrs =
@@ -635,6 +734,36 @@ export default {
   },
 
   methods: {
+    // A factor's value at the start of the last calculation, or its formula
+    // if it is a plain number and the model hasn't been calculated yet.
+    hourlyCostOf(node) {
+      if (!node) return NaN;
+      const values = this.baseline && this.baseline.nodesValues && this.baseline.nodesValues[node.id];
+      if (values && typeof values[0] == "number") return values[0];
+      return Number(node.symbolFormula);
+    },
+    openAddRoleCost() {
+      if (this.$refs.effortCostSelect) this.$refs.effortCostSelect.hidePopup();
+      this.newRoleCost = { name: "", cost: null };
+      this.showAddRoleCost = true;
+    },
+    async addRoleCost() {
+      this.addingRoleCost = true;
+      try {
+        const nodeId = await this.$store.dispatch("model/addHourlyCostFactor", {
+          modelId: this.currentModel.id,
+          name: this.newRoleCost.name.trim(),
+          cost: this.newRoleCost.cost,
+          unit: this.averageEffortCostPerHourNode ? this.averageEffortCostPerHourNode.unit : "",
+        });
+        this.effortCostChoice = "factor:" + nodeId;
+        this.showAddRoleCost = false;
+      } catch (error) {
+        showErrorMessage(this.$t("Add a role or person's hourly cost"), error.message);
+      } finally {
+        this.addingRoleCost = false;
+      }
+    },
     ...mapActions("model", ["updateAction"]),
     ...mapMutations("uiAction", ["mergeNewActionToUiAction"]),
     formatNumber,

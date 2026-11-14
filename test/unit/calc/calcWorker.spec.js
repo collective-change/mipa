@@ -262,6 +262,7 @@ function actionModel() {
   return {
     nodes: [
       node("avgCost", "50"),
+      node("doctorRate", "120"), // hourly cost of a role, used by some actions
       node("effort", "0"),
       node("spending", "0", { unit: "USD" }),
       node("trees", "100"),
@@ -361,6 +362,28 @@ describe("actions", () => {
     expect(n.totalRoi).toBeCloseTo(roi, 9);
     expect(n.actionLeverage).toBeCloseTo(((net * roi) / cost) * Math.sign(net), 9);
     expect(result.effectiveChainedCostsAndImpacts.includedActionIds).toEqual(["plant"]);
+  });
+
+  it("uses the hourly cost of a role's factor when the action names one", async () => {
+    const [result] = await calcActions([
+      action("consult", {
+        estEffortHrs: 10,
+        effortCostPerHrType: "use_factor",
+        effortCostNodeId: "doctorRate"
+      })
+    ]);
+    expect(result.effectiveChainedCostsAndImpacts.estEffortCosts).toBe(1200);
+  });
+
+  it("falls back to the average hourly cost if the role's factor is gone", async () => {
+    const [result] = await calcActions([
+      action("consult", {
+        estEffortHrs: 10,
+        effortCostPerHrType: "use_factor",
+        effortCostNodeId: "deleted"
+      })
+    ]);
+    expect(result.effectiveChainedCostsAndImpacts.estEffortCosts).toBe(500);
   });
 
   it("only counts the outstanding part of effort and uses a custom hourly cost", async () => {
