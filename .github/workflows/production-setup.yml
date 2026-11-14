@@ -132,6 +132,23 @@ jobs:
 
       # ---- migrate ----
 
+      - name: Turn on the Google Cloud services the deploy needs
+        if: inputs.mode == 'migrate'
+        env:
+          PROJECT: ${{ steps.config.outputs.project }}
+        run: |
+          gcloud services enable --project "$PROJECT" --quiet \
+            secretmanager.googleapis.com \
+            cloudfunctions.googleapis.com \
+            run.googleapis.com \
+            cloudbuild.googleapis.com \
+            artifactregistry.googleapis.com \
+            eventarc.googleapis.com \
+            pubsub.googleapis.com \
+            cloudscheduler.googleapis.com
+          # newly enabled services can take a moment to accept requests
+          sleep 30
+
       - name: Create missing secrets
         if: inputs.mode == 'migrate'
         env:
@@ -139,7 +156,7 @@ jobs:
           FIXER_IO_ACCESS_KEY: ${{ secrets.FIXER_IO_ACCESS_KEY }}
         run: |
           if ! gcloud secrets describe AI_KEY_ENCRYPTION_KEY --project "$PROJECT" >/dev/null 2>&1; then
-            openssl rand -base64 32 | tr -d '\n' | gcloud secrets create AI_KEY_ENCRYPTION_KEY \
+            openssl rand -base64 32 | tr -d '\n' | gcloud secrets create AI_KEY_ENCRYPTION_KEY --quiet \
               --project "$PROJECT" --replication-policy=automatic --data-file=-
             echo "Created AI_KEY_ENCRYPTION_KEY."
           fi
@@ -153,7 +170,7 @@ jobs:
               echo "::error::The project has no FIXER_IO_ACCESS_KEY secret and the old config has none. Add it as a repository secret (Settings > Secrets and variables > Actions) and run again."
               exit 1
             fi
-            printf '%s' "$FIXER_IO_ACCESS_KEY" | gcloud secrets create FIXER_IO_ACCESS_KEY \
+            printf '%s' "$FIXER_IO_ACCESS_KEY" | gcloud secrets create FIXER_IO_ACCESS_KEY --quiet \
               --project "$PROJECT" --replication-policy=automatic --data-file=-
             echo "Created FIXER_IO_ACCESS_KEY."
           fi
