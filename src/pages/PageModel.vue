@@ -3,6 +3,7 @@
     <div v-if="currentOrg && currentOrg.goal" class="q-px-md q-pt-sm text-subtitle1 text-grey-8">
       {{ currentOrg.goal }}
     </div>
+    <getting-started class="q-mt-sm print-hide" @add-factor="showAddNode = true" />
 
     <div class="row">
       <div class="col-12 col-md-2 print-hide q-px-sm">
@@ -113,6 +114,9 @@
         </div>
       </div>
     </div>
+    <q-dialog v-model="showAddNode">
+      <add-node newNodeRole="" @close="showAddNode = false" />
+    </q-dialog>
     <q-dialog v-model="showConfigOrgModel">
       <config-org-model @close="showConfigOrgModel = false" />
     </q-dialog>
@@ -128,6 +132,8 @@ import CalculatorUi from "@/components/Calc/CalculatorUi.vue";
 import ExportCalcResults from "@/components/Calc/ExportCalcResults.vue";
 import DependencyGraph from "@/components/Model/DependencyGraph.vue";
 import NodeSummary from "@/components/Model/NodeSummary.vue";
+import GettingStarted from "@/components/Model/GettingStarted.vue";
+import AddNode from "@/components/Model/Modals/AddNode.vue";
 //import ExportCalcResults from "../components/Calc/ExportCalcResults.vue";
 
 const nest = (items, id = null, link = "parentId") => {
@@ -142,6 +148,8 @@ const nest = (items, id = null, link = "parentId") => {
 export default {
   components: {
     "config-org-model": ConfigOrgModel,
+    "getting-started": GettingStarted,
+    "add-node": AddNode,
     "calculator-ui": CalculatorUi,
     "export-calc-results": ExportCalcResults,
     "dependency-graph": DependencyGraph,
@@ -152,6 +160,7 @@ export default {
     return {
       //dependencyGraphSavefile: null,
       showConfigOrgModel: false,
+      showAddNode: false,
       models: null,
       //selectedNodeGroupId: null,
       expanded: [],

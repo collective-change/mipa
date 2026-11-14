@@ -322,6 +322,21 @@ export default {
   toastRelationshipRemoved: "Related action removed",
   toastUserUpdated: "Profile saved",
 
+  // first-run checklist (GettingStarted.vue)
+  "Getting started": "Getting started",
+  gsIntro: "Six steps to your first comparison of actions. Each one ticks off when it's done.",
+  gsAllDoneTitle: "You're all set",
+  gsAllDoneText: "Your model is connected and your actions are compared. You can hide this list.",
+  Hide: "Hide",
+  gs: {
+    hourlyCost: { title: "Set the hourly cost of work", text: "Open the factor marked (new) and enter what an hour of work costs your organization, then save.", button: "Open it" },
+    addFactors: { title: "Add what matters to you", text: "Add factors such as sales, people served or emissions, with a formula for each.", button: "Add factor" },
+    linkFactors: { title: "Connect them to the benefits and costs", text: "Link your factors to the benefit and cost factors, so mipa knows what each one is worth to your organization and to the world.", button: "Open benefit to the world" },
+    calculate: { title: "Calculate", text: "mipa calculates your model into the future. Fix anything it reports, then calculate again." },
+    addAction: { title: "Add a first action", text: "Describe something your organization could do, with the work, money and impacts it needs.", button: "Go to actions" },
+    compare: { title: "Compare actions", text: "On the Actions page, choose Recalculate to see each action's benefits, costs and leverage.", button: "Go to actions" }
+  },
+
   // for PageOrgs.vue
   "My organizations": "My organizations",
   "Add organization": "Add organization",
