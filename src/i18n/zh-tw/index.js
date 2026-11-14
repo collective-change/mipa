@@ -755,5 +755,14 @@ export default {
   setCompletionPreset: "設定進度",
   sunkenCostLabel: "目前已沉沒成本",
   outstandingCostLabel: "後續預計直接成本",
-  targetDueDate: "預計完成日期"
+  targetDueDate: "預計完成日期",
+
+  // Role Explanations & Invitation Resend
+  resendInvitation: "重新發送",
+  toastInvitationResent: "已重新發送邀請至 {email}",
+  roleAdminTooltip: "管理員：擁有組織最高管理權限，可管理成員、配置 AI 供應商、建立與編輯模型與行動。",
+  roleMemberTooltip: "一般成員：可共同協作模型、公式與行動方案，執行模擬運算並參與討論。",
+  roleAdminDesc: "管理員可邀請與移除成員、變更權限，並配置組織全域設定與 AI 連線。",
+  roleMemberDesc: "一般成員可共同編輯模型與因素、提出行動方案並執行模擬。",
+  roleExplanationsTitle: "組織角色與權限說明"
 };
