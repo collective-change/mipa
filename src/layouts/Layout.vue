@@ -559,6 +559,12 @@ export default {
 
     lang(lang) {
       this.$i18n.locale = lang;
+      // Quasar's own texts (table pagination, date pickers...)
+      const quasarLang =
+        lang == "zh-tw"
+          ? import("quasar/lang/zh-TW.js")
+          : import("quasar/lang/en-US.js");
+      quasarLang.then((pack) => this.$q.lang.set(pack.default));
       this.$q.cookies.set("locale", lang, {
         sameSite: "None",
         secure: true,

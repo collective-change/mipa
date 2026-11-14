@@ -59,7 +59,7 @@
       </q-item>
     </q-list>
     <div class="q-pa-sm q-gutter-sm">
-      <q-btn label="Add impact" color="primary" @click="showAddImpact = true" />
+      <q-btn :label="$t('Add impact')" icon="add" color="primary" unelevated no-caps @click="showAddImpact = true" />
     </div>
     <q-dialog v-model="showAddImpact">
       <add-edit-impact addOrEdit="add" :nodes="nodes" @close="showAddImpact = false" />

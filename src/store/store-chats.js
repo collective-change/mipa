@@ -14,6 +14,7 @@ import {
 import { firestoreAction } from "./firestore-bind";
 import { Notify } from "quasar";
 import { showErrorMessage } from "@/utils/util-show-error-message";
+import { i18n } from "@/boot/i18n";
 
 const state = {
   currentChat: null,
@@ -76,7 +77,7 @@ const actions = {
         [`unreadBy.${payload.memberId}`]: false
       })
       .then(function() {
-        Notify.create("Chat member added!");
+        Notify.create(i18n.global.t("toastChatMemberAdded"));
       })
       .catch(function(error) {
         showErrorMessage("Error adding chat member", error.message);
@@ -90,7 +91,7 @@ const actions = {
         [`unreadBy.${payload.memberId}`]: deleteField()
       })
       .then(function() {
-        Notify.create("Chat member removed!");
+        Notify.create(i18n.global.t("toastChatMemberRemoved"));
       })
       .catch(function(error) {
         showErrorMessage("Error removing chat member", error.message);

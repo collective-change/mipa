@@ -4,6 +4,7 @@ import { collection, doc, setDoc } from "firebase/firestore";
 import { firestoreAction } from "./firestore-bind";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { slugify } from "@/utils/util-slugify";
+import { i18n } from "@/boot/i18n";
 
 const state = {
   currentUser: null,
@@ -24,7 +25,7 @@ const actions = {
       .then(function() {
         //let keys = Object.keys(payload.updates);
         //console.log("keys: ", keys);
-        //Notify.create("User information updated!");
+        //Notify.create(i18n.global.t("toastUserUpdated"));
       })
       .catch(function(error) {
         showErrorMessage("Error updating user information", error.message);

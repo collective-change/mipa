@@ -11,6 +11,7 @@ import {
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { PUBLIC_PATHS } from "@/router/public-paths";
+import { i18n } from "@/boot/i18n";
 
 const state = {
   loggedIn: false,
@@ -68,7 +69,7 @@ const actions = {
   sendPasswordResetEmail({}, payload) {
     sendPasswordResetEmail(firebaseAuth, payload.email)
       .then(function() {
-        Notify.create("Email sent");
+        Notify.create(i18n.global.t("toastEmailSent"));
       })
       .catch(error => {
         showErrorMessage("Error", error.message);
