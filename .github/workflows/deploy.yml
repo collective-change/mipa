@@ -52,11 +52,38 @@ jobs:
           echo "project=$project" >> "$GITHUB_OUTPUT"
           echo "ready=true" >> "$GITHUB_OUTPUT"
 
+      # Check out first: checkout cleans the folder, which would delete the
+      # credentials file the auth step writes.
       - uses: actions/checkout@v4
         if: steps.config.outputs.ready == 'true'
 
-      - uses: actions/setup-node@v4
+      # The first deploy goes through the Production setup workflow (mode
+      # migrate), which also creates secrets and removes the old function.
+      # Until it has run, the AI_KEY_ENCRYPTION_KEY secret doesn't exist and
+      # automatic deploys skip.
+      - uses: google-github-actions/auth@v2
         if: steps.config.outputs.ready == 'true'
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        if: steps.config.outputs.ready == 'true'
+
+      - name: Check that the first deploy has been done
+        id: migrated
+        if: steps.config.outputs.ready == 'true'
+        env:
+          PROJECT: ${{ steps.config.outputs.project }}
+        run: |
+          if gcloud secrets describe AI_KEY_ENCRYPTION_KEY --project "$PROJECT" >/dev/null 2>&1; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Deploy skipped: run the Production setup workflow with mode migrate first (README, Deploying)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.migrated.outputs.ready == 'true'
         with:
           node-version: 22
           cache: npm
@@ -65,7 +92,7 @@ jobs:
             functions/package-lock.json
 
       - name: Write configuration files
-        if: steps.config.outputs.ready == 'true'
+        if: steps.migrated.outputs.ready == 'true'
         env:
           APP_ENV_FILE: ${{ vars.APP_ENV_FILE }}
           FUNCTIONS_ENV_FILE: ${{ vars.FUNCTIONS_ENV_FILE }}
@@ -78,7 +105,7 @@ jobs:
           fi
 
       - name: Build and test the app
-        if: steps.config.outputs.ready == 'true'
+        if: steps.migrated.outputs.ready == 'true'
         run: |
           npm ci
           npm ci --prefix src-pwa
@@ -87,16 +114,11 @@ jobs:
           npm run build
 
       - name: Install Cloud Functions dependencies
-        if: steps.config.outputs.ready == 'true'
+        if: steps.migrated.outputs.ready == 'true'
         run: npm ci --prefix functions
 
-      - uses: google-github-actions/auth@v2
-        if: steps.config.outputs.ready == 'true'
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-
       - name: Deploy to Firebase
-        if: steps.config.outputs.ready == 'true'
+        if: steps.migrated.outputs.ready == 'true'
         run: >
           npx --yes firebase-tools@15.36.0 deploy
           --project "${{ steps.config.outputs.project }}"
