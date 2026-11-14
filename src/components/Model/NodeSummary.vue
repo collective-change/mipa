@@ -432,6 +432,66 @@
           <q-tooltip max-width="300px">{{ $t("isHourlyCostHint") }}</q-tooltip>
         </q-toggle>
         <q-input v-model="nodeToSubmit.notes" :label="$t('Notes')" autogrow />
+
+        <!-- Multilingual Factor Titles (Cross-Lingual Collaboration) -->
+        <q-expansion-item
+          icon="translate"
+          :label="$t('multilingualTitles')"
+          header-class="text-grey-8"
+          class="q-mt-sm border rounded-borders bg-white"
+        >
+          <div class="q-pa-sm q-gutter-y-xs bg-grey-1">
+            <div class="text-caption text-grey-6 q-mb-xs">
+              {{ $t("multilingualTitlesHint") }}
+            </div>
+            <q-input
+              v-model="factorTranslations['en-us']"
+              dense
+              outlined
+              label="English"
+              @update:model-value="updateFactorTranslation('en-us', $event)"
+            >
+              <template v-slot:prepend><span class="q-mr-xs">🇺🇸</span></template>
+            </q-input>
+            <q-input
+              v-model="factorTranslations['zh-tw']"
+              dense
+              outlined
+              :label="$t('langTraditionalChinese')"
+              @update:model-value="updateFactorTranslation('zh-tw', $event)"
+            >
+              <template v-slot:prepend><span class="q-mr-xs">🇹🇼</span></template>
+            </q-input>
+            <q-input
+              v-model="factorTranslations['zh-cn']"
+              dense
+              outlined
+              :label="$t('langSimplifiedChinese')"
+              @update:model-value="updateFactorTranslation('zh-cn', $event)"
+            >
+              <template v-slot:prepend><span class="q-mr-xs">🇨🇳</span></template>
+            </q-input>
+            <q-input
+              v-model="factorTranslations['es']"
+              dense
+              outlined
+              :label="$t('langSpanish')"
+              @update:model-value="updateFactorTranslation('es', $event)"
+            >
+              <template v-slot:prepend><span class="q-mr-xs">🇪🇸</span></template>
+            </q-input>
+            <q-input
+              v-model="factorTranslations['ja']"
+              dense
+              outlined
+              :label="$t('langJapanese')"
+              @update:model-value="updateFactorTranslation('ja', $event)"
+            >
+              <template v-slot:prepend><span class="q-mr-xs">🇯🇵</span></template>
+            </q-input>
+          </div>
+        </q-expansion-item>
+
         <modal-buttons />
       </q-form>
       <div class="text-h6">{{ $t("Chat") }}</div>
@@ -595,6 +655,13 @@ export default {
         },
       },
       influencerChartsArr: [],
+      factorTranslations: {
+        "en-us": "",
+        "zh-tw": "",
+        "zh-cn": "",
+        "es": "",
+        "ja": ""
+      },
     };
   },
 
@@ -993,6 +1060,15 @@ export default {
       if (found) return found.unit;
       else return "";
     },
+    updateFactorTranslation(locale, val) {
+      if (!this.nodeToSubmit.translations) {
+        this.nodeToSubmit.translations = {};
+      }
+      if (!this.nodeToSubmit.translations.name) {
+        this.nodeToSubmit.translations.name = {};
+      }
+      this.nodeToSubmit.translations.name[locale] = val;
+    },
   },
 
   watch: {
@@ -1006,6 +1082,13 @@ export default {
           blockingInfluencers: [...(this.selectedNode.blockingInfluencers || [])],
           unusedInfluencers: [...(this.selectedNode.unusedInfluencers || [])]
         });
+        this.factorTranslations = {
+          "en-us": this.selectedNode.translations?.name?.["en-us"] || "",
+          "zh-tw": this.selectedNode.translations?.name?.["zh-tw"] || "",
+          "zh-cn": this.selectedNode.translations?.name?.["zh-cn"] || "",
+          "es": this.selectedNode.translations?.name?.["es"] || "",
+          "ja": this.selectedNode.translations?.name?.["ja"] || "",
+        };
         this.$store.commit("ui/setUiNodeChanged", false);
         this.influencerChartsArr = [];
         this.nodeChart = {};

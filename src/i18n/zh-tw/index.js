@@ -148,6 +148,16 @@ export default {
   liveDraftBadge: "即時變動草稿",
   freezeSnapshotNotice: "將本次決策推演鎖定為正式不可篡改之歷史快照。",
 
+  // Multi-Language Expansion & Cross-Lingual Collaboration
+  multilingualTitles: "多語系要素名稱",
+  multilingualTitlesHint: "設定各語系之要素名稱，便於跨國跨語系團隊協作。",
+  translateWithAi: "使用 AI 翻譯",
+  inlineTranslationNotice: "已自動翻譯自原始語言",
+  langTraditionalChinese: "繁體中文",
+  langSimplifiedChinese: "簡體中文",
+  langSpanish: "西班牙文",
+  langJapanese: "日文",
+
   // for PageModel.vue
   Calculate: "計算",
   "Model settings": "模型設定",

@@ -99,25 +99,30 @@
       </template>
       <template v-slot:body-cell-title="props">
         <q-td :props="props">
-          <div class="row items-center no-wrap">
-            <span class="text-weight-medium">{{ props.value }}</span>
-            <q-badge
-              v-if="props.row.guardrailViolations && props.row.guardrailViolations.length"
-              color="negative"
-              text-color="white"
-              dense
-              class="q-ml-sm cursor-pointer guardrail-breach-badge"
-            >
-              <q-icon name="warning" size="xs" class="q-mr-xs" />
-              {{ $t("guardrailBreachBadge") }}
-              <q-tooltip max-width="320px">
-                <div class="text-weight-bold q-mb-xs">{{ $t("guardrailBreachWarningTitle") }}</div>
-                <div v-for="(v, idx) in props.row.guardrailViolations" :key="idx" class="q-mb-xs">
-                  • {{ v.factorName }}: {{ $t(v.boundType === 'min' ? 'belowMinimum' : 'exceedsMaximum') }}
-                  ({{ v.worstValue }} {{ v.unit }} vs {{ v.threshold }} {{ v.unit }})
-                </div>
-              </q-tooltip>
-            </q-badge>
+          <div class="column">
+            <div class="row items-center no-wrap">
+              <span class="text-weight-medium">{{ getActionDisplayTitle(props.row) }}</span>
+              <q-badge
+                v-if="props.row.guardrailViolations && props.row.guardrailViolations.length"
+                color="negative"
+                text-color="white"
+                dense
+                class="q-ml-sm cursor-pointer guardrail-breach-badge"
+              >
+                <q-icon name="warning" size="xs" class="q-mr-xs" />
+                {{ $t("guardrailBreachBadge") }}
+                <q-tooltip max-width="320px">
+                  <div class="text-weight-bold q-mb-xs">{{ $t("guardrailBreachWarningTitle") }}</div>
+                  <div v-for="(v, idx) in props.row.guardrailViolations" :key="idx" class="q-mb-xs">
+                    • {{ v.factorName }}: {{ $t(v.boundType === 'min' ? 'belowMinimum' : 'exceedsMaximum') }}
+                    ({{ v.worstValue }} {{ v.unit }} vs {{ v.threshold }} {{ v.unit }})
+                  </div>
+                </q-tooltip>
+              </q-badge>
+            </div>
+            <div v-if="getActionSubtitle(props.row)" class="text-caption text-grey-6 text-italic">
+              {{ getActionSubtitle(props.row) }}
+            </div>
           </div>
         </q-td>
       </template>
@@ -198,6 +203,7 @@ import CalculatorUi from "@/components/Calc/CalculatorUi.vue";
 import SelectUser from "@/components/Users/SelectUser.vue";
 import SelectActionStates from "@/components/Actions/SelectActionStates.vue";
 import EmptyState from "@/components/Shared/EmptyState.vue";
+import { getDualLanguageDisplay } from "@/utils/crossLingual";
 
 function getRelationshipsDisplay(row) {
   let relationships = [];
@@ -443,6 +449,14 @@ export default {
             this.$store.dispatch("ui/setSelectedActionId", row.id);
           });
       } else this.$store.dispatch("ui/setSelectedActionId", row.id);
+    },
+    getActionDisplayTitle(row) {
+      if (!row) return "";
+      return getDualLanguageDisplay(row, "title", this.$i18n.locale).primary || row.title || "";
+    },
+    getActionSubtitle(row) {
+      if (!row) return null;
+      return getDualLanguageDisplay(row, "title", this.$i18n.locale).subtitle;
     },
     // emulate fetching data from server
     addRow() {
