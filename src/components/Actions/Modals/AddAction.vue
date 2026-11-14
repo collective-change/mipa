@@ -338,6 +338,9 @@ export default {
         marginalNetTotalBenefitNpv: 0,
         marginalTotalCostNpv: 0,
         actionLeverage: null,
+        deadweight: 0,
+        attribution: 0,
+        displacement: 0,
       },
       operationOptions: [
         { label: "+", value: "+" },

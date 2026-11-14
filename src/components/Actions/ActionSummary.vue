@@ -38,6 +38,9 @@
             <q-chip outline color="primary"
               >{{ $t("Leverage") }} {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip
             >
+            <q-chip v-if="actionSroiMetrics.sroiRatio !== null" outline color="positive" class="text-weight-bold"
+              >SROI {{ formatSroiRatio(actionSroiMetrics.sroiRatio) }}</q-chip
+            >
             <q-chip outline color="primary"
               >{{ $t("totalRoi") }} {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip
             >
@@ -546,6 +549,123 @@
               </div>
             </q-card-section>
           </q-card>
+
+          <!-- SROI (Social Return on Investment) Analysis Card -->
+          <q-card flat bordered class="q-mt-md bg-grey-1 rounded-borders">
+            <q-card-section class="q-pb-xs">
+              <div class="row items-center justify-between">
+                <div>
+                  <div class="text-subtitle1 text-weight-bold text-positive row items-center">
+                    <q-icon name="volunteer_activism" class="q-mr-xs" size="20px" />
+                    {{ $t("sroiCardTitle") }}
+                  </div>
+                  <div class="text-caption text-grey-7">
+                    {{ $t("sroiCardSubtitle") }}
+                  </div>
+                </div>
+                <div class="row items-center q-gutter-xs">
+                  <q-chip
+                    dense
+                    color="positive"
+                    text-color="white"
+                    class="text-weight-bolder"
+                  >
+                    SROI {{ formatSroiRatio(actionSroiMetrics.sroiRatio) }}
+                  </q-chip>
+                  <q-btn
+                    outline
+                    dense
+                    no-caps
+                    size="sm"
+                    color="primary"
+                    icon="table_chart"
+                    :label="$t('viewSroiImpactMap')"
+                    @click="showSroiModal = true"
+                  />
+                </div>
+              </div>
+            </q-card-section>
+
+            <q-card-section class="q-pt-xs q-pb-sm">
+              <!-- Social Value Metrics Row -->
+              <div class="row q-col-gutter-sm q-mb-sm">
+                <div class="col-12 col-sm-4">
+                  <div class="bg-white q-pa-xs rounded-borders border text-center">
+                    <div class="text-caption text-grey-7">{{ $t("grossSocialBenefit") }}</div>
+                    <div class="text-weight-bold text-grey-9">
+                      {{ formatNumber(actionSroiMetrics.grossSocialBenefitNpv, 2) }} {{ currentOrg.currency }}
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-sm-4">
+                  <div class="bg-white q-pa-xs rounded-borders border text-center">
+                    <div class="text-caption text-grey-7">{{ $t("netImpactShare") }}</div>
+                    <div class="text-weight-bold text-primary">
+                      {{ (actionSroiMetrics.adjustmentFactor * 100).toFixed(1) }}%
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 col-sm-4">
+                  <div class="bg-white q-pa-xs rounded-borders border text-center">
+                    <div class="text-caption text-grey-7">{{ $t("netSocialValue") }}</div>
+                    <div class="text-weight-bold text-positive">
+                      {{ formatNumber(actionSroiMetrics.netSocialBenefitNpv, 2) }} {{ currentOrg.currency }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- SROI Adjustment Inputs -->
+              <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">
+                {{ $t("sroiDeductionsTitle") }}
+              </div>
+              <div class="row q-col-gutter-sm items-start">
+                <div class="col-12 col-sm-4">
+                  <q-input
+                    v-model.number="deadweight"
+                    type="number"
+                    dense
+                    filled
+                    suffix="%"
+                    :label="$t('deadweightLabel')"
+                    :hint="$t('deadweightHint')"
+                    :rules="[(val) => val == null || (val >= 0 && val <= 100) || '0 - 100%']"
+                  />
+                </div>
+                <div class="col-12 col-sm-4">
+                  <q-input
+                    v-model.number="attribution"
+                    type="number"
+                    dense
+                    filled
+                    suffix="%"
+                    :label="$t('attributionLabel')"
+                    :hint="$t('attributionHint')"
+                    :rules="[(val) => val == null || (val >= 0 && val <= 100) || '0 - 100%']"
+                  />
+                </div>
+                <div class="col-12 col-sm-4">
+                  <q-input
+                    v-model.number="displacement"
+                    type="number"
+                    dense
+                    filled
+                    suffix="%"
+                    :label="$t('displacementLabel')"
+                    :hint="$t('displacementHint')"
+                    :rules="[(val) => val == null || (val >= 0 && val <= 100) || '0 - 100%']"
+                  />
+                </div>
+              </div>
+            </q-card-section>
+          </q-card>
+
+          <sroi-impact-map-modal
+            v-model="showSroiModal"
+            :action="uiAction"
+            @updateAdjustments="onSroiAdjustmentsUpdated"
+          />
+
           <q-card-actions align="right">
             <q-btn :label="$t('Save')" color="primary" type="submit" unelevated no-caps />
           </q-card-actions>
@@ -722,6 +842,8 @@ import ActionSimCharts from "@/components/Charts/ActionSimCharts.vue";
 import Chat from "@/components/Chats/Chat.vue";
 import DecisionBriefModal from "@/components/Actions/Modals/DecisionBriefModal.vue";
 import ExplainRankingModal from "@/components/Actions/Modals/ExplainRankingModal.vue";
+import SroiImpactMapModal from "@/components/Actions/Modals/SroiImpactMapModal.vue";
+import { calculateSroiMetrics, formatSroiRatio } from "@/utils/sroi";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
@@ -743,6 +865,7 @@ export default {
     chat: Chat,
     "decision-brief-modal": DecisionBriefModal,
     "explain-ranking-modal": ExplainRankingModal,
+    "sroi-impact-map-modal": SroiImpactMapModal,
   },
 
   props: ["action"],
@@ -753,6 +876,7 @@ export default {
       actionId: null,
       showDecisionBrief: false,
       showExplainRanking: false,
+      showSroiModal: false,
       saveFullResults: false,
       saveResultsOnDevice: false,
       showAddRoleCost: false,
@@ -801,6 +925,9 @@ export default {
       "uiAction.outstandingDirectEffortCost",
       "uiAction.outstandingSpending",
       "uiAction.dueDate",
+      "uiAction.deadweight",
+      "uiAction.attribution",
+      "uiAction.displacement",
       "uiAction.notes",
       "uiAction.responsiblePerson",
       "uiAction.accountablePerson",
@@ -831,6 +958,14 @@ export default {
       const spent = Number(this.spentAmount) || 0;
       if (est <= 0) return 0;
       return spent / est;
+    },
+
+    actionSroiMetrics() {
+      return calculateSroiMetrics(this.uiAction, {
+        deadweight: this.deadweight,
+        attribution: this.attribution,
+        displacement: this.displacement
+      });
     },
 
     isOverBudget() {
@@ -994,6 +1129,13 @@ export default {
     ...mapActions("model", ["updateAction"]),
     ...mapMutations("uiAction", ["mergeNewActionToUiAction"]),
     formatNumber,
+    formatSroiRatio,
+
+    onSroiAdjustmentsUpdated({ deadweight, attribution, displacement }) {
+      this.deadweight = deadweight;
+      this.attribution = attribution;
+      this.displacement = displacement;
+    },
 
     async loadAction(newAction) {
       // Start with the machine's initial context

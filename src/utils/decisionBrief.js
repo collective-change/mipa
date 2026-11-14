@@ -1,5 +1,6 @@
 import { formatNumber } from "./util-formatNumber";
 import { generateSensitivityReport } from "./sensitivityAnalysis";
+import { calculateSroiMetrics } from "./sroi";
 
 /**
  * Decision Brief and Ranking Explanation Engine (Feature 2)
@@ -233,6 +234,7 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
       estEffortHrs: action.estEffortHrs ?? 0,
       estSpending: action.estSpending ?? 0,
       totalRoi: action.totalRoi ?? 0,
+      sroiRatio: action.sroiRatio ?? (calculateSroiMetrics(action).sroiRatio ?? null),
       effortCompletionPercentage: action.effortCompletionPercentage ?? 0,
       drivers,
       hasUncertainInputs,

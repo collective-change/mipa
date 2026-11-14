@@ -141,7 +141,8 @@ function mountActionSummary(actionOverrides = {}, locale = "en-us") {
         chat: true,
         "select-user": true,
         "explain-ranking-modal": true,
-        "decision-brief-modal": true
+        "decision-brief-modal": true,
+        "sroi-impact-map-modal": true
       }
     }
   });
@@ -197,6 +198,22 @@ describe("ActionSummary.vue - Consolidated Progress & Actuals Tracker", () => {
       dueDate: "2026-11-30"
     });
     expect(wrapper.vm.dueDate).toBe("2026-11-30");
+  });
+
+  it("renders the SROI analysis card and computes ratio from inputs", () => {
+    const { wrapper } = mountActionSummary({
+      marginalWorldBenefitNpv: 200000,
+      marginalWorldCostNpv: 10000,
+      outstandingDirectCosts: 50000,
+      deadweight: 10,
+      attribution: 10,
+      displacement: 0
+    });
+    expect(wrapper.text()).toContain("Social Return on Investment (SROI)");
+    expect(wrapper.text()).toContain("Gross Present Social Benefit");
+    expect(wrapper.vm.actionSroiMetrics.sroiRatio).toBeDefined();
+    // 200k * 0.9 * 0.9 = 162k - 10k = 152k / 50k = 3.04
+    expect(wrapper.vm.actionSroiMetrics.sroiRatio).toBeCloseTo(3.04, 1);
   });
 
   it("renders in English with zero Chinese characters", () => {
