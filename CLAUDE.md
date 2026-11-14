@@ -28,7 +28,7 @@ First users: Tzu Chi Foundation (CEO's office); UI in English and Traditional Ch
   - Only admins (`superAdmins`) change membership.
   - Model subcollections other than `nodes` are closed to browsers.
 - **Privacy**: No promise that AI providers don't train on data; the org picks a provider.
-  Contact: `tedchwang@gmail.com` for private matters; GitHub issues otherwise.
+  Contact: GitHub issues for questions and feedback; GitHub Security Advisories for private security matters.
 - **Git workflow**:
   - Develop on `modernize-2026`.
   - Open a PR to `master`, squash-merge when CI is green.
