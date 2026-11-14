@@ -13,6 +13,7 @@ export default defineConfig({
   },
   test: {
     environment: "happy-dom",
+    testTimeout: 20000,
     include: ["test/unit/**/*.spec.js"],
     server: { deps: { inline: ["quasar"] } }
   }

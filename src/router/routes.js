@@ -3,11 +3,15 @@ const routes = [
     path: "/",
     component: () => import("@/layouts/Layout.vue"),
     children: [
-      { path: "", component: () => import("@/pages/PageOrgs.vue") },
+      { path: "", component: () => import("@/pages/PageLanding.vue") },
+      { path: "/orgs", name: "orgs", component: () => import("@/pages/PageOrgs.vue") },
+      { path: "/about", name: "about", component: () => import("@/pages/PageLanding.vue") },
+      { path: "/landing", name: "landing", component: () => import("@/pages/PageLanding.vue") },
       //{ path: "/teams", component: () => import("@/pages/PageTeams.vue") },
       //{ path: "/todo", component: () => import("@/pages/PageTodo.vue") },
       { path: "/settings", component: () => import("@/pages/PageSettings.vue") },
       { path: "/settings/help", component: () => import("@/pages/PageHelp.vue") },
+      { path: "/help", redirect: "/settings/help" },
       { path: "/auth", component: () => import("@/pages/PageAuth.vue") },
       { path: "/privacy", component: () => import("@/pages/PagePrivacy.vue") },
       {

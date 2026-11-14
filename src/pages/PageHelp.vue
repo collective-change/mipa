@@ -1,7 +1,15 @@
 <template>
   <q-page padding>
     <div class="help">
-      <q-btn to="/settings" flat no-caps color="primary" icon="chevron_left" :label="$t('Settings')" class="q-mb-sm" />
+      <q-btn
+        :to="loggedIn ? '/settings' : '/auth'"
+        flat
+        no-caps
+        color="primary"
+        icon="chevron_left"
+        :label="loggedIn ? $t('Settings') : $t('Login')"
+        class="q-mb-sm"
+      />
       <div class="text-h5">{{ $t("helpTitle") }}</div>
       <p class="text-body1 text-grey-8 q-mt-sm">{{ $t("helpIntro") }}</p>
 
@@ -41,9 +49,13 @@
 </template>
 
 <script>
+import { mapState } from "vuex";
 import { FEEDBACK_URL } from "@/utils/util-links";
 
 export default {
+  computed: {
+    ...mapState("auth", ["loggedIn"]),
+  },
   data() {
     return {
       feedbackUrl: FEEDBACK_URL,

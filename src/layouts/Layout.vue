@@ -10,7 +10,7 @@
           class="q-ml-xs"
           v-if="$q.screen.gt.xs"
           clickable
-          to="/"
+          :to="loggedIn ? '/orgs' : '/'"
         >
           <q-toolbar-title shrink class="text-weight-bold text-primary"
             >mipa</q-toolbar-title
@@ -95,19 +95,20 @@
           </q-btn>
 
           <q-btn
-            v-if="!loggedIn && $route.path != '/auth'"
+            v-if="!loggedIn && $route.path !== '/auth'"
             to="/auth"
             flat
-            icon-right="account_circle"
+            no-caps
             :label="$t('Login')"
           />
           <q-btn
-            v-else
             flat
-            icon-right="account_circle"
+            round
+            dense
+            :icon="loggedIn ? 'account_circle' : 'menu'"
             @click="rightDrawerOpen = !rightDrawerOpen"
           >
-            <q-tooltip>{{ $t("Account") }}</q-tooltip>
+            <q-tooltip>{{ loggedIn ? $t("Account") : $t("Menu") }}</q-tooltip>
           </q-btn>
 
           <q-select
@@ -138,26 +139,28 @@
     >
       <q-scroll-area class="fit">
         <q-list padding>
-          <q-item
-            v-for="link in links1"
-            :key="link.text"
-            v-ripple
-            clickable
-            :to="link.to"
-            exact
-          >
-            <q-item-section avatar>
-              <q-icon color="grey" :name="link.icon" :class="link.icon_class" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>{{ $t(link.text) }}</q-item-label>
-            </q-item-section>
-          </q-item>
+          <template v-if="loggedIn">
+            <q-item
+              v-for="link in links1"
+              :key="link.text"
+              v-ripple
+              clickable
+              :to="link.to"
+              exact
+            >
+              <q-item-section avatar>
+                <q-icon color="grey" :name="link.icon" :class="link.icon_class" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t(link.text) }}</q-item-label>
+              </q-item-section>
+            </q-item>
 
-          <q-separator class="q-my-md" />
+            <q-separator class="q-my-md" />
+          </template>
 
           <q-item
-            v-for="link in links2"
+            v-for="link in visibleDrawerLinks2"
             :key="link.text"
             v-ripple
             clickable
@@ -174,20 +177,22 @@
             </q-item-section>
           </q-item>
 
-          <q-item
-            v-for="link in links3"
-            :key="link.text"
-            v-ripple
-            clickable
-            v-on:click="logoutUser"
-          >
-            <q-item-section avatar>
-              <q-icon color="grey" :name="link.icon" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>{{ $t(link.text) }}</q-item-label>
-            </q-item-section>
-          </q-item>
+          <template v-if="loggedIn">
+            <q-item
+              v-for="link in links3"
+              :key="link.text"
+              v-ripple
+              clickable
+              v-on:click="logoutUser"
+            >
+              <q-item-section avatar>
+                <q-icon color="grey" :name="link.icon" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t(link.text) }}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </template>
 
           <q-item v-if="$q.screen.xs">
             <q-item-section avatar>
@@ -266,7 +271,7 @@ export default {
 
       rightDrawerOpen: false, //this.$q.platform.is.desktop,
 
-      links1: [{ icon: "home", text: "Home", to: "/" }],
+      links1: [{ icon: "home", text: "Home", to: "/orgs" }],
       links2: [
         { icon: "settings", text: "Settings", to: "/settings" },
         { icon: "help", text: "Help", to: "/settings/help" },
@@ -274,7 +279,7 @@ export default {
       ],
       links3: [{ icon: "exit_to_app", text: "Logout", onclick: "logoutUser" }],
       buttons1: [
-        { text: "About", href: "https://collective-change.org" },
+        { text: "About", to: "/about" },
         { text: "Source code", href: "https://github.com/collective-change/mipa" },
         { text: "Privacy", to: "/privacy" },
       ],
@@ -286,6 +291,11 @@ export default {
     ...mapState("model", ["currentModel"]),
     ...mapState("orgs", ["orgs", "currentOrg"]),
     ...mapState("adHocDocs", ["exchangeRates", "appSummary"]),
+
+    visibleDrawerLinks2() {
+      if (this.loggedIn) return this.links2;
+      return this.links2.filter((link) => link.to !== "/settings");
+    },
 
     currentRoute() {
       return this.$route.path;
@@ -317,7 +327,7 @@ export default {
           text: this.$t("Home"),
           icon: "home",
           links: [
-            { text: this.$t("My dashboard"), to: "/", disable: false },
+            { text: this.$t("My dashboard"), to: "/orgs", disable: false },
             { text: this.$t("To do"), to: "/todo", disable: true },
           ],
         },
@@ -521,6 +531,27 @@ export default {
       this.$store.dispatch("model/unbindNodes");
       //this.$store.dispatch("calcResults/unbindBaseline");
     },
+    notifyUpdateAvailable() {
+      this.$q.notify({
+        message: this.$t("swUpdateAvailable"),
+        color: "primary",
+        icon: "system_update",
+        timeout: 0,
+        actions: [
+          {
+            label: this.$t("Reload"),
+            color: "white",
+            handler: () => {
+              window.location.reload();
+            },
+          },
+          {
+            label: this.$t("Dismiss"),
+            color: "white",
+          },
+        ],
+      });
+    },
   },
   created() {
     this.bindPublicData();
@@ -539,6 +570,7 @@ export default {
     })();
   },
   mounted() {
+    window.addEventListener("mipa-update-available", this.notifyUpdateAvailable);
     // The browser says "zh-TW" or "en-US"; mipa's languages are "zh-tw" and
     // "en-us". Any Chinese gets Traditional Chinese, anything else English.
     const wanted = this.$q.cookies.has("locale")
@@ -547,6 +579,7 @@ export default {
     this.lang = /^zh/i.test(wanted || "") ? "zh-tw" : "en-us";
   },
   beforeUnmount() {
+    window.removeEventListener("mipa-update-available", this.notifyUpdateAvailable);
     this.unbindAllOrgRelatedData();
     this.unbindPublicData();
     this.$store.dispatch("users/unbindCurrentUser");

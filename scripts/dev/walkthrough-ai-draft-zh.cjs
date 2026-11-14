@@ -1,0 +1,21 @@
+const { chromium } = require("playwright");
+const S = require("path").join(__dirname, "shots");
+require("fs").mkdirSync(S, { recursive: true });
+(async () => {
+  const browser = await chromium.launch();
+  const page = await (await browser.newContext({ viewport: { width: 1280, height: 950 }, locale: "zh-TW" })).newPage();
+  await page.goto("http://localhost:9000/auth", { waitUntil: "networkidle" });
+  const panel = page.getByRole("tabpanel").first();
+  await panel.locator("input[type=email]").fill("baker6@example.org");
+  await panel.locator("input[type=password]").fill("correct-horse-42");
+  await panel.locator("button").filter({ hasText: /登入|sign in/i }).first().click();
+  await page.waitForURL(u => !u.pathname.startsWith("/auth"));
+  await page.waitForTimeout(2000);
+  await page.locator(".q-card a").first().click();
+  await page.waitForURL(u => u.pathname.includes("/model/"));
+  await page.waitForTimeout(3000);
+  await page.getByRole("button", { name: "用 AI 起草" }).first().click();
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: `${S}/ai-zh-describe.png` });
+  await browser.close();
+})();
