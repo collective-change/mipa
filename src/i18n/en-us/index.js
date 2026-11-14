@@ -712,5 +712,29 @@ export default {
   startOver: "Start over",
   createActionProposal: "Create action",
   heuristicFallbackNotice: "Generated draft proposal based on model factor matching.",
-  actionCreatedSuccess: "Action created successfully with estimates and impacts."
+  actionCreatedSuccess: "Action created successfully with estimates and impacts.",
+
+  // AI Provider Streamlined Setup
+  selectAiPreset: "Choose an AI provider",
+  presetAnthropicDesc: "Recommended for highest modeling accuracy and reasoning",
+  presetOpenAiDesc: "Industry standard OpenAI models (GPT-4o)",
+  presetOpenRouterDesc: "Single key for multiple providers with flexible prepaid credits",
+  presetGeminiDesc: "Google Gemini via OpenAI-compatible endpoint",
+  presetCustomDesc: "Custom OpenAI-compatible service (e.g. Azure, private hosting)",
+  howToGetKeyTitle: "How to get an API key",
+  openKeyDashboard: "Get key from {name}",
+  stepRegister: "Sign in or create an account at {name}.",
+  stepCreateKey: "Generate a new secret API key in the keys section.",
+  stepPasteKey: "Copy and paste the key into the field below.",
+  stepBillingHint: "Tip: Make sure your account has a small credit balance or active payment method.",
+  recommendedModels: "Recommended models",
+  advancedEndpoint: "Advanced endpoint settings",
+  testAndSaveBtn: "Test connection & save",
+  testingConnection: "Verifying connection...",
+  connectionSuccess: "Connected successfully! Provider responded in {timeMs} ms.",
+  connectionFailedTitle: "Connection test failed",
+  errAuthAdvice: "The API key was rejected. Please verify you copied the full key without extra spaces.",
+  errModelAdvice: "The specified model was not found or is not enabled for your account.",
+  errQuotaAdvice: "Your provider account may be out of credits or rate limited. Check your billing dashboard.",
+  errNetworkAdvice: "Unable to reach the provider endpoint. Please verify the URL."
 };
