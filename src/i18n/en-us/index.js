@@ -443,5 +443,46 @@ export default {
   spentAmount: "Spent amount",
 
   // for ActionRelationships.vue
-  "(some action)": "(some action)"
+  "(some action)": "(some action)",
+
+  // sample organization (utils/sample-org.js, PageOrgs.vue)
+  sampleTry: "Explore a sample organization",
+  sampleTryHint:
+    "A small food bank with a ready-made model and three actions to compare. It's your own copy: change anything, and delete it when you're done.",
+  sampleCreating: "Creating the sample…",
+  sampleChip: "Sample",
+  toastSampleCreated: "Sample organization created",
+  sampleFailed: "The sample organization couldn't be created",
+  sample: {
+    org: {
+      name: "Riverside Food Bank (sample)",
+      goal: "No one in our neighbourhood goes hungry."
+    },
+    factors: {
+      averageEffortCostPerHour: { name: "hourly cost of work", notes: "What an hour of staff or volunteer time is worth to the organization. mipa uses it to turn the hours an action needs into money." },
+      oneTimeEffort: { name: "work hours for actions", notes: "When actions are compared, each one adds the hours it needs here. Leave it at 0." },
+      oneTimeSpending: { name: "money spent on actions", notes: "When actions are compared, each one adds the money it needs here. Leave it at 0." },
+      costToOrganizationDuringInterval: { name: "cost to the organization per month", notes: "Running costs, plus the hours and money that actions need." },
+      costToWorldDuringInterval: { name: "cost to the world per month", notes: "Harm done to others. None in this example." },
+      benefitToOrganizationDuringInterval: { name: "benefit to the organization per month", notes: "What the food bank itself gains. None in this example: the good it does goes to its neighbours." },
+      benefitToWorldDuringInterval: { name: "benefit to the world per month", notes: "Meals served, valued at what each meal is worth to the family that receives it." },
+      volunteers: { name: "volunteers", notes: "People volunteering this month. Each month some join and some leave, so the number settles where joining and leaving balance (about 50)." },
+      newVolunteersPerMonth: { name: "new volunteers per month", notes: "People who start volunteering each month." },
+      volunteersLeavingPerMonth: { name: "share of volunteers leaving each month", notes: "0.08 means 8% of volunteers stop each month." },
+      hoursPerVolunteer: { name: "hours per volunteer per month", notes: "" },
+      mealsPackedPerHour: { name: "meals packed per volunteer hour", notes: "" },
+      packingCapacity: { name: "meals volunteers can pack per month", notes: "How many meals there are hands for." },
+      foodDonatedKg: { name: "food donated per month (kg)", notes: "" },
+      mealsPerKg: { name: "meals per kg of food", notes: "" },
+      foodAvailableInMeals: { name: "food available, in meals", notes: "How many meals the donated food makes." },
+      mealsServed: { name: "meals served per month", notes: "The smaller of the food available and the meals volunteers can pack: whichever runs out first limits the meals served." },
+      valueOfAMeal: { name: "value of a meal", notes: "What one meal is worth to the family that receives it. An estimate: try changing it and recalculating." },
+      monthlyRunningCosts: { name: "running costs per month", notes: "Rent, utilities and the van." }
+    },
+    actions: {
+      recruit: { title: "Run a volunteer recruitment drive", notes: "Talks at schools and places of worship, and posters around the neighbourhood. Expected to bring 2 more new volunteers each month." },
+      supermarkets: { title: "Partner with supermarkets for surplus food", notes: "Expected to bring 800 kg more food each month. But volunteer hours, not food, limit the meals served right now. Open the model and compare \"food available, in meals\" with \"meals volunteers can pack per month\" to see why this action does little on its own." },
+      report: { title: "Print a glossy annual report", notes: "It looks good, but it changes nothing in the model, so it only costs. Not every action that feels useful does good." }
+    }
+  }
 };

@@ -70,17 +70,18 @@ const actions = {
       worldToOrgWeightingRatio: 0.5,
       worldWeightingFactor: 1
     };
-    setDoc(doc(firebaseDb, "models", payload.modelId), model)
-      .then(function(docRef) {
-        //Notify.create(i18n.global.t("toastModelAdded"));
-        dispatch("createInitialNodes", {
-          modelId: payload.modelId,
-          currency: payload.currency
-        });
-      })
-      .catch(function(error) {
-        showErrorMessage("Error creating model", error.message);
-      });
+    try {
+      await setDoc(doc(firebaseDb, "models", payload.modelId), model);
+    } catch (error) {
+      showErrorMessage("Error creating model", error.message);
+      return;
+    }
+    // A sample organization brings its own factors.
+    if (payload.withoutStarterNodes) return;
+    dispatch("createInitialNodes", {
+      modelId: payload.modelId,
+      currency: payload.currency
+    });
   },
 
   async createInitialNodes({ dispatch }, payload) {
