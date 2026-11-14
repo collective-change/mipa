@@ -693,5 +693,29 @@ export default {
   startOver: "重新填寫",
   createActionProposal: "確認建立行動方案",
   heuristicFallbackNotice: "已依據現有模型要素與情境推演生成建議提案。",
-  actionCreatedSuccess: "行動方案已成功建立並帶入預估數值與因素影響。"
+  actionCreatedSuccess: "行動方案已成功建立並帶入預估數值與因素影響。",
+
+  // AI Provider Streamlined Setup
+  selectAiPreset: "選擇 AI 服務供應商",
+  presetAnthropicDesc: "推薦首選：具備最高品質之推演與結構化模型建構能力",
+  presetOpenAiDesc: "業界廣泛運用之 OpenAI 標準模型（如 GPT-4o）",
+  presetOpenRouterDesc: "單一金鑰靈活串接多元模型，支援預付儲值彈性扣款",
+  presetGeminiDesc: "Google Gemini 系列模型（經由標準相容協定）",
+  presetCustomDesc: "自訂或企業私有端點（如 Azure OpenAI 或私有伺服器）",
+  howToGetKeyTitle: "如何取得 API 金鑰",
+  openKeyDashboard: "前往 {name} 取得金鑰",
+  stepRegister: "登入或註冊 {name} 平台帳號。",
+  stepCreateKey: "於金鑰管理頁面建立一組新的 API 金鑰。",
+  stepPasteKey: "複製金鑰並完整貼入下方欄位中。",
+  stepBillingHint: "提示：請確認帳號已綁定付款方式或存有少量額度。",
+  recommendedModels: "推薦模型",
+  advancedEndpoint: "進階端點連線設定",
+  testAndSaveBtn: "測試連線並儲存",
+  testingConnection: "正在驗證連線與模型回應...",
+  connectionSuccess: "連線驗證成功！供應商已順利回應（耗時 {timeMs} 毫秒）。",
+  connectionFailedTitle: "連線測試未通過",
+  errAuthAdvice: "API 金鑰驗證未通過，請確認金鑰字串是否完整且無多餘空格。",
+  errModelAdvice: "找不到指定的模型名稱，或該模型尚未對您的帳號開放存取權限。",
+  errQuotaAdvice: "供應商帳號之調用額度可能已用罄或受到頻率限制，請至供應商帳務中心確認。",
+  errNetworkAdvice: "無法連線至供應商端點，請確認網路環境或端點網址。"
 };
