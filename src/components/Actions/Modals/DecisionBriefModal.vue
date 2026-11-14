@@ -348,9 +348,25 @@
               v-if="briefData.section4.sensitivity && briefData.section4.sensitivity.turningPoints && briefData.section4.sensitivity.turningPoints.length"
               class="q-mt-md"
             >
-              <div class="text-subtitle2 text-grey-8 q-mb-xs row items-center">
-                <q-icon name="crisis_alert" class="q-mr-xs" color="primary" />
-                {{ $t("turningPointAnalysis") }}
+              <div class="row items-center justify-between q-mb-xs">
+                <div class="text-subtitle2 text-grey-8 row items-center">
+                  <q-icon name="crisis_alert" class="q-mr-xs" color="primary" />
+                  {{ $t("turningPointAnalysis") }}
+                </div>
+                <div class="row items-center q-gutter-xs">
+                  <span class="text-caption text-grey-7">{{ $t("perturbationRangeLabel") }}:</span>
+                  <q-btn-toggle
+                    v-model="perturbationPercent"
+                    dense
+                    unelevated
+                    size="sm"
+                    toggle-color="primary"
+                    toggle-text-color="white"
+                    color="grey-2"
+                    text-color="grey-8"
+                    :options="perturbationOptions"
+                  />
+                </div>
               </div>
               <q-table
                 flat
@@ -457,7 +473,14 @@ export default {
       editableSection5Narrative: "",
       editorName: "",
       editedAt: null,
-      isPrinting: false
+      isPrinting: false,
+      perturbationPercent: 30,
+      perturbationOptions: [
+        { label: "±10%", value: 10 },
+        { label: "±25%", value: 25 },
+        { label: "±30%", value: 30 },
+        { label: "±50%", value: 50 }
+      ]
     };
   },
   computed: {
@@ -501,7 +524,8 @@ export default {
         orgName,
         modelName,
         authorName,
-        decisionQuestion: this.editableSection1Decision
+        decisionQuestion: this.editableSection1Decision,
+        perturbationRange: this.perturbationPercent / 100
       }) || {
         metadata: { orgName: "", modelName: "", authorName: "", generatedAt: new Date().toISOString() },
         section1: { title: "", decisionQuestion: "", optionsOverview: "" },

@@ -736,5 +736,9 @@ export default {
   errAuthAdvice: "The API key was rejected. Please verify you copied the full key without extra spaces.",
   errModelAdvice: "The specified model was not found or is not enabled for your account.",
   errQuotaAdvice: "Your provider account may be out of credits or rate limited. Check your billing dashboard.",
-  errNetworkAdvice: "Unable to reach the provider endpoint. Please verify the URL."
+  errNetworkAdvice: "Unable to reach the provider endpoint. Please verify the URL.",
+
+  // Sensitivity Stress Testing
+  perturbationRangeLabel: "Scenario shock range",
+  perturbationHint: "Test ranking stability under assumption variances"
 };

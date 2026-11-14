@@ -141,8 +141,19 @@
                 {{ robustnessLabel }}
               </q-chip>
             </div>
-            <div class="text-caption text-grey-7">
-              {{ $t("turningPointAnalysis") }}
+            <div class="row items-center q-gutter-xs">
+              <span class="text-caption text-grey-7">{{ $t("perturbationRangeLabel") }}:</span>
+              <q-btn-toggle
+                v-model="perturbationPercent"
+                dense
+                unelevated
+                size="sm"
+                toggle-color="primary"
+                toggle-text-color="white"
+                color="white"
+                text-color="grey-8"
+                :options="perturbationOptions"
+              />
             </div>
           </div>
 
@@ -240,7 +251,14 @@ export default {
   data() {
     return {
       selectedComparisonId: null,
-      activeTab: "comparison"
+      activeTab: "comparison",
+      perturbationPercent: 30,
+      perturbationOptions: [
+        { label: "±10%", value: 10 },
+        { label: "±25%", value: 25 },
+        { label: "±30%", value: 30 },
+        { label: "±50%", value: 50 }
+      ]
     };
   },
   computed: {
@@ -292,7 +310,8 @@ export default {
       if (!this.actionA || !this.actionB) return null;
       return generateSensitivityReport(this.actionA, this.actionB, this.nodes, {}, {
         locale: this.$i18n.locale,
-        currency: this.currentOrg ? this.currentOrg.currency : ""
+        currency: this.currentOrg ? this.currentOrg.currency : "",
+        perturbationRange: this.perturbationPercent / 100
       });
     },
     robustnessColor() {
