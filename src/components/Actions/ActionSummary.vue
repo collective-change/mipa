@@ -256,7 +256,6 @@
           <impacts v-else /> -->
           <impacts />
 
-          <div class="text-h6 q-mt-md">{{ $t("Costs and progress") }}</div>
           <q-dialog v-model="showAddRoleCost">
             <q-card style="width: 420px; max-width: 90vw">
               <q-card-section>
@@ -294,112 +293,259 @@
               </q-card-actions>
             </q-card>
           </q-dialog>
-          <div class="row q-gutter-md items-start">
-            <q-select
-              ref="effortCostSelect"
-              v-model="effortCostChoice"
-              :label="$t('effortCostPerHour')"
-              :options="effortCostOptions"
-              emit-value
-              map-options
-              filled
-              style="min-width: 260px"
-            >
-              <template v-slot:after-options>
-                <q-item clickable @click="openAddRoleCost">
-                  <q-item-section avatar>
-                    <q-icon name="add" color="primary" />
-                  </q-item-section>
-                  <q-item-section class="text-primary">
-                    {{ $t("Add a role or person's hourly cost") }}
-                  </q-item-section>
-                </q-item>
-              </template>
-            </q-select>
-            <q-input
-              v-if="effortCostPerHrType == 'use_custom'"
-              v-model.number="customEffortCostPerHr"
-              :label="$t('customEffortCostPerHr')"
-              type="number"
-              :suffix="
-                averageEffortCostPerHourNode
-                  ? averageEffortCostPerHourNode.unit
-                  : ''
-              "
-              :rules="[
-                (val) => val == null || val >= 0 || 'Should be at least 0',
-              ]"
-              filled
-              style="max-width: 150px"
-              debounce="500"
-            />
-            <q-input
-              v-model.number="estEffortHrs"
-              :label="$t('estEffortHrs')"
-              type="number"
-              step="any"
-              suffix="hours"
-              :rules="[
-                (val) => val == null || val >= 0 || 'Should be at least 0',
-              ]"
-              filled
-              style="max-width: 150px"
-              debounce="500"
-            />
-            <q-input
-              v-model.number="effortCompletionPercentage"
-              type="number"
-              step="any"
-              :suffix="$t('percentDone')"
-              :rules="[
-                (val) => val == null || val >= 0 || 'Should be at least 0',
-              ]"
-              filled
-              style="max-width: 150px"
-              debounce="500"
-            />
 
-            <q-slider
-              :model-value="effortCompletionPercentage"
-              @change="
-                (val) => {
-                  effortCompletionPercentage = val;
-                }
-              "
-              :min="0"
-              :max="100"
-              label
-            />
-          </div>
+          <!-- Consolidated Progress & Actuals Card -->
+          <q-card flat bordered class="q-mt-md bg-grey-1 rounded-borders">
+            <q-card-section class="q-pb-xs">
+              <div class="row items-center justify-between">
+                <div>
+                  <div class="text-subtitle1 text-weight-bold text-primary row items-center">
+                    <q-icon name="insights" class="q-mr-xs" size="20px" />
+                    {{ $t("progressAndActualsTitle") }}
+                  </div>
+                  <div class="text-caption text-grey-7">
+                    {{ $t("progressAndActualsSubtitle") }}
+                  </div>
+                </div>
+                <div class="row items-center q-gutter-xs">
+                  <q-chip
+                    dense
+                    :color="progressChipColor"
+                    text-color="white"
+                    class="text-weight-bold"
+                  >
+                    {{ effortCompletionPercentage || 0 }}% {{ $t("percentDone") }}
+                  </q-chip>
+                  <q-chip
+                    dense
+                    outline
+                    :color="budgetVarianceColor"
+                    class="text-weight-medium"
+                  >
+                    {{ budgetVarianceText }}
+                  </q-chip>
+                </div>
+              </div>
+            </q-card-section>
 
-          <div class="q-gutter-md q-mt-md row items-start">
-            <q-input
-              v-model.number="estSpending"
-              :label="$t('estSpending')"
-              type="number"
-              step="any"
-              :suffix="currentOrg.currency"
-              :rules="[
-                (val) => val == null || val >= 0 || 'Should be at least 0',
-              ]"
-              filled
-              style="max-width: 150px"
-              debounce="500"
-            />
-            <q-input
-              v-model.number="spentAmount"
-              :label="$t('spentAmount')"
-              type="number"
-              step="any"
-              :suffix="currentOrg.currency"
-              :rules="[
-                (val) => val == null || val >= 0 || 'Should be at least 0',
-              ]"
-              filled
-              style="max-width: 150px"
-              debounce="500"
-            />
-          </div>
+            <!-- Visual Progress Indicators (Dual Progress Bars) -->
+            <q-card-section class="q-pt-xs q-pb-sm">
+              <div class="q-gutter-y-sm">
+                <!-- Hours Progress -->
+                <div>
+                  <div class="row justify-between text-caption text-grey-8 q-mb-xs">
+                    <span>
+                      <q-icon name="schedule" size="14px" class="q-mr-xs" />
+                      {{ $t("hoursProgressLabel") }}
+                    </span>
+                    <span class="text-weight-medium">
+                      {{ formatNumber(completedWorkHours, 1) }} / {{ formatNumber(estEffortHrs || 0, 1) }} hours
+                      ({{ effortCompletionPercentage || 0 }}%)
+                    </span>
+                  </div>
+                  <q-linear-progress
+                    :value="hoursProgressRatio"
+                    color="primary"
+                    track-color="grey-3"
+                    size="8px"
+                    rounded
+                  />
+                </div>
+
+                <!-- Budget Spending Progress -->
+                <div>
+                  <div class="row justify-between text-caption text-grey-8 q-mb-xs">
+                    <span>
+                      <q-icon name="payments" size="14px" class="q-mr-xs" />
+                      {{ $t("spendingProgressLabel") }}
+                    </span>
+                    <span class="text-weight-medium" :class="isOverBudget ? 'text-negative' : 'text-grey-9'">
+                      {{ formatNumber(spentAmount || 0, 2) }} / {{ formatNumber(estSpending || 0, 2) }} {{ currentOrg.currency }}
+                      ({{ Math.round(spendingProgressRatio * 100) }}%)
+                    </span>
+                  </div>
+                  <q-linear-progress
+                    :value="Math.min(spendingProgressRatio, 1)"
+                    :color="isOverBudget ? 'negative' : 'secondary'"
+                    track-color="grey-3"
+                    size="8px"
+                    rounded
+                  />
+                </div>
+              </div>
+            </q-card-section>
+
+            <q-separator />
+
+            <!-- Input Controls & Milestones Grid -->
+            <q-card-section class="q-pt-sm">
+              <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">
+                {{ $t("effortCostPerHour") }}
+              </div>
+              <div class="row q-col-gutter-sm items-start q-mb-sm">
+                <div class="col-12 col-sm-7">
+                  <q-select
+                    ref="effortCostSelect"
+                    v-model="effortCostChoice"
+                    :label="$t('effortCostPerHour')"
+                    :options="effortCostOptions"
+                    emit-value
+                    map-options
+                    filled
+                    dense
+                  >
+                    <template v-slot:after-options>
+                      <q-item clickable @click="openAddRoleCost">
+                        <q-item-section avatar>
+                          <q-icon name="add" color="primary" />
+                        </q-item-section>
+                        <q-item-section class="text-primary">
+                          {{ $t("Add a role or person's hourly cost") }}
+                        </q-item-section>
+                      </q-item>
+                    </template>
+                  </q-select>
+                </div>
+                <div class="col-12 col-sm-5" v-if="effortCostPerHrType == 'use_custom'">
+                  <q-input
+                    v-model.number="customEffortCostPerHr"
+                    :label="$t('customEffortCostPerHr')"
+                    type="number"
+                    dense
+                    :suffix="averageEffortCostPerHourNode ? averageEffortCostPerHourNode.unit : ''"
+                    :rules="[(val) => val == null || val >= 0 || 'Should be at least 0']"
+                    filled
+                    debounce="500"
+                  />
+                </div>
+              </div>
+
+              <!-- Work Hours & Preset Buttons -->
+              <div class="row q-col-gutter-sm items-start q-mb-sm">
+                <div class="col-12 col-sm-6">
+                  <q-input
+                    v-model.number="estEffortHrs"
+                    :label="$t('estEffortHrs')"
+                    type="number"
+                    step="any"
+                    dense
+                    suffix="hours"
+                    :rules="[(val) => val == null || val >= 0 || 'Should be at least 0']"
+                    filled
+                    debounce="500"
+                  />
+                </div>
+                <div class="col-12 col-sm-6">
+                  <q-input
+                    v-model.number="effortCompletionPercentage"
+                    type="number"
+                    step="any"
+                    dense
+                    :label="$t('percentDone')"
+                    suffix="%"
+                    :rules="[(val) => val == null || val >= 0 || 'Should be at least 0']"
+                    filled
+                    debounce="500"
+                  />
+                </div>
+              </div>
+
+              <!-- Completion Slider & Presets -->
+              <div class="q-px-xs q-mb-md">
+                <q-slider
+                  :model-value="effortCompletionPercentage || 0"
+                  @change="(val) => { effortCompletionPercentage = val; }"
+                  :min="0"
+                  :max="100"
+                  label
+                  color="primary"
+                />
+                <div class="row items-center justify-between text-caption text-grey-7 q-mt-xs">
+                  <span>{{ $t("setCompletionPreset") }}:</span>
+                  <div class="row q-gutter-xs">
+                    <q-btn
+                      v-for="p in [0, 25, 50, 75, 100]"
+                      :key="p"
+                      dense
+                      flat
+                      size="xs"
+                      :color="(effortCompletionPercentage || 0) === p ? 'primary' : 'grey-7'"
+                      :label="p + '%'"
+                      @click="effortCompletionPercentage = p"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Spending & Due Date -->
+              <div class="row q-col-gutter-sm items-start q-mb-sm">
+                <div class="col-12 col-sm-4">
+                  <q-input
+                    v-model.number="estSpending"
+                    :label="$t('estSpending')"
+                    type="number"
+                    step="any"
+                    dense
+                    :suffix="currentOrg.currency"
+                    :rules="[(val) => val == null || val >= 0 || 'Should be at least 0']"
+                    filled
+                    debounce="500"
+                  />
+                </div>
+                <div class="col-12 col-sm-4">
+                  <q-input
+                    v-model.number="spentAmount"
+                    :label="$t('spentAmount')"
+                    type="number"
+                    step="any"
+                    dense
+                    :suffix="currentOrg.currency"
+                    :rules="[(val) => val == null || val >= 0 || 'Should be at least 0']"
+                    filled
+                    debounce="500"
+                  />
+                </div>
+                <div class="col-12 col-sm-4">
+                  <q-input
+                    v-model="dueDate"
+                    dense
+                    filled
+                    :label="$t('targetDueDate')"
+                    mask="####-##-##"
+                  >
+                    <template v-slot:append>
+                      <q-icon name="event" class="cursor-pointer">
+                        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                          <q-date v-model="dueDate" mask="YYYY-MM-DD">
+                            <div class="row items-center justify-end">
+                              <q-btn v-close-popup :label="$t('Close')" color="primary" flat />
+                            </div>
+                          </q-date>
+                        </q-popup-proxy>
+                      </q-icon>
+                    </template>
+                  </q-input>
+                </div>
+              </div>
+
+              <!-- Cost Summary Chips -->
+              <div class="row q-gutter-sm items-center bg-white q-pa-sm rounded-borders border">
+                <div class="col text-caption">
+                  <span class="text-grey-7">{{ $t("sunkenCostLabel") }}:</span>
+                  <span class="text-weight-bold text-grey-9 q-ml-xs">
+                    {{ formatNumber(directCost ? directCost.sunken : 0, 2) }} {{ currentOrg.currency }}
+                  </span>
+                </div>
+                <q-separator vertical />
+                <div class="col text-caption">
+                  <span class="text-grey-7">{{ $t("outstandingCostLabel") }}:</span>
+                  <span class="text-weight-bold text-primary q-ml-xs">
+                    {{ formatNumber(directCost ? directCost.outstanding : 0, 2) }} {{ currentOrg.currency }}
+                  </span>
+                </div>
+              </div>
+            </q-card-section>
+          </q-card>
           <q-card-actions align="right">
             <q-btn :label="$t('Save')" color="primary" type="submit" unelevated no-caps />
           </q-card-actions>
@@ -663,12 +809,57 @@ export default {
     ...mapMultiRowFields(["uiAction.impacts"]),
 
     embedded() {
-      let that = this;
-      if (this.$route.params.actionId) {
+      if (this.$route && this.$route.params && this.$route.params.actionId) {
         return false;
-      } else if (this.selectedActionId) {
-        return true;
       }
+      return !!this.selectedActionId;
+    },
+
+    completedWorkHours() {
+      const hrs = Number(this.estEffortHrs) || 0;
+      const pct = Number(this.effortCompletionPercentage) || 0;
+      return (hrs * pct) / 100;
+    },
+
+    hoursProgressRatio() {
+      const pct = Number(this.effortCompletionPercentage) || 0;
+      return Math.min(1, Math.max(0, pct / 100));
+    },
+
+    spendingProgressRatio() {
+      const est = Number(this.estSpending) || 0;
+      const spent = Number(this.spentAmount) || 0;
+      if (est <= 0) return 0;
+      return spent / est;
+    },
+
+    isOverBudget() {
+      const est = Number(this.estSpending) || 0;
+      const spent = Number(this.spentAmount) || 0;
+      return spent > est && est > 0;
+    },
+
+    progressChipColor() {
+      const pct = Number(this.effortCompletionPercentage) || 0;
+      if (pct >= 100) return "positive";
+      if (pct > 0) return "primary";
+      return "grey-6";
+    },
+
+    budgetVarianceColor() {
+      if (this.isOverBudget) return "negative";
+      return "positive";
+    },
+
+    budgetVarianceText() {
+      const spent = Number(this.spentAmount) || 0;
+      const est = Number(this.estSpending) || 0;
+      const diff = est - spent;
+      const cur = this.currentOrg?.currency || "";
+      if (diff < 0) {
+        return `${this.$t("budgetOverrun")}: ${formatNumber(Math.abs(diff), 2)} ${cur}`;
+      }
+      return `${this.$t("remainingBudget")}: ${formatNumber(diff, 2)} ${cur}`;
     },
 
     // Factors that hold the hourly cost of a role or person.

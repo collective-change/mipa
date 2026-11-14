@@ -741,5 +741,19 @@ export default {
   linkedInfluencer: "已關聯變數",
   unlinkedFactor: "模型其他變數",
   linkFactorSuccess: "已成功建立因素關聯",
-  formulaSyntaxErrorBlock: "請先修正公式語法錯誤後再儲存。"
+  formulaSyntaxErrorBlock: "請先修正公式語法錯誤後再儲存。",
+
+  // Execution Progress & Actuals Tracker
+  progressAndActualsTitle: "執行進度與實績追蹤",
+  progressAndActualsSubtitle: "追蹤投入工時、實際支出、進度里程碑與後續承諾成本",
+  hoursProgressLabel: "累計工時完成率",
+  spendingProgressLabel: "預算執行率",
+  remainingBudget: "預算餘額",
+  budgetOverrun: "超支金額",
+  completedHours: "已投入工時",
+  remainingHours: "剩餘工時",
+  setCompletionPreset: "設定進度",
+  sunkenCostLabel: "目前已沉沒成本",
+  outstandingCostLabel: "後續預計直接成本",
+  targetDueDate: "預計完成日期"
 };
