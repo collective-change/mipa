@@ -39,6 +39,20 @@ export default {
   "Forgot password?": "忘記密碼？",
   "Please enter a valid email address.": "請輸入有效的電子郵件地址。",
   "Please enter at least 8 characters.": "請至少輸入 8 個字元。",
+  orContinueWith: "或使用第三方帳號登入",
+  signInWithGoogle: "Google",
+  signInWithMicrosoft: "Microsoft",
+  signInWithApple: "Apple",
+  signInWithWeChat: "微信",
+  authAccountCollisionMsg:
+    "該電子郵件地址已綁定其他登入方式，請使用原本的登入方式進行驗證。",
+  weChatSignInTitle: "微信 / 區域登入",
+  weChatSignInDesc:
+    "為協助無法使用 Google 服務地區的團隊成員，可透過系統管理員提供之授權權杖登入。",
+  enterCustomToken: "貼上授權權杖",
+  tokenPlaceholder: "輸入組織所提供之驗證權杖",
+  authVerifyToken: "驗證並登入",
+  authCancelledByUser: "登入作業已取消。",
 
   // for PageModel.vue
   Calculate: "計算",
