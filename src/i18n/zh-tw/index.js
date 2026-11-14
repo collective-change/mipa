@@ -429,5 +429,46 @@ export default {
   spentAmount: "已支出金額",
 
   // for ActionRelationships.vue
-  "(some action)": "(某行動)"
+  "(some action)": "(某行動)",
+
+  // sample organization (utils/sample-org.js, PageOrgs.vue)
+  sampleTry: "探索範例組織",
+  sampleTryHint:
+    "一個小型食物銀行，附有建好的模型和三個可比較的行動。這是您自己的副本：可以任意修改，用完後刪除即可。",
+  sampleCreating: "正在建立範例…",
+  sampleChip: "範例",
+  toastSampleCreated: "已建立範例組織",
+  sampleFailed: "無法建立範例組織",
+  sample: {
+    org: {
+      name: "河濱食物銀行（範例）",
+      goal: "讓社區裡沒有人挨餓。"
+    },
+    factors: {
+      averageEffortCostPerHour: { name: "每小時工作成本", notes: "職工或志工一小時的時間對組織的價值。mipa 用它把行動所需的工時換算成金額。" },
+      oneTimeEffort: { name: "行動工時", notes: "比較行動時，每個行動會把所需的工時加在這裡。請保持為 0。" },
+      oneTimeSpending: { name: "行動支出", notes: "比較行動時，每個行動會把所需的金額加在這裡。請保持為 0。" },
+      costToOrganizationDuringInterval: { name: "每月的組織成本", notes: "營運成本，加上行動所需的工時和金額。" },
+      costToWorldDuringInterval: { name: "每月的世界成本", notes: "對他人造成的損害。本範例沒有。" },
+      benefitToOrganizationDuringInterval: { name: "每月的組織效益", notes: "食物銀行本身的收穫。本範例沒有：它做的好事都歸於鄰里。" },
+      benefitToWorldDuringInterval: { name: "每月的世界效益", notes: "供應的餐數，乘以每餐對受助家庭的價值。" },
+      volunteers: { name: "志工人數", notes: "本月參與的志工。每月有人加入、有人離開，人數會穩定在加入與離開相抵之處（約 50 人）。" },
+      newVolunteersPerMonth: { name: "每月新志工", notes: "每月開始參與的人數。" },
+      volunteersLeavingPerMonth: { name: "每月離開的志工比例", notes: "0.08 表示每月有 8% 的志工停止參與。" },
+      hoursPerVolunteer: { name: "每位志工每月時數", notes: "" },
+      mealsPackedPerHour: { name: "每志工小時包裝餐數", notes: "" },
+      packingCapacity: { name: "志工每月可包裝餐數", notes: "人手足以處理的餐數。" },
+      foodDonatedKg: { name: "每月捐贈食物（公斤）", notes: "" },
+      mealsPerKg: { name: "每公斤食物可做餐數", notes: "" },
+      foodAvailableInMeals: { name: "可用食物（餐數）", notes: "捐贈的食物可做成多少餐。" },
+      mealsServed: { name: "每月供應餐數", notes: "可用食物與志工可包裝餐數中較小的一個：先用完的那個限制了供應的餐數。" },
+      valueOfAMeal: { name: "每餐價值", notes: "一餐對受助家庭的價值。這是估計值：試著修改後重新計算。" },
+      monthlyRunningCosts: { name: "每月營運成本", notes: "租金、水電和貨車。" }
+    },
+    actions: {
+      recruit: { title: "舉辦志工招募活動", notes: "到學校和宗教場所演講，並在社區張貼海報。預計每月多帶來 2 位新志工。" },
+      supermarkets: { title: "與超市合作取得剩餘食物", notes: "預計每月多 800 公斤食物。但目前限制供應餐數的是志工時數，不是食物。打開模型，比較「可用食物（餐數）」和「志工每月可包裝餐數」，就會明白為什麼這個行動單獨做效果不大。" },
+      report: { title: "印製精美年報", notes: "看起來很好，但不會改變模型中的任何東西，所以只有成本。並非每個感覺有用的行動都能帶來好處。" }
+    }
+  }
 };

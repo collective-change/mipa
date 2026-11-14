@@ -12,12 +12,24 @@
       no-caps
       size="md"
     />
+    <q-separator class="q-my-lg" />
+    <p class="text-body2 text-grey-8">{{ $t("sampleTryHint") }}</p>
+    <q-btn
+      @click="$emit('try-sample')"
+      color="primary"
+      icon="explore"
+      :label="creatingSample ? $t('sampleCreating') : $t('sampleTry')"
+      :loading="creatingSample"
+      outline
+      no-caps
+    />
   </q-card>
 </template>
 
 <script>
 export default {
-  emits: ["add-org"]
+  props: { creatingSample: Boolean },
+  emits: ["add-org", "try-sample"]
 };
 </script>
 

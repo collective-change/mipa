@@ -531,9 +531,12 @@ export default {
     })();
   },
   mounted() {
-    if (this.$q.cookies.has("locale")) {
-      this.lang = this.$q.cookies.get("locale");
-    } else this.lang = this.$q.lang.getLocale();
+    // The browser says "zh-TW" or "en-US"; mipa's languages are "zh-tw" and
+    // "en-us". Any Chinese gets Traditional Chinese, anything else English.
+    const wanted = this.$q.cookies.has("locale")
+      ? this.$q.cookies.get("locale")
+      : this.$q.lang.getLocale();
+    this.lang = /^zh/i.test(wanted || "") ? "zh-tw" : "en-us";
   },
   beforeUnmount() {
     this.unbindAllOrgRelatedData();

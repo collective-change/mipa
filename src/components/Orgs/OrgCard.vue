@@ -2,6 +2,7 @@
   <q-card class="org-card column">
     <q-card-section class="bg-primary text-white">
       <div class="text-h6 ellipsis">{{ org.name }}</div>
+      <q-badge v-if="org.isSample" color="white" text-color="primary" :label="$t('sampleChip')" />
       <div v-if="org.goal" class="text-body2 org-goal">{{ org.goal }}</div>
     </q-card-section>
 
