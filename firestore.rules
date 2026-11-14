@@ -51,8 +51,9 @@ service cloud.firestore {
       allow read: if isInvitee(resource.data);
     }
 
-    // Match any document in the 'models' collection or subcollections
-    match /models/{model}/{document=**} {
+    // A model and its nodes. Its other subcollections, such as aiDrafts
+    // (AI draft conversations), are written only by Cloud Functions.
+    match /models/{model} {
       allow create: if request.auth.uid != null;
       allow read, update: if request.auth.uid in resource.data.editors.users;
       allow delete: if request.auth.uid in resource.data.owners.users;
@@ -62,6 +63,13 @@ service cloud.firestore {
       match /nodes/{node} {
         allow read, write: if request.auth.uid in get(/databases/$(database)/documents/models/$(model)).data.editors.users;
       }
+    }
+
+    // AI provider settings: members see which provider and model are in use;
+    // only Cloud Functions change them. API keys are in orgSecrets, which no
+    // browser can read or write.
+    match /orgAiSettings/{org} {
+      allow read: if userInOrg(org);
     }
 
     match /actions/{action}  {
