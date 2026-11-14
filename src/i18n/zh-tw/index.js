@@ -158,6 +158,26 @@ export default {
   langSpanish: "西班牙文",
   langJapanese: "日文",
 
+  // System Dynamics & Feedback Loops
+  systemDynamicsBtn: "系統動態迴路與基模",
+  systemDynamicsModalTitle: "系統動力學反饋迴路與基模探勘",
+  systemDynamicsModalSubtitle: "解析增強迴路飛輪、調節約束與 Donella Meadows 槓桿點位階。",
+  feedbackLoopsTab: "反饋迴路（R 與 B）",
+  systemArchetypesTab: "系統基模診斷",
+  meadowsHierarchyTab: "Meadows 槓桿階梯",
+  reinforcingLoopLabel: "增強迴路（R）",
+  balancingLoopLabel: "調節迴路（B）",
+  noLoopsDetectedTitle: "尚未檢測到閉環反饋迴路。",
+  noLoopsDetectedSubtitle: "當要素彼此建立因果關聯時，系統將自動繪製反饋迴路與飛輪結構。",
+  loopLengthLabel: "個關聯要素",
+  hasDelayBadge: "含時間延遲",
+  meadowsLevelBadge: "Meadows 位階",
+  strategicRecommendationTitle: "系統思維策略建議",
+  leveragePowerLow: "初階槓桿（參數調整）",
+  leveragePowerMedium: "中階槓桿（結構反饋）",
+  leveragePowerHigh: "高階槓桿（規則資訊）",
+  leveragePowerTransformative: "典範躍遷（核心目標）",
+
   // for PageModel.vue
   Calculate: "計算",
   "Model settings": "模型設定",

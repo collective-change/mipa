@@ -158,6 +158,26 @@ export default {
   langSpanish: "西班牙语",
   langJapanese: "日语",
 
+  // System Dynamics & Feedback Loops
+  systemDynamicsBtn: "系统动态回路与基模",
+  systemDynamicsModalTitle: "系统动力学反馈回路与基模探勘",
+  systemDynamicsModalSubtitle: "解析增强回路飞轮、调节约束与 Donella Meadows 杠杆点位阶。",
+  feedbackLoopsTab: "反馈回路（R 与 B）",
+  systemArchetypesTab: "系统基模诊断",
+  meadowsHierarchyTab: "Meadows 杠杆阶梯",
+  reinforcingLoopLabel: "增强回路（R）",
+  balancingLoopLabel: "调节回路（B）",
+  noLoopsDetectedTitle: "尚未检测到闭环反馈回路。",
+  noLoopsDetectedSubtitle: "当要素彼此建立因果关联时，系统将自动绘制反馈回路与飞轮结构。",
+  loopLengthLabel: "个关联要素",
+  hasDelayBadge: "含时间延迟",
+  meadowsLevelBadge: "Meadows 位阶",
+  strategicRecommendationTitle: "系统思维策略建议",
+  leveragePowerLow: "初阶杠杆（参数调整）",
+  leveragePowerMedium: "中阶杠杆（结构反馈）",
+  leveragePowerHigh: "高阶杠杆（规则信息）",
+  leveragePowerTransformative: "典范跃迁（核心目标）",
+
   // for PageModel.vue
   Calculate: "计算",
   "Model settings": "模型设置",

@@ -68,6 +68,15 @@
               :label="$t('modelSnapshotsBtn')"
             />
             <q-btn
+              @click="showSystemDynamics = true"
+              class="full-width print-hide"
+              color="primary"
+              outline
+              no-caps
+              icon="all_inclusive"
+              :label="$t('systemDynamicsBtn')"
+            />
+            <q-btn
               v-if="latestAiDraft"
               @click="confirmRemoveDraft"
               class="full-width print-hide"
@@ -180,6 +189,11 @@
       :model="currentModel"
       :nodes="nodes"
     />
+    <system-dynamics-modal
+      v-model="showSystemDynamics"
+      :model="currentModel"
+      :nodes="nodes"
+    />
   </q-page>
 </template>
 
@@ -197,6 +211,7 @@ import AddNode from "@/components/Model/Modals/AddNode.vue";
 import DraftModelDialog from "@/components/Model/Modals/DraftModelDialog.vue";
 import IngestDataDialog from "@/components/Model/Modals/IngestDataDialog.vue";
 import ModelSnapshotsModal from "@/components/Model/Modals/ModelSnapshotsModal.vue";
+import SystemDynamicsModal from "@/components/Model/Modals/SystemDynamicsModal.vue";
 import { planDraftRemoval, removeDraft } from "@/utils/util-aiDraft";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 //import ExportCalcResults from "../components/Calc/ExportCalcResults.vue";
@@ -218,6 +233,7 @@ export default {
     "draft-model-dialog": DraftModelDialog,
     "ingest-data-dialog": IngestDataDialog,
     "model-snapshots-modal": ModelSnapshotsModal,
+    "system-dynamics-modal": SystemDynamicsModal,
     "calculator-ui": CalculatorUi,
     "export-calc-results": ExportCalcResults,
     "dependency-graph": DependencyGraph,
@@ -232,6 +248,7 @@ export default {
       showDraftModel: false,
       showIngestData: false,
       showModelSnapshots: false,
+      showSystemDynamics: false,
       models: null,
       //selectedNodeGroupId: null,
       expanded: [],

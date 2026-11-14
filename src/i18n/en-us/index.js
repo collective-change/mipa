@@ -162,6 +162,26 @@ export default {
   langSpanish: "Spanish",
   langJapanese: "Japanese",
 
+  // System Dynamics & Feedback Loops
+  systemDynamicsBtn: "Feedback Loops & Archetypes",
+  systemDynamicsModalTitle: "System Dynamics & Feedback Loop Explorer",
+  systemDynamicsModalSubtitle: "Analyze reinforcing flywheels, balancing constraints, and Donella Meadows leverage points.",
+  feedbackLoopsTab: "Feedback Loops (R & B)",
+  systemArchetypesTab: "System Archetypes",
+  meadowsHierarchyTab: "Meadows Leverage Hierarchy",
+  reinforcingLoopLabel: "Reinforcing Loop (R)",
+  balancingLoopLabel: "Balancing Loop (B)",
+  noLoopsDetectedTitle: "No feedback cycles detected.",
+  noLoopsDetectedSubtitle: "As factors link together, feedback loops will be automatically mapped here.",
+  loopLengthLabel: "factors in cycle",
+  hasDelayBadge: "Contains Delay",
+  meadowsLevelBadge: "Meadows Level",
+  strategicRecommendationTitle: "Strategic Recommendation",
+  leveragePowerLow: "Low Leverage",
+  leveragePowerMedium: "Medium Leverage",
+  leveragePowerHigh: "High Leverage",
+  leveragePowerTransformative: "Transformative",
+
   // for PageModel.vue
   Calculate: "Calculate",
   "Model settings": "Model settings",
