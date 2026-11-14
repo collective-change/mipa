@@ -253,7 +253,9 @@ export default {
           help: "helpRemainingCost",
           align: "right",
           label: this.$t("outstandingDirectCost"),
-          field: "outstandingDirectCost",
+          // Recalculate saves outstandingDirectCosts; saving an action by
+          // hand saves outstandingDirectCost.
+          field: (row) => row.outstandingDirectCosts ?? row.outstandingDirectCost,
           format: (val) => `${formatNumber(val, 3)}`,
           sortable: true,
         },
