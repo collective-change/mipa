@@ -2,6 +2,7 @@ import { formatNumber } from "./util-formatNumber";
 import { generateSensitivityReport } from "./sensitivityAnalysis";
 import { calculateSroiMetrics } from "./sroi";
 import { runMonteCarloSimulation } from "./monteCarlo";
+import { detectFeedbackLoops } from "./systemDynamics";
 
 /**
  * Decision Brief and Ranking Explanation Engine (Feature 2)
@@ -305,11 +306,33 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
     section1OptionsSummary = `This brief evaluates ${sortedActions.length} options for ${orgName}: ${sortedActions.map((a) => `"${a.title}"`).join(", ")}. Each option's systemic impact and direct requirements were projected across the full simulation horizon using the "${modelName}" model.`;
   }
 
+  // System Dynamics loops touched by top action
+  const allLoops = detectFeedbackLoops(nodes);
+  const reinforcingLoops = allLoops.filter((l) => l.type === "reinforcing");
+  const topActionFactorIds = new Set(
+    (topAction.impacts || []).map((imp) => imp.nodeId || imp.symbol).filter(Boolean)
+  );
+  (nodes || []).forEach((n) => {
+    if (topActionFactorIds.has(n.symbol)) {
+      topActionFactorIds.add(n.id);
+    }
+  });
+  const touchedRLoops = reinforcingLoops.filter((loop) =>
+    loop.nodeIds.some((nid) => topActionFactorIds.has(nid))
+  );
+
   // Section 3: Why the top option ranks first in plain words
   let section3WhyTopOption;
   if (runnerUp) {
     const comparison = explainActionComparison(topAction, runnerUp, nodes, { locale: isZh ? "zh-tw" : "en-us", currency });
     section3WhyTopOption = comparison.narrative;
+    if (touchedRLoops.length > 0) {
+      if (isZh) {
+        section3WhyTopOption += `\n\n四、系統反饋飛輪效應：\n「${topAction.title}」直接觸發增強型反饋循環（${touchedRLoops.map((l) => l.code).join("、")}），在系統動態中產生持續放大的滾雪球效益。`;
+      } else {
+        section3WhyTopOption += `\n\n4. Systemic Flywheel Dynamic:\n"${topAction.title}" directly activates reinforcing feedback loop(s) (${touchedRLoops.map((l) => l.code).join(", ")}), driving compounding gains throughout the factor network.`;
+      }
+    }
   } else {
     const topDrivers = extractActionDrivers(topAction, nodes);
     const topCost = topAction.outstandingDirectCosts ?? topAction.outstandingDirectCost ?? topAction.estSpending ?? 0;
@@ -326,7 +349,10 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
           ? `該行動重點作用於關鍵要素：${topDrivers.map((d) => `「${d.name}」（${d.operation}${d.operand} ${d.unit}）`).join("、")}，帶動組織整體正向反饋循環。\n\n`
           : `該行動透過持續性之流程強化深化組織成果。\n\n`) +
         `三、資源投入適宜性：\n` +
-        `尚需直接經費為 ${formatCurrencyValue(topCost, currency)}，在組織可承載之資源範疇內具備極高推動可行性。`;
+        `尚需直接經費為 ${formatCurrencyValue(topCost, currency)}，在組織可承載之資源範疇內具備極高推動可行性。` +
+        (touchedRLoops.length > 0
+          ? `\n\n四、系統反饋飛輪效應：\n該行動直接作用於增強型循環（${touchedRLoops.map((l) => l.code).join("、")}），在系統網絡中形成自我增強的正向循環，持續放大投入成果。`
+          : "");
     } else {
       section3WhyTopOption = `"${topAction.title}" demonstrates strong positive strategic impact in the simulation model:\n\n` +
         `1. Superior Leverage Performance:\n` +
@@ -336,7 +362,10 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
           ? `It directly reinforces key factor(s): ${topDrivers.map((d) => `"${d.name}" (${d.operation}${d.operand} ${d.unit})`).join(", ")}, triggering positive reinforcing loops across the model.\n\n`
           : `It generates sustained benefits through steady operational execution.\n\n`) +
         `3. Capital Feasibility:\n` +
-        `With an outstanding direct cost of ${formatCurrencyValue(topCost, currency)}, the required financial outlay is well-proportioned to the long-term societal and organizational gains.`;
+        `With an outstanding direct cost of ${formatCurrencyValue(topCost, currency)}, the required financial outlay is well-proportioned to the long-term societal and organizational gains.` +
+        (touchedRLoops.length > 0
+          ? `\n\n4. Systemic Flywheel Dynamic:\nThis action directly activates reinforcing feedback loop(s) (${touchedRLoops.map((l) => l.code).join(", ")}), compounding long-term returns across the model.`
+          : "");
     }
   }
 
@@ -382,13 +411,17 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
       `• 「${d.name}」變動幅度：假設實施後將產生 ${d.operation}${d.operand} ${d.unit} 之實質影響（${d.isEstimate ? "屬專家估算值，建議追蹤實施初期之實際指標" : "具備前期運作數據支持"}）。`
     ).join("\n");
 
+    const loopAssumptionZh = touchedRLoops.length > 0
+      ? `\n• 系統反饋結構依賴：本方案之高效應比倚賴增強型反饋循環（${touchedRLoops.map((l) => l.code).join("、")}）的持續運轉。決策團隊應注意監測潛在的滯後或平衡調節約束，防範遭遇成長上限。`
+      : "";
+
     const generalAssumptions = [
       `• 貼現率與時間跨度：依組織設定之年化折現率計算未來現金流與社會效益現值。`,
       `• 組織與社會權重：模型中社會大眾效益與組織內部效益權重比維持既定標準配置。`,
       estimatedFactors.length > 0
         ? `• 系統估算要素：模型中包含 ${estimatedFactors.length} 個估算型要素（如：${estimatedFactors.slice(0, 3).map((f) => `「${f.name || f.symbol}」`).join("、")}），若外部環境發生劇烈變動，可能對長期模擬數據產生微幅調整。`
         : `• 要素穩定性：多數要素奠基於既有營運基準數值。`
-    ].join("\n");
+    ].join("\n") + loopAssumptionZh;
 
     const sensitivityBlock = sensitivity ? `\n\n三、決策穩健性與關鍵翻轉點推演：\n${sensitivity.narrative}` : "";
     section4Assumptions = `本排序結果奠基於以下關鍵假設：\n\n${driverAssumptions ? driverAssumptions + "\n" : ""}${generalAssumptions}${sensitivityBlock}`;
@@ -397,13 +430,17 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
       `- Impact scale on "${d.name}": assumes an operational change of ${d.operation}${d.operand} ${d.unit} (${d.isEstimate ? "expert estimate; early monitoring recommended" : "supported by historical operational data"}).`
     ).join("\n");
 
+    const loopAssumptionEn = touchedRLoops.length > 0
+      ? `\n- Systemic Feedback Dependency: High leverage relies on the compounding operation of reinforcing loop(s) (${touchedRLoops.map((l) => l.code).join(", ")}). Leadership should monitor feedback latency and balancing constraints to avoid premature limits to growth.`
+      : "";
+
     const generalAssumptions = [
       `- Discounting & Horizon: Future net benefits are discounted according to the organization's standard parameters.`,
       `- Societal vs. Organizational Weighting: Balanced based on established organizational evaluation criteria.`,
       estimatedFactors.length > 0
         ? `- Model Estimations: The model incorporates ${estimatedFactors.length} estimated factor(s) (such as ${estimatedFactors.slice(0, 3).map((f) => `"${f.name || f.symbol}"`).join(", ")}). Sensitivity testing should be referenced for high-variance inputs.`
         : `- Factor Baselines: Core factors are derived from prevailing operational baseline data.`
-    ].join("\n");
+    ].join("\n") + loopAssumptionEn;
 
     const sensitivityBlock = sensitivity ? `\n\n3. Decision Robustness & Turning Points:\n${sensitivity.narrative}` : "";
     section4Assumptions = `The ranking depends primarily on the following core assumptions:\n\n${driverAssumptions ? driverAssumptions + "\n" : ""}${generalAssumptions}${sensitivityBlock}`;
