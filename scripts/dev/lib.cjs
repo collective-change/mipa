@@ -1,0 +1,21 @@
+const { chromium } = require("playwright");
+exports.S = require("path").join(__dirname, "shots");
+require("fs").mkdirSync(exports.S, { recursive: true });
+exports.start = async (viewport = { width: 1280, height: 800 }) => {
+  const browser = await chromium.launch();
+  const ctx = await browser.newContext({ viewport });
+  const page = await ctx.newPage();
+  const log = [];
+  page.on("console", m => { if (["error", "warning"].includes(m.type())) log.push(m.type() + ": " + m.text().slice(0, 300)); });
+  page.on("pageerror", e => log.push("pageerror: " + e.message));
+  await page.goto("http://localhost:9000/auth", { waitUntil: "networkidle" });
+  const panel = page.getByRole("tabpanel").first();
+  await panel.getByLabel("Email").fill("alex@example.org");
+  await panel.getByLabel("Password").fill("correct-horse-42");
+  await panel.getByRole("button", { name: /^sign in$/i }).click();
+  await page.waitForURL(u => !u.pathname.startsWith("/auth"));
+  await page.waitForTimeout(1500);
+  return { browser, page, log };
+};
+exports.shot = async (page, name, full = true) => { await page.waitForTimeout(1200); await page.screenshot({ path: `${exports.S}/${name}.png`, fullPage: full }); };
+exports.text = async (page, sel = "body") => (await page.locator(sel).first().innerText()).replace(/\n+/g, " | ").slice(0, 2000);
