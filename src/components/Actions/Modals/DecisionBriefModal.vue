@@ -269,6 +269,15 @@
                 </q-td>
               </template>
 
+              <template v-slot:body-cell-sroiRatio="props">
+                <q-td :props="props">
+                  <q-badge v-if="props.value" color="positive" text-color="white" dense>
+                    {{ formatRatio(props.value) }}
+                  </q-badge>
+                  <span v-else class="text-grey-5">-</span>
+                </q-td>
+              </template>
+
               <template v-slot:body-cell-marginalNetTotalBenefitNpv="props">
                 <q-td :props="props">
                   {{ formatAmount(props.value) }}
@@ -563,6 +572,7 @@ export default {
         { name: "rank", label: this.$t("rankCol"), field: "rank", align: "center", sortable: true },
         { name: "title", label: this.$t("Title") || "Option", field: "title", align: "left", sortable: true },
         { name: "actionLeverage", label: this.$t("Leverage"), field: "actionLeverage", align: "right", sortable: true },
+        { name: "sroiRatio", label: "SROI", field: "sroiRatio", align: "right", sortable: true },
         { name: "marginalNetTotalBenefitNpv", label: `${this.$t("marginalNetTotalBenefitNpv")}${cur}`, field: "marginalNetTotalBenefitNpv", align: "right", sortable: true },
         { name: "totalRoi", label: this.$t("totalRoi"), field: "totalRoi", align: "right", sortable: true },
         { name: "outstandingDirectCosts", label: `${this.$t("outstandingDirectCost")}${cur}`, field: "outstandingDirectCosts", align: "right", sortable: true },

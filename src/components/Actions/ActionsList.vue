@@ -107,6 +107,14 @@
           </div>
         </q-td>
       </template>
+      <template v-slot:body-cell-sroiRatio="props">
+        <q-td :props="props">
+          <q-badge v-if="props.value !== '-'" color="positive" text-color="white" dense>
+            {{ props.value }}
+          </q-badge>
+          <span v-else class="text-grey-5">-</span>
+        </q-td>
+      </template>
       <template v-slot:no-data>
         <div class="full-width column items-center q-pa-lg text-center">
           <q-icon name="wb_incandescent" color="primary" size="48px" class="flip-vertical" />
@@ -145,6 +153,7 @@
 import { mapGetters, mapState } from "vuex";
 import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import { formatNumber } from "@/utils/util-formatNumber";
+import { formatSroiRatio } from "@/utils/sroi";
 import {
   getUserDisplayNameOrTruncatedEmail,
   getUserPhotoURL,
@@ -220,6 +229,14 @@ export default {
           format: (val) => `${formatNumber(val, 2)}`,
           sortable: true,
           sortBy: "desc",
+        },
+        {
+          name: "sroiRatio",
+          align: "right",
+          label: "SROI",
+          field: "sroiRatio",
+          format: (val) => formatSroiRatio(val),
+          sortable: true,
         },
         {
           name: "state",

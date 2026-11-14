@@ -447,6 +447,11 @@ function composeCostsAndImpactsOfSelf(action, averageEffortCostPerHour) {
     outstandingSpending,
     outstandingDirectCosts,
 
+    deadweight: action.deadweight || 0,
+    attribution: action.attribution || 0,
+    displacement: action.displacement || 0,
+    dropOffRate: action.dropOffRate || 0,
+
     impacts: [...action.impacts],
     includedActionIds: [action.id]
   };
@@ -473,6 +478,10 @@ function includeActionInCostsAndImpacts(action, costsAndImpacts) {
         costsAndImpacts.outstandingSpending + ae.outstandingSpending,
       outstandingDirectCosts:
         costsAndImpacts.outstandingDirectCosts + ae.outstandingDirectCosts,
+      deadweight: costsAndImpacts.deadweight || ae.deadweight || 0,
+      attribution: costsAndImpacts.attribution || ae.attribution || 0,
+      displacement: costsAndImpacts.displacement || ae.displacement || 0,
+      dropOffRate: costsAndImpacts.dropOffRate || ae.dropOffRate || 0,
       impacts: [...costsAndImpacts.impacts, ...ae.impacts],
       includedActionIds: [...costsAndImpacts.includedActionIds, action.id]
     };
@@ -617,7 +626,8 @@ function simulateCostsAndImpacts(
     ifDoneNodesValues,
     ifNotDoneNodesValues,
     timeSPoints,
-    sim
+    sim,
+    testCostsAndImpacts
   );
 
   let simulateCostsAndImpactsResults = {
@@ -721,7 +731,8 @@ function calcActionResultsFromTimeSeries(
   ifDoneTimeSeriesNodesValues,
   ifNotDoneTimeSeriesNodesValues,
   timeSPoints,
-  sim
+  sim,
+  actionAdjustments = {}
 ) {
   const roleNodes = sim.roleNodes;
   const yearlyDiscountRate = sim.yearlyDiscountRate;
@@ -816,6 +827,18 @@ function calcActionResultsFromTimeSeries(
   if (isNaN(totalRoi)) totalRoi = null;
   if (isNaN(actionLeverage)) actionLeverage = null;
 
+  // SROI (Social Return on Investment) calculation
+  const deadweight = Math.min(100, Math.max(0, Number(actionAdjustments.deadweight) || 0)) / 100;
+  const attribution = Math.min(100, Math.max(0, Number(actionAdjustments.attribution) || 0)) / 100;
+  const displacement = Math.min(100, Math.max(0, Number(actionAdjustments.displacement) || 0)) / 100;
+  const sroiAdjustmentFactor = Math.max(0, (1 - deadweight) * (1 - attribution) * (1 - displacement));
+
+  const grossSocialBenefitNpv = marginalWorldBenefitNpv;
+  const adjustedSocialBenefitNpv = grossSocialBenefitNpv * sroiAdjustmentFactor;
+  const netSocialBenefitNpv = adjustedSocialBenefitNpv - marginalWorldCostNpv;
+  let sroiRatio = outstandingDirectCosts > 0 ? (netSocialBenefitNpv / outstandingDirectCosts) : null;
+  if (isNaN(sroiRatio)) sroiRatio = null;
+
   const roiResults = {
     outstandingDirectCosts,
     rawMarginalOrgBenefitNpv,
@@ -830,7 +853,12 @@ function calcActionResultsFromTimeSeries(
     marginalNetTotalBenefitNpv,
     marginalTotalCostNpv,
     totalRoi,
-    actionLeverage
+    actionLeverage,
+    grossSocialBenefitNpv,
+    adjustedSocialBenefitNpv,
+    netSocialBenefitNpv,
+    sroiRatio,
+    sroiAdjustmentFactor
   };
   //console.log({ roiResults });
   return roiResults;
