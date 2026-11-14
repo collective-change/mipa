@@ -34,13 +34,25 @@
         <div
           v-bind:class="{ 'col-12 col-md-2': !embedded, 'col-12': embedded }"
         >
-          <div class="q-px-xs q-gutter-xs">
+          <div class="q-px-xs q-gutter-xs row items-center">
             <q-chip outline color="primary"
               >{{ $t("Leverage") }} {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip
             >
             <q-chip outline color="primary"
               >{{ $t("totalRoi") }} {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip
             >
+            <q-btn
+              flat
+              dense
+              round
+              size="sm"
+              icon="psychology"
+              color="primary"
+              :title="$t('explainRanking')"
+              @click="showExplainRanking = true"
+            >
+              <q-tooltip>{{ $t("explainRankingShort") }}</q-tooltip>
+            </q-btn>
           </div>
         </div>
 
@@ -75,6 +87,14 @@
               :buttonLabel="$t('Download results')"
               flat
               no-caps
+            />
+            <q-btn
+              flat
+              no-caps
+              icon="description"
+              color="primary"
+              :label="$t('decisionBrief')"
+              @click="showDecisionBrief = true"
             />
             <q-btn-group v-if="uiAction.actionMchState.value == 'initiating'">
               <q-btn
@@ -522,6 +542,16 @@
       <div v-if="!embedded">
         <action-sim-charts />
       </div>
+
+      <decision-brief-modal
+        v-model="showDecisionBrief"
+        :initialActions="[uiAction]"
+      />
+      <explain-ranking-modal
+        v-model="showExplainRanking"
+        :action="uiAction"
+        @open-full-brief="showDecisionBrief = true"
+      />
     </q-form>
   </div>
 </template>
@@ -544,6 +574,8 @@ import ActionRelationships from "@/components/Actions/Relationships/ActionRelati
 import SelectUser from "@/components/Users/SelectUser.vue";
 import ActionSimCharts from "@/components/Charts/ActionSimCharts.vue";
 import Chat from "@/components/Chats/Chat.vue";
+import DecisionBriefModal from "@/components/Actions/Modals/DecisionBriefModal.vue";
+import ExplainRankingModal from "@/components/Actions/Modals/ExplainRankingModal.vue";
 
 const { mapFields } = createHelpers({
   getterType: "uiAction/getField",
@@ -563,6 +595,8 @@ export default {
     "select-user": SelectUser,
     "action-sim-charts": ActionSimCharts,
     chat: Chat,
+    "decision-brief-modal": DecisionBriefModal,
+    "explain-ranking-modal": ExplainRankingModal,
   },
 
   props: ["action"],
@@ -571,6 +605,8 @@ export default {
     return {
       //embedded: false, //whether this component is embedded or a full page
       actionId: null,
+      showDecisionBrief: false,
+      showExplainRanking: false,
       saveFullResults: false,
       saveResultsOnDevice: false,
       showAddRoleCost: false,
