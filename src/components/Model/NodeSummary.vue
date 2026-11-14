@@ -105,17 +105,167 @@
           </tr>
         </q-markup-table>
 
+        <!-- Formula helper chips row -->
+        <div class="row items-center q-gutter-xs q-mt-sm q-mb-xs">
+          <span class="text-caption text-grey-7 q-mr-xs">{{ $t("formulaChipsLabel") }}</span>
+          <q-chip
+            v-for="chip in formulaPrimitives"
+            :key="chip.id"
+            clickable
+            dense
+            outline
+            color="primary"
+            text-color="primary"
+            class="q-ma-none text-weight-medium"
+            @click="insertPrimitive(chip)"
+          >
+            <q-icon :name="chip.icon" size="14px" class="q-mr-xs" v-if="chip.icon" />
+            {{ chip.label }}
+            <q-tooltip>{{ $t(chip.descKey) }}</q-tooltip>
+          </q-chip>
+
+          <q-btn
+            flat
+            dense
+            size="sm"
+            color="secondary"
+            icon="add_circle"
+            :label="$t('insertFactor')"
+            class="q-ml-xs"
+          >
+            <q-tooltip>{{ $t("insertFactorHint") }}</q-tooltip>
+            <q-menu auto-close style="max-height: 280px; min-width: 260px">
+              <q-list dense>
+                <q-item-label header class="text-caption">{{ $t("insertFactorHint") }}</q-item-label>
+                <q-item
+                  v-for="factor in allFactorSuggestions"
+                  :key="factor.id"
+                  clickable
+                  @click="insertFactor(factor)"
+                >
+                  <q-item-section>
+                    <div class="row items-center">
+                      <span class="text-weight-bold text-primary q-mr-sm">{{ factor.symbol }}</span>
+                      <span class="text-caption text-grey-8">{{ factor.name }}</span>
+                    </div>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-badge
+                      :color="isInfluencerLinked(factor.id) ? 'positive' : 'grey-5'"
+                      :label="isInfluencerLinked(factor.id) ? $t('linkedInfluencer') : $t('unlinkedFactor')"
+                    />
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
+        </div>
+
         <q-input
+          ref="formulaInput"
           v-model="nodeToSubmit.symbolFormula"
           :label="$t('Formula: how this factor is calculated')"
           prefix="="
           autogrow
-          debounce="800"
+          debounce="500"
+          @keyup="onFormulaKeyUp"
+          @click="updateCursorPos"
+          @focus="updateCursorPos"
           :rules="[
-            (val) =>
-              this.isAllowedInFormula(val) || $t('formulaCharacters'),
+            (val) => isAllowedInFormula(val) || $t('formulaCharacters'),
+            () => formulaValidation.valid || $t('formulaSyntaxErrorBlock')
           ]"
         />
+
+        <!-- Inline Factor Autocomplete Suggestions Popup/Bar -->
+        <div v-if="autocompleteSuggestions.length > 0 && showAutocompleteMenu" class="q-mb-sm">
+          <q-card flat bordered class="bg-grey-1 q-pa-xs">
+            <div class="row items-center justify-between q-px-xs q-pb-xs">
+              <span class="text-caption text-grey-7">
+                {{ $t("insertFactorHint") }} ("{{ currentFormulaToken }}")
+              </span>
+              <q-btn flat round dense icon="close" size="xs" @click="showAutocompleteMenu = false" />
+            </div>
+            <div class="row q-gutter-xs">
+              <q-chip
+                v-for="sug in autocompleteSuggestions"
+                :key="sug.id"
+                clickable
+                dense
+                color="white"
+                text-color="primary"
+                class="q-ma-none shadow-1"
+                @click="insertFactor(sug, currentFormulaToken)"
+              >
+                <span class="text-weight-bold text-primary q-mr-xs">{{ sug.symbol }}</span>
+                <span class="text-caption text-grey-8">({{ sug.name }})</span>
+                <q-icon
+                  :name="isInfluencerLinked(sug.id) ? 'check_circle' : 'add_link'"
+                  :color="isInfluencerLinked(sug.id) ? 'positive' : 'grey-6'"
+                  size="14px"
+                  class="q-ml-xs"
+                />
+              </q-chip>
+            </div>
+          </q-card>
+        </div>
+
+        <!-- Syntax Error Banner -->
+        <q-banner
+          v-if="!formulaValidation.valid && !formulaValidation.empty"
+          dense
+          rounded
+          class="bg-red-1 text-negative q-mt-xs q-mb-xs"
+        >
+          <template v-slot:avatar>
+            <q-icon name="error_outline" color="negative" />
+          </template>
+          <div class="text-weight-medium">
+            <span v-if="formulaValidation.errorType === 'parenthesis'">{{ $t('formulaErrorParenthesis') }}</span>
+            <span v-else-if="formulaValidation.errorType === 'incomplete'">{{ $t('formulaErrorIncomplete') }}</span>
+            <span v-else>{{ formulaValidation.error }}</span>
+          </div>
+          <div class="text-caption text-grey-8" v-if="formulaValidation.error">
+            {{ formulaValidation.error }}
+          </div>
+        </q-banner>
+
+        <!-- Unlinked Factors Banner -->
+        <q-banner
+          v-if="formulaValidation.valid && formulaValidation.unlinkedSymbols.length > 0"
+          dense
+          rounded
+          class="bg-amber-1 text-brown-9 q-mt-xs q-mb-xs"
+        >
+          <template v-slot:avatar>
+            <q-icon name="warning_amber" color="warning" />
+          </template>
+          <div>{{ $t('formulaUnlinkedWarning') }}</div>
+          <div class="row q-gutter-xs q-mt-xs">
+            <q-btn
+              v-for="unlinked in formulaValidation.unlinkedSymbols"
+              :key="unlinked.symbol"
+              size="sm"
+              outline
+              dense
+              color="warning"
+              text-color="brown-10"
+              icon="link"
+              :label="$t('linkFactorButton', { name: unlinked.name || unlinked.symbol })"
+              @click="linkInfluencer(unlinked.nodeId)"
+            />
+          </div>
+        </q-banner>
+
+        <!-- Unrecognized Symbols Notice -->
+        <div
+          v-if="formulaValidation.valid && formulaValidation.unknownSymbols.length > 0"
+          class="text-caption text-orange-9 q-mt-xs q-mb-xs row items-center"
+        >
+          <q-icon name="info" class="q-mr-xs" size="14px" />
+          {{ $t('formulaUnknownSymbols') }}: {{ formulaValidation.unknownSymbols.join(', ') }}
+        </div>
+
         <q-expansion-item
           dense
           dense-toggle
@@ -125,12 +275,11 @@
         >
           <div class="text-caption formula-help">{{ $t("formulaHelp") }}</div>
         </q-expansion-item>
-        <div v-if="parserError == '' && latexFormula">
+        <div v-if="formulaValidation.valid && latexFormula" class="q-my-xs">
           <latex-formula
             :formula="nodeToSubmit.symbol + '=' + latexFormula"
           />
         </div>
-        <div v-else class="text-negative">{{ parserError }}</div>
         <q-input
           v-model="nodeToSubmit.latestValue"
           :label="$t('Current value (optional)')"
@@ -254,6 +403,12 @@ import LatexFormula from "@/components/Shared/LatexFormula.vue";
 import { GChart } from "vue-google-charts";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { classifyInfluencers } from "@/utils/util-node-operations";
+import {
+  FORMULA_PRIMITIVES,
+  validateFormulaSyntax,
+  getFactorSuggestions,
+  insertSnippetIntoFormula
+} from "@/utils/formulaHelper";
 import SelectUser from "../Users/SelectUser.vue";
 import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
 import Chat from "@/components/Chats/Chat.vue";
@@ -285,7 +440,10 @@ export default {
       showDeleteFactor: false,
       nodeToSubmitIsFreshlyAssigned: false,
       model: null,
-      parserError: "",
+      formulaPrimitives: FORMULA_PRIMITIVES,
+      formulaCursorPos: 0,
+      currentFormulaToken: "",
+      showAutocompleteMenu: false,
       nodeChart: {
         chartData: [],
         chartOptions: {
@@ -338,16 +496,43 @@ export default {
       return influencerNodesInfo;
     },
 
+    formulaValidation() {
+      const availableSymbols = [this.nodeToSubmit?.symbol || ""];
+      if (Array.isArray(this.nodeToSubmit?.influencers)) {
+        this.nodeToSubmit.influencers.forEach((id) => {
+          const found = (this.nodes || []).find((n) => n.id === id);
+          if (found && found.symbol) availableSymbols.push(found.symbol);
+        });
+      }
+      return validateFormulaSyntax(this.nodeToSubmit?.symbolFormula || "", {
+        availableSymbols,
+        allNodes: this.nodes || [],
+        currentNodeId: this.nodeToSubmit?.id
+      });
+    },
+
+    allFactorSuggestions() {
+      return getFactorSuggestions("", this.nodes, this.nodeToSubmit?.id, this.nodeToSubmit?.influencers);
+    },
+
+    autocompleteSuggestions() {
+      if (!this.currentFormulaToken) return [];
+      return getFactorSuggestions(
+        this.currentFormulaToken,
+        this.nodes,
+        this.nodeToSubmit?.id,
+        this.nodeToSubmit?.influencers
+      ).slice(0, 8);
+    },
+
     //parse symbol formula
     parsedSymbolFormula() {
+      if (!this.nodeToSubmit?.symbolFormula || !this.formulaValidation?.valid) {
+        return "";
+      }
       try {
-        let parsedSymbolFormula = this.nodeToSubmit.symbolFormula
-          ? parse(this.nodeToSubmit.symbolFormula)
-          : "";
-        this.parserError = "";
-        return parsedSymbolFormula;
+        return parse(this.nodeToSubmit.symbolFormula);
       } catch (err) {
-        this.parserError = "Error parsing formula: " + err.message;
         return "";
       }
     },
@@ -361,7 +546,7 @@ export default {
 
     //latexFormula from parsedSymbolFormula
     latexFormula() {
-      return this.parsedSymbolFormula
+      return this.parsedSymbolFormula && typeof this.parsedSymbolFormula.toTex === "function"
         ? this.parsedSymbolFormula.toTex({
             parenthesis: "keep",
             implicit: "hide",
@@ -383,7 +568,7 @@ export default {
       };
       this.showAddLink = true;
     },
-    ...mapActions("model", ["updateNode"]),
+    ...mapActions("model", ["updateNode", "addLink"]),
     ...mapActions("ui", ["setSelectedNodeId"]),
 
     isAlphanumeric(str) {
@@ -396,13 +581,116 @@ export default {
       );
     },
     isAllowedInFormula(str) {
+      if (!str) return true;
       return str.match(/^[a-z0-9 _,=<>/:%\-\(\)\+\^\.\?\*]+$/i) !== null;
     },
-    submitForm() {
-      this.$refs.nodeName.validate();
-      if (!this.$refs.nodeName.hasError) {
-        this.submitNode();
+    isInfluencerLinked(nodeId) {
+      return Array.isArray(this.nodeToSubmit?.influencers) && this.nodeToSubmit.influencers.includes(nodeId);
+    },
+    updateCursorPos() {
+      this.$nextTick(() => {
+        const inputEl = this.$refs.formulaInput?.$el?.querySelector("input, textarea");
+        if (inputEl && typeof inputEl.selectionStart === "number") {
+          this.formulaCursorPos = inputEl.selectionStart;
+        }
+      });
+    },
+    onFormulaKeyUp() {
+      this.updateCursorPos();
+      this.$nextTick(() => {
+        const formula = this.nodeToSubmit?.symbolFormula || "";
+        const pos = this.formulaCursorPos;
+        const match = formula.slice(0, pos).match(/([a-zA-Z0-9_]+)$/);
+        if (match && match[1].length >= 1) {
+          this.currentFormulaToken = match[1];
+          this.showAutocompleteMenu = true;
+        } else {
+          this.showAutocompleteMenu = false;
+          this.currentFormulaToken = "";
+        }
+      });
+    },
+    insertPrimitive(chip) {
+      const currentFormula = this.nodeToSubmit?.symbolFormula || "";
+      let snippet = chip.snippet;
+      if (chip.id === "delay") {
+        snippet = `delay(${this.nodeToSubmit?.symbol || "factor"}, dt, 0)`;
       }
+      const res = insertSnippetIntoFormula(
+        currentFormula,
+        snippet,
+        this.formulaCursorPos,
+        this.formulaCursorPos
+      );
+      this.nodeToSubmit.symbolFormula = res.newFormula;
+      this.formulaCursorPos = res.newCursorPosition;
+      this.showAutocompleteMenu = false;
+      this.focusFormulaInput();
+    },
+    insertFactor(factor, tokenToReplace = "") {
+      const currentFormula = this.nodeToSubmit?.symbolFormula || "";
+      const snippet = factor.symbol;
+      const res = insertSnippetIntoFormula(
+        currentFormula,
+        snippet,
+        this.formulaCursorPos,
+        this.formulaCursorPos,
+        tokenToReplace || this.currentFormulaToken
+      );
+      this.nodeToSubmit.symbolFormula = res.newFormula;
+      this.formulaCursorPos = res.newCursorPosition;
+      this.showAutocompleteMenu = false;
+      this.currentFormulaToken = "";
+
+      if (!this.isInfluencerLinked(factor.id)) {
+        this.linkInfluencer(factor.id);
+      }
+      this.focusFormulaInput();
+    },
+    linkInfluencer(influencerId) {
+      if (!Array.isArray(this.nodeToSubmit.influencers)) {
+        this.nodeToSubmit.influencers = [];
+      }
+      if (!this.nodeToSubmit.influencers.includes(influencerId)) {
+        this.nodeToSubmit.influencers.push(influencerId);
+      }
+      if (this.selectedNode?.id && this.$route?.params?.modelId && this.addLink) {
+        this.addLink({
+          modelId: this.$route.params.modelId,
+          link: {
+            sourceNodeId: this.selectedNode.id,
+            targetNodeId: influencerId,
+            targetType: "influencer"
+          }
+        });
+      }
+    },
+    focusFormulaInput() {
+      this.$nextTick(() => {
+        if (this.$refs.formulaInput && typeof this.$refs.formulaInput.focus === "function") {
+          this.$refs.formulaInput.focus();
+        }
+        const inputEl = this.$refs.formulaInput?.$el?.querySelector("input, textarea");
+        if (inputEl && typeof inputEl.setSelectionRange === "function") {
+          inputEl.setSelectionRange(this.formulaCursorPos, this.formulaCursorPos);
+        }
+      });
+    },
+    submitForm() {
+      if (this.$refs.nodeName) {
+        this.$refs.nodeName.validate();
+        if (this.$refs.nodeName.hasError) return;
+      }
+      if (!this.formulaValidation?.valid) {
+        if (this.$q && this.$q.notify) {
+          this.$q.notify({
+            type: "negative",
+            message: this.$t("formulaSyntaxErrorBlock")
+          });
+        }
+        return;
+      }
+      this.submitNode();
     },
     submitNode() {
       let oldLatestVal = this.selectedNode.latestValue;
@@ -554,14 +842,22 @@ export default {
   },
 
   watch: {
-    selectedNode: function (newNode, oldNode) {
-      this.nodeToSubmitIsFreshlyAssigned = true;
-      this.nodeToSubmit = Object.assign({}, this.selectedNode);
-      this.$store.commit("ui/setUiNodeChanged", false);
-      this.influencerChartsArr = [];
-      this.nodeChart = {};
-      this.updateChartData();
-      this.updateInfluencerChartsArr();
+    selectedNode: {
+      immediate: true,
+      handler: function () {
+        if (!this.selectedNode) return;
+        this.nodeToSubmitIsFreshlyAssigned = true;
+        this.nodeToSubmit = Object.assign({}, this.selectedNode, {
+          influencers: [...(this.selectedNode.influencers || [])],
+          blockingInfluencers: [...(this.selectedNode.blockingInfluencers || [])],
+          unusedInfluencers: [...(this.selectedNode.unusedInfluencers || [])]
+        });
+        this.$store.commit("ui/setUiNodeChanged", false);
+        this.influencerChartsArr = [];
+        this.nodeChart = {};
+        this.updateChartData();
+        this.updateInfluencerChartsArr();
+      },
     },
 
     nodeToSubmit: {
@@ -625,14 +921,16 @@ export default {
             influencerNode = nodes.find(function (node) {
               return node.id == influencerNodeId;
             });
-            potentials.push({
-              symbol: influencerNode.symbol,
-              id: influencerNodeId,
-            });
+            if (influencerNode && influencerNode.symbol) {
+              potentials.push({
+                symbol: influencerNode.symbol,
+                id: influencerNodeId,
+              });
+            }
           });
         }
         potentials.sort(function (a, b) {
-          return b.symbol.length - a.symbol.length;
+          return (b.symbol || "").length - (a.symbol || "").length;
         });
 
         var sysFormula = parsedSymbolFormula.toString();
