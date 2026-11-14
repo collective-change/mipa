@@ -189,4 +189,20 @@ describe("NodeSummary.vue - Formula Autocomplete & Syntax Helpers", () => {
     const chineseRegex = /[\u4e00-\u9fff]/;
     expect(chineseRegex.test(html)).toBe(false);
   });
+
+  it("exposes data provenance, accounting categories, and freshness evaluation", () => {
+    const { wrapper } = mountNodeSummary("node_meals", "en-us");
+    expect(wrapper.vm.accountingCategoryOptions.length).toBeGreaterThan(0);
+    expect(wrapper.vm.factorFreshness).toBeDefined();
+    expect(wrapper.vm.factorFreshness.status).toBeDefined();
+
+    // Verify updating provenance fields
+    wrapper.vm.nodeToSubmit.costCategory = "direct_program";
+    wrapper.vm.nodeToSubmit.reportingPeriod = "FY2025";
+    wrapper.vm.nodeToSubmit.effectiveDate = "2025-12-31";
+    wrapper.vm.nodeToSubmit.sourceCitation = "2025 Annual Financial Report";
+
+    expect(wrapper.vm.nodeToSubmit.costCategory).toBe("direct_program");
+    expect(wrapper.vm.nodeToSubmit.sourceCitation).toBe("2025 Annual Financial Report");
+  });
 });
