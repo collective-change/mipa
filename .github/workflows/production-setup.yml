@@ -21,11 +21,11 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "check (read-only) or migrate (deploys)"
+        description: "check (read-only), migrate (deploys), or functions (deploys Cloud Functions only, with detailed logs)"
         required: true
         default: check
         type: choice
-        options: [check, migrate]
+        options: [check, migrate, functions]
 
 concurrency:
   group: deploy-production
@@ -231,3 +231,27 @@ jobs:
           cd scripts/backfill-org-members
           npm ci
           node backfill.mjs --project "$PROJECT"
+
+      # ---- functions ----
+
+      - name: Write configuration files (functions)
+        if: inputs.mode == 'functions'
+        env:
+          FUNCTIONS_ENV_FILE: ${{ vars.FUNCTIONS_ENV_FILE }}
+        run: |
+          if [ -n "$FUNCTIONS_ENV_FILE" ]; then
+            printf '%s\n' "$FUNCTIONS_ENV_FILE" > functions/.env
+          else
+            cp functions/.env.example functions/.env
+          fi
+          rm -f functions.json
+
+      - name: Deploy Cloud Functions only (detailed logs)
+        if: inputs.mode == 'functions'
+        env:
+          PROJECT: ${{ steps.config.outputs.project }}
+        run: |
+          npm ci --prefix functions
+          npx --yes firebase-tools@15.36.0 deploy --project "$PROJECT" --only functions --non-interactive --debug 2>&1 \
+            | grep -v -i -E "authorization|access_token|bearer" | tail -n 400
+          npx --yes firebase-tools@15.36.0 functions:list --project "$PROJECT"
