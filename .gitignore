@@ -45,5 +45,7 @@ docs/BACKLOG*.md
 # Local service operations - not part of the product.
 .agents/skills/
 .agents/rules/ops-private.md
+scripts/mipa-bridge.js
+scripts/mipa-ops.json
 scripts/mipa-mcp-config.json
 
