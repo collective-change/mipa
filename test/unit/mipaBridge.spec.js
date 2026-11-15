@@ -7,13 +7,14 @@ import {
   parseBacklog,
   getLocalTodayDateString,
   queueBacklogTask,
+  loadOperationsContent,
   getMipaStatus,
   queryKnowledge,
   isMainModule,
   BRIDGE_VERSION
-} from '../../scripts/mipa-bridge.js';
+} from '../../scripts/agent-bridge.js';
 
-describe('mipa-bridge.js - Hermes Agent Bridge Suite', () => {
+describe('agent-bridge.js - Tracked Agent Bridge Mechanism Suite', () => {
   let tmpDir;
 
   beforeEach(() => {
@@ -186,7 +187,7 @@ describe('mipa-bridge.js - Hermes Agent Bridge Suite', () => {
   });
 
   describe('getMipaStatus & queryKnowledge', () => {
-    it('returns degraded array and bridgeVersion in status output', () => {
+    it('returns degraded array and bridgeVersion in status output, falling back gracefully when ops content is absent', () => {
       const gitDir = path.join(tmpDir, '.git');
       fs.mkdirSync(gitDir, { recursive: true });
       fs.writeFileSync(path.join(gitDir, 'HEAD'), 'ref: refs/heads/test-branch\n');
@@ -197,30 +198,82 @@ describe('mipa-bridge.js - Hermes Agent Bridge Suite', () => {
         `## Active / In Progress\n\n## Queue (Priority Order)\n\n### [TODO] Task 1\n\n## Completed\n`
       );
 
-      const status = getMipaStatus({ repoRoot: tmpDir, backlogPath: backlogFile });
-      expect(status.status).toBe('online');
-      expect(status.bridgeVersion).toBe(BRIDGE_VERSION);
-      expect(Array.isArray(status.degraded)).toBe(true);
-      expect(status.workingBranch).toBe('test-branch');
-      expect(status.activeTasksCount).toBe(1);
-      expect(status.activeQueue).toEqual(['Task 1']);
-      expect(status.chineseLeverageTerm).toBe('效應比');
-      expect(status.pricingTiers).toBeDefined();
+      // Status without ops content (e.g. CI runner environment)
+      const fallbackStatus = getMipaStatus({
+        repoRoot: tmpDir,
+        backlogPath: backlogFile,
+        operationsContent: null,
+        opsPath: path.join(tmpDir, 'nonexistent-ops.json')
+      });
+      expect(fallbackStatus.status).toBe('online');
+      expect(fallbackStatus.bridgeVersion).toBe(BRIDGE_VERSION);
+      expect(Array.isArray(fallbackStatus.degraded)).toBe(true);
+      expect(fallbackStatus.degraded).toContain('operations:unconfigured');
+      expect(fallbackStatus.workingBranch).toBe('test-branch');
+      expect(fallbackStatus.activeTasksCount).toBe(1);
+      expect(fallbackStatus.activeQueue).toEqual(['Task 1']);
+      expect(fallbackStatus.chineseLeverageTerm).toBe('效應比');
+      expect(fallbackStatus.pricingTiers).toBeNull();
+
+      // Status with operations content configured
+      const configuredStatus = getMipaStatus({
+        repoRoot: tmpDir,
+        backlogPath: backlogFile,
+        operationsContent: {
+          pricingTiers: {
+            tierA: '$10/mo',
+            tierB: '$50/mo'
+          }
+        }
+      });
+      expect(configuredStatus.pricingTiers).toBeDefined();
+      expect(configuredStatus.pricingTiers.tierA).toBe('$10/mo');
     });
 
-    it('queryKnowledge returns domain-specific answers for leverage, pricing, and rules', () => {
+    it('queryKnowledge returns domain-specific answers for leverage and tech stack', () => {
       const formulaResult = queryKnowledge('leverage formula');
       expect(formulaResult.length).toBeGreaterThan(0);
       expect(formulaResult[0].details).toContain('actionLeverage');
       expect(formulaResult[0].details).toContain('效應比');
 
-      const pricingResult = queryKnowledge('pricing tiers');
-      expect(pricingResult[0].details).toContain('Lemon Squeezy');
-      expect(pricingResult[0].details).toContain('Starter');
-
       const techResult = queryKnowledge('tech stack');
       expect(techResult[0].details).toContain('Vue 3');
       expect(techResult[0].details).toContain('Math.js');
+    });
+
+    it('queryKnowledge answers pricing when operations content is present, and reports degradation when absent', () => {
+      // Degraded case (missing ops content on fresh clone / CI runner)
+      const degradedResult = queryKnowledge('pricing plans', {
+        operationsContent: null,
+        opsPath: path.join(tmpDir, 'nonexistent-ops.json')
+      });
+      expect(degradedResult.length).toBeGreaterThan(0);
+      expect(degradedResult[0].degraded).toBe(true);
+      expect(degradedResult[0].details).toContain('Operations content not configured');
+
+      // Configured case (with ops content injected or loaded)
+      const configuredResult = queryKnowledge('pricing plans', {
+        operationsContent: {
+          billing: {
+            topic: 'Monetization & Billing',
+            details: 'Configured billing provider with multiple tiers.'
+          }
+        }
+      });
+      expect(configuredResult.length).toBeGreaterThan(0);
+      expect(configuredResult[0].degraded).toBeUndefined();
+      expect(configuredResult[0].details).toContain('Configured billing provider with multiple tiers.');
+    });
+
+    it('loadOperationsContent loads from file or env when available', () => {
+      const opsFile = path.join(tmpDir, 'ops.json');
+      fs.writeFileSync(opsFile, JSON.stringify({ billing: { details: 'File loaded' } }));
+
+      const loadedFromFile = loadOperationsContent({ opsPath: opsFile });
+      expect(loadedFromFile.billing.details).toBe('File loaded');
+
+      const loadedDirect = loadOperationsContent({ operationsContent: { direct: true } });
+      expect(loadedDirect.direct).toBe(true);
     });
 
     it('isMainModule returns false during unit tests execution', () => {

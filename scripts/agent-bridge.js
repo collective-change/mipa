@@ -1,18 +1,17 @@
 #!/usr/bin/env node
 
 /**
- * Mipa <-> Hermes Autonomous Agent Bridge
- * Provides direct real-time communication between Hermes Agent and Antigravity/Mipa.
+ * Agent Bridge (Pure Mechanism)
+ * Provides standard interface between autonomous agents (e.g. Hermes, Antigravity) and Mipa.
  * 
- * Supports 3 runtime modes:
- * 1. CLI tool:
- *    - `node scripts/mipa-bridge.js status`
- *    - `node scripts/mipa-bridge.js query "formula"`
- *    - `node scripts/mipa-bridge.js queue "<title>" "<description>"`
- * 2. Model Context Protocol (MCP stdio):
- *    - `node scripts/mipa-bridge.js --mcp`
- * 3. Local HTTP Server:
- *    - `node scripts/mipa-bridge.js --server 9876`
+ * Holds pure mechanism:
+ * - .git/HEAD branch and commit extraction without child_process requirement
+ * - Status payload structure and explicit degradation reporting
+ * - Strict line-anchored backlog parsing
+ * - Queue block formatting and Asia/Taipei calendar date stamping
+ * - Model Context Protocol (MCP stdio) JSON-RPC plumbing
+ * - Local HTTP API server
+ * - Runtime operations content loader with documented fallback
  */
 
 import fs from 'fs';
@@ -28,7 +27,7 @@ export const REPO_ROOT = path.resolve(__dirname, '..');
 export const BACKLOG_PATH = path.join(REPO_ROOT, 'docs', 'BACKLOG.md');
 export const RULES_PATH = path.join(REPO_ROOT, '.agents', 'rules', 'mipa-rules.md');
 export const SKILL_PATH = path.join(REPO_ROOT, '.agents', 'skills', 'mipa-ops', 'SKILL.md');
-export const BRIDGE_VERSION = '1.1.0';
+export const BRIDGE_VERSION = '1.2.0';
 
 /**
  * Fallback direct git inspection without shelling out to child_process.
@@ -56,7 +55,6 @@ export function readGitInfoDirectly(repoRoot = REPO_ROOT) {
     const logsHeadPath = path.join(gitDir, 'logs', 'HEAD');
     if (fs.existsSync(logsHeadPath)) {
       const logLines = fs.readFileSync(logsHeadPath, 'utf8').trim().split('\n').filter(Boolean);
-      // Process from newest to oldest
       for (let i = logLines.length - 1; i >= 0 && commits.length < 5; i--) {
         const line = logLines[i];
         const [meta, desc] = line.split('\t');
@@ -155,7 +153,49 @@ export function parseBacklog(contentOrPath) {
 }
 
 /**
+ * Loads operations content (pricing, billing, private operations knowledge).
+ * Sources in priority order:
+ * 1. options.operationsContent (in-memory injection)
+ * 2. process.env.MIPA_OPS_JSON (JSON string)
+ * 3. options.opsPath or process.env.MIPA_OPS_PATH (file path)
+ * 4. scripts/mipa-ops.json (ignored local file)
+ */
+export function loadOperationsContent(options = {}) {
+  if (options.operationsContent !== undefined) {
+    return options.operationsContent;
+  }
+
+  if (process.env.MIPA_OPS_JSON) {
+    try {
+      return JSON.parse(process.env.MIPA_OPS_JSON);
+    } catch {
+      // Ignore JSON parse error in env
+    }
+  }
+
+  const candidatePaths = [
+    options.opsPath,
+    process.env.MIPA_OPS_PATH,
+    path.join(REPO_ROOT, 'scripts', 'mipa-ops.json')
+  ].filter(Boolean);
+
+  for (const candidate of candidatePaths) {
+    try {
+      if (fs.existsSync(candidate)) {
+        const raw = fs.readFileSync(candidate, 'utf8');
+        return JSON.parse(raw);
+      }
+    } catch {
+      // Continue to next candidate
+    }
+  }
+
+  return null;
+}
+
+/**
  * Retrieves the comprehensive real-time operational status of Mipa.
+ * When operations content is absent, falls back gracefully and marks 'operations:unconfigured'.
  */
 export function getMipaStatus(options = {}) {
   const repoRoot = options.repoRoot || REPO_ROOT;
@@ -192,6 +232,16 @@ export function getMipaStatus(options = {}) {
   // 3. Parse backlog strictly
   const backlogData = parseBacklog(backlogPath);
 
+  // 4. Operations content (pricing tiers, etc.)
+  const opsContent = loadOperationsContent(options);
+  let pricingTiers = null;
+
+  if (opsContent && opsContent.pricingTiers) {
+    pricingTiers = opsContent.pricingTiers;
+  } else {
+    degraded.push('operations:unconfigured');
+  }
+
   return {
     status: 'online',
     bridgeVersion: BRIDGE_VERSION,
@@ -206,22 +256,18 @@ export function getMipaStatus(options = {}) {
     recentCommits,
     leverageFormula: '(netBenefitNpv * totalRoi / outstandingDirectCosts) * sign(net)',
     chineseLeverageTerm: '效應比',
-    pricingTiers: {
-      community: '$0 (1 seat, unlimited read-only viewers, public models or BYO key)',
-      starter: '$29/mo (up to 5 seats, pooled starter AI)',
-      growth: '$79/mo (up to 20 seats, pooled starter AI)',
-      pro: '$199/mo (up to 50 seats, unbranded executive dossiers & PDF export)',
-      enterprise: 'Custom (150+ seats, custom SLA)'
-    }
+    pricingTiers
   };
 }
 
 /**
  * Queries core domain and engineering knowledge base.
+ * Leverages operations content for pricing/billing if present, or reports degradation if unconfigured.
  */
-export function queryKnowledge(query) {
+export function queryKnowledge(query, options = {}) {
   const q = (query || '').toLowerCase();
   const results = [];
+  const opsContent = loadOperationsContent(options);
 
   // Check leverage / formula
   if (q.includes('formula') || q.includes('leverage') || q.includes('效應比') || q.includes('roi')) {
@@ -233,10 +279,18 @@ export function queryKnowledge(query) {
 
   // Check billing / pricing
   if (q.includes('pric') || q.includes('billing') || q.includes('tier') || q.includes('lemon') || q.includes('cost') || q.includes('plan') || q.includes('subscript')) {
-    results.push({
-      topic: 'Monetization & Billing',
-      details: 'Merchant of Record is Lemon Squeezy (handles global taxes & W-8BEN). Tiers: Starter ($29/mo, 5 seats), Growth ($79/mo, 20 seats), Pro ($199/mo, 50 seats). Stakeholder viewers are 100% free and unlimited via /m/:modelId. Domestic Taiwan usage is 100% free.'
-    });
+    if (opsContent && opsContent.billing && opsContent.billing.details) {
+      results.push({
+        topic: opsContent.billing.topic || 'Monetization & Billing',
+        details: opsContent.billing.details
+      });
+    } else {
+      results.push({
+        topic: 'Monetization & Billing',
+        degraded: true,
+        details: 'Operations content not configured on this host (missing operations knowledge file or MIPA_OPS_JSON).'
+      });
+    }
   }
 
   // Check tech stack & rules
@@ -296,7 +350,6 @@ export function queueBacklogTask(title, description, criteria = [], options = {}
   const sectionEnd = nextSectionMatch ? headerEnd + nextSectionMatch.index : content.length;
 
   let sectionContent = content.slice(headerEnd, sectionEnd);
-  // Remove empty queue placeholder if present
   sectionContent = sectionContent.replace(/\s*\*\(Queue currently empty - all prioritized tasks completed\)\*\s*/g, '\n\n');
 
   const trimmedSection = sectionContent.trim();
@@ -311,7 +364,7 @@ export function queueBacklogTask(title, description, criteria = [], options = {}
 // -------------------------------------------------------------
 // MCP Protocol (Model Context Protocol) Implementation over stdio
 // -------------------------------------------------------------
-export function runMcpServer() {
+export function runMcpServer(options = {}) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -385,17 +438,17 @@ export function runMcpServer() {
       } else if (method === 'tools/call') {
         const { name, arguments: args } = params;
         if (name === 'mipa_get_status') {
-          const status = getMipaStatus();
+          const status = getMipaStatus(options);
           sendResponse(id, {
             content: [{ type: 'text', text: JSON.stringify(status, null, 2) }]
           });
         } else if (name === 'mipa_query_knowledge') {
-          const answer = queryKnowledge(args?.query || '');
+          const answer = queryKnowledge(args?.query || '', options);
           sendResponse(id, {
             content: [{ type: 'text', text: JSON.stringify(answer, null, 2) }]
           });
         } else if (name === 'mipa_queue_task') {
-          const result = queueBacklogTask(args.title, args.description, args.criteria || []);
+          const result = queueBacklogTask(args.title, args.description, args.criteria || [], options);
           sendResponse(id, {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           });
@@ -416,7 +469,7 @@ export function runMcpServer() {
 // -------------------------------------------------------------
 // Local HTTP Server Mode
 // -------------------------------------------------------------
-export function runHttpServer(port = 9876) {
+export function runHttpServer(port = 9876, options = {}) {
   const server = http.createServer((req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -433,14 +486,14 @@ export function runHttpServer(port = 9876) {
 
     if (req.method === 'GET' && parsedUrl.pathname === '/status') {
       res.writeHead(200);
-      res.end(JSON.stringify(getMipaStatus(), null, 2));
+      res.end(JSON.stringify(getMipaStatus(options), null, 2));
       return;
     }
 
     if (req.method === 'GET' && parsedUrl.pathname === '/query') {
       const query = parsedUrl.searchParams.get('q') || '';
       res.writeHead(200);
-      res.end(JSON.stringify(queryKnowledge(query), null, 2));
+      res.end(JSON.stringify(queryKnowledge(query, options), null, 2));
       return;
     }
 
@@ -450,7 +503,7 @@ export function runHttpServer(port = 9876) {
       req.on('end', () => {
         try {
           const data = JSON.parse(body);
-          const result = queueBacklogTask(data.title, data.description, data.criteria);
+          const result = queueBacklogTask(data.title, data.description, data.criteria, options);
           res.writeHead(200);
           res.end(JSON.stringify(result, null, 2));
         } catch (err) {
@@ -466,7 +519,7 @@ export function runHttpServer(port = 9876) {
   });
 
   server.listen(port, '127.0.0.1', () => {
-    console.log(`[Mipa Bridge] HTTP Server running at http://127.0.0.1:${port}`);
+    console.log(`[Agent Bridge] HTTP Server running at http://127.0.0.1:${port}`);
     console.log(`  Endpoints:`);
     console.log(`    GET  http://127.0.0.1:${port}/status`);
     console.log(`    GET  http://127.0.0.1:${port}/query?q=formula`);
@@ -477,61 +530,63 @@ export function runHttpServer(port = 9876) {
 /**
  * Checks whether this script was executed directly from the command line.
  */
-export function isMainModule() {
+export function isMainModule(moduleUrl = import.meta.url) {
   if (!process.argv[1]) return false;
   try {
     const entryPath = fs.realpathSync(path.resolve(process.argv[1]));
-    const currentPath = fs.realpathSync(fileURLToPath(import.meta.url));
+    const currentPath = fs.realpathSync(fileURLToPath(moduleUrl));
     return entryPath === currentPath;
   } catch {
     return false;
   }
 }
 
-// -------------------------------------------------------------
-// CLI Dispatcher (Only runs when executed as main script)
-// -------------------------------------------------------------
-if (isMainModule()) {
-  const args = process.argv.slice(2);
-
+/**
+ * Common CLI Dispatcher
+ */
+export function runCli(args = process.argv.slice(2), options = {}) {
   if (args.includes('--mcp')) {
-    runMcpServer();
+    runMcpServer(options);
   } else if (args.includes('--server')) {
     const portIdx = args.indexOf('--server') + 1;
     const port = args[portIdx] ? parseInt(args[portIdx], 10) : 9876;
-    runHttpServer(port);
+    runHttpServer(port, options);
   } else {
     const command = args[0];
     if (command === 'status') {
-      console.log(JSON.stringify(getMipaStatus(), null, 2));
+      console.log(JSON.stringify(getMipaStatus(options), null, 2));
     } else if (command === 'query') {
       const q = args.slice(1).join(' ');
-      console.log(JSON.stringify(queryKnowledge(q), null, 2));
+      console.log(JSON.stringify(queryKnowledge(q, options), null, 2));
     } else if (command === 'queue') {
       const title = args[1];
       const description = args[2] || '';
       if (!title) {
         console.error('Error: Task title is required.');
-        console.error('Usage: node scripts/mipa-bridge.js queue "<title>" "<description>"');
+        console.error('Usage: node scripts/agent-bridge.js queue "<title>" "<description>"');
         process.exit(1);
       }
       try {
-        const result = queueBacklogTask(title, description);
+        const result = queueBacklogTask(title, description, [], options);
         console.log(JSON.stringify(result, null, 2));
       } catch (err) {
         console.error('Error queuing task:', err.message);
         process.exit(1);
       }
     } else {
-      console.log(`Mipa <-> Hermes Bridge (v${BRIDGE_VERSION})`);
+      console.log(`Agent Bridge (v${BRIDGE_VERSION})`);
       console.log(`Usage:`);
-      console.log(`  node scripts/mipa-bridge.js status`);
-      console.log(`  node scripts/mipa-bridge.js query "<topic>"`);
-      console.log(`  node scripts/mipa-bridge.js queue "<title>" "<description>"`);
-      console.log(`  node scripts/mipa-bridge.js --mcp           (Runs MCP stdio server)`);
-      console.log(`  node scripts/mipa-bridge.js --server [port] (Runs local HTTP API)`);
+      console.log(`  node scripts/agent-bridge.js status`);
+      console.log(`  node scripts/agent-bridge.js query "<topic>"`);
+      console.log(`  node scripts/agent-bridge.js queue "<title>" "<description>"`);
+      console.log(`  node scripts/agent-bridge.js --mcp           (Runs MCP stdio server)`);
+      console.log(`  node scripts/agent-bridge.js --server [port] (Runs local HTTP API)`);
     }
   }
+}
+
+if (isMainModule()) {
+  runCli();
 }
 
 export default {
@@ -541,7 +596,9 @@ export default {
   readGitInfoDirectly,
   parseBacklog,
   getLocalTodayDateString,
+  loadOperationsContent,
   runMcpServer,
   runHttpServer,
+  runCli,
   isMainModule
 };
