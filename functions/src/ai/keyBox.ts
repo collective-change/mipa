@@ -8,6 +8,7 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { defineSecret } from "firebase-functions/params";
 
 export const aiKeyEncryptionKey = defineSecret("AI_KEY_ENCRYPTION_KEY");
+export const systemAiProviderKey = defineSecret("SYSTEM_AI_PROVIDER_KEY");
 
 function key(secret: string): Buffer {
   const bytes = Buffer.from(secret, "base64");
