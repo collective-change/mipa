@@ -6,7 +6,7 @@
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
-import { aiKeyEncryptionKey } from "./keyBox";
+import { aiKeyEncryptionKey, systemAiProviderKey } from "./keyBox";
 import { loadProvider } from "./aiSettings";
 import { getSystemAiProvider, verifyAndConsumeAiCredit, AllowanceResult } from "./starterAllowance";
 import { adapterFor, ProviderReplyError, Turn, Usage } from "./providers";
@@ -57,7 +57,7 @@ async function modelContext(orgId: string, modelId: string): Promise<ModelContex
 }
 
 export const draftModel = onCall(
-  { secrets: [aiKeyEncryptionKey], timeoutSeconds: 300, memory: "512MiB" },
+  { secrets: [aiKeyEncryptionKey, systemAiProviderKey], timeoutSeconds: 300, memory: "512MiB" },
   async (request) => {
     if (!request.auth) throw new HttpsError("unauthenticated", "Please sign in.");
     const uid = request.auth.uid;
@@ -89,13 +89,15 @@ export const draftModel = onCall(
     let provider = await loadProvider(orgId);
     let allowance: AllowanceResult | null = null;
     if (!provider) {
-      allowance = await verifyAndConsumeAiCredit(db, uid, orgId, request.auth);
       provider = getSystemAiProvider();
       if (!provider) {
-        throw new HttpsError("failed-precondition", "This organization hasn't connected an AI provider and no system AI fallback is configured.", {
-          reason: "no-provider"
-        });
+        throw new HttpsError(
+          "failed-precondition",
+          "This organization hasn't connected an AI provider and no system AI fallback is configured.",
+          { reason: "no-provider", degraded: true }
+        );
       }
+      allowance = await verifyAndConsumeAiCredit(db, uid, orgId, request.auth);
     }
 
     // Load or start the conversation.
