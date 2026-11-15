@@ -32,6 +32,78 @@ describe("Security Audit & Hardening", () => {
     });
   });
 
+  describe("Public Dossier Route Security & Hardening (/m/:modelId)", () => {
+    const rulesPath = path.resolve(process.cwd(), "firestore.rules");
+    const rulesContent = fs.readFileSync(rulesPath, "utf8");
+
+    it("restricts public model read strictly to documents with isPublic == true", () => {
+      // Must not contain open or unconditional read rules on models
+      expect(rulesContent).not.toMatch(/match \/models\/\{model\}\s*\{\s*allow read: if true;/);
+      // Must strictly require resource.data.isPublic == true
+      expect(rulesContent).toContain("allow read: if resource.data.isPublic == true;");
+    });
+
+    it("prohibits recursive wildcard exposure on /models subcollections", () => {
+      // Must not match /models/{model}/{document=**} which would leak subcollections
+      expect(rulesContent).not.toMatch(/match \/models\/\{model\}\/\{document=\*\*\}/);
+    });
+
+    it("strictly forbids unauthenticated writes, updates, and deletes on public models", () => {
+      // Create requires authentication
+      expect(rulesContent).toContain("allow create: if request.auth != null;");
+      // Update requires authenticated editor
+      expect(rulesContent).toContain("allow read, update: if request.auth != null && request.auth.uid in resource.data.editors.users;");
+      // Delete requires authenticated owner
+      expect(rulesContent).toContain("allow delete: if request.auth != null && request.auth.uid in resource.data.owners.users;");
+    });
+
+    it("gates nodes subcollection on parent model isPublic flag and forbids unauthenticated writes", () => {
+      // Read must inspect parent model isPublic flag
+      expect(rulesContent).toMatch(/get\(\/databases\/\$\(database\)\/documents\/models\/\$\(model\)\)\.data\.isPublic == true/);
+      // Write must require authenticated editor
+      expect(rulesContent).toContain("allow write: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/models/$(model)).data.editors.users;");
+      // Must not allow unauthenticated write
+      expect(rulesContent).not.toMatch(/match \/nodes\/\{node\}\s*\{[^}]*allow write:[^;]*isPublic == true/);
+    });
+
+    it("strictly requires authentication for snapshots even when model is public", () => {
+      // Snapshots must require request.auth != null
+      expect(rulesContent).toMatch(/match \/snapshots\/\{snapshot\}\s*\{\s*allow read: if request\.auth != null/);
+      // Snapshots must be immutable (no updates or deletes)
+      expect(rulesContent).toContain("allow update, delete: if false;");
+    });
+
+    it("verifies sensitive collections remain completely inaccessible to unauthenticated visitors", () => {
+      // orgSecrets is completely closed
+      expect(rulesContent).toMatch(/match \/orgSecrets\/\{secret=\*\*\}\s*\{\s*allow read, write: if false;\s*\}/);
+      // members require org membership
+      expect(rulesContent).toMatch(/match \/members\/\{memberId\}\s*\{\s*allow read: if userInOrg\(org\);/);
+      // user profiles require matching UID
+      expect(rulesContent).toMatch(/match \/users\/\{userId\}\s*\{\s*allow read, write: if request\.auth\.uid == userId;\s*\}/);
+      // actions require org membership
+      expect(rulesContent).toMatch(/match \/actions\/\{action\}\s*\{\s*allow create: if userInOrg\(request\.resource\.data\.orgId\);/);
+      expect(rulesContent).toMatch(/allow read: if userInOrg\(resource\.data\.orgId\);/);
+    });
+
+    it("confirms the perturbation sandbox in PageModelDossier and modelDossier cannot write to Firestore", () => {
+      const pageDossierPath = path.resolve(process.cwd(), "src/pages/PageModelDossier.vue");
+      const pageDossierContent = fs.readFileSync(pageDossierPath, "utf8");
+      const utilDossierPath = path.resolve(process.cwd(), "src/utils/modelDossier.js");
+      const utilDossierContent = fs.readFileSync(utilDossierPath, "utf8");
+
+      // Verify no mutating Firestore methods are imported or called
+      const prohibitedMutations = ["setDoc", "updateDoc", "deleteDoc", "addDoc", "writeBatch", "runTransaction"];
+      prohibitedMutations.forEach(op => {
+        expect(pageDossierContent).not.toMatch(new RegExp(`\\b${op}\\s*\\(`));
+        expect(utilDossierContent).not.toMatch(new RegExp(`\\b${op}\\s*\\(`));
+      });
+
+      // Verify no mutating Vuex store dispatching
+      expect(pageDossierContent).not.toContain("this.$store.dispatch");
+      expect(pageDossierContent).not.toContain("this.$store.commit");
+    });
+  });
+
   describe("Cloud Functions SSRF Hardening", () => {
     it("allows valid public HTTPS endpoints", () => {
       expect(isAllowedEndpoint("https://api.anthropic.com/v1")).toBe(true);
