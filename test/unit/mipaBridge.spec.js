@@ -2,26 +2,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import {
+  readGitInfoDirectly,
+  parseBacklog,
+  getLocalTodayDateString,
+  queueBacklogTask,
+  getMipaStatus,
+  queryKnowledge,
+  isMainModule,
+  BRIDGE_VERSION
+} from '../../scripts/mipa-bridge.js';
 
-const bridgePath = path.resolve(__dirname, '../../scripts/mipa-bridge.js');
-const bridgeExists = fs.existsSync(bridgePath);
-
-let bridge = null;
-if (bridgeExists) {
-  bridge = await import('../../scripts/mipa-bridge.js');
-}
-
-describe.runIf(bridgeExists)('mipa-bridge.js - Hermes Agent Bridge Suite', () => {
-  const {
-    readGitInfoDirectly,
-    parseBacklog,
-    getLocalTodayDateString,
-    queueBacklogTask,
-    getMipaStatus,
-    queryKnowledge,
-    isMainModule,
-    BRIDGE_VERSION
-  } = bridge || {};
+describe('mipa-bridge.js - Hermes Agent Bridge Suite', () => {
   let tmpDir;
 
   beforeEach(() => {
