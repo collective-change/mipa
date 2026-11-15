@@ -177,7 +177,11 @@ test("verifyAndConsumeAiCredit: Atomically checks and decrements allowance", asy
   };
   const mockOrgStore: Record<string, unknown> = {
     aiCreditsUsed: 5,
-    subscriptionTier: "community"
+    subscriptionTier: "community",
+    monthlyAiUsage: { "2026-11": 10 }
+  };
+  const mockGlobalStore: Record<string, unknown> = {
+    creditsUsed: 150
   };
 
   const userDocMock = {
@@ -186,21 +190,30 @@ test("verifyAndConsumeAiCredit: Atomically checks and decrements allowance", asy
   const orgDocMock = {
     get: (field: string) => mockOrgStore[field]
   };
+  const globalDocMock = {
+    get: (field: string) => mockGlobalStore[field]
+  };
+
+  const auditLogs: unknown[] = [];
 
   const mockDb = {
-    doc: (path: string) => ({
-      path
+    doc: (path: string) => ({ path }),
+    collection: (name: string) => ({
+      doc: () => ({ path: `${name}/audit-1` })
     }),
     runTransaction: async (cb: (tx: unknown) => Promise<unknown>) => {
       const txMock = {
         get: async (ref: { path: string }) => {
           if (ref.path.startsWith("users/")) return userDocMock;
           if (ref.path.startsWith("orgs/")) return orgDocMock;
+          if (ref.path.startsWith("systemUsage/")) return globalDocMock;
           return { get: () => undefined };
         },
         set: (ref: { path: string }, data: Record<string, unknown>) => {
           if (ref.path.startsWith("users/")) Object.assign(mockUserStore, data);
           if (ref.path.startsWith("orgs/")) Object.assign(mockOrgStore, data);
+          if (ref.path.startsWith("systemUsage/")) Object.assign(mockGlobalStore, data);
+          if (ref.path.startsWith("systemAuditLogs/")) auditLogs.push(data);
         }
       };
       return await cb(txMock);
@@ -210,10 +223,173 @@ test("verifyAndConsumeAiCredit: Atomically checks and decrements allowance", asy
   // Consume credit with verified email
   const result = await verifyAndConsumeAiCredit(mockDb, "uid-123", "org-456", {
     token: { email_verified: true }
+  }, {
+    yearMonth: "2026-11",
+    globalMonthlyCeiling: 5000,
+    orgMonthlyCeiling: 50
   });
 
   assert.equal(result.allowed, true);
   assert.equal(result.source, "starter_verified");
   assert.ok(mockUserStore.lastAiUsedAt !== undefined);
   assert.ok(mockOrgStore.lastAiUsedAt !== undefined);
+  assert.ok(mockGlobalStore.lastUsedAt !== undefined);
+  assert.equal(mockGlobalStore.yearMonth, "2026-11");
+});
+
+test("verifyAndConsumeAiCredit: Global monthly ceiling refusal logs audit and throws resource-exhausted", async () => {
+  const mockUserStore: Record<string, unknown> = { aiCreditsUsed: 1 };
+  const mockOrgStore: Record<string, unknown> = { aiCreditsUsed: 1, subscriptionTier: "community" };
+  const mockGlobalStore: Record<string, unknown> = { creditsUsed: 5000 }; // At ceiling
+
+  const auditLogs: Record<string, unknown>[] = [];
+
+  const mockDb = {
+    doc: (path: string) => ({ path }),
+    collection: (name: string) => ({
+      doc: () => ({ path: `${name}/audit-${auditLogs.length + 1}` })
+    }),
+    runTransaction: async (cb: (tx: unknown) => Promise<unknown>) => {
+      const txMock = {
+        get: async (ref: { path: string }) => {
+          if (ref.path.startsWith("users/")) return { get: (f: string) => mockUserStore[f] };
+          if (ref.path.startsWith("orgs/")) return { get: (f: string) => mockOrgStore[f] };
+          if (ref.path.startsWith("systemUsage/")) return { get: (f: string) => mockGlobalStore[f] };
+          return { get: () => undefined };
+        },
+        set: (ref: { path: string }, data: Record<string, unknown>) => {
+          if (ref.path.startsWith("systemAuditLogs/")) auditLogs.push(data);
+        }
+      };
+      return await cb(txMock);
+    }
+  } as unknown as import("firebase-admin/firestore").Firestore;
+
+  await assert.rejects(
+    async () => {
+      await verifyAndConsumeAiCredit(mockDb, "uid-1", "org-1", {
+        token: { email_verified: true }
+      }, {
+        yearMonth: "2026-11",
+        globalMonthlyCeiling: 5000,
+        orgMonthlyCeiling: 50
+      });
+    },
+    (err: unknown) => {
+      const httpsErr = err as { code?: string; message?: string; details?: { reason?: string } };
+      assert.equal(httpsErr.code, "resource-exhausted");
+      assert.ok(httpsErr.message?.includes("$25 limit"));
+      assert.equal(httpsErr.details?.reason, "global-ceiling-reached");
+      return true;
+    }
+  );
+
+  // Assert audit event was written
+  assert.equal(auditLogs.length, 1);
+  assert.equal(auditLogs[0].event, "ai_ceiling_reached");
+  assert.equal(auditLogs[0].type, "global");
+  assert.equal(auditLogs[0].ceiling, 5000);
+});
+
+test("verifyAndConsumeAiCredit: Per-organization starter ceiling refusal logs audit and throws resource-exhausted", async () => {
+  const mockUserStore: Record<string, unknown> = { aiCreditsUsed: 1 };
+  const mockOrgStore: Record<string, unknown> = {
+    aiCreditsUsed: 50,
+    subscriptionTier: "community",
+    monthlyAiUsage: { "2026-11": 50 } // Org reached 50 free credits
+  };
+  const mockGlobalStore: Record<string, unknown> = { creditsUsed: 100 }; // Global has room
+
+  const auditLogs: Record<string, unknown>[] = [];
+
+  const mockDb = {
+    doc: (path: string) => ({ path }),
+    collection: (name: string) => ({
+      doc: () => ({ path: `${name}/audit-${auditLogs.length + 1}` })
+    }),
+    runTransaction: async (cb: (tx: unknown) => Promise<unknown>) => {
+      const txMock = {
+        get: async (ref: { path: string }) => {
+          if (ref.path.startsWith("users/")) return { get: (f: string) => mockUserStore[f] };
+          if (ref.path.startsWith("orgs/")) return { get: (f: string) => mockOrgStore[f] };
+          if (ref.path.startsWith("systemUsage/")) return { get: (f: string) => mockGlobalStore[f] };
+          return { get: () => undefined };
+        },
+        set: (ref: { path: string }, data: Record<string, unknown>) => {
+          if (ref.path.startsWith("systemAuditLogs/")) auditLogs.push(data);
+        }
+      };
+      return await cb(txMock);
+    }
+  } as unknown as import("firebase-admin/firestore").Firestore;
+
+  await assert.rejects(
+    async () => {
+      await verifyAndConsumeAiCredit(mockDb, "uid-2", "org-abuse", {
+        token: { email_verified: true }
+      }, {
+        yearMonth: "2026-11",
+        globalMonthlyCeiling: 5000,
+        orgMonthlyCeiling: 50
+      });
+    },
+    (err: unknown) => {
+      const httpsErr = err as { code?: string; message?: string; details?: { reason?: string } };
+      assert.equal(httpsErr.code, "resource-exhausted");
+      assert.ok(httpsErr.message?.includes("Organization monthly starter AI quota reached"));
+      assert.equal(httpsErr.details?.reason, "org-ceiling-reached");
+      return true;
+    }
+  );
+
+  assert.equal(auditLogs.length, 1);
+  assert.equal(auditLogs[0].event, "ai_ceiling_reached");
+  assert.equal(auditLogs[0].type, "org");
+  assert.equal(auditLogs[0].orgId, "org-abuse");
+});
+
+test("evaluateAiAllowance: Independent per-org and global ceiling evaluation", () => {
+  // Global ceiling reached refusal
+  const globalRefused = evaluateAiAllowance({
+    userCreditsUsed: 1,
+    orgCreditsUsed: 1,
+    isEmailVerified: true,
+    subscriptionTier: "community",
+    hasByoKey: false,
+    globalMonthlyUsed: 5000,
+    globalMonthlyCeiling: 5000
+  });
+  assert.equal(globalRefused.allowed, false);
+  assert.ok(globalRefused.reason?.includes("$25 limit"));
+
+  // Per-org ceiling reached refusal
+  const orgRefused = evaluateAiAllowance({
+    userCreditsUsed: 1,
+    orgCreditsUsed: 50,
+    isEmailVerified: true,
+    subscriptionTier: "community",
+    hasByoKey: false,
+    globalMonthlyUsed: 200,
+    globalMonthlyCeiling: 5000,
+    orgMonthlyUsed: 50,
+    orgMonthlyCeiling: 50
+  });
+  assert.equal(orgRefused.allowed, false);
+  assert.ok(orgRefused.reason?.includes("Organization monthly starter AI quota reached"));
+
+  // BYO key bypasses even if both global and org ceilings are at capacity
+  const byoBypass = evaluateAiAllowance({
+    userCreditsUsed: 50,
+    orgCreditsUsed: 5000,
+    isEmailVerified: true,
+    subscriptionTier: "community",
+    hasByoKey: true,
+    globalMonthlyUsed: 10000,
+    globalMonthlyCeiling: 5000,
+    orgMonthlyUsed: 500,
+    orgMonthlyCeiling: 50
+  });
+  assert.equal(byoBypass.allowed, true);
+  assert.equal(byoBypass.source, "byo");
+  assert.equal(byoBypass.maxCredits, Infinity);
 });
