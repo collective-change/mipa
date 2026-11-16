@@ -808,6 +808,19 @@ export default {
   tabComparison: "方案對照總覽",
   tabRobustness: "穩健性與翻轉點",
 
+  // MIPA-12: Ranking Sensitivity & Invariance for Value Factors
+  rankingInvarianceTitle: "排名敏感度与稳健性",
+  rankingInvariantBadge: "不影响排名",
+  rankingCanMoveBadge: "可能改变排名",
+  rankingInvariantDesc: "此因子同比例缩放所有行动之效益。在 mipa 中，效应比对效益量级具尺度不变性（以 k² 等比缩放），因此调整其数值大小不会改变行动优先顺序。",
+  rankingSubsetDesc: "此因子仅影响部分行动（{total} 项中的 {fed} 项）。调整其数值会改变相对效益，可能影响行动优先顺序。",
+  rankingTurningPointHint: "决策翻转点：若此数值{direction} {percent}% 至 {threshold}，「{runnerUp}」将超越「{topAction}」。",
+  rankingHighlyRobustHint: "高度稳健：在合理的数值变动范围（±50%）内，顶尖行动之排名均维持稳定。",
+  rankingDirectionIncrease: "增加",
+  rankingDirectionDecrease: "减少",
+  rankingNoActionsHint: "新增行动后即可评估调整此因子是否会影响决策排名。",
+  rankingSingleActionHint: "目前仅有一项行动；排名敏感度需至少两项行动以进行比较。",
+
   // Feature 4: Idea to Complete Action
   tabSmartDraft: "點子智慧建案",
   tabManualEntry: "手動创建",

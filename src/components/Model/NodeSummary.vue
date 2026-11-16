@@ -290,6 +290,75 @@
           debounce="300"
         />
 
+        <!-- Ranking Sensitivity & Invariance Card (MIPA-12) -->
+        <q-card
+          v-if="rankingSensitivity && rankingSensitivity.isConstant"
+          flat
+          bordered
+          class="q-my-sm bg-grey-1"
+        >
+          <q-card-section class="q-pa-sm">
+            <div class="row items-center justify-between q-mb-xs">
+              <div class="row items-center q-gutter-xs">
+                <q-icon name="tune" color="primary" size="18px" />
+                <span class="text-subtitle2 text-weight-bold text-grey-9">
+                  {{ $t("sensitivityAnalysis") }}
+                </span>
+              </div>
+              <q-badge
+                :color="rankingSensitivity.canMoveRanking ? 'warning' : 'positive'"
+                text-color="white"
+                class="text-weight-bold q-px-sm q-py-xs"
+              >
+                <q-icon
+                  :name="rankingSensitivity.canMoveRanking ? 'shuffle' : 'lock'"
+                  size="12px"
+                  class="q-mr-xs"
+                />
+                {{ rankingSensitivity.canMoveRanking ? $t("rankingCanMoveBadge") : $t("rankingInvariantBadge") }}
+              </q-badge>
+            </div>
+
+            <!-- Description -->
+            <div class="text-caption text-grey-8 q-mb-xs">
+              <span v-if="rankingSensitivity.isRankingInvariant">
+                {{ $t("rankingInvariantDesc") }}
+              </span>
+              <span v-else-if="rankingSensitivity.canMoveRanking">
+                {{ $t("rankingSubsetDesc", { fed: rankingSensitivity.fedCount, total: rankingSensitivity.totalCount }) }}
+              </span>
+              <span v-else-if="rankingSensitivity.reason === 'insufficient_actions'">
+                {{ rankingSensitivity.totalCount === 1 ? $t("rankingSingleActionHint") : $t("rankingNoActionsHint") }}
+              </span>
+            </div>
+
+            <!-- Turning Point Details (when factor can move ranking) -->
+            <div
+              v-if="rankingSensitivity.canMoveRanking"
+              class="q-mt-xs q-pa-xs rounded-borders bg-white border"
+            >
+              <div v-if="rankingSensitivity.turningPoint !== null" class="row items-center text-caption text-grey-9">
+                <q-icon name="crisis_alert" color="primary" size="14px" class="q-mr-xs" />
+                <span>
+                  {{
+                    $t("rankingTurningPointHint", {
+                      topAction: rankingSensitivity.topActionTitle,
+                      runnerUp: rankingSensitivity.runnerUpTitle,
+                      direction: rankingSensitivity.direction === "decrease" ? $t("rankingDirectionDecrease") : $t("rankingDirectionIncrease"),
+                      percent: Math.abs(rankingSensitivity.percentShift).toFixed(1),
+                      threshold: formatSensitivityNumber(rankingSensitivity.turningPoint, 2)
+                    })
+                  }}
+                </span>
+              </div>
+              <div v-else class="row items-center text-caption text-grey-7">
+                <q-icon name="shield" color="positive" size="14px" class="q-mr-xs" />
+                <span>{{ $t("rankingHighlyRobustHint") }}</span>
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+
         <!-- Data Provenance & Freshness section -->
         <q-expansion-item
           dense
@@ -610,6 +679,8 @@ import {
   ACCOUNTING_CATEGORIES,
   evaluateFactorFreshness
 } from "@/utils/dataIngestion";
+import { analyzeFactorRankingInvariance } from "@/utils/sensitivityAnalysis";
+import { formatNumber } from "@/utils/util-formatNumber";
 import SelectUser from "../Users/SelectUser.vue";
 import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
 import EmptyState from "@/components/Shared/EmptyState.vue";
@@ -674,6 +745,7 @@ export default {
     ]),
     ...mapState("calcResults", ["baseline"]),
     ...mapState("model", ["currentModel"]),
+    ...mapState("actions", ["matchingActions", "actions"]),
     ...mapGetters("model", ["nodes", "links"]),
 
     selectedNode() {
@@ -780,9 +852,35 @@ export default {
           })
         : "";
     },
+
+    // Ranking sensitivity & invariance analysis (MIPA-12)
+    rankingSensitivity() {
+      if (!this.nodeToSubmit) return null;
+      const formula = String(this.nodeToSubmit.symbolFormula ?? "").trim();
+      const isNumeric = formula !== "" && !isNaN(Number(formula));
+      const isConstantClass = this.nodeToSubmit.class === "constant";
+      const hasNoInfluencers = !this.nodeToSubmit.influencers || (Array.isArray(this.nodeToSubmit.influencers) && this.nodeToSubmit.influencers.length === 0);
+      const isValueFactor = isNumeric || isConstantClass || (hasNoInfluencers && formula !== "" && !formula.includes("$"));
+
+      if (!isValueFactor) return null;
+
+      const actionsList = (this.matchingActions && this.matchingActions.length > 0)
+        ? this.matchingActions
+        : (this.actions && this.actions.length > 0 ? this.actions : []);
+
+      return analyzeFactorRankingInvariance(
+        this.nodeToSubmit,
+        actionsList,
+        this.nodes || [],
+        this.currentModel?.simulationParams || {}
+      );
+    },
   },
 
   methods: {
+    formatSensitivityNumber(num, precision = 2) {
+      return formatNumber(num, precision);
+    },
     openAddFactor(role) {
       this.addFactorRole = role;
       this.showAddFactor = true;

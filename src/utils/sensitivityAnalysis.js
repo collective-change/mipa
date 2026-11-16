@@ -147,9 +147,11 @@ export function evaluatePerturbedAction(action, input, testValue, defaultHourlyR
       netBenefit = totalBenefit - totalCost;
     }
   } else if (input.type === "model_constant") {
-    // Model constant influences total benefit
-    totalBenefit = totalBenefit * ratio;
-    netBenefit = totalBenefit - totalCost;
+    // Model constant influences total benefit (optionally scoped to affected actions)
+    if (!input.affectedActionIds || input.affectedActionIds.includes(action.id)) {
+      totalBenefit = totalBenefit * ratio;
+      netBenefit = totalBenefit - totalCost;
+    }
   } else if (input.type === "simulation_param" && input.symbol === "worldWeightingFactor") {
     const orgBenefit = action.marginalOrgBenefitNpv ?? (totalBenefit * 0.4);
     const worldBenefit = action.marginalWorldBenefitNpv ?? (totalBenefit * 0.6);
@@ -438,5 +440,273 @@ export function generateSensitivityReport(actionA, actionB, nodes = [], simulati
     turningPoints,
     executiveSummary,
     narrative
+  };
+}
+
+/**
+ * Recursively find all downstream node IDs reachable from startNodeId in the causal DAG.
+ */
+export function getDownstreamNodeIds(startNodeId, nodes = []) {
+  if (!startNodeId || !Array.isArray(nodes)) return new Set();
+
+  const downstream = new Set();
+  const queue = [startNodeId];
+
+  // Adjacency map: sourceNodeId -> [targetNodeIds]
+  const forwardMap = new Map();
+
+  nodes.forEach((target) => {
+    // 1. influencers: target lists source in influencers
+    const infs = Array.isArray(target.influencers) ? target.influencers : [];
+    infs.forEach((srcId) => {
+      if (!forwardMap.has(srcId)) forwardMap.set(srcId, []);
+      forwardMap.get(srcId).push(target.id);
+    });
+
+    // 2. influencees: source lists target in influencees
+    const influencees = Array.isArray(target.influencees) ? target.influencees : [];
+    influencees.forEach((tgtId) => {
+      if (!forwardMap.has(target.id)) forwardMap.set(target.id, []);
+      if (!forwardMap.get(target.id).includes(tgtId)) {
+        forwardMap.get(target.id).push(tgtId);
+      }
+    });
+
+    // 3. sysFormula: target has $srcId in its formula
+    const sysFormula = typeof target.sysFormula === "string" ? target.sysFormula : "";
+    if (sysFormula.includes("$")) {
+      nodes.forEach((src) => {
+        if (src.id !== target.id && sysFormula.includes(`$${src.id}`)) {
+          if (!forwardMap.has(src.id)) forwardMap.set(src.id, []);
+          if (!forwardMap.get(src.id).includes(target.id)) {
+            forwardMap.get(src.id).push(target.id);
+          }
+        }
+      });
+    }
+  });
+
+  while (queue.length > 0) {
+    const curr = queue.shift();
+    const children = forwardMap.get(curr) || [];
+    for (const childId of children) {
+      if (!downstream.has(childId)) {
+        downstream.add(childId);
+        queue.push(childId);
+      }
+    }
+  }
+
+  return downstream;
+}
+
+/**
+ * Determine which actions are fed / influenced by a factor node.
+ */
+export function getFactorActionReach(factorNode, actions = [], nodes = [], simulationParams = {}) {
+  if (!factorNode || !Array.isArray(actions) || actions.length === 0) {
+    return [];
+  }
+
+  const factorId = factorNode.id;
+  const factorSymbol = factorNode.symbol;
+  const downstreamOfFactor = getDownstreamNodeIds(factorId, nodes);
+
+  // Identify model benefit role nodes if any
+  const roleNodes = simulationParams.roleNodes || {};
+  const benefitNodeIds = [roleNodes.orgBenefit, roleNodes.worldBenefit].filter(Boolean);
+  const factorReachesBenefit = benefitNodeIds.some((bId) => factorId === bId || downstreamOfFactor.has(bId));
+
+  const fedActions = [];
+
+  actions.forEach((action) => {
+    const impacts = Array.isArray(action.impacts) ? action.impacts : [];
+
+    // If factor is directly in action's impacts
+    const directlyImpacted = impacts.some(
+      (imp) => imp.nodeId === factorId || (factorSymbol && imp.symbol === factorSymbol)
+    );
+    if (directlyImpacted) {
+      fedActions.push(action);
+      return;
+    }
+
+    // Check if factor is an immediate influencer of a role benefit node that this action reaches
+    const directlyInfluencesBenefit = benefitNodeIds.some((bId) => {
+      const bNode = nodes.find((n) => n.id === bId);
+      if (!bNode) return false;
+      const infs = Array.isArray(bNode.influencers) ? bNode.influencers : [];
+      return infs.includes(factorId) || (bNode.sysFormula && bNode.sysFormula.includes(`$${factorId}`));
+    });
+
+    // Traverse downstream of each impact
+    let intersectsIntermediate = false;
+    let actionReachesBenefit = false;
+
+    for (const imp of impacts) {
+      const impNodeId = imp.nodeId || nodes.find((n) => n.symbol === imp.symbol)?.id;
+      if (!impNodeId) continue;
+
+      if (impNodeId === factorId) {
+        intersectsIntermediate = true;
+        break;
+      }
+
+      const downstreamOfImpact = getDownstreamNodeIds(impNodeId, nodes);
+      const actionPath = new Set([impNodeId, ...downstreamOfImpact]);
+
+      if (actionPath.has(factorId)) {
+        intersectsIntermediate = true;
+        break;
+      }
+
+      if (downstreamOfFactor.has(impNodeId)) {
+        intersectsIntermediate = true;
+        break;
+      }
+
+      // Check if downstream paths intersect at any node other than benefit role nodes
+      for (const dId of downstreamOfImpact) {
+        if (downstreamOfFactor.has(dId) && !benefitNodeIds.includes(dId)) {
+          intersectsIntermediate = true;
+          break;
+        }
+      }
+
+      if (intersectsIntermediate) break;
+
+      if (benefitNodeIds.some((bId) => actionPath.has(bId))) {
+        actionReachesBenefit = true;
+      }
+    }
+
+    if (intersectsIntermediate) {
+      fedActions.push(action);
+    } else if (directlyInfluencesBenefit && actionReachesBenefit) {
+      fedActions.push(action);
+    }
+  });
+
+  return fedActions;
+}
+
+/**
+ * Analyze whether tuning a factor's magnitude can move action rankings or is ranking-invariant.
+ * (MIPA-12: Ranking-invariance & turning-point analysis on factor-editing surface)
+ */
+export function analyzeFactorRankingInvariance(node, actions = [], nodes = [], simulationParams = {}) {
+  if (!node) return null;
+
+  const rawFormula = String(node.symbolFormula ?? node.sysFormula ?? node.value ?? "").trim();
+  const numericVal = Number(rawFormula);
+  const isNumeric = rawFormula !== "" && !isNaN(numericVal);
+  const isConstantClass = node.class === "constant";
+  const hasNoInfluencers = !node.influencers || (Array.isArray(node.influencers) && node.influencers.length === 0);
+  const isConstant = isNumeric || isConstantClass || (hasNoInfluencers && rawFormula !== "" && !rawFormula.includes("$"));
+
+  if (!isConstant) {
+    return { isConstant: false };
+  }
+
+  const validActions = actions.filter((a) => a && (typeof a.actionLeverage === "number" || typeof a.marginalNetTotalBenefitNpv === "number"));
+
+  if (validActions.length < 2) {
+    return {
+      isConstant: true,
+      hasSufficientActions: false,
+      canMoveRanking: false,
+      isRankingInvariant: false,
+      reason: "insufficient_actions",
+      totalCount: validActions.length
+    };
+  }
+
+  const fedActions = getFactorActionReach(node, validActions, nodes, simulationParams);
+
+  // If factor feeds all actions equally
+  if (fedActions.length === validActions.length) {
+    return {
+      isConstant: true,
+      hasSufficientActions: true,
+      isRankingInvariant: true,
+      canMoveRanking: false,
+      reason: "ranking_invariant_all_actions",
+      fedCount: fedActions.length,
+      totalCount: validActions.length,
+      scalingDegree: 2
+    };
+  }
+
+  // If factor is unlinked from any action
+  if (fedActions.length === 0) {
+    return {
+      isConstant: true,
+      hasSufficientActions: true,
+      isRankingInvariant: true,
+      canMoveRanking: false,
+      reason: "unlinked_factor",
+      fedCount: 0,
+      totalCount: validActions.length
+    };
+  }
+
+  // Subset factor: feeds some actions, but not all. Can move the ranking!
+  // Sort actions by leverage descending to compare Top Option vs Runner-up
+  const sorted = [...validActions].sort((a, b) => (b.actionLeverage ?? 0) - (a.actionLeverage ?? 0));
+  const actionA = sorted[0];
+  const actionB = sorted[1];
+
+  const baseVal = isNumeric && numericVal > 0 ? numericVal : 1;
+  const input = {
+    id: `node_${node.symbol || node.id}`,
+    type: "model_constant",
+    nodeId: node.id,
+    name: node.name || node.symbol,
+    symbol: node.symbol,
+    baseValue: baseVal,
+    unit: node.unit || "",
+    min: Math.max(0.001, baseVal * 0.05),
+    max: baseVal * 10.0,
+    affectedActionIds: fedActions.map((a) => a.id)
+  };
+
+  let activeTp = findTurningPoint(actionA, actionB, input);
+  let topTitle = actionA.title;
+  let runnerUpTitle = actionB.title;
+
+  // If top 2 don't flip with each other (e.g. both are in the fed subset), check if comparing
+  // the highest-ranked fed action against the highest-ranked unfed action yields a flip
+  if (!activeTp.found) {
+    const fedSet = new Set(fedActions.map((a) => a.id));
+    const topFed = sorted.find((a) => fedSet.has(a.id));
+    const topUnfed = sorted.find((a) => !fedSet.has(a.id));
+
+    if (topFed && topUnfed && (topFed !== actionA || topUnfed !== actionB)) {
+      const [higher, lower] = (topFed.actionLeverage ?? 0) >= (topUnfed.actionLeverage ?? 0)
+        ? [topFed, topUnfed]
+        : [topUnfed, topFed];
+      const altTp = findTurningPoint(higher, lower, input);
+      if (altTp.found) {
+        activeTp = altTp;
+        topTitle = higher.title;
+        runnerUpTitle = lower.title;
+      }
+    }
+  }
+
+  return {
+    isConstant: true,
+    hasSufficientActions: true,
+    isRankingInvariant: false,
+    canMoveRanking: true,
+    reason: "subset_factor",
+    fedCount: fedActions.length,
+    totalCount: validActions.length,
+    turningPoint: activeTp.found ? activeTp.turningPoint : null,
+    percentShift: activeTp.found ? activeTp.percentShift : null,
+    direction: activeTp.direction,
+    robustness: activeTp.robustness,
+    topActionTitle: topTitle,
+    runnerUpTitle: runnerUpTitle
   };
 }

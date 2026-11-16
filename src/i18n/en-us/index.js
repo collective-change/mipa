@@ -827,6 +827,19 @@ export default {
   tabComparison: "Comparison overview",
   tabRobustness: "Robustness & Turning points",
 
+  // MIPA-12: Ranking Sensitivity & Invariance for Value Factors
+  rankingInvarianceTitle: "Ranking Sensitivity",
+  rankingInvariantBadge: "Ranking-Invariant",
+  rankingCanMoveBadge: "Can Change Ranking",
+  rankingInvariantDesc: "This factor scales all actions' benefits equally. In mipa, leverage is scale-invariant in benefit value (scales by k²), so tuning its magnitude will not alter the action priority ranking.",
+  rankingSubsetDesc: "This factor feeds a subset of actions ({fed} of {total}). Adjusting its value changes relative benefits and can move action rankings.",
+  rankingTurningPointHint: "Turning point: {runnerUp} overtakes {topAction} if this value shifts {direction} by {percent}% to {threshold}.",
+  rankingHighlyRobustHint: "High stability: Ranking between top actions remains stable across a wide range of values (+/- 50%).",
+  rankingDirectionIncrease: "up",
+  rankingDirectionDecrease: "down",
+  rankingNoActionsHint: "Add actions to evaluate whether tuning this factor affects decision rankings.",
+  rankingSingleActionHint: "Single action defined; ranking sensitivity requires at least two actions to compare.",
+
   // Feature 4: Idea to Complete Action
   tabSmartDraft: "Smart draft from idea",
   tabManualEntry: "Manual entry",
