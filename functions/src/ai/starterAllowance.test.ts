@@ -8,6 +8,13 @@ import {
   STARTER_UNVERIFIED_TEASER,
   TIER_AI_ALLOWANCES
 } from "./starterAllowance";
+import {
+  DEFAULT_SYSTEM_ANTHROPIC_MODEL,
+  DEFAULT_SYSTEM_OPENAI_MODEL,
+  RECOMMENDED_CLAUDE_MODELS,
+  RECOMMENDED_OPENAI_MODELS,
+  adapterFor
+} from "./providers";
 
 test("evaluateAiAllowance: BYO API keys bypass all starter allowances and quotas", () => {
   const result = evaluateAiAllowance({
@@ -143,6 +150,9 @@ test("getSystemAiProvider: Resolves system backend provider appropriately", () =
     const anthropicProvider = getSystemAiProvider();
     assert.ok(anthropicProvider);
     assert.equal(anthropicProvider.settings.provider, "anthropic");
+    assert.equal(anthropicProvider.settings.model, DEFAULT_SYSTEM_ANTHROPIC_MODEL);
+    assert.equal(anthropicProvider.settings.model, "claude-haiku-5-5");
+    assert.ok(RECOMMENDED_CLAUDE_MODELS.includes(anthropicProvider.settings.model));
     assert.equal(anthropicProvider.apiKey, "test-anthropic-key");
 
     // 2. With OpenAI key only
@@ -151,6 +161,9 @@ test("getSystemAiProvider: Resolves system backend provider appropriately", () =
     const openaiProvider = getSystemAiProvider();
     assert.ok(openaiProvider);
     assert.equal(openaiProvider.settings.provider, "openai-compatible");
+    assert.equal(openaiProvider.settings.model, DEFAULT_SYSTEM_OPENAI_MODEL);
+    assert.equal(openaiProvider.settings.model, "gpt-4o-mini");
+    assert.ok(RECOMMENDED_OPENAI_MODELS.includes(openaiProvider.settings.model));
     assert.equal(openaiProvider.apiKey, "test-openai-key");
 
     // 3. In emulator mode
@@ -168,6 +181,64 @@ test("getSystemAiProvider: Resolves system backend provider appropriately", () =
     process.env.ANTHROPIC_API_KEY = origAnthropic;
     process.env.OPENAI_API_KEY = origOpenAi;
     process.env.SYSTEM_AI_API_KEY = origSystem;
+  }
+});
+
+test("getSystemAiProvider: Starter models are valid, tested names in providers list", () => {
+  assert.equal(DEFAULT_SYSTEM_ANTHROPIC_MODEL, "claude-haiku-5-5");
+  assert.ok(RECOMMENDED_CLAUDE_MODELS.includes(DEFAULT_SYSTEM_ANTHROPIC_MODEL));
+  assert.equal(DEFAULT_SYSTEM_OPENAI_MODEL, "gpt-4o-mini");
+  assert.ok(RECOMMENDED_OPENAI_MODELS.includes(DEFAULT_SYSTEM_OPENAI_MODEL));
+  // Prohibit retired Claude 3 / 3.5 names
+  assert.ok(!RECOMMENDED_CLAUDE_MODELS.includes("claude-3-5-haiku-20241022"));
+  assert.ok(!RECOMMENDED_CLAUDE_MODELS.includes("claude-3.5-sonnet"));
+});
+
+test("adapterFor: Successfully instantiates adapter for system starter provider", () => {
+  const anthropicAdapter = adapterFor({
+    provider: "anthropic",
+    model: DEFAULT_SYSTEM_ANTHROPIC_MODEL
+  }, "test-key");
+  assert.ok(anthropicAdapter);
+
+  const openaiAdapter = adapterFor({
+    provider: "openai-compatible",
+    model: DEFAULT_SYSTEM_OPENAI_MODEL,
+    baseUrl: "https://api.openai.com/v1"
+  }, "test-key");
+  assert.ok(openaiAdapter);
+});
+
+test("end-to-end starter draft resolution: brand new user accesses claude-haiku-5-5 without 404", () => {
+  // 1. New verified user allowance check
+  const allowance = evaluateAiAllowance({
+    userCreditsUsed: 0,
+    orgCreditsUsed: 0,
+    isEmailVerified: true,
+    subscriptionTier: "community",
+    hasByoKey: false
+  });
+  assert.equal(allowance.allowed, true);
+  assert.equal(allowance.source, "starter_verified");
+  assert.equal(allowance.creditsRemaining, 10);
+
+  // 2. System provider resolution with Anthropic system key
+  const origKey = process.env.SYSTEM_AI_PROVIDER_KEY;
+  try {
+    process.env.SYSTEM_AI_PROVIDER_KEY = "sk-ant-system-live-key";
+    const systemProvider = getSystemAiProvider();
+    assert.ok(systemProvider);
+    assert.equal(systemProvider.settings.provider, "anthropic");
+    // Must be the live, non-retired model
+    assert.equal(systemProvider.settings.model, "claude-haiku-5-5");
+    assert.notEqual(systemProvider.settings.model, "claude-3-5-haiku-20241022");
+    assert.ok(RECOMMENDED_CLAUDE_MODELS.includes(systemProvider.settings.model));
+
+    // 3. Adapter instantiation with verified model
+    const adapter = adapterFor(systemProvider.settings, systemProvider.apiKey);
+    assert.ok(adapter);
+  } finally {
+    process.env.SYSTEM_AI_PROVIDER_KEY = origKey;
   }
 });
 

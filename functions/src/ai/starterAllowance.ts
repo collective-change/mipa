@@ -1,6 +1,10 @@
 import { Firestore, FieldValue, getFirestore } from "firebase-admin/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { ProviderSettings } from "./providers";
+import {
+  ProviderSettings,
+  DEFAULT_SYSTEM_ANTHROPIC_MODEL,
+  DEFAULT_SYSTEM_OPENAI_MODEL
+} from "./providers";
 import { systemAiProviderKey } from "./keyBox";
 
 export interface AllowanceEvaluationParams {
@@ -211,7 +215,7 @@ export function getSystemAiProvider(): SystemProviderInfo | null {
     return {
       settings: {
         provider: "openai-compatible",
-        model: "gpt-4o-mini",
+        model: DEFAULT_SYSTEM_OPENAI_MODEL,
         baseUrl: "https://api.openai.com/v1"
       },
       apiKey
@@ -221,7 +225,7 @@ export function getSystemAiProvider(): SystemProviderInfo | null {
   return {
     settings: {
       provider: "anthropic",
-      model: "claude-3-5-haiku-20241022"
+      model: DEFAULT_SYSTEM_ANTHROPIC_MODEL
     },
     apiKey
   };
