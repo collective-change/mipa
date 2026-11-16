@@ -821,6 +821,11 @@ export default {
   rankingNoActionsHint: "新增行動後即可評估調整此因子是否會影響決策排名。",
   rankingSingleActionHint: "目前僅有一項行動；排名敏感度需至少兩項行動以進行比較。",
 
+  // MIPA-10: Bounded Actions Query & Pagination
+  showingBoundedActions: "顯示 {loaded} / {total} 項行動。",
+  loadMoreActionsButton: "載入更多（+{count}）",
+  loadAllActionsButton: "載入全部",
+
   // Feature 4: Idea to Complete Action
   tabSmartDraft: "點子智慧建案",
   tabManualEntry: "手動建立",

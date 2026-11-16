@@ -840,6 +840,11 @@ export default {
   rankingNoActionsHint: "Add actions to evaluate whether tuning this factor affects decision rankings.",
   rankingSingleActionHint: "Single action defined; ranking sensitivity requires at least two actions to compare.",
 
+  // MIPA-10: Bounded Actions Query & Pagination
+  showingBoundedActions: "Showing {loaded} of {total} actions.",
+  loadMoreActionsButton: "Load more (+{count})",
+  loadAllActionsButton: "Load all",
+
   // Feature 4: Idea to Complete Action
   tabSmartDraft: "Smart draft from idea",
   tabManualEntry: "Manual entry",
