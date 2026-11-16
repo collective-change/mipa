@@ -211,7 +211,8 @@
 
 <script>
 import { doc, getDoc, collection, getDocs } from "firebase/firestore";
-import { firebaseDb } from "@/boot/firebase";
+import { firebaseDb, firebaseFunctions } from "@/boot/firebase";
+import { httpsCallable } from "firebase/functions";
 import { buildDossierSummary, printDossierBrief } from "@/utils/modelDossier";
 
 export default {
@@ -292,6 +293,18 @@ export default {
             { id: "n2", symbol: "RS", name: "Relief Supplies", initialValue: 85, units: "tons" },
             { id: "n3", symbol: "PT", name: "Public Trust", initialValue: 90, units: "points" }
           ];
+        }
+
+        // Fetch actions. Actions are not publicly readable by Firestore rules
+        // (MIPA-4); this callable returns only title + computed leverage for
+        // a model with isPublic === true.
+        try {
+          const getActions = httpsCallable(firebaseFunctions, "getPublicDossierActions");
+          const res = await getActions({ modelId: this.modelId });
+          this.rawActions = (res.data && res.data.actions) || [];
+        } catch (err) {
+          console.warn("Could not load public dossier actions:", err);
+          this.rawActions = [];
         }
 
         // Initialize perturbation sliders map

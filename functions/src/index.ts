@@ -9,6 +9,7 @@ export { draftModel } from "./ai/draftModel";
 export { draftAction } from "./ai/draftAction";
 export { getAiAllowanceStatus } from "./ai/starterAllowance";
 export { exchangeWeChatCode } from "./wechatAuth";
+export { getPublicDossierActions } from "./publicDossier";
 export { lemonSqueezyWebhook, getCheckoutUrl, getCustomerPortalUrl } from "./billing/lemonSqueezy";
 export {
   sendWeeklyStrategicDigest,

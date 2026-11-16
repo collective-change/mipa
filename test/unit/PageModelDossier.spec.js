@@ -11,8 +11,15 @@ const components = Object.fromEntries(
 );
 
 // Mock Firestore getDoc and getDocs
+const mockGetActions = vi.fn();
+
 vi.mock("@/boot/firebase", () => ({
-  firebaseDb: {}
+  firebaseDb: {},
+  firebaseFunctions: {}
+}));
+
+vi.mock("firebase/functions", () => ({
+  httpsCallable: vi.fn(() => (...args) => mockGetActions(...args))
 }));
 
 vi.mock("firebase/firestore", () => ({
@@ -59,6 +66,58 @@ function mountDossier(locale = "en-us") {
 describe("PageModelDossier.vue", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetActions.mockResolvedValue({ data: { actions: [] } });
+  });
+
+  it("MIPA-14: loads actions through the public callable and ranks them by leverage", async () => {
+    mockGetActions.mockResolvedValue({
+      data: {
+        actions: [
+          { id: "a1", title: "Low action", actionLeverage: 1.5 },
+          { id: "a2", title: "Top action", actionLeverage: 12.25 }
+        ]
+      }
+    });
+    const wrapper = mountDossier("en-us");
+    await wrapper.vm.fetchDossierData();
+
+    expect(mockGetActions).toHaveBeenCalledWith({ modelId: "test-model-public" });
+    expect(wrapper.vm.rawActions).toHaveLength(2);
+    expect(wrapper.vm.dossier.actionsCount).toBe(2);
+    expect(wrapper.vm.dossier.rankedActions[0].title).toBe("Top action");
+    expect(wrapper.vm.topLeverageFormatted).toBe("12.25x");
+  });
+
+  it("MIPA-14: a failed actions read leaves the dossier rendering with zero actions", async () => {
+    mockGetActions.mockRejectedValue(new Error("not-found"));
+    const wrapper = mountDossier("en-us");
+    await wrapper.vm.fetchDossierData();
+
+    expect(wrapper.vm.dossier.actionsCount).toBe(0);
+    expect(wrapper.vm.dossier.factorsCount).toBe(2);
+    expect(wrapper.vm.topLeverageFormatted).toBe("-");
+  });
+
+  it("MIPA-14 (measured): a slider changes the factor's displayed value but not the ranking", async () => {
+    mockGetActions.mockResolvedValue({
+      data: {
+        actions: [
+          { id: "a1", title: "B", actionLeverage: 2 },
+          { id: "a2", title: "A", actionLeverage: 8 }
+        ]
+      }
+    });
+    const wrapper = mountDossier("en-us");
+    await wrapper.vm.fetchDossierData();
+    const before = wrapper.vm.dossier;
+    expect(before.factors[0].perturbedValue).toBe(10);
+
+    wrapper.vm.perturbations["n1"] = 50;
+    const after = wrapper.vm.dossier;
+    expect(after.factors[0].perturbedValue).toBe(15);
+    expect(after.rankedActions.map((a) => a.actionLeverage)).toEqual(
+      before.rankedActions.map((a) => a.actionLeverage)
+    );
   });
 
   it("renders the public dossier in English with zero Chinese characters", async () => {
