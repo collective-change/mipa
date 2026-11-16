@@ -454,4 +454,37 @@ describe("actions", () => {
       9
     );
   });
+
+  it("defines actionLeverage as null when outstandingDirectCosts is 0 (MIPA-11)", async () => {
+    const [result] = await calcActions([
+      action("zeroCostAction", {
+        impacts: [treesImpact(50)],
+        estEffortHrs: 0,
+        estSpending: 0,
+        outstandingSpending: 0
+      })
+    ]);
+
+    const n = result.effectiveResultsNumbers;
+    expect(n.outstandingDirectCosts).toBe(0);
+    expect(n.actionLeverage).toBeNull();
+  });
+
+  it("clamps negative outstanding spending to 0, preventing inverted ranking (MIPA-11)", async () => {
+    const [result] = await calcActions([
+      action("overspentAction", {
+        impacts: [treesImpact(50)],
+        estEffortHrs: 0,
+        estSpending: 100,
+        spentAmount: 150,
+        outstandingSpending: -50 // raw overspent input
+      })
+    ]);
+
+    expect(result.effectiveChainedCostsAndImpacts.outstandingSpending).toBe(0);
+    expect(result.effectiveChainedCostsAndImpacts.outstandingDirectCosts).toBe(0);
+    const n = result.effectiveResultsNumbers;
+    expect(n.outstandingDirectCosts).toBe(0);
+    expect(n.actionLeverage).toBeNull();
+  });
 });

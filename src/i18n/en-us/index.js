@@ -387,7 +387,7 @@ export default {
     action: { term: "Action", text: "Something your organization could do, with an estimate of the work hours and money it needs." },
     impact: { term: "Impact", text: "How an action changes a factor: by how much, and for how long." },
     netBenefit: { term: "Net benefit", text: "An action's benefits minus its costs, to the organization and to the world, added up over time with later years counting a little less." },
-    leverage: { term: "Leverage", text: "How strongly an action's net benefit outweighs what it costs. Actions with higher leverage are worth doing first." }
+    leverage: { term: "Leverage", text: "How strongly an action's net benefit outweighs what it costs. Leverage is quadratic in net benefit relative to direct spending, rewarding outsized societal gains from lean direct resource commitments." }
   },
 
   // plain wording for actions
@@ -402,7 +402,7 @@ export default {
   Accountable: "Accountable",
   "Search actions": "Search actions",
   helpLeverage:
-    "How strongly the action's net benefit outweighs what it costs. Higher leverage: worth doing sooner.",
+    "How strongly the action's net benefit outweighs what it costs. The metric scales quadratically with net benefit (net² / [C · (C + E)]), strongly rewarding high net benefits achieved with minimal direct spending.",
   helpState: "Where the action is in its life: being proposed, approved, done, and so on.",
   helpResponsibleAccountable:
     "Responsible: the person doing the work. Accountable: the person who answers for the result.",

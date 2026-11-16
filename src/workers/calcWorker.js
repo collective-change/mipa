@@ -370,12 +370,17 @@ async function simulateActionWithDependencies(
   }
   //sort blockees by descending leverage
   blockees.sort(function(a, b) {
-    return b.actionLeverage - a.actionLeverage;
+    return (b.actionLeverage ?? -Infinity) - (a.actionLeverage ?? -Infinity);
   });
   let testCostsAndImpactsExcludingSelf = getEmptyCostsAndImpacts();
   //if (blockees.length) console.log("blockees for", action.title, blockees);
   //include each blockee until resulting leverage drops
-  while (blockees.length && blockees[0].actionLeverage > highestLeverageFound) {
+  while (
+    blockees.length &&
+    blockees[0].actionLeverage != null &&
+    (highestLeverageFound == null ||
+      blockees[0].actionLeverage > highestLeverageFound)
+  ) {
     //console.log("blockee leverage", blockees[0].actionLeverage);
     testCostsAndImpacts = includeActionInCostsAndImpacts(
       blockees[0],
@@ -396,8 +401,10 @@ async function simulateActionWithDependencies(
       action.nodeIdsToChart
     );
     if (
-      testActionResults.actionResultsNumbers.actionLeverage >
-      highestLeverageFound
+      testActionResults.actionResultsNumbers.actionLeverage != null &&
+      (highestLeverageFound == null ||
+        testActionResults.actionResultsNumbers.actionLeverage >
+          highestLeverageFound)
     ) {
       highestLeverageFound =
         testActionResults.actionResultsNumbers.actionLeverage;
@@ -427,20 +434,26 @@ function composeCostsAndImpactsOfSelf(action, averageEffortCostPerHour) {
   }
   let estEffortHrs = isNaN(action.estEffortHrs) ? 0 : 0 + action.estEffortHrs;
   let estEffortCosts = estEffortHrs * effortCostPerHour;
-  let outstandingDirectEffortHrs =
+  let outstandingDirectEffortHrs = Math.max(
+    0,
     estEffortHrs *
-    (100 -
-      (isNaN(action.effortCompletionPercentage)
-        ? 0
-        : action.effortCompletionPercentage)) *
-    0.01;
+      (100 -
+        (isNaN(action.effortCompletionPercentage)
+          ? 0
+          : action.effortCompletionPercentage)) *
+      0.01
+  );
   let outstandingDirectEffortCosts =
     outstandingDirectEffortHrs * effortCostPerHour;
+  // Clamped non-negative: outstanding spending cannot be negative when an initiative
+  // is complete or over-budget, preventing inverted leverage rankings.
   let outstandingSpending = isNaN(action.outstandingSpending)
     ? 0
-    : 0 + action.outstandingSpending;
-  let outstandingDirectCosts =
-    outstandingDirectEffortCosts + outstandingSpending;
+    : Math.max(0, 0 + action.outstandingSpending);
+  let outstandingDirectCosts = Math.max(
+    0,
+    outstandingDirectEffortCosts + outstandingSpending
+  );
   let estSpending = isNaN(action.estSpending) ? 0 : 0 + action.estSpending;
   let spentAmount = isNaN(action.spentAmount) ? 0 : 0 + action.spentAmount;
   let estDirectCosts = estEffortCosts + estSpending;
@@ -823,20 +836,31 @@ function calcActionResultsFromTimeSeries(
     marginalOrgCostNpv * orgWeightingFactor +
     marginalWorldCostNpv * worldWeightingFactor;
 
-  //calculate actionLeverage and prepare results
+  // Calculate actionLeverage and prepare results
   const marginalNetTotalBenefitNpv =
     marginalTotalBenefitNpv - marginalTotalCostNpv;
   const marginalTotalCostExcludingAction =
     marginalTotalCostNpv - outstandingDirectCosts;
-  let totalRoi =
-    marginalNetTotalBenefitNpv /
-    (outstandingDirectCosts + math.max(0, marginalTotalCostExcludingAction));
-  let actionLeverage =
-    ((marginalNetTotalBenefitNpv * totalRoi) / outstandingDirectCosts) *
-    Math.sign(marginalNetTotalBenefitNpv);
+  const totalCostDenominator =
+    outstandingDirectCosts + Math.max(0, marginalTotalCostExcludingAction);
 
-  if (isNaN(totalRoi)) totalRoi = null;
-  if (isNaN(actionLeverage)) actionLeverage = null;
+  let totalRoi = null;
+  if (totalCostDenominator > 0) {
+    totalRoi = marginalNetTotalBenefitNpv / totalCostDenominator;
+  }
+
+  // Leverage is sign(net) * net^2 / (C * (C + E)) where C = outstandingDirectCosts.
+  // Defined as null when C <= 0 (e.g. fully complete or zero outstanding cost),
+  // preventing unbounded Infinity or NaN values from dominating action rankings.
+  let actionLeverage = null;
+  if (outstandingDirectCosts > 0 && totalRoi !== null) {
+    actionLeverage =
+      ((marginalNetTotalBenefitNpv * totalRoi) / outstandingDirectCosts) *
+      Math.sign(marginalNetTotalBenefitNpv);
+  }
+
+  if (isNaN(totalRoi) || !isFinite(totalRoi)) totalRoi = null;
+  if (isNaN(actionLeverage) || !isFinite(actionLeverage)) actionLeverage = null;
 
   // SROI (Social Return on Investment) calculation
   const deadweight = Math.min(100, Math.max(0, Number(actionAdjustments.deadweight) || 0)) / 100;
@@ -2042,12 +2066,14 @@ function replace$NodeIdsWithSymbol(workingString) {
 }
 
 function changedSignificantly(newObj, oldObj, propertyName) {
-  if (isNaN(newObj[propertyName]) && !isNaN(oldObj[propertyName])) return true;
-  if (!isNaN(newObj[propertyName]) && isNaN(oldObj[propertyName])) return true;
-  if (Math.abs(newObj[propertyName] / oldObj[propertyName]) > 1.001)
-    return true;
-  if (Math.abs(oldObj[propertyName] / newObj[propertyName]) > 1.001)
-    return true;
+  const vNew = newObj ? newObj[propertyName] : undefined;
+  const vOld = oldObj ? oldObj[propertyName] : undefined;
+  if (vNew === vOld) return false;
+  if ((vNew == null && vOld != null) || (vNew != null && vOld == null)) return true;
+  if (isNaN(vNew) && !isNaN(vOld)) return true;
+  if (!isNaN(vNew) && isNaN(vOld)) return true;
+  if (Math.abs(vNew / vOld) > 1.001) return true;
+  if (Math.abs(vOld / vNew) > 1.001) return true;
   return false;
 }
 
@@ -2150,8 +2176,10 @@ async function writeInheritedResultsOfActions(
       );
       foundResults.inheritedResultsNumbers = branchAndBlockeesResultsNumbers;
       if (
-        branchAndBlockeesResultsNumbers.actionLeverage >
-        foundResults.effectiveResultsNumbers.actionLeverage
+        branchAndBlockeesResultsNumbers.actionLeverage != null &&
+        (foundResults.effectiveResultsNumbers.actionLeverage == null ||
+          branchAndBlockeesResultsNumbers.actionLeverage >
+            foundResults.effectiveResultsNumbers.actionLeverage)
       ) {
         foundResults.effectiveResultsNumbers = branchAndBlockeesResultsNumbers;
       }

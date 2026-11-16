@@ -36,13 +36,13 @@
         >
           <div class="q-px-xs q-gutter-xs row items-center">
             <q-chip outline color="primary"
-              >{{ $t("Leverage") }} {{ formatNumber(uiAction.actionLeverage, 2) }}</q-chip
+              >{{ $t("Leverage") }} {{ uiAction.actionLeverage != null ? formatNumber(uiAction.actionLeverage, 2) : "-" }}</q-chip
             >
             <q-chip v-if="actionSroiMetrics.sroiRatio !== null" outline color="positive" class="text-weight-bold"
               >SROI {{ formatSroiRatio(actionSroiMetrics.sroiRatio) }}</q-chip
             >
             <q-chip outline color="primary"
-              >{{ $t("totalRoi") }} {{ formatNumber(uiAction.totalRoi, 2) }}</q-chip
+              >{{ $t("totalRoi") }} {{ uiAction.totalRoi != null ? formatNumber(uiAction.totalRoi, 2) : "-" }}</q-chip
             >
             <q-btn
               flat
@@ -1095,22 +1095,28 @@ export default {
       let effortCostPerHour = this.effortCostPerHourInUse;
       let directEffortCost =
         (isNaN(this.estEffortHrs) ? 0 : this.estEffortHrs) * effortCostPerHour;
-      let outstandingDirectEffortHrs =
+      let outstandingDirectEffortHrs = Math.max(
+        0,
         (isNaN(this.estEffortHrs) ? 0 : this.estEffortHrs) *
-        (100 -
-          (isNaN(this.effortCompletionPercentage)
-            ? 0
-            : this.effortCompletionPercentage)) *
-        0.01;
+          (100 -
+            (isNaN(this.effortCompletionPercentage)
+              ? 0
+              : this.effortCompletionPercentage)) *
+          0.01
+      );
       let outstandingDirectEffortCost =
         outstandingDirectEffortHrs * effortCostPerHour;
-      let outstandingSpending =
+      let outstandingSpending = Math.max(
+        0,
         (isNaN(this.estSpending) ? 0 : this.estSpending) -
-        (isNaN(this.spentAmount) ? 0 : this.spentAmount);
+          (isNaN(this.spentAmount) ? 0 : this.spentAmount)
+      );
       let ownDirectCost =
         directEffortCost + (isNaN(this.estSpending) ? 0 : this.estSpending);
-      let outstandingDirectCost =
-        outstandingDirectEffortCost + outstandingSpending;
+      let outstandingDirectCost = Math.max(
+        0,
+        outstandingDirectEffortCost + outstandingSpending
+      );
       let directCost = {
         own: ownDirectCost,
         outstanding: outstandingDirectCost,
