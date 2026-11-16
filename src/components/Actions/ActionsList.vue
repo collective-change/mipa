@@ -304,7 +304,8 @@ export default {
           align: "right",
           label: this.$t("Leverage"),
           field: "actionLeverage",
-          format: (val) => `${formatNumber(val, 2)}`,
+          format: (val) =>
+            val != null && isFinite(val) ? `${formatNumber(val, 2)}` : "-",
           sortable: true,
           sortBy: "desc",
         },
@@ -406,7 +407,8 @@ export default {
           align: "right",
           label: this.$t("totalRoi"),
           field: "totalRoi",
-          format: (val) => `${formatNumber(val, 2)}`,
+          format: (val) =>
+            val != null && isFinite(val) ? `${formatNumber(val, 2)}` : "-",
           sortable: true,
           sortBy: "desc",
         },

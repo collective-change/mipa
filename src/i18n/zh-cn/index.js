@@ -376,7 +376,7 @@ export default {
     action: { term: "行动", text: "组织可以做的一件事，包含所需工时和金錢的估計。" },
     impact: { term: "影响", text: "行动如何改變一個因素：改變多少、持續多久。" },
     netBenefit: { term: "净效益", text: "行动對组织和世界的效益減去成本，隨時間加總，越晚的年份權重略低。" },
-    leverage: { term: "效应比", text: "行动的净效益相對於它的成本有多大。效应比越高的行动越值得先做。" }
+    leverage: { term: "效应比", text: "行动的净效益相對於它的成本有多大。效应比对净效益具二次敏感度，高度奖励以精简之直接投入获取庞大成果之方案。" }
   },
 
   // plain wording for actions
@@ -390,7 +390,7 @@ export default {
   Responsible: "負責",
   Accountable: "當責",
   "Search actions": "搜索行动",
-  helpLeverage: "行动的净效益相對於它的成本有多大。效应比越高，越值得先做。",
+  helpLeverage: "行动的净效益相對於其直接成本之比率。效应比对净效益呈二次敏感度（net² / [C · (C + E)]），高度奖励以极少直接支出创造庞大净效益之行动。",
   helpState: "行动目前所處的階段：提案中、已核准、已完成等。",
   helpResponsibleAccountable: "負責：实际做事的人。當責：對結果負最終責任的人。",
   helpBenefit: "行动在 mipa 计算的整段期間內，為组织和世界帶來的所有效益，越晚的年份權重略低。",

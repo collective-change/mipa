@@ -21,7 +21,7 @@ First users: Tzu Chi Foundation (CEO's office); UI in English and Traditional Ch
 ## 3. Conventions & Rules
 - **Plain language for newcomers**: "factor" (not node), "short name" (not symbol), "uses / used by"; Chinese leverage term is 效應比. Every new UI string goes in BOTH `en-us` and `zh-tw` (no duplicate keys; avoid `@`, `|`, `{` literals in messages).
 - **"Leverage" is NOT "good done per hour"**:
-  Formula: `actionLeverage = (netBenefitNpv * totalRoi / outstandingDirectCosts) * sign(net)`.
+  Formula: `actionLeverage = (netBenefitNpv * totalRoi / outstandingDirectCosts) * sign(net)`. The metric scales quadratically with net benefit (net² / [C · (C + E)]), strongly rewarding high net gains achieved with minimal direct spending. When outstanding direct costs C <= 0, leverage is null.
 - **Security rules**:
   - Org members via `orgs/{orgId}/members/{uid}`.
   - User profiles private; chats member-only.

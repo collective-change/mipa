@@ -380,7 +380,7 @@ export default {
   "Responsible": "Responsible",
   "Accountable": "Accountable",
   "Search actions": "Search actions",
-  "helpLeverage": "How strongly the action's net benefit outweighs what it costs. Higher leverage: worth doing sooner.",
+  "helpLeverage": "行動の純利益が直接コストをどれだけ上回るかを示す指標。純利益に対して二次関数的に感応し（net² / [C · (C + E)]）、最小限の直接支出で大きな純利益をもたらす行動を強力に評価します。",
   "helpState": "Where the action is in its life: being proposed, approved, done, and so on.",
   "helpResponsibleAccountable": "Responsible: the person doing the work. Accountable: the person who answers for the result.",
   "helpBenefit": "Everything the action adds, to the organization and to the world, over the whole period mipa calculates, with later years counting a little less.",
