@@ -367,6 +367,8 @@ export default {
   errEvalTitle: "A formula couldn't be calculated",
   errEvalAdvice:
     "Check that every short name in the formula belongs to a linked factor, and that the units can be combined (for example, kg can't be added to USD). The factor is selected in the graph.",
+  errEvalAdviceAlreadyLinked:
+    "Check that the units can be combined (for example, kg can't be added to USD) and that the formula operations are valid. The factor is selected in the graph.",
   errUnknownUnitTitle: "Unknown unit",
   errUnknownUnitAdvice:
     "Use a unit mipa knows, such as USD, TWD, kg, km, hours or people, or leave the unit empty for plain numbers.",

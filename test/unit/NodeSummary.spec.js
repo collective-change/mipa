@@ -205,4 +205,50 @@ describe("NodeSummary.vue - Formula Autocomplete & Syntax Helpers", () => {
     expect(wrapper.vm.nodeToSubmit.costCategory).toBe("direct_program");
     expect(wrapper.vm.nodeToSubmit.sourceCitation).toBe("2025 Annual Financial Report");
   });
+
+  it("resolves bare factor short names into $<nodeId> on typing and save (MIPA-8)", async () => {
+    const { wrapper } = mountNodeSummary("node_volunteers");
+    // node_volunteers has symbol "volunteers" and no initial influencers
+    // User types formula referencing "totalBudget" (matching node_budget)
+    wrapper.vm.nodeToSubmit.symbolFormula = "totalBudget * 0.1";
+    await wrapper.vm.$nextTick();
+
+    // Watched recalculation resolves sysFormula to $<nodeId>
+    expect(wrapper.vm.nodeToSubmit.sysFormula).toBe("$node_budget * 0.1");
+  });
+
+  it("auto-links referenced factors as inputs on save so manual linking is not required (MIPA-8)", async () => {
+    const { wrapper, actions } = mountNodeSummary("node_volunteers");
+    wrapper.vm.nodeToSubmit.symbolFormula = "totalBudget * 0.1";
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.vm.nodeToSubmit.influencers).not.toContain("node_budget");
+
+    wrapper.vm.submitNode();
+
+    // 1. Auto-links node_budget into influencers
+    expect(wrapper.vm.nodeToSubmit.influencers).toContain("node_budget");
+    // 2. Dispatches addLink for the auto-linked factor
+    expect(actions.addLink).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        modelId: "test-model-1",
+        link: expect.objectContaining({
+          sourceNodeId: "node_volunteers",
+          targetNodeId: "node_budget",
+          targetType: "influencer"
+        })
+      })
+    );
+    // 3. updateNode receives sysFormula with $<nodeId>
+    expect(actions.updateNode).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        updates: expect.objectContaining({
+          sysFormula: "$node_budget * 0.1",
+          influencers: expect.arrayContaining(["node_budget"])
+        })
+      })
+    );
+  });
 });

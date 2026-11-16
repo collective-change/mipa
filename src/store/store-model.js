@@ -19,6 +19,7 @@ import { showErrorMessage } from "@/utils/util-show-error-message";
 import { classifyInfluencers } from "@/utils/util-node-operations";
 import { i18n } from "@/boot/i18n";
 import { camelize } from "@/utils/util-camelize";
+import { toSysFormula } from "@/utils/formulaHelper";
 
 // Starter factors are named in the user's current language.
 const t = key => i18n.global.t(key);
@@ -321,9 +322,31 @@ const actions = {
       });
   },
 
-  updateNode({ dispatch }, payload) {
+  updateNode({ dispatch, getters, state }, payload) {
     let modelId = payload.modelId;
     let nodeId = payload.updates.id;
+
+    if (payload.updates && typeof payload.updates.symbolFormula === "string" && payload.updates.symbolFormula.trim()) {
+      const allNodes = (getters && getters.nodes) || (state && state.nodes) || [];
+      const { sysFormula, referencedNodeIds } = toSysFormula(
+        payload.updates.symbolFormula,
+        allNodes,
+        payload.updates
+      );
+      if (!payload.updates.sysFormula || !payload.updates.sysFormula.includes("$")) {
+        payload.updates.sysFormula = sysFormula;
+      }
+      if (Array.isArray(referencedNodeIds) && referencedNodeIds.length > 0) {
+        if (!Array.isArray(payload.updates.influencers)) {
+          payload.updates.influencers = [];
+        }
+        referencedNodeIds.forEach(refId => {
+          if (!payload.updates.influencers.includes(refId)) {
+            payload.updates.influencers.push(refId);
+          }
+        });
+      }
+    }
 
     //let formulaChanged = false;
     payload.updates.updateTime = serverTimestamp();

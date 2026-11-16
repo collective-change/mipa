@@ -1375,7 +1375,25 @@ function prepExpressionsArray(sim) {
     if (!sim.errorOccurred)
       try {
         // A factor just added has no formula yet; it counts as 0.
-        if (node.sysFormula.trim() === "") node.sysFormula = "0";
+        if (typeof node.sysFormula !== "string" || node.sysFormula.trim() === "") {
+          node.sysFormula = "0";
+        }
+
+        // Defensive resolution for bare short names (e.g. from existing models or imports)
+        if (!node.sysFormula.includes("$") && Array.isArray(sim.sortedNodes)) {
+          let resolved = node.sysFormula;
+          const candidates = sim.sortedNodes
+            .filter(n => n && n.symbol)
+            .sort((a, b) => (b.symbol || "").length - (a.symbol || "").length);
+          for (const cand of candidates) {
+            const reg = new RegExp(`(?<![\\$\\p{L}\\p{N}_])${cand.symbol.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}_])`, "gu");
+            if (reg.test(resolved)) {
+              resolved = resolved.replace(reg, () => "$" + cand.id);
+            }
+          }
+          node.sysFormula = resolved;
+        }
+
         //if formula includes a variable then save it
         if (node.sysFormula.includes("$")) {
           expressionsArray.push("$" + node.id + " = " + node.sysFormula);
@@ -1608,6 +1626,30 @@ function topoSortNodes(sim) {
 
 function prepNodesForSort(sim) {
   nodes = sim.data.modelNodes;
+
+  // Resolve short names to $<id> and detect blocking dependencies for unlinked/legacy models
+  nodes.forEach(function(outerNode) {
+    if (outerNode.sysFormula && typeof outerNode.sysFormula === "string" && !outerNode.sysFormula.includes("$")) {
+      const candidates = nodes
+        .filter(n => n && n.symbol && n.id !== outerNode.id)
+        .sort((a, b) => (b.symbol || "").length - (a.symbol || "").length);
+      let resolved = outerNode.sysFormula;
+      for (const cand of candidates) {
+        const reg = new RegExp(`(?<![\\$\\p{L}\\p{N}_])${cand.symbol.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}_])`, "gu");
+        if (reg.test(resolved)) {
+          resolved = resolved.replace(reg, () => "$" + cand.id);
+          if (!Array.isArray(outerNode.blockingInfluencers)) {
+            outerNode.blockingInfluencers = [];
+          }
+          if (!outerNode.blockingInfluencers.includes(cand.id)) {
+            outerNode.blockingInfluencers.push(cand.id);
+          }
+        }
+      }
+      outerNode.sysFormula = resolved;
+    }
+  });
+
   let preppedNodes = [];
   nodes.forEach(function(outerNode) {
     // calculate blockedInfluencees
@@ -1627,6 +1669,7 @@ function prepNodesForSort(sim) {
     preppedNodes.push({
       id: outerNode.id,
       name: outerNode.name,
+      symbol: outerNode.symbol,
       blockingInDegree:
         typeof outerNode.blockingInfluencers !== "undefined"
           ? outerNode.blockingInfluencers.length
@@ -1993,7 +2036,7 @@ function replaceNodeIdsWithName(workingString) {
 
 function replace$NodeIdsWithSymbol(workingString) {
   modelNodes.forEach(
-    node => (workingString = workingString.replace("$" + node.id, node.symbol))
+    node => (workingString = workingString.replaceAll("$" + node.id, node.symbol))
   );
   return workingString;
 }

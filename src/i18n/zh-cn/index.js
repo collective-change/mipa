@@ -357,6 +357,8 @@ export default {
   errEvalTitle: "無法计算公式",
   errEvalAdvice:
     "請確認公式中的每個代號都屬於已链接的因素，而且单位可以相加減（例如 kg 不能加 USD）。圖上已選取這個因素。",
+  errEvalAdviceAlreadyLinked:
+    "请检查公式中的单位是否可以结合（例如 kg 不能与 USD 相加）以及运算是否有效。图上已选取这个因素。",
   errUnknownUnitTitle: "不明的单位",
   errUnknownUnitAdvice: "請使用 mipa 認得的单位，例如 USD、TWD、kg、km、hours 或 people，純數字請將单位留空。",
   errValueTitle: "無法讀取目前数值",

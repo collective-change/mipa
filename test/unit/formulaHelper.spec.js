@@ -3,7 +3,8 @@ import {
   FORMULA_PRIMITIVES,
   validateFormulaSyntax,
   getFactorSuggestions,
-  insertSnippetIntoFormula
+  insertSnippetIntoFormula,
+  toSysFormula
 } from "@/utils/formulaHelper";
 
 describe("Formula Helper Utilities for Model Builders", () => {
@@ -119,6 +120,86 @@ describe("Formula Helper Utilities for Model Builders", () => {
       expect(ids).toContain("conditional");
       expect(ids).toContain("min");
       expect(ids).toContain("max");
+    });
+  });
+
+  describe("toSysFormula (MIPA-8)", () => {
+    it("resolves bare factor short names to $<nodeId> in formulas", () => {
+      const result = toSysFormula("volunteers * costPerMeal", mockNodes, {
+        id: "node_meals",
+        symbol: "mealsServed",
+        influencers: []
+      });
+
+      expect(result.sysFormula).toBe("$node_volunteers * $node_food_cost");
+      expect(result.referencedNodeIds).toContain("node_volunteers");
+      expect(result.referencedNodeIds).toContain("node_food_cost");
+      expect(result.referencedNodeIds).not.toContain("node_meals");
+      expect(result.unlinkedSymbols.map(u => u.symbol)).toEqual(
+        expect.arrayContaining(["volunteers", "costPerMeal"])
+      );
+    });
+
+    it("prioritizes longer symbol names over substrings to prevent partial corruption", () => {
+      const extendedNodes = [
+        ...mockNodes,
+        { id: "node_vol_active", symbol: "volunteersActive", name: "Active Volunteers Count", unit: "people" }
+      ];
+
+      const result = toSysFormula("volunteersActive + volunteers", extendedNodes, {
+        id: "node_meals",
+        symbol: "mealsServed",
+        influencers: []
+      });
+
+      expect(result.sysFormula).toBe("$node_vol_active + $node_volunteers");
+    });
+
+    it("preserves already resolved $<nodeId> references without re-replacing or corrupting them", () => {
+      const result = toSysFormula("$node_volunteers * 10", mockNodes, {
+        id: "node_meals",
+        symbol: "mealsServed",
+        influencers: ["node_volunteers"]
+      });
+
+      expect(result.sysFormula).toBe("$node_volunteers * 10");
+      expect(result.referencedNodeIds).toContain("node_volunteers");
+      expect(result.unlinkedSymbols).toEqual([]);
+    });
+
+    it("handles self-referencing nodes with delay()", () => {
+      const result = toSysFormula("delay(mealsServed, dt, 0) + volunteers", mockNodes, {
+        id: "node_meals",
+        symbol: "mealsServed",
+        influencers: []
+      });
+
+      expect(result.sysFormula).toBe("delay($node_meals, dt, 0) + $node_volunteers");
+      expect(result.referencedNodeIds).toContain("node_volunteers");
+      expect(result.referencedNodeIds).not.toContain("node_meals");
+    });
+
+    it("returns empty sysFormula and empty references for blank input", () => {
+      const result = toSysFormula("", mockNodes);
+      expect(result.sysFormula).toBe("");
+      expect(result.referencedNodeIds).toEqual([]);
+      expect(result.unlinkedSymbols).toEqual([]);
+    });
+
+    it("supports Unicode Traditional Chinese factor symbols with proper word boundaries", () => {
+      const zhNodes = [
+        { id: "node_zh_1", symbol: "志工人數", name: "志工人數", unit: "people" },
+        { id: "node_zh_2", symbol: "餐點數量", name: "餐點數量", unit: "meals" }
+      ];
+
+      const result = toSysFormula("志工人數 * 10", zhNodes, {
+        id: "node_zh_2",
+        symbol: "餐點數量",
+        influencers: []
+      });
+
+      expect(result.sysFormula).toBe("$node_zh_1 * 10");
+      expect(result.referencedNodeIds).toContain("node_zh_1");
     });
   });
 });
