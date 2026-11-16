@@ -8,7 +8,9 @@ import {
   deleteDoc,
   deleteField,
   doc,
+  getCountFromServer,
   getDoc,
+  limit,
   query,
   runTransaction,
   serverTimestamp,
@@ -20,10 +22,15 @@ import { firestoreAction } from "./firestore-bind";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { i18n } from "@/boot/i18n";
 
+export const DEFAULT_ACTIONS_LIMIT = 50;
+
 const state = {
   currentAction: null,
   actions: [],
   matchingActions: [],
+  actionsTotalCount: null,
+  matchingActionsTotalCount: null,
+  actionsLimit: DEFAULT_ACTIONS_LIMIT,
   search: "",
   sort: "name"
 };
@@ -41,6 +48,15 @@ const mutations = {
   },
   setActionsDownloaded(state, value) {
     state.actionsDownloaded = value;
+  },
+  setActionsTotalCount(state, count) {
+    state.actionsTotalCount = count;
+  },
+  setMatchingActionsTotalCount(state, count) {
+    state.matchingActionsTotalCount = count;
+  },
+  setActionsLimit(state, limit) {
+    state.actionsLimit = limit;
   }
 };
 
@@ -52,7 +68,6 @@ const actions = {
       "currentAction",
       doc(firebaseDb, "actions", actionId),
       {
-        maxRefDepth: 1,
         wait: false,
         reset: true
       }
@@ -190,17 +205,30 @@ const actions = {
     }
   },*/
 
-  bindActions: firestoreAction(({ bindFirestoreRef }, orgId) => {
-    //let userId = firebaseAuth.currentUser.uid;
-    // return the promise returned by `bindFirestoreRef`
+  bindActions: firestoreAction(async ({ bindFirestoreRef, commit }, payload) => {
+    const orgId = typeof payload === "string" ? payload : payload?.orgId;
+    const actionsLimit = typeof payload === "object" && typeof payload?.limit === "number" && payload.limit > 0
+      ? payload.limit
+      : DEFAULT_ACTIONS_LIMIT;
+
+    const baseQuery = query(collection(firebaseDb, "actions"), where("orgId", "==", orgId));
+    const actionsQuery = query(
+      collection(firebaseDb, "actions"),
+      where("orgId", "==", orgId),
+      limit(actionsLimit)
+    );
+
+    try {
+      const countSnap = await getCountFromServer(baseQuery);
+      commit("setActionsTotalCount", countSnap.data().count);
+    } catch {
+      commit("setActionsTotalCount", null);
+    }
+
     return bindFirestoreRef(
       "actions",
-      query(collection(firebaseDb, "actions"), where("orgId", "==", orgId)),
-      //.where("users", "array-contains", userId)
-      //.orderBy("updateTime", "desc"),
-      //.orderBy("goal", "asc"),
+      actionsQuery,
       {
-        maxRefDepth: 1,
         reset: true, //reset actions so they don't linger when switching orgs
         wait: false
       }
@@ -211,24 +239,39 @@ const actions = {
     unbindFirestoreRef("actions", true); //reset data when unbinding
   }),
 
-  bindMatchingActions: firestoreAction(({ bindFirestoreRef }, payload) => {
-    //let userId = firebaseAuth.currentUser.uid;
+  bindMatchingActions: firestoreAction(async ({ bindFirestoreRef, commit }, payload) => {
     const filters = [
-      where("orgId", "==", payload.orgId),
-      where("actionMchState.value", "in", payload.actionStatesToSearch)
+      where("orgId", "==", payload.orgId)
     ];
-    if (payload.responsiblePersonToSearch)
+    if (Array.isArray(payload.actionStatesToSearch) && payload.actionStatesToSearch.length > 0) {
+      filters.push(where("actionMchState.value", "in", payload.actionStatesToSearch));
+    }
+    if (payload.responsiblePersonToSearch) {
       filters.push(
         where("responsiblePerson", "==", payload.responsiblePersonToSearch)
       );
-    if (payload.accountablePersonToSearch)
+    }
+    if (payload.accountablePersonToSearch) {
       filters.push(
         where("accountablePerson", "==", payload.accountablePersonToSearch)
       );
-    const actionsQuery = query(collection(firebaseDb, "actions"), ...filters);
-    // return the promise returned by `bindFirestoreRef`
+    }
+
+    const actionsLimit = typeof payload.limit === "number" && payload.limit > 0
+      ? payload.limit
+      : DEFAULT_ACTIONS_LIMIT;
+
+    const baseQuery = query(collection(firebaseDb, "actions"), ...filters);
+    const actionsQuery = query(collection(firebaseDb, "actions"), ...filters, limit(actionsLimit));
+
+    try {
+      const countSnap = await getCountFromServer(baseQuery);
+      commit("setMatchingActionsTotalCount", countSnap.data().count);
+    } catch {
+      commit("setMatchingActionsTotalCount", null);
+    }
+
     return bindFirestoreRef("matchingActions", actionsQuery, {
-      maxRefDepth: 1,
       reset: true, //reset actions so they don't linger when switching orgs
       wait: false
     });
