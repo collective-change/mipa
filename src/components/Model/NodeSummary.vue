@@ -603,7 +603,8 @@ import {
   FORMULA_PRIMITIVES,
   validateFormulaSyntax,
   getFactorSuggestions,
-  insertSnippetIntoFormula
+  insertSnippetIntoFormula,
+  toSysFormula
 } from "@/utils/formulaHelper";
 import {
   ACCOUNTING_CATEGORIES,
@@ -760,8 +761,13 @@ export default {
 
     watchedObjectForNodePropertyRecalculation() {
       return {
-        latestValue: this.nodeToSubmit.latestValue,
+        latestValue: this.nodeToSubmit?.latestValue,
         parsedFormula: this.parsedSymbolFormula,
+        symbolFormula: this.nodeToSubmit?.symbolFormula,
+        influencers: Array.isArray(this.nodeToSubmit?.influencers)
+          ? this.nodeToSubmit.influencers.slice().sort().join(",")
+          : "",
+        nodesCount: (this.nodes || []).length
       };
     },
 
@@ -914,6 +920,50 @@ export default {
       this.submitNode();
     },
     submitNode() {
+      // 1. Resolve sysFormula and referenced factors from bare short names
+      const { sysFormula, referencedNodeIds } = toSysFormula(
+        this.nodeToSubmit.symbolFormula,
+        this.nodes,
+        this.nodeToSubmit
+      );
+      this.nodeToSubmit.sysFormula = sysFormula;
+
+      // 2. Auto-link any referenced factors as inputs so "not yet linked" banner is not needed
+      if (!Array.isArray(this.nodeToSubmit.influencers)) {
+        this.nodeToSubmit.influencers = [];
+      }
+      const newlyLinkedIds = [];
+      referencedNodeIds.forEach((refId) => {
+        if (!this.nodeToSubmit.influencers.includes(refId)) {
+          this.nodeToSubmit.influencers.push(refId);
+          newlyLinkedIds.push(refId);
+        }
+      });
+
+      // 3. Dispatch addLink so the link is persisted to Firestore and graph
+      newlyLinkedIds.forEach((influencerId) => {
+        if (this.selectedNode?.id && this.$route?.params?.modelId && this.addLink) {
+          this.addLink({
+            modelId: this.$route.params.modelId,
+            link: {
+              sourceNodeId: this.selectedNode.id,
+              targetNodeId: influencerId,
+              targetType: "influencer"
+            }
+          });
+        }
+      });
+
+      // 4. Update classified influencers
+      let classifiedInfluencers = classifyInfluencers({
+        thisNode: this.nodeToSubmit,
+      });
+      this.nodeToSubmit.blockingInfluencers = classifiedInfluencers.blocking;
+      this.nodeToSubmit.unusedInfluencers = classifiedInfluencers.unused;
+      this.nodeToSubmit.isSelfBlocking = classifiedInfluencers.blocking.includes(
+        this.nodeToSubmit.id
+      );
+
       let oldLatestVal = this.selectedNode.latestValue;
       let newLatestVal = this.nodeToSubmit.latestValue;
       let oldLatestValIsANumber =
@@ -937,10 +987,6 @@ export default {
         updates: this.nodeToSubmit,
         latestValueExistenceChanged: latestValueExistenceChanged,
         symbolChanged: symbolChanged,
-        /* "symbolChanged" doesn't actually work yet to classify influencers
-        of node's influencees, because classifyInfluencers currently
-        starts with sysFormula, which would not change until it's recomposed.
-        */
       });
     },
     updateChartData() {
@@ -1141,46 +1187,11 @@ export default {
       if (parsedSymbolFormula.toString() == "") {
         this.nodeToSubmit.sysFormula = "";
       } else {
-        var nodes = this.nodes;
-        var influencerNode = {};
-
-        //gather up ids of self, influencers, and their symbols
-        var potentials = [];
-        potentials.push({
-          symbol: this.nodeToSubmit.symbol,
-          id: this.nodeToSubmit.id,
-        });
-        if (
-          "influencers" in this.nodeToSubmit &&
-          this.nodeToSubmit.influencers.length > 0
-        ) {
-          this.nodeToSubmit.influencers.forEach(function (influencerNodeId) {
-            influencerNode = nodes.find(function (node) {
-              return node.id == influencerNodeId;
-            });
-            if (influencerNode && influencerNode.symbol) {
-              potentials.push({
-                symbol: influencerNode.symbol,
-                id: influencerNodeId,
-              });
-            }
-          });
-        }
-        potentials.sort(function (a, b) {
-          return (b.symbol || "").length - (a.symbol || "").length;
-        });
-
-        var sysFormula = parsedSymbolFormula.toString();
-        if (sysFormula) {
-          potentials.forEach(function (node) {
-            sysFormula = sysFormula.replace(
-              new RegExp("\\b" + node.symbol + "\\b", "g"), //global replacement
-              "$" + node.id
-            );
-          });
-        }
-        sysFormula.trim(); //trim whitespace from both sides
-        sysFormula = sysFormula.replace(/  +/g, " "); //replace multiple spaces with single space
+        const { sysFormula } = toSysFormula(
+          this.nodeToSubmit.symbolFormula,
+          this.nodes,
+          this.nodeToSubmit
+        );
         this.nodeToSubmit.sysFormula = sysFormula;
       }
 

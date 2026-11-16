@@ -227,3 +227,124 @@ export function insertSnippetIntoFormula(formula = "", snippet = "", selectionSt
     newCursorPosition
   };
 }
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Resolves a formula written with factor short names into a sysFormula with $<nodeId> references.
+ * Also returns the referenced factor IDs and unlinked factors for auto-linking.
+ *
+ * @param {string} formula - The human-written formula (e.g. "organisationsReachedPerStep * valueOfBetterDecision")
+ * @param {Array} allNodes - All factor nodes available in the model
+ * @param {Object} [currentNode] - The node being edited/saved
+ * @returns {{ sysFormula: string, referencedNodeIds: string[], unlinkedSymbols: Array }}
+ */
+export function toSysFormula(formula = "", allNodes = [], currentNode = null) {
+  if (typeof formula !== "string" || !formula.trim()) {
+    return { sysFormula: "", referencedNodeIds: [], unlinkedSymbols: [] };
+  }
+
+  const nodes = Array.isArray(allNodes) ? allNodes : [];
+  const currentNodeId = currentNode?.id || null;
+  const currentInfluencers = new Set(
+    Array.isArray(currentNode?.influencers) ? currentNode.influencers : []
+  );
+
+  // Gather candidate factor mappings
+  const potentials = [];
+  const seenIds = new Set();
+
+  if (currentNode && (currentNode.symbol || currentNode.name)) {
+    potentials.push({
+      id: currentNode.id,
+      symbol: currentNode.symbol || currentNode.name,
+      name: currentNode.name,
+      isSelf: true
+    });
+    seenIds.add(currentNode.id);
+  }
+
+  for (const n of nodes) {
+    if (!n || !n.id || seenIds.has(n.id)) continue;
+    seenIds.add(n.id);
+    if (n.symbol) {
+      potentials.push({
+        id: n.id,
+        symbol: n.symbol,
+        name: n.name || n.symbol,
+        isSelf: false
+      });
+    }
+  }
+
+  // Sort candidate factors by symbol length descending to prevent partial substring matches
+  potentials.sort((a, b) => (b.symbol || "").length - (a.symbol || "").length);
+
+  // Parse with mathjs if possible to identify symbols
+  let ast;
+  try {
+    ast = parse(formula.trim());
+  } catch (e) {
+    ast = null;
+  }
+
+  // Find used symbols from AST if available
+  const usedSymbolsSet = new Set();
+  if (ast) {
+    ast.traverse((node, path, parent) => {
+      if (node.isSymbolNode && !(parent && parent.isFunctionNode && path === "fn")) {
+        if (!BUILTIN_FORMULA_IDENTIFIERS.has(node.name)) {
+          usedSymbolsSet.add(node.name);
+        }
+      }
+    });
+  }
+
+  let sysFormula = ast ? ast.toString() : formula.trim();
+  const referencedNodeIdsSet = new Set();
+  const unlinkedSymbols = [];
+
+  for (const p of potentials) {
+    if (!p.symbol) continue;
+    const isUsedInAst = usedSymbolsSet.size > 0 ? usedSymbolsSet.has(p.symbol) : true;
+    const regex = new RegExp(
+      `(?<![\\$\\p{L}\\p{N}_])${escapeRegex(p.symbol)}(?![\\p{L}\\p{N}_])`,
+      "gu"
+    );
+
+    if (regex.test(sysFormula) && isUsedInAst) {
+      sysFormula = sysFormula.replace(regex, () => "$" + p.id);
+      if (!p.isSelf) {
+        referencedNodeIdsSet.add(p.id);
+        if (!currentInfluencers.has(p.id)) {
+          unlinkedSymbols.push({
+            symbol: p.symbol,
+            nodeId: p.id,
+            name: p.name
+          });
+        }
+      }
+    }
+  }
+
+  // Also collect any existing $<id> references
+  const dollarMatches = sysFormula.match(/\$([a-zA-Z0-9_-]+)/g);
+  if (dollarMatches) {
+    dollarMatches.forEach(m => {
+      const id = m.substring(1);
+      if (id !== currentNodeId && nodes.some(n => n.id === id)) {
+        referencedNodeIdsSet.add(id);
+      }
+    });
+  }
+
+  sysFormula = sysFormula.trim().replace(/  +/g, " ");
+
+  return {
+    sysFormula,
+    referencedNodeIds: Array.from(referencedNodeIdsSet),
+    unlinkedSymbols
+  };
+}
