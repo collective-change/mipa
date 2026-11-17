@@ -18,8 +18,19 @@ jobs:
       - run: npm ci
       - run: npm ci
         working-directory: src-pwa
+      # test/unit imports functions/src/** (aiModelConsistency, stakeholderViewers),
+      # which needs functions/node_modules; the app job used to never install them.
+      - run: npm ci
+        working-directory: functions
       - run: npm run lint
-      - run: npm test
+      # firebase-tools needs Java 21 for the Firestore emulator that
+      # test/unit/stakeholderViewerRules.spec.js (MIPA-15) talks to on port 5002.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Unit tests (with Auth + Firestore emulators)
+        run: npx --yes firebase-tools@15.36.0 emulators:exec --only auth,firestore --project demo-mipa "npm test"
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
       - name: Run E2E Visual Funnel Harness
