@@ -5,11 +5,11 @@ import { fileURLToPath } from "node:url";
 export default defineConfig({
   plugins: [vue()],
   resolve: {
-    alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    alias: [
+      { find: "@", replacement: fileURLToPath(new URL("./src", import.meta.url)) },
       // use Quasar's browser build in the DOM test environment
-      quasar: "quasar/dist/quasar.client.js"
-    }
+      { find: /^quasar$/, replacement: "quasar/dist/quasar.client.js" }
+    ]
   },
   test: {
     environment: "happy-dom",

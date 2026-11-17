@@ -2,12 +2,19 @@
   <q-layout view="hHh lpR fFf">
     <q-header elevated class="bg-white text-grey-8 q-py-none print-hide">
       <q-toolbar>
-        <div v-if="$q.screen.gt.xs" class="text-h6 ellipsis org-name">{{ orgName }}</div>
+        <div
+          v-if="$q.screen.gt.xs && orgName"
+          class="text-h6 ellipsis org-name"
+          :title="orgName"
+        >
+          {{ orgName }}
+          <q-tooltip v-if="orgName">{{ orgName }}</q-tooltip>
+        </div>
         <q-btn
           flat
           no-caps
           no-wrap
-          class="q-ml-xs"
+          class="q-ml-sm"
           v-if="$q.screen.gt.xs"
           clickable
           :to="loggedIn ? '/orgs' : '/'"
@@ -707,6 +714,21 @@ export default {
   }
 }
 .org-name {
-  max-width: 220px;
+  max-width: 240px;
+}
+@media (min-width: 768px) {
+  .org-name {
+    max-width: 340px;
+  }
+}
+@media (min-width: 1024px) {
+  .org-name {
+    max-width: 480px;
+  }
+}
+@media (min-width: 1440px) {
+  .org-name {
+    max-width: 560px;
+  }
 }
 </style>
