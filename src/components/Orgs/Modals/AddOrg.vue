@@ -1,13 +1,13 @@
 <template>
   <q-card>
-    <modal-header>Add a new organization</modal-header>
+    <modal-header>{{ $t ? $t("Add organization") : "Add a new organization" }}</modal-header>
     <q-form @submit.prevent="submitForm">
       <q-card-section>
         <modal-org-name v-model:name="orgToSubmit.name" ref="modalOrgName" />
         <q-input
           v-model="orgToSubmit.goal"
           label="Goal"
-          :rules="[val => !!val || 'Field is required']"
+          :rules="[val => !!val || ($t ? $t('Required') : 'Field is required')]"
           clearable
         />
         <q-select v-model="orgToSubmit.orgType" :options="options" emit-value label="Type" />
@@ -21,6 +21,7 @@
 <script>
 import { mapActions } from "vuex";
 import mixinAddEditOrg from "@/mixins/mixin-add-edit-org";
+import { sampleCurrencyFor } from "@/utils/sample-org";
 
 export default {
   mixins: [mixinAddEditOrg],
@@ -40,6 +41,7 @@ export default {
         name: "",
         goal: "",
         orgType: "",
+        currency: sampleCurrencyFor(this.$i18n?.locale) || "USD",
       },
     };
   },
@@ -48,7 +50,6 @@ export default {
 
     submitOrg() {
       this.addOrg(this.orgToSubmit);
-      //console.log(this.orgToSubmit);
       this.$emit("close");
     },
   },

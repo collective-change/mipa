@@ -1133,5 +1133,9 @@ export default {
 
   // Starter AI Allowance
   "aiStarterAllowanceTitle": "Créditos iniciales de IA activos",
-  "aiStarterAllowanceDesc": "Incluye 10 operaciones gratuitas de redacción de IA (Claude 3.5 Haiku / GPT-4o-mini). Conecte su propia clave de API abajo para uso ilimitado."
+  "aiStarterAllowanceDesc": "Incluye 10 operaciones gratuitas de redacción de IA (Claude 3.5 Haiku / GPT-4o-mini). Conecte su propia clave de API abajo para uso ilimitado.",
+
+  // Currency Selection
+  "currency": "Moneda",
+  "noMatchingCurrencies": "No hay monedas coincidentes"
 };

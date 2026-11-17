@@ -1126,5 +1126,9 @@ export default {
   noViewersConfigured: "尚未設定利益關係人檢視者。",
   alreadyViewer: "此電子信箱已在檢視者清單中。",
   stakeholderViewerNotice: "您正以唯讀利益關係人身分檢視此模型。",
-  invalidViewerEmail: "請輸入有效的電子信箱地址。"
+  invalidViewerEmail: "請輸入有效的電子信箱地址。",
+
+  // Currency Selection
+  currency: "幣別",
+  noMatchingCurrencies: "無相符幣別"
 };
