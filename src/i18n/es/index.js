@@ -41,6 +41,7 @@ export default {
   "SendFeedback": "Enviar comentarios",
   "Logout": "Cerrar sesión",
   "About": "About",
+  "Documentation": "Documentación",
   "Copyright": "Copyright",
   "Contact us": "Contact us",
   "Terms": "Terms",

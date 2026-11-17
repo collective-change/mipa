@@ -290,6 +290,7 @@ export default {
       links3: [{ icon: "exit_to_app", text: "Logout", onclick: "logoutUser" }],
       buttons1: [
         { text: "About", to: "/about" },
+        { text: "Documentation", href: "https://github.com/collective-change/mipa#readme" },
         { text: "Source code", href: "https://github.com/collective-change/mipa" },
         { text: "Privacy", to: "/privacy" },
       ],

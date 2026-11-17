@@ -17,6 +17,7 @@ export default {
   SendFeedback: "回饋",
   Logout: "登出",
   About: "關於",
+  Documentation: "說明文件",
   Copyright: "著作權",
   "Contact us": "聯絡我們",
   Terms: "條款",
