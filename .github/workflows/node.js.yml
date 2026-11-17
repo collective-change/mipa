@@ -2,9 +2,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: [master]
+    branches: [master, modernize-2026]
   pull_request:
-    branches: [master]
+    branches: [master, modernize-2026]
 
 jobs:
   app:
@@ -20,6 +20,10 @@ jobs:
         working-directory: src-pwa
       - run: npm run lint
       - run: npm test
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run E2E Visual Funnel Harness
+        run: npm run test:e2e
       - run: npm run build
 
   functions:

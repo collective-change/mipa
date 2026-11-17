@@ -38,7 +38,7 @@
             size="lg"
             no-caps
             icon="login"
-            :label="$t('landingSignIn')"
+            :label="$t('Login')"
           />
           <q-btn
             href="https://github.com/collective-change/mipa"
@@ -282,6 +282,12 @@
           <div class="col-12 col-md-6 text-center text-md-right">
             <router-link to="/about" class="footer-link q-mx-sm">{{ $t("About") }}</router-link>
             <router-link to="/privacy" class="footer-link q-mx-sm">{{ $t("Privacy") }}</router-link>
+            <a
+              href="https://github.com/collective-change/mipa#readme"
+              target="_blank"
+              rel="noopener"
+              class="footer-link q-mx-sm"
+            >{{ $t("Documentation") }}</a>
             <a
               href="https://github.com/collective-change/mipa"
               target="_blank"

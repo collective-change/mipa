@@ -41,6 +41,7 @@ export default {
   "SendFeedback": "フィードバック送信",
   "Logout": "ログアウト",
   "About": "About",
+  "Documentation": "ドキュメント",
   "Copyright": "Copyright",
   "Contact us": "Contact us",
   "Terms": "Terms",
