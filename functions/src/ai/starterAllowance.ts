@@ -231,8 +231,95 @@ export function getSystemAiProvider(): SystemProviderInfo | null {
   };
 }
 
+export type AuditOutcome = "success" | "failure" | "unknown";
+
+export interface SystemAuditLogData {
+  auditKey: string;
+  event: string;
+  outcome: AuditOutcome;
+  yearMonth: string;
+  orgId: string;
+  uid: string;
+  type?: "global" | "org" | "user" | "system";
+  creditsUsed?: number;
+  ceiling?: number;
+  reason?: string;
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
+function cleanUndefined<T extends Record<string, unknown>>(obj: T): Partial<T> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  }
+  return result as Partial<T>;
+}
+
+/**
+ * Creates an audit record outside of the transaction boundary with initial outcome 'unknown'.
+ * The resulting record carries an auditKey that can be back-filled once the transaction outcome is known.
+ */
+export async function createAuditRecord(
+  db: Firestore,
+  params: {
+    auditKey?: string;
+    event?: string;
+    outcome?: AuditOutcome;
+    yearMonth: string;
+    orgId: string;
+    uid: string;
+    type?: "global" | "org" | "user" | "system";
+    creditsUsed?: number;
+    ceiling?: number;
+    reason?: string;
+  }
+): Promise<{ ref: import("firebase-admin/firestore").DocumentReference; auditKey: string }> {
+  const docRef = params.auditKey
+    ? db.collection("systemAuditLogs").doc(params.auditKey)
+    : db.collection("systemAuditLogs").doc();
+  const auditKey = docRef.id;
+
+  await docRef.set(
+    cleanUndefined({
+      auditKey,
+      event: params.event || "ai_credit_evaluation",
+      outcome: params.outcome || "unknown",
+      yearMonth: params.yearMonth,
+      orgId: params.orgId,
+      uid: params.uid,
+      type: params.type,
+      creditsUsed: params.creditsUsed,
+      ceiling: params.ceiling,
+      reason: params.reason,
+      createdAt: FieldValue.serverTimestamp()
+    })
+  );
+
+  return { ref: docRef, auditKey };
+}
+
+/**
+ * Back-fills an existing audit record with its final verdict outcome ('success' or 'failure').
+ */
+export async function backfillAuditRecord(
+  auditRef: import("firebase-admin/firestore").DocumentReference,
+  updates: Partial<SystemAuditLogData>
+): Promise<void> {
+  await auditRef.set(
+    cleanUndefined({
+      ...updates,
+      updatedAt: FieldValue.serverTimestamp()
+    }),
+    { merge: true }
+  );
+}
+
 /**
  * Verifies and atomically consumes 1 AI credit in Firestore for user, org, and global ceiling.
+ * Audit logging is handled outside the transaction boundary to ensure audit records survive transaction rollback.
  */
 export async function verifyAndConsumeAiCredit(
   db: Firestore,
@@ -243,129 +330,147 @@ export async function verifyAndConsumeAiCredit(
     yearMonth?: string;
     globalMonthlyCeiling?: number;
     orgMonthlyCeiling?: number;
+    auditKey?: string;
   } = {}
 ): Promise<AllowanceResult> {
   const yearMonth = options.yearMonth || getCurrentYearMonth();
   const globalCeiling = options.globalMonthlyCeiling ?? getGlobalMonthlyCeiling();
   const orgStarterCeiling = options.orgMonthlyCeiling ?? getOrgStarterMonthlyCeiling();
 
+  // 1. Create audit record OUTSIDE transaction blast radius with outcome: 'unknown'
+  const { ref: auditRef } = await createAuditRecord(db, {
+    auditKey: options.auditKey,
+    event: "ai_credit_evaluation",
+    outcome: "unknown",
+    yearMonth,
+    orgId,
+    uid
+  });
+
   const userRef = db.doc(`users/${uid}`);
   const orgRef = db.doc(`orgs/${orgId}`);
   const globalUsageRef = db.doc(`systemUsage/${yearMonth}`);
 
-  return await db.runTransaction(async (tx) => {
-    const [userDoc, orgDoc, globalDoc] = await Promise.all([
-      tx.get(userRef),
-      tx.get(orgRef),
-      tx.get(globalUsageRef)
-    ]);
+  try {
+    const evaluation = await db.runTransaction(async (tx) => {
+      const [userDoc, orgDoc, globalDoc] = await Promise.all([
+        tx.get(userRef),
+        tx.get(orgRef),
+        tx.get(globalUsageRef)
+      ]);
 
-    const userCreditsUsed = (userDoc.get("aiCreditsUsed") as number) || 0;
-    const orgCreditsUsed = (orgDoc.get("aiCreditsUsed") as number) || 0;
-    const subscriptionTier = (orgDoc.get("subscriptionTier") as string) || "community";
-    const isEmailVerified = Boolean(auth.token?.email_verified);
+      const userCreditsUsed = (userDoc.get("aiCreditsUsed") as number) || 0;
+      const orgCreditsUsed = (orgDoc.get("aiCreditsUsed") as number) || 0;
+      const subscriptionTier = (orgDoc.get("subscriptionTier") as string) || "community";
+      const isEmailVerified = Boolean(auth.token?.email_verified);
 
-    // Monthly usage counters
-    const globalMonthlyUsed = (globalDoc.get("creditsUsed") as number) || 0;
-    const monthlyUsageMap = (orgDoc.get("monthlyAiUsage") as Record<string, number>) || {};
-    const orgMonthlyUsed = monthlyUsageMap[yearMonth] || 0;
+      // Monthly usage counters
+      const globalMonthlyUsed = (globalDoc.get("creditsUsed") as number) || 0;
+      const monthlyUsageMap = (orgDoc.get("monthlyAiUsage") as Record<string, number>) || {};
+      const orgMonthlyUsed = monthlyUsageMap[yearMonth] || 0;
 
-    // 1. Check Global Spend Ceiling ($25 monthly spend cap)
-    if (globalMonthlyUsed >= globalCeiling) {
-      console.warn(`[AI Spend Ceiling] Global ceiling reached: ${globalMonthlyUsed}/${globalCeiling} in ${yearMonth}`);
-      const auditRef = db.collection("systemAuditLogs").doc();
-      tx.set(auditRef, {
-        event: "ai_ceiling_reached",
-        type: "global",
-        yearMonth,
-        creditsUsed: globalMonthlyUsed,
-        ceiling: globalCeiling,
-        orgId,
-        uid,
-        timestamp: FieldValue.serverTimestamp()
+      // 1. Check Global Spend Ceiling ($25 monthly spend cap)
+      if (globalMonthlyUsed >= globalCeiling) {
+        console.warn(`[AI Spend Ceiling] Global ceiling reached: ${globalMonthlyUsed}/${globalCeiling} in ${yearMonth}`);
+        throw new HttpsError(
+          "resource-exhausted",
+          `System AI monthly capacity ceiling reached for this month ($25 limit). To continue drafting models immediately, please connect your organization's own Anthropic or OpenAI API key in AI Settings.`,
+          { reason: "global-ceiling-reached", degraded: true, yearMonth, globalMonthlyUsed, globalCeiling }
+        );
+      }
+
+      // 2. Check Per-Organization Monthly Ceiling for free tier
+      const isCommunity = subscriptionTier.toLowerCase() === "community";
+      if (isCommunity && orgMonthlyUsed >= orgStarterCeiling) {
+        console.warn(`[AI Spend Ceiling] Org ceiling reached for ${orgId}: ${orgMonthlyUsed}/${orgStarterCeiling} in ${yearMonth}`);
+        throw new HttpsError(
+          "resource-exhausted",
+          `Organization monthly starter AI quota reached (${orgStarterCeiling} operations for ${yearMonth}). Please connect your own API key in AI Settings or upgrade.`,
+          { reason: "org-ceiling-reached", degraded: true, yearMonth, orgMonthlyUsed, orgStarterCeiling }
+        );
+      }
+
+      // 3. User & Paid Tier Allowance Check
+      const evalResult = evaluateAiAllowance({
+        userCreditsUsed,
+        orgCreditsUsed,
+        isEmailVerified,
+        subscriptionTier,
+        hasByoKey: false,
+        globalMonthlyUsed,
+        globalMonthlyCeiling: globalCeiling,
+        orgMonthlyUsed,
+        orgMonthlyCeiling: orgStarterCeiling
       });
-      throw new HttpsError(
-        "resource-exhausted",
-        `System AI monthly capacity ceiling reached for this month ($25 limit). To continue drafting models immediately, please connect your organization's own Anthropic or OpenAI API key in AI Settings.`,
-        { reason: "global-ceiling-reached", degraded: true, yearMonth, globalMonthlyUsed, globalCeiling }
-      );
-    }
 
-    // 2. Check Per-Organization Monthly Ceiling for free tier
-    const isCommunity = subscriptionTier.toLowerCase() === "community";
-    if (isCommunity && orgMonthlyUsed >= orgStarterCeiling) {
-      console.warn(`[AI Spend Ceiling] Org ceiling reached for ${orgId}: ${orgMonthlyUsed}/${orgStarterCeiling} in ${yearMonth}`);
-      const auditRef = db.collection("systemAuditLogs").doc();
-      tx.set(auditRef, {
-        event: "ai_ceiling_reached",
-        type: "org",
-        yearMonth,
-        creditsUsed: orgMonthlyUsed,
-        ceiling: orgStarterCeiling,
-        orgId,
-        uid,
-        timestamp: FieldValue.serverTimestamp()
-      });
-      throw new HttpsError(
-        "resource-exhausted",
-        `Organization monthly starter AI quota reached (${orgStarterCeiling} operations for ${yearMonth}). Please connect your own API key in AI Settings or upgrade.`,
-        { reason: "org-ceiling-reached", degraded: true, yearMonth, orgMonthlyUsed, orgStarterCeiling }
-      );
-    }
+      if (!evalResult.allowed) {
+        throw new HttpsError("failed-precondition", evalResult.reason || "AI credit limit reached.", {
+          reason: isEmailVerified ? "quota-exceeded" : "verify-email",
+          creditsUsed: evalResult.creditsUsed,
+          maxCredits: evalResult.maxCredits
+        });
+      }
 
-    // 3. User & Paid Tier Allowance Check
-    const evaluation = evaluateAiAllowance({
-      userCreditsUsed,
-      orgCreditsUsed,
-      isEmailVerified,
-      subscriptionTier,
-      hasByoKey: false,
-      globalMonthlyUsed,
-      globalMonthlyCeiling: globalCeiling,
-      orgMonthlyUsed,
-      orgMonthlyCeiling: orgStarterCeiling
+      // 4. Atomically increment all counters
+      tx.set(
+        userRef,
+        {
+          aiCreditsUsed: FieldValue.increment(1),
+          lastAiUsedAt: FieldValue.serverTimestamp()
+        },
+        { merge: true }
+      );
+
+      tx.set(
+        orgRef,
+        {
+          aiCreditsUsed: FieldValue.increment(1),
+          [`monthlyAiUsage.${yearMonth}`]: FieldValue.increment(1),
+          lastAiUsedAt: FieldValue.serverTimestamp()
+        },
+        { merge: true }
+      );
+
+      tx.set(
+        globalUsageRef,
+        {
+          yearMonth,
+          creditsUsed: FieldValue.increment(1),
+          lastUsedAt: FieldValue.serverTimestamp()
+        },
+        { merge: true }
+      );
+
+      return evalResult;
     });
 
-    if (!evaluation.allowed) {
-      throw new HttpsError("failed-precondition", evaluation.reason || "AI credit limit reached.", {
-        reason: isEmailVerified ? "quota-exceeded" : "verify-email",
-        creditsUsed: evaluation.creditsUsed,
-        maxCredits: evaluation.maxCredits
-      });
-    }
-
-    // 4. Atomically increment all counters
-    tx.set(
-      userRef,
-      {
-        aiCreditsUsed: FieldValue.increment(1),
-        lastAiUsedAt: FieldValue.serverTimestamp()
-      },
-      { merge: true }
-    );
-
-    tx.set(
-      orgRef,
-      {
-        aiCreditsUsed: FieldValue.increment(1),
-        [`monthlyAiUsage.${yearMonth}`]: FieldValue.increment(1),
-        lastAiUsedAt: FieldValue.serverTimestamp()
-      },
-      { merge: true }
-    );
-
-    tx.set(
-      globalUsageRef,
-      {
-        yearMonth,
-        creditsUsed: FieldValue.increment(1),
-        lastUsedAt: FieldValue.serverTimestamp()
-      },
-      { merge: true }
-    );
+    // 2. Transaction succeeded: backfill outcome = 'success'
+    await backfillAuditRecord(auditRef, {
+      outcome: "success",
+      creditsUsed: evaluation.creditsUsed
+    });
 
     return evaluation;
-  });
+  } catch (error) {
+    // 3. Transaction failed or threw: backfill outcome = 'failure'
+    const details = (error instanceof HttpsError ? error.details : {}) as Record<string, unknown> | undefined;
+    const isCeiling = details?.reason === "global-ceiling-reached" || details?.reason === "org-ceiling-reached";
+    const ceilingType = details?.reason === "global-ceiling-reached" ? "global" : "org";
+
+    await backfillAuditRecord(auditRef, {
+      outcome: "failure",
+      event: isCeiling ? "ai_ceiling_reached" : "ai_credit_evaluation",
+      type: isCeiling ? ceilingType : "user",
+      creditsUsed: typeof details?.globalMonthlyUsed === "number" ? details.globalMonthlyUsed
+        : typeof details?.orgMonthlyUsed === "number" ? details.orgMonthlyUsed
+        : typeof details?.creditsUsed === "number" ? details.creditsUsed : undefined,
+      ceiling: typeof details?.globalCeiling === "number" ? details.globalCeiling
+        : typeof details?.orgStarterCeiling === "number" ? details.orgStarterCeiling : undefined,
+      reason: (details?.reason as string) || (error instanceof Error ? error.message : "transaction_failed")
+    });
+
+    throw error;
+  }
 }
 
 /**
