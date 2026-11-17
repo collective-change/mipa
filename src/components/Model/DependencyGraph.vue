@@ -80,7 +80,7 @@
       id="dependencyGraph"
       :width="svgWidth"
       :height="svgHeight"
-      style="border: black; border-style: solid; border-width: 0px"
+      style="border: black; border-style: solid; border-width: 0px; overflow: hidden"
     />
     <q-dialog v-model="showAddNode">
       <add-node
@@ -464,7 +464,10 @@ export default {
         .iterations(that.forceProperties.link.iterations);
 
       const transform = (d) => {
-        return "translate(" + d.x + "," + d.y + ")";
+        if (d.x != null && !isNaN(d.x) && d.y != null && !isNaN(d.y)) {
+          return "translate(" + d.x + "," + d.y + ")";
+        }
+        return "translate(-9999,-9999)";
       };
 
       const link = (d) => {
@@ -483,8 +486,18 @@ export default {
 
       const graph = this.selections.graph;
       graph.selectAll("path").attr("d", link);
-      graph.selectAll("circle").attr("transform", transform);
-      graph.selectAll("text").attr("transform", transform);
+      graph
+        .selectAll("circle")
+        .attr("transform", transform)
+        .style("opacity", (d) =>
+          d.x != null && !isNaN(d.x) && d.y != null && !isNaN(d.y) ? 1 : 0
+        );
+      graph
+        .selectAll("text")
+        .attr("transform", transform)
+        .style("opacity", (d) =>
+          d.x != null && !isNaN(d.x) && d.y != null && !isNaN(d.y) ? 1 : 0
+        );
       this.iterationCount++;
       //this.simulation.stop();
     },
@@ -1045,6 +1058,14 @@ export default {
         .data(this.d3Data.nodes)
         .enter()
         .append("circle")
+        .attr("transform", (d) =>
+          d.x != null && !isNaN(d.x) && d.y != null && !isNaN(d.y)
+            ? `translate(${d.x},${d.y})`
+            : "translate(-9999,-9999)"
+        )
+        .style("opacity", (d) =>
+          d.x != null && !isNaN(d.x) && d.y != null && !isNaN(d.y) ? 1 : 0
+        )
         .each(function (node, i) {
           if (node.newlyEntered) {
             d3.select(this).transition().attr("r", nodeRadius);
@@ -1313,6 +1334,14 @@ export default {
         .attr("x", 0)
         .attr("y", ".31em")
         .attr("text-anchor", "middle")
+        .attr("transform", (d) =>
+          d.x != null && !isNaN(d.x) && d.y != null && !isNaN(d.y)
+            ? `translate(${d.x},${d.y})`
+            : "translate(-9999,-9999)"
+        )
+        .style("opacity", (d) =>
+          d.x != null && !isNaN(d.x) && d.y != null && !isNaN(d.y) ? 1 : 0
+        )
         .text((d) =>
           d.name.concat(
             d.isSelfBlocking ? " (self-blocking)" : "",
