@@ -52,7 +52,7 @@ describe("Security Audit & Hardening", () => {
       // Create requires authentication
       expect(rulesContent).toContain("allow create: if request.auth != null;");
       // Update requires authenticated editor
-      expect(rulesContent).toContain("allow read, update: if request.auth != null && request.auth.uid in resource.data.editors.users;");
+      expect(rulesContent).toContain("allow update: if request.auth != null && request.auth.uid in resource.data.editors.users;");
       // Delete requires authenticated owner
       expect(rulesContent).toContain("allow delete: if request.auth != null && request.auth.uid in resource.data.owners.users;");
     });

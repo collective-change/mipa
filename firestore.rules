@@ -55,20 +55,28 @@ service cloud.firestore {
     // (AI draft conversations), are written only by Cloud Functions.
     match /models/{model} {
       allow create: if request.auth != null;
-      allow read, update: if request.auth != null && request.auth.uid in resource.data.editors.users;
-      allow delete: if request.auth != null && request.auth.uid in resource.data.owners.users;
+      allow read: if request.auth != null && (request.auth.uid in resource.data.editors.users || isModelViewer(resource.data));
       allow read: if resource.data.isPublic == true;
+      allow update: if request.auth != null && request.auth.uid in resource.data.editors.users;
+      allow delete: if request.auth != null && request.auth.uid in resource.data.owners.users;
     
       // Match any document in a model's nodes collection
       match /nodes/{node} {
-        allow read: if (request.auth != null && request.auth.uid in get(/databases/$(database)/documents/models/$(model)).data.editors.users)
+        allow read: if (request.auth != null && (
+            request.auth.uid in get(/databases/$(database)/documents/models/$(model)).data.editors.users
+            || isModelViewer(get(/databases/$(database)/documents/models/$(model)).data)
+          ))
           || get(/databases/$(database)/documents/models/$(model)).data.isPublic == true;
         allow write: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/models/$(model)).data.editors.users;
       }
 
       // Immutable model snapshots for decision provenance & governance
       match /snapshots/{snapshot} {
-        allow read: if request.auth != null && (request.auth.uid in get(/databases/$(database)/documents/models/$(model)).data.editors.users || get(/databases/$(database)/documents/models/$(model)).data.isPublic == true);
+        allow read: if request.auth != null && (
+            request.auth.uid in get(/databases/$(database)/documents/models/$(model)).data.editors.users
+            || isModelViewer(get(/databases/$(database)/documents/models/$(model)).data)
+            || get(/databases/$(database)/documents/models/$(model)).data.isPublic == true
+          );
         allow create: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/models/$(model)).data.editors.users;
         allow update, delete: if false;
       }
@@ -127,6 +135,15 @@ service cloud.firestore {
     function userInOrg(orgId) {
       return request.auth != null
         && request.auth.uid in get(/databases/$(database)/documents/orgs/$(orgId)).data.users;
+    }
+
+    function isModelViewer(modelData) {
+      return request.auth != null && (
+        ('viewers' in modelData && modelData.viewers != null && (
+          ('users' in modelData.viewers && modelData.viewers.users != null && request.auth.uid in modelData.viewers.users)
+          || ('emails' in modelData.viewers && modelData.viewers.emails != null && request.auth.token.email != null && request.auth.token.email.lower() in modelData.viewers.emails)
+        ))
+      );
     }
 
   }

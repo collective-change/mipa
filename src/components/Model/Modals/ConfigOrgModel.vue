@@ -241,6 +241,66 @@
         </div>
       </div>
 
+      <q-separator />
+
+      <q-card-section>
+        <div class="row items-center justify-between q-mb-xs">
+          <div class="text-h6 row items-center">
+            <q-icon name="visibility" color="primary" class="q-mr-xs" size="22px" />
+            {{ $t("stakeholderViewersTitle") }}
+          </div>
+          <q-badge color="blue-1" text-color="primary" class="q-px-sm q-py-xs text-caption">
+            {{ $t("freeStakeholderViewersNotice") }}
+          </q-badge>
+        </div>
+        <div class="text-body2 text-grey-8 q-mb-md">
+          {{ $t("stakeholderViewersHelp") }}
+        </div>
+
+        <div class="row q-col-gutter-sm items-start q-mb-md">
+          <div class="col">
+            <q-input
+              v-model="newViewerEmail"
+              :label="$t('viewerEmailLabel')"
+              placeholder="stakeholder@example.com"
+              type="email"
+              dense
+              filled
+              :error="!!viewerEmailError"
+              :error-message="viewerEmailError"
+              @keydown.enter.prevent="addViewer"
+            />
+          </div>
+          <div class="col-auto">
+            <q-btn
+              no-caps
+              unelevated
+              color="primary"
+              icon="person_add"
+              :label="$t('addViewerBtn')"
+              @click="addViewer"
+            />
+          </div>
+        </div>
+
+        <div v-if="viewerEmails.length" class="q-gutter-xs">
+          <q-chip
+            v-for="email in viewerEmails"
+            :key="email"
+            removable
+            @remove="removeViewer(email)"
+            color="grey-2"
+            text-color="grey-9"
+            icon="visibility"
+          >
+            {{ email }}
+          </q-chip>
+        </div>
+        <div v-else class="text-caption text-grey-6 italic">
+          {{ $t("noViewersConfigured") }}
+        </div>
+      </q-card-section>
+
       <modal-buttons />
     </q-form>
   </q-card>
@@ -260,7 +320,10 @@ export default {
         name: "",
         simulationParams: {},
         roleNodes: {},
+        viewers: { users: [], emails: [] },
       },
+      newViewerEmail: "",
+      viewerEmailError: "",
       timeUnitOptions: [
         { label: "seconds", value: "seconds" },
         { label: "minutes", value: "minutes" },
@@ -308,9 +371,44 @@ export default {
     worldToOrgWeightingRatio() {
       return this.modelToSubmit.simulationParams.worldToOrgWeightingRatio;
     },
+    viewerEmails() {
+      return (this.modelToSubmit.viewers && this.modelToSubmit.viewers.emails) || [];
+    },
   },
   methods: {
     ...mapActions("model", ["updateModel"]),
+    addViewer() {
+      this.viewerEmailError = "";
+      if (!this.newViewerEmail) return;
+      const email = this.newViewerEmail.trim().toLowerCase();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        this.viewerEmailError = this.$t("invalidViewerEmail");
+        return;
+      }
+      if (!this.modelToSubmit.viewers) {
+        this.modelToSubmit.viewers = { users: [], emails: [] };
+      }
+      if (!Array.isArray(this.modelToSubmit.viewers.emails)) {
+        this.modelToSubmit.viewers.emails = [];
+      }
+      if (!Array.isArray(this.modelToSubmit.viewers.users)) {
+        this.modelToSubmit.viewers.users = [];
+      }
+      if (this.modelToSubmit.viewers.emails.includes(email)) {
+        this.viewerEmailError = this.$t("alreadyViewer");
+        return;
+      }
+      this.modelToSubmit.viewers.emails.push(email);
+      this.newViewerEmail = "";
+    },
+    removeViewer(email) {
+      if (this.modelToSubmit.viewers && Array.isArray(this.modelToSubmit.viewers.emails)) {
+        this.modelToSubmit.viewers.emails = this.modelToSubmit.viewers.emails.filter(
+          (e) => e !== email
+        );
+      }
+    },
     filterFn(val, update, abort) {
       update(() => {
         if (val === "") {
@@ -347,6 +445,13 @@ export default {
       this.modelToSubmit,
       JSON.parse(JSON.stringify(this.currentModel))
     );
+    if (!this.modelToSubmit.viewers || typeof this.modelToSubmit.viewers !== "object") {
+      this.modelToSubmit.viewers = { users: [], emails: [] };
+    } else {
+      if (!Array.isArray(this.modelToSubmit.viewers.users)) this.modelToSubmit.viewers.users = [];
+      if (!Array.isArray(this.modelToSubmit.viewers.emails)) this.modelToSubmit.viewers.emails = [];
+      delete this.modelToSubmit.viewers.org;
+    }
   },
 
   watch: {

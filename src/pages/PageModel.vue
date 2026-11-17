@@ -3,14 +3,29 @@
     <div v-if="currentOrg && currentOrg.goal" class="q-px-md q-pt-sm text-subtitle1 text-grey-8">
       {{ currentOrg.goal }}
     </div>
+    <q-banner
+      v-if="isReadOnly"
+      dense
+      rounded
+      class="bg-blue-1 text-primary q-mx-sm q-mb-sm print-hide"
+    >
+      <template v-slot:avatar>
+        <q-icon name="visibility" color="primary" />
+      </template>
+      <div class="text-body2 text-weight-medium">
+        {{ $t("stakeholderViewerNotice") }}
+      </div>
+    </q-banner>
+
     <getting-started
+      v-if="!isReadOnly"
       class="q-mt-sm print-hide"
       @add-factor="showAddNode = true"
       @open-templates="showTemplateLibrary = true"
       @open-tour="showOnboardingTour = true"
     />
     <q-banner
-      v-if="showDraftInvite"
+      v-if="showDraftInvite && !isReadOnly"
       rounded
       class="bg-blue-1 q-mx-sm q-mb-sm print-hide"
     >
@@ -37,6 +52,7 @@
               class="full-width"
             />
             <q-btn
+              v-if="!isReadOnly"
               @click="showConfigOrgModel = true"
               class="full-width print-hide"
               color="primary"
@@ -46,6 +62,7 @@
               :label="$t('Model settings')"
             />
             <q-btn
+              v-if="!isReadOnly"
               @click="showDraftModel = true"
               class="full-width print-hide"
               color="primary"
@@ -55,6 +72,7 @@
               :label="$t('Draft with AI')"
             />
             <q-btn
+              v-if="!isReadOnly"
               @click="showIngestData = true"
               class="full-width print-hide"
               color="primary"
@@ -100,7 +118,7 @@
               :label="$t('guidedTourBtn')"
             />
             <q-btn
-              v-if="latestAiDraft"
+              v-if="latestAiDraft && !isReadOnly"
               @click="confirmRemoveDraft"
               class="full-width print-hide"
               color="grey-8"
@@ -189,11 +207,12 @@
       <div class="col-12 col-md-7">
         <dependency-graph
           :initialCirclePositions="initialCirclePositions"
+          :readOnly="isReadOnly"
         ></dependency-graph>
       </div>
       <div class="col-12 col-md-3">
         <div class="node-panel q-pa-sm">
-          <node-summary />
+          <node-summary :readOnly="isReadOnly" />
         </div>
       </div>
     </div>
@@ -309,6 +328,29 @@ export default {
     latestAiDraft() {
       const drafts = (this.currentModel && this.currentModel.appliedAiDrafts) || [];
       return drafts.length ? drafts[drafts.length - 1] : null;
+    },
+    isEditor() {
+      const uid = firebaseAuth.currentUser?.uid;
+      if (!uid || !this.currentModel) return false;
+      const editors = this.currentModel.editors?.users || [];
+      const owners = this.currentModel.owners?.users || [];
+      return editors.includes(uid) || owners.includes(uid);
+    },
+    isViewer() {
+      const user = firebaseAuth.currentUser;
+      if (!user || !this.currentModel) return false;
+      if (this.isEditor) return false;
+      const viewerUsers = this.currentModel.viewers?.users || [];
+      const viewerEmails = (this.currentModel.viewers?.emails || []).map((e) =>
+        e.toLowerCase()
+      );
+      return (
+        viewerUsers.includes(user.uid) ||
+        (user.email && viewerEmails.includes(user.email.toLowerCase()))
+      );
+    },
+    isReadOnly() {
+      return this.isViewer || !this.isEditor;
     },
     ...mapState("orgs", ["currentOrg"]),
     ...mapState("model", ["currentModel"]),
