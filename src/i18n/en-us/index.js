@@ -1135,5 +1135,15 @@ export default {
 
   // Starter AI Allowance
   aiStarterAllowanceTitle: "Complimentary Starter AI Active",
-  aiStarterAllowanceDesc: "10 free AI drafting operations included (Claude 3.5 Haiku / GPT-4o-mini). Connect your own API key below anytime for unlimited operations."
+  aiStarterAllowanceDesc: "10 free AI drafting operations included (Claude 3.5 Haiku / GPT-4o-mini). Connect your own API key below anytime for unlimited operations.",
+
+  // Stakeholder Viewers
+  stakeholderViewersTitle: "Stakeholder Viewers",
+  stakeholderViewersHelp: "Invite read-only stakeholder viewers by email. Viewers can open the model, view factors, and run simulations without consuming member seats.",
+  viewerEmailLabel: "Viewer email",
+  addViewerBtn: "Add viewer",
+  noViewersConfigured: "No stakeholder viewers configured yet.",
+  alreadyViewer: "This email is already in the viewers list.",
+  stakeholderViewerNotice: "You are viewing this model as a read-only stakeholder viewer.",
+  invalidViewerEmail: "Please enter a valid email address."
 };

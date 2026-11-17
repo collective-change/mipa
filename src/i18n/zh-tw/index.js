@@ -1116,5 +1116,15 @@ export default {
 
   // Starter AI Allowance
   aiStarterAllowanceTitle: "已啟用先導 AI 免費額度",
-  aiStarterAllowanceDesc: "包含 10 次免費 AI 建模生成額度（由 Claude 3.5 Haiku / GPT-4o-mini 驅動）。您隨時可在下方連接自備 API 金鑰以享有無限使用次數。"
+  aiStarterAllowanceDesc: "包含 10 次免費 AI 建模生成額度（由 Claude 3.5 Haiku / GPT-4o-mini 驅動）。您隨時可在下方連接自備 API 金鑰以享有無限使用次數。",
+
+  // Stakeholder Viewers
+  stakeholderViewersTitle: "利益關係人檢視者",
+  stakeholderViewersHelp: "透過電子信箱邀請唯讀利益關係人。檢視者可開啟模型、檢視要素並執行模擬，且不消耗成員席位。",
+  viewerEmailLabel: "檢視者電子信箱",
+  addViewerBtn: "新增檢視者",
+  noViewersConfigured: "尚未設定利益關係人檢視者。",
+  alreadyViewer: "此電子信箱已在檢視者清單中。",
+  stakeholderViewerNotice: "您正以唯讀利益關係人身分檢視此模型。",
+  invalidViewerEmail: "請輸入有效的電子信箱地址。"
 };

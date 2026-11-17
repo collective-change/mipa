@@ -3,6 +3,7 @@
     <!-- Floating Graph Controls Toolbar -->
     <div class="graph-floating-toolbar glass-panel print-hide" style="top: 12px; left: 12px">
       <q-btn
+        v-if="!readOnly"
         @click="
           showAddNode = true;
           addNodeProps.newNodeRole = '';
@@ -133,7 +134,7 @@ export default {
     "delete-node": DeleteNode,
     "add-link": AddLink,
   },
-  props: ["initialCirclePositions"],
+  props: ["initialCirclePositions", "readOnly"],
   data() {
     return {
       showAddNode: false,
@@ -1031,6 +1032,10 @@ export default {
                 },
               },
             ];
+            if (that.readOnly) {
+              return [];
+            }
+
             let items = [];
             //TODO: distinguish between links to nodes and to node groups
             items.push(...baseLinkContextMenuItems);
@@ -1240,6 +1245,10 @@ export default {
                 },
               },
             ];
+
+            if (that.readOnly) {
+              return [];
+            }
 
             let items = [];
             if (!nodeIsGroupNode) items.push(...baseNodeContextMenuItems);

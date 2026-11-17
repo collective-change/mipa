@@ -38,10 +38,14 @@ function requireRole(value: unknown): Role {
 
 async function orgModelRefs(tx: Transaction, orgId: string) {
   const db = getFirestore();
-  const models = await tx.get(
-    db.collection("models").where("viewers.org", "array-contains", orgId)
-  );
-  return models.docs.map((d) => d.ref);
+  const [byOrgId, byLegacy] = await Promise.all([
+    tx.get(db.collection("models").where("orgId", "==", orgId)),
+    tx.get(db.collection("models").where("viewers.org", "array-contains", orgId))
+  ]);
+  const refs = new Map<string, FirebaseFirestore.DocumentReference>();
+  for (const d of byOrgId.docs) refs.set(d.id, d.ref);
+  for (const d of byLegacy.docs) refs.set(d.id, d.ref);
+  return Array.from(refs.values());
 }
 
 export function checkSeatCapacity(usersCount: number, pendingInvitesCount: number, seatLimit: number): { allowed: boolean; remaining: number } {

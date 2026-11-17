@@ -6,11 +6,12 @@
           <q-input
             class="text-h6 col"
             v-model="nodeToSubmit.name"
+            :readonly="readOnly"
             :placeholder="$t('Name of the factor')"
             :rules="[(val) => !!val || $t('Required')]"
             ref="nodeName"
           />
-          <q-btn flat round icon="more_horiz" class="q-mt-sm" :aria-label="$t('More options')">
+          <q-btn v-if="!readOnly" flat round icon="more_horiz" class="q-mt-sm" :aria-label="$t('More options')">
             <q-tooltip>{{ $t("More options") }}</q-tooltip>
             <q-menu auto-close>
               <q-list style="min-width: 260px">
@@ -561,7 +562,7 @@
           </div>
         </q-expansion-item>
 
-        <modal-buttons />
+        <modal-buttons v-if="!readOnly" />
       </q-form>
       <div class="text-h6">{{ $t("Chat") }}</div>
       <chat
@@ -700,6 +701,12 @@ export default {
     chat: Chat,
     gchart: GChart,
     "latex-formula": LatexFormula,
+  },
+  props: {
+    readOnly: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   data() {
@@ -1002,6 +1009,7 @@ export default {
       });
     },
     submitForm() {
+      if (this.readOnly) return;
       if (this.$refs.nodeName) {
         this.$refs.nodeName.validate();
         if (this.$refs.nodeName.hasError) return;
