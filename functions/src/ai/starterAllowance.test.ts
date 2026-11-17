@@ -4,6 +4,9 @@ import {
   evaluateAiAllowance,
   getSystemAiProvider,
   verifyAndConsumeAiCredit,
+  createAuditRecord,
+  backfillAuditRecord,
+  AuditOutcome,
   STARTER_VERIFIED_ALLOWANCE,
   STARTER_UNVERIFIED_TEASER,
   TIER_AI_ALLOWANCES
@@ -242,6 +245,102 @@ test("end-to-end starter draft resolution: brand new user accesses claude-haiku-
   }
 });
 
+interface MockDatabaseOptions {
+  userStore?: Record<string, unknown>;
+  orgStore?: Record<string, unknown>;
+  globalStore?: Record<string, unknown>;
+  auditLogs?: Record<string, unknown>[];
+  onTransactionThrow?: () => void;
+}
+
+function createTransactionalMockDb(options: MockDatabaseOptions = {}) {
+  const userStore = options.userStore || {};
+  const orgStore = options.orgStore || {};
+  const globalStore = options.globalStore || {};
+  const auditLogs = options.auditLogs || [];
+
+  return {
+    doc: (path: string) => ({
+      path,
+      get: async () => {
+        if (path.startsWith("users/")) return { get: (f: string) => userStore[f] };
+        if (path.startsWith("orgs/")) return { get: (f: string) => orgStore[f] };
+        if (path.startsWith("systemUsage/")) return { get: (f: string) => globalStore[f] };
+        return { get: () => undefined };
+      },
+      set: async (data: Record<string, unknown>) => {
+        if (path.startsWith("users/")) Object.assign(userStore, data);
+        if (path.startsWith("orgs/")) Object.assign(orgStore, data);
+        if (path.startsWith("systemUsage/")) Object.assign(globalStore, data);
+      }
+    }),
+    collection: (name: string) => ({
+      doc: (id?: string) => {
+        const docId = id || `audit-${auditLogs.length + 1}`;
+        const docPath = `${name}/${docId}`;
+        return {
+          id: docId,
+          path: docPath,
+          get: async () => {
+            const found = auditLogs.find((l) => l.auditKey === docId);
+            return {
+              exists: !!found,
+              data: () => found,
+              get: (f: string) => found?.[f]
+            };
+          },
+          set: async (data: Record<string, unknown>, opts?: { merge?: boolean }) => {
+            if (name === "systemAuditLogs") {
+              const existingIndex = auditLogs.findIndex((l) => l.auditKey === docId);
+              if (existingIndex >= 0) {
+                if (opts?.merge) {
+                  Object.assign(auditLogs[existingIndex], data);
+                } else {
+                  auditLogs[existingIndex] = { ...data, auditKey: docId };
+                }
+              } else {
+                auditLogs.push({ ...data, auditKey: docId });
+              }
+            }
+          }
+        };
+      }
+    }),
+    runTransaction: async (cb: (tx: unknown) => Promise<unknown>) => {
+      // Buffer transactional writes so if cb throws, rollback clears all staged mutations
+      const stagedWrites: Array<() => void> = [];
+      const txMock = {
+        get: async (ref: { path: string }) => {
+          if (ref.path.startsWith("users/")) return { get: (f: string) => userStore[f] };
+          if (ref.path.startsWith("orgs/")) return { get: (f: string) => orgStore[f] };
+          if (ref.path.startsWith("systemUsage/")) return { get: (f: string) => globalStore[f] };
+          return { get: () => undefined };
+        },
+        set: (ref: { path: string }, data: Record<string, unknown>) => {
+          stagedWrites.push(() => {
+            if (ref.path.startsWith("users/")) Object.assign(userStore, data);
+            if (ref.path.startsWith("orgs/")) Object.assign(orgStore, data);
+            if (ref.path.startsWith("systemUsage/")) Object.assign(globalStore, data);
+          });
+        }
+      };
+
+      try {
+        const result = await cb(txMock);
+        // Transaction committed: apply all staged writes
+        for (const commit of stagedWrites) {
+          commit();
+        }
+        return result;
+      } catch (err) {
+        // Transaction threw: roll back all staged writes (do NOT apply them)
+        if (options.onTransactionThrow) options.onTransactionThrow();
+        throw err;
+      }
+    }
+  } as unknown as import("firebase-admin/firestore").Firestore;
+}
+
 test("verifyAndConsumeAiCredit: Atomically checks and decrements allowance", async () => {
   const mockUserStore: Record<string, unknown> = {
     aiCreditsUsed: 3
@@ -255,41 +354,13 @@ test("verifyAndConsumeAiCredit: Atomically checks and decrements allowance", asy
     creditsUsed: 150
   };
 
-  const userDocMock = {
-    get: (field: string) => mockUserStore[field]
-  };
-  const orgDocMock = {
-    get: (field: string) => mockOrgStore[field]
-  };
-  const globalDocMock = {
-    get: (field: string) => mockGlobalStore[field]
-  };
-
-  const auditLogs: unknown[] = [];
-
-  const mockDb = {
-    doc: (path: string) => ({ path }),
-    collection: (name: string) => ({
-      doc: () => ({ path: `${name}/audit-1` })
-    }),
-    runTransaction: async (cb: (tx: unknown) => Promise<unknown>) => {
-      const txMock = {
-        get: async (ref: { path: string }) => {
-          if (ref.path.startsWith("users/")) return userDocMock;
-          if (ref.path.startsWith("orgs/")) return orgDocMock;
-          if (ref.path.startsWith("systemUsage/")) return globalDocMock;
-          return { get: () => undefined };
-        },
-        set: (ref: { path: string }, data: Record<string, unknown>) => {
-          if (ref.path.startsWith("users/")) Object.assign(mockUserStore, data);
-          if (ref.path.startsWith("orgs/")) Object.assign(mockOrgStore, data);
-          if (ref.path.startsWith("systemUsage/")) Object.assign(mockGlobalStore, data);
-          if (ref.path.startsWith("systemAuditLogs/")) auditLogs.push(data);
-        }
-      };
-      return await cb(txMock);
-    }
-  } as unknown as import("firebase-admin/firestore").Firestore;
+  const auditLogs: Record<string, unknown>[] = [];
+  const mockDb = createTransactionalMockDb({
+    userStore: mockUserStore,
+    orgStore: mockOrgStore,
+    globalStore: mockGlobalStore,
+    auditLogs
+  });
 
   // Consume credit with verified email
   const result = await verifyAndConsumeAiCredit(mockDb, "uid-123", "org-456", {
@@ -306,6 +377,11 @@ test("verifyAndConsumeAiCredit: Atomically checks and decrements allowance", asy
   assert.ok(mockOrgStore.lastAiUsedAt !== undefined);
   assert.ok(mockGlobalStore.lastUsedAt !== undefined);
   assert.equal(mockGlobalStore.yearMonth, "2026-11");
+
+  // Verify audit log outcome was recorded as success
+  assert.equal(auditLogs.length, 1);
+  assert.equal(auditLogs[0].outcome, "success");
+  assert.ok(auditLogs[0].auditKey !== undefined);
 });
 
 test("verifyAndConsumeAiCredit: Global monthly ceiling refusal logs audit and throws resource-exhausted", async () => {
@@ -314,27 +390,12 @@ test("verifyAndConsumeAiCredit: Global monthly ceiling refusal logs audit and th
   const mockGlobalStore: Record<string, unknown> = { creditsUsed: 5000 }; // At ceiling
 
   const auditLogs: Record<string, unknown>[] = [];
-
-  const mockDb = {
-    doc: (path: string) => ({ path }),
-    collection: (name: string) => ({
-      doc: () => ({ path: `${name}/audit-${auditLogs.length + 1}` })
-    }),
-    runTransaction: async (cb: (tx: unknown) => Promise<unknown>) => {
-      const txMock = {
-        get: async (ref: { path: string }) => {
-          if (ref.path.startsWith("users/")) return { get: (f: string) => mockUserStore[f] };
-          if (ref.path.startsWith("orgs/")) return { get: (f: string) => mockOrgStore[f] };
-          if (ref.path.startsWith("systemUsage/")) return { get: (f: string) => mockGlobalStore[f] };
-          return { get: () => undefined };
-        },
-        set: (ref: { path: string }, data: Record<string, unknown>) => {
-          if (ref.path.startsWith("systemAuditLogs/")) auditLogs.push(data);
-        }
-      };
-      return await cb(txMock);
-    }
-  } as unknown as import("firebase-admin/firestore").Firestore;
+  const mockDb = createTransactionalMockDb({
+    userStore: mockUserStore,
+    orgStore: mockOrgStore,
+    globalStore: mockGlobalStore,
+    auditLogs
+  });
 
   await assert.rejects(
     async () => {
@@ -355,11 +416,13 @@ test("verifyAndConsumeAiCredit: Global monthly ceiling refusal logs audit and th
     }
   );
 
-  // Assert audit event was written
+  // Assert audit event was written outside the rolled-back transaction
   assert.equal(auditLogs.length, 1);
   assert.equal(auditLogs[0].event, "ai_ceiling_reached");
   assert.equal(auditLogs[0].type, "global");
   assert.equal(auditLogs[0].ceiling, 5000);
+  assert.equal(auditLogs[0].outcome, "failure");
+  assert.ok(auditLogs[0].auditKey !== undefined);
 });
 
 test("verifyAndConsumeAiCredit: Per-organization starter ceiling refusal logs audit and throws resource-exhausted", async () => {
@@ -372,27 +435,12 @@ test("verifyAndConsumeAiCredit: Per-organization starter ceiling refusal logs au
   const mockGlobalStore: Record<string, unknown> = { creditsUsed: 100 }; // Global has room
 
   const auditLogs: Record<string, unknown>[] = [];
-
-  const mockDb = {
-    doc: (path: string) => ({ path }),
-    collection: (name: string) => ({
-      doc: () => ({ path: `${name}/audit-${auditLogs.length + 1}` })
-    }),
-    runTransaction: async (cb: (tx: unknown) => Promise<unknown>) => {
-      const txMock = {
-        get: async (ref: { path: string }) => {
-          if (ref.path.startsWith("users/")) return { get: (f: string) => mockUserStore[f] };
-          if (ref.path.startsWith("orgs/")) return { get: (f: string) => mockOrgStore[f] };
-          if (ref.path.startsWith("systemUsage/")) return { get: (f: string) => mockGlobalStore[f] };
-          return { get: () => undefined };
-        },
-        set: (ref: { path: string }, data: Record<string, unknown>) => {
-          if (ref.path.startsWith("systemAuditLogs/")) auditLogs.push(data);
-        }
-      };
-      return await cb(txMock);
-    }
-  } as unknown as import("firebase-admin/firestore").Firestore;
+  const mockDb = createTransactionalMockDb({
+    userStore: mockUserStore,
+    orgStore: mockOrgStore,
+    globalStore: mockGlobalStore,
+    auditLogs
+  });
 
   await assert.rejects(
     async () => {
@@ -417,6 +465,136 @@ test("verifyAndConsumeAiCredit: Per-organization starter ceiling refusal logs au
   assert.equal(auditLogs[0].event, "ai_ceiling_reached");
   assert.equal(auditLogs[0].type, "org");
   assert.equal(auditLogs[0].orgId, "org-abuse");
+  assert.equal(auditLogs[0].outcome, "failure");
+});
+
+test("MIPA-13: Audit record survives throwing transaction rollback", async () => {
+  const mockUserStore: Record<string, unknown> = { aiCreditsUsed: 10 };
+  const mockOrgStore: Record<string, unknown> = {
+    aiCreditsUsed: 20,
+    subscriptionTier: "community",
+    monthlyAiUsage: { "2026-11": 50 } // Hits org starter ceiling
+  };
+  const mockGlobalStore: Record<string, unknown> = { creditsUsed: 200 };
+  const auditLogs: Record<string, unknown>[] = [];
+
+  let transactionRolledBack = false;
+  const mockDb = createTransactionalMockDb({
+    userStore: mockUserStore,
+    orgStore: mockOrgStore,
+    globalStore: mockGlobalStore,
+    auditLogs,
+    onTransactionThrow: () => {
+      transactionRolledBack = true;
+    }
+  });
+
+  // Force transaction to throw
+  await assert.rejects(async () => {
+    await verifyAndConsumeAiCredit(mockDb, "uid-throw-test", "org-throw-test", {
+      token: { email_verified: true }
+    }, {
+      yearMonth: "2026-11",
+      globalMonthlyCeiling: 5000,
+      orgMonthlyCeiling: 50
+    });
+  });
+
+  // 1. Assert transaction rolled back and staged counter increments were discarded
+  assert.equal(transactionRolledBack, true, "Transaction rollback must have been triggered");
+  assert.equal(mockUserStore.aiCreditsUsed, 10, "User credits counter must NOT be incremented upon rollback");
+  assert.equal(mockOrgStore.aiCreditsUsed, 20, "Org credits counter must NOT be incremented upon rollback");
+
+  // 2. Assert and RECORD that the audit record is present despite transaction rollback
+  assert.equal(auditLogs.length, 1, "Audit record must be present in systemAuditLogs store");
+  const auditRecord = auditLogs[0];
+  assert.ok(auditRecord.auditKey, "Audit record must have an auditKey");
+  assert.equal(auditRecord.outcome, "failure", "Audit outcome must be recorded as 'failure'");
+  assert.equal(auditRecord.type, "org");
+  assert.equal(auditRecord.uid, "uid-throw-test");
+  assert.equal(auditRecord.orgId, "org-throw-test");
+});
+
+test("MIPA-13: Outcome field is three-valued (success, failure, unknown)", async () => {
+  const auditLogs: Record<string, unknown>[] = [];
+  const mockDb = createTransactionalMockDb({ auditLogs });
+
+  // 1. Verify 'unknown' - initial state written upfront before transaction resolution
+  const { ref: unknownRef, auditKey } = await createAuditRecord(mockDb, {
+    auditKey: "key-unknown-state",
+    event: "ai_credit_evaluation",
+    outcome: "unknown",
+    yearMonth: "2026-11",
+    orgId: "org-test",
+    uid: "uid-test"
+  });
+
+  assert.equal(auditKey, "key-unknown-state");
+  assert.equal(auditLogs.length, 1);
+  assert.equal(auditLogs[0].auditKey, "key-unknown-state");
+  assert.equal(auditLogs[0].outcome, "unknown" as AuditOutcome, "Initial outcome must be 'unknown'");
+
+  // 2. Verify 'success' - back-filling after successful outcome
+  await backfillAuditRecord(unknownRef, {
+    outcome: "success",
+    creditsUsed: 1
+  });
+  assert.equal(auditLogs[0].outcome, "success" as AuditOutcome, "Resolved outcome must transition to 'success'");
+
+  // 3. Verify 'failure' - separate failure record
+  const { ref: failRef } = await createAuditRecord(mockDb, {
+    auditKey: "key-failure-state",
+    event: "ai_credit_evaluation",
+    outcome: "unknown",
+    yearMonth: "2026-11",
+    orgId: "org-test",
+    uid: "uid-test"
+  });
+  await backfillAuditRecord(failRef, {
+    outcome: "failure",
+    reason: "quota_exceeded"
+  });
+
+  const failDoc = auditLogs.find((l) => l.auditKey === "key-failure-state");
+  assert.ok(failDoc);
+  assert.equal(failDoc.outcome, "failure" as AuditOutcome, "Failed outcome must transition to 'failure'");
+  assert.equal(failDoc.reason, "quota_exceeded");
+});
+
+test("MIPA-13: Audit record carries key that can be back-filled once outcome is known", async () => {
+  const auditLogs: Record<string, unknown>[] = [];
+  const mockDb = createTransactionalMockDb({ auditLogs });
+
+  const customKey = "custom-audit-key-2026";
+  const { ref, auditKey } = await createAuditRecord(mockDb, {
+    auditKey: customKey,
+    event: "ai_credit_evaluation",
+    outcome: "unknown",
+    yearMonth: "2026-11",
+    orgId: "org-backfill-test",
+    uid: "uid-backfill-test"
+  });
+
+  assert.equal(auditKey, customKey);
+  assert.equal(auditLogs.length, 1);
+  assert.equal(auditLogs[0].auditKey, customKey);
+  assert.equal(auditLogs[0].outcome, "unknown");
+
+  // Backfill with execution details
+  await backfillAuditRecord(ref, {
+    outcome: "success",
+    creditsUsed: 5,
+    reason: "verified_tier_approval"
+  });
+
+  const record = auditLogs.find((l) => l.auditKey === customKey);
+  assert.ok(record);
+  assert.equal(record.auditKey, customKey);
+  assert.equal(record.outcome, "success");
+  assert.equal(record.creditsUsed, 5);
+  assert.equal(record.reason, "verified_tier_approval");
+  assert.equal(record.orgId, "org-backfill-test");
+  assert.equal(record.uid, "uid-backfill-test");
 });
 
 test("evaluateAiAllowance: Independent per-org and global ceiling evaluation", () => {
