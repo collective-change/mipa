@@ -1145,5 +1145,9 @@ export default {
   noViewersConfigured: "No stakeholder viewers configured yet.",
   alreadyViewer: "This email is already in the viewers list.",
   stakeholderViewerNotice: "You are viewing this model as a read-only stakeholder viewer.",
-  invalidViewerEmail: "Please enter a valid email address."
+  invalidViewerEmail: "Please enter a valid email address.",
+
+  // Currency Selection
+  currency: "Currency",
+  noMatchingCurrencies: "No matching currencies"
 };

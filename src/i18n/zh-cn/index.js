@@ -1116,5 +1116,9 @@ export default {
 
   // Starter AI Allowance
   aiStarterAllowanceTitle: "已启用先导 AI 免费额度",
-  aiStarterAllowanceDesc: "包含 10 次免费 AI 建模生成额度（由 Claude 3.5 Haiku / GPT-4o-mini 驱动）。您随时可在下方连接自备 API 密钥以享有无限使用次数。"
+  aiStarterAllowanceDesc: "包含 10 次免费 AI 建模生成额度（由 Claude 3.5 Haiku / GPT-4o-mini 驱动）。您随时可在下方连接自备 API 密钥以享有无限使用次数。",
+
+  // Currency Selection
+  currency: "币种",
+  noMatchingCurrencies: "无匹配币种"
 };

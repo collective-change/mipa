@@ -1133,5 +1133,9 @@ export default {
 
   // Starter AI Allowance
   "aiStarterAllowanceTitle": "スターターAIクレジットが有効です",
-  "aiStarterAllowanceDesc": "10回の無料AIドラフト操作が含まれています（Claude 3.5 Haiku / GPT-4o-mini）。無制限に利用するには、以下から独自のAPIキーを接続してください。"
+  "aiStarterAllowanceDesc": "10回の無料AIドラフト操作が含まれています（Claude 3.5 Haiku / GPT-4o-mini）。無制限に利用するには、以下から独自のAPIキーを接続してください。",
+
+  // Currency Selection
+  "currency": "通貨",
+  "noMatchingCurrencies": "一致する通貨がありません"
 };
