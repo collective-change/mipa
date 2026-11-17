@@ -55,6 +55,7 @@ export default {
         exchangeRates: this.exchangeRates,
         simulationParams: this.currentModel.simulationParams,
         roleNodes: this.currentModel.roleNodes,
+        customVariables: this.currentModel?.customVariables || null,
       };
       switch (this.calculationType) {
         case "baseline":

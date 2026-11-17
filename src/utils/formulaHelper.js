@@ -127,12 +127,21 @@ export function validateFormulaSyntax(formula = "", options = {}) {
   const usedSymbols = Array.from(usedSymbolsSet);
   const availableSet = new Set(options.availableSymbols || []);
   const allNodes = options.allNodes || [];
+  const customVariables = options.customVariables || [];
+  const customVarNames = new Set(
+    Array.isArray(customVariables)
+      ? customVariables.map((v) => v && (v.name || v.id)).filter(Boolean)
+      : Object.keys(customVariables || {})
+  );
 
+  const usedCustomVariables = [];
   const unlinkedSymbols = [];
   const unknownSymbols = [];
 
   for (const sym of usedSymbols) {
-    if (!availableSet.has(sym)) {
+    if (customVarNames.has(sym)) {
+      usedCustomVariables.push(sym);
+    } else if (!availableSet.has(sym)) {
       const matchedNode = allNodes.find((n) => n.symbol === sym && n.id !== options.currentNodeId);
       if (matchedNode) {
         unlinkedSymbols.push({
@@ -154,7 +163,8 @@ export function validateFormulaSyntax(formula = "", options = {}) {
     errorType: null,
     usedSymbols,
     unlinkedSymbols,
-    unknownSymbols
+    unknownSymbols,
+    usedCustomVariables
   };
 }
 
@@ -164,30 +174,68 @@ export function validateFormulaSyntax(formula = "", options = {}) {
  * @param {Array} allNodes
  * @param {string} currentNodeId
  * @param {string[]} influencerIds
+ * @param {Array|Object} [customVariables]
  * @returns {Array}
  */
-export function getFactorSuggestions(token = "", allNodes = [], currentNodeId = "", influencerIds = []) {
-  if (!Array.isArray(allNodes)) return [];
+export function getFactorSuggestions(
+  token = "",
+  allNodes = [],
+  currentNodeId = "",
+  influencerIds = [],
+  customVariables = []
+) {
   const query = (token || "").trim().toLowerCase();
   const influencerSet = new Set(influencerIds || []);
 
-  const candidates = allNodes.filter((n) => {
-    if (!n || !n.symbol) return false;
-    if (n.id === currentNodeId) return false;
-    if (!query) return true;
-    const sym = n.symbol.toLowerCase();
-    const name = (n.name || "").toLowerCase();
-    return sym.includes(query) || name.includes(query);
-  });
+  const candidates = [];
+
+  if (Array.isArray(allNodes)) {
+    for (const n of allNodes) {
+      if (!n || !n.symbol) continue;
+      if (n.id === currentNodeId) continue;
+      const sym = n.symbol.toLowerCase();
+      const name = (n.name || "").toLowerCase();
+      if (!query || sym.includes(query) || name.includes(query)) {
+        candidates.push({
+          ...n,
+          isCustomVariable: false
+        });
+      }
+    }
+  }
+
+  const varList = Array.isArray(customVariables)
+    ? customVariables
+    : Object.entries(customVariables || {}).map(([name, item]) => ({
+        name,
+        ...(typeof item === "object" && item !== null ? item : { value: item })
+      }));
+
+  for (const v of varList) {
+    if (!v || !v.name) continue;
+    const sym = String(v.name).toLowerCase();
+    const desc = String(v.description || "").toLowerCase();
+    if (!query || sym.includes(query) || desc.includes(query)) {
+      candidates.push({
+        id: `cvar_${v.name}`,
+        symbol: v.name,
+        name: v.description || v.name,
+        unit: v.unit || "",
+        value: v.value,
+        isCustomVariable: true
+      });
+    }
+  }
 
   return candidates.sort((a, b) => {
-    const aIsInf = influencerSet.has(a.id) ? 1 : 0;
-    const bIsInf = influencerSet.has(b.id) ? 1 : 0;
-    if (aIsInf !== bIsInf) return bIsInf - aIsInf; // Influencers first
+    // If one is influencer factor, it has top priority
+    const aIsInf = !a.isCustomVariable && influencerSet.has(a.id) ? 1 : 0;
+    const bIsInf = !b.isCustomVariable && influencerSet.has(b.id) ? 1 : 0;
+    if (aIsInf !== bIsInf) return bIsInf - aIsInf;
 
     if (query) {
-      const aStartsSym = a.symbol.toLowerCase().startsWith(query) ? 1 : 0;
-      const bStartsSym = b.symbol.toLowerCase().startsWith(query) ? 1 : 0;
+      const aStartsSym = (a.symbol || "").toLowerCase().startsWith(query) ? 1 : 0;
+      const bStartsSym = (b.symbol || "").toLowerCase().startsWith(query) ? 1 : 0;
       if (aStartsSym !== bStartsSym) return bStartsSym - aStartsSym;
     }
 

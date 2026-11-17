@@ -1149,5 +1149,24 @@ export default {
 
   // Currency Selection
   currency: "Currency",
-  noMatchingCurrencies: "No matching currencies"
+  noMatchingCurrencies: "No matching currencies",
+
+  // Custom Variables (MIPA-19)
+  customVariablesTitle: "Custom Variables",
+  customVariablesBtn: "Custom Variables",
+  customVariablesHelp: "Define model-wide constants and parameters outside the graph (e.g. unit prices, tax rates, operational conversion factors) that formulas can reference directly without cluttering the graph.",
+  varNameLabel: "Variable name",
+  varValueLabel: "Value",
+  varUnitLabel: "Unit (optional)",
+  varDescLabel: "Description (optional)",
+  addVariableBtn: "Add variable",
+  editVariableBtn: "Save variable",
+  deleteVariableBtn: "Delete variable",
+  noCustomVariables: "No custom variables defined yet.",
+  varNameInvalid: "Variable name must start with a letter or underscore and contain only letters, numbers, and underscores.",
+  varNameDuplicate: "A variable with this name already exists.",
+  varValueInvalid: "Please enter a valid numeric value.",
+  customVarBadge: "Variable",
+  formulaCustomVariablesUsed: "Custom variables in formula",
+  clickToCopy: "Click to copy"
 };

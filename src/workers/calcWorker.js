@@ -1307,7 +1307,68 @@ function prepEnvironment(data) {
   });
 
   sim.calcTimeLog.push({ stage: "prepEnv", endTime: new Date() });
+  sim.customVariables = data.customVariables || data.model?.customVariables || null;
+  registerCustomVariableUnits(sim.customVariables);
   return sim;
+}
+
+function registerCustomVariableUnits(customVars) {
+  if (!customVars) return;
+  const entries = Array.isArray(customVars)
+    ? customVars
+    : Object.values(customVars);
+  for (const v of entries) {
+    if (v && v.unit && typeof v.unit === "string" && v.unit.trim()) {
+      const u = v.unit.trim();
+      try {
+        math.unit(u);
+      } catch (e) {
+        try {
+          math.createUnit(u);
+        } catch {
+          // ignore duplicate or invalid unit
+        }
+      }
+    }
+  }
+}
+
+function loadCustomVariables(sim) {
+  const customVars = sim.customVariables || sim.data?.customVariables || sim.data?.model?.customVariables;
+  if (!customVars || !sim.scope) return;
+
+  const entries = Array.isArray(customVars)
+    ? customVars
+    : Object.entries(customVars).map(([name, item]) => ({
+        name,
+        ...(typeof item === "object" && item !== null ? item : { value: item })
+      }));
+
+  for (const v of entries) {
+    if (!v || !v.name) continue;
+    const name = String(v.name).trim();
+    if (!name) continue;
+    try {
+      const numVal = Number(v.value);
+      if (v.unit && typeof v.unit === "string" && v.unit.trim()) {
+        const u = v.unit.trim();
+        try {
+          sim.scope[name] = math.unit(numVal, u);
+        } catch (errUnit) {
+          try {
+            math.createUnit(u);
+            sim.scope[name] = math.unit(numVal, u);
+          } catch (e2) {
+            sim.scope[name] = numVal;
+          }
+        }
+      } else {
+        sim.scope[name] = numVal;
+      }
+    } catch (err) {
+      sim.scope[name] = Number(v.value) || 0;
+    }
+  }
 }
 
 function prepScope(sim) {
@@ -1329,6 +1390,8 @@ function prepScope(sim) {
     stage: "prep timeSeries",
     endTime: new Date()
   });
+  sim.scope = scope;
+  loadCustomVariables(sim);
   return scope;
 }
 
@@ -1359,6 +1422,7 @@ function resetScope(sim) {
     delete sim.scope["$" + node.id];
   });
   loadLatestValues(sim);
+  loadCustomVariables(sim);
 }
 
 function loadLatestValues(sim) {

@@ -301,8 +301,56 @@
         </div>
       </q-card-section>
 
+      <q-separator />
+
+      <q-card-section>
+        <div class="row items-center justify-between q-mb-xs">
+          <div class="text-h6 row items-center">
+            <q-icon name="data_object" color="primary" class="q-mr-xs" size="22px" />
+            {{ $t("customVariablesTitle") }}
+          </div>
+          <q-badge color="primary" class="q-px-sm q-py-xs text-caption">
+            {{ customVariablesCount }}
+          </q-badge>
+        </div>
+        <div class="text-body2 text-grey-8 q-mb-md">
+          {{ $t("customVariablesHelp") }}
+        </div>
+
+        <div v-if="customVariablesList.length" class="q-gutter-xs q-mb-md">
+          <q-chip
+            v-for="v in customVariablesList"
+            :key="v.name"
+            color="grey-2"
+            text-color="primary"
+            icon="data_object"
+            dense
+          >
+            <span class="text-weight-bold q-mr-xs">{{ v.name }}</span>
+            <span class="text-grey-8">= {{ v.value }}{{ v.unit ? ' ' + v.unit : '' }}</span>
+          </q-chip>
+        </div>
+        <div v-else class="text-caption text-grey-6 italic q-mb-md">
+          {{ $t("noCustomVariables") }}
+        </div>
+
+        <q-btn
+          no-caps
+          outline
+          color="primary"
+          icon="tune"
+          :label="$t('customVariablesTitle')"
+          @click="showCustomVariablesModal = true"
+        />
+      </q-card-section>
+
       <modal-buttons />
     </q-form>
+
+    <custom-variables-modal
+      v-model="showCustomVariablesModal"
+      :model="currentModel"
+    />
   </q-card>
 </template>
 
@@ -311,11 +359,13 @@ import { mapState, mapActions } from "vuex";
 import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
 import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
 import ModalOrgName from "@/components/Orgs/Modals/Shared/ModalOrgName.vue";
+import CustomVariablesModal from "@/components/Model/Modals/CustomVariablesModal.vue";
 //import { parse } from "mathjs";
 
 export default {
   data() {
     return {
+      showCustomVariablesModal: false,
       modelToSubmit: {
         name: "",
         simulationParams: {},
@@ -343,10 +393,25 @@ export default {
     "modal-header": ModalHeader,
     "modal-buttons": ModalButtons,
     "modal-org-name": ModalOrgName,
+    "custom-variables-modal": CustomVariablesModal,
   },
   computed: {
     ...mapState("orgs", ["currentOrg"]),
     ...mapState("model", ["currentModel", "nodes"]),
+    customVariablesList() {
+      const vars = this.currentModel?.customVariables;
+      if (Array.isArray(vars)) return vars;
+      if (vars && typeof vars === "object") {
+        return Object.entries(vars).map(([name, item]) => ({
+          name,
+          ...(typeof item === "object" && item !== null ? item : { value: item })
+        }));
+      }
+      return [];
+    },
+    customVariablesCount() {
+      return this.customVariablesList.length;
+    },
     computedFinalTime() {
       let finalTime = { number: 0, unit: "months" };
       let simulationParams = this.modelToSubmit.simulationParams;
