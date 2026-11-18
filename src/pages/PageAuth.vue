@@ -46,11 +46,12 @@
             no-caps
           >
             <q-tab name="login" :label="$t('Sign in')" />
+            <q-tab name="register" :label="$t('Create account')" />
             <q-tab name="waitlist" :label="$t('earlyAccessTab')" />
           </q-tabs>
           <q-separator />
 
-          <div v-if="tab === 'login'" class="q-px-md q-pt-md">
+          <div v-if="tab === 'login' || tab === 'register'" class="q-px-md q-pt-md">
             <q-banner dense rounded class="bg-blue-1 text-grey-9 text-caption">
               <template v-slot:avatar>
                 <q-icon name="info" color="primary" size="20px" />
@@ -62,6 +63,9 @@
           <q-tab-panels v-model="tab" animated>
             <q-tab-panel name="login">
               <login-register tab="login" />
+            </q-tab-panel>
+            <q-tab-panel name="register">
+              <login-register tab="register" />
             </q-tab-panel>
             <q-tab-panel name="waitlist">
               <early-access-form @switch-to-login="tab = 'login'" />
@@ -87,7 +91,7 @@ export default {
   },
   data() {
     return {
-      tab: this.$route.query.tab === "waitlist" || this.$route.query.tab === "register" ? "waitlist" : "login",
+      tab: this.$route.query.tab === "waitlist" ? "waitlist" : (this.$route.query.tab === "register" ? "register" : "login"),
       points: [
         {
           icon: "share",
@@ -110,8 +114,10 @@ export default {
   },
   watch: {
     "$route.query.tab"(newTab) {
-      if (newTab === "waitlist" || newTab === "register") {
+      if (newTab === "waitlist") {
         this.tab = "waitlist";
+      } else if (newTab === "register") {
+        this.tab = "register";
       } else if (newTab === "login") {
         this.tab = "login";
       }

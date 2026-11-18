@@ -129,7 +129,7 @@ service cloud.firestore {
     function isInvitee(invitation) {
       return request.auth != null
         && request.auth.token.email != null
-        && request.auth.token.email.lower() == invitation.email;
+        && (request.auth.token.email == invitation.email || request.auth.token.email.lower() == invitation.email);
     }
 
     function userInOrg(orgId) {

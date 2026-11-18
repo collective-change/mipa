@@ -1,4 +1,5 @@
-import { firebaseDb } from "@/boot/firebase";
+import { firebaseDb, firebaseFunctions, firebaseAuth } from "@/boot/firebase";
+import { httpsCallable } from "firebase/functions";
 import { collection, addDoc, serverTimestamp, getDocs, query, collectionGroup, where } from "firebase/firestore";
 
 export const ALLOWED_SECTORS = [
@@ -63,6 +64,42 @@ export async function checkEmailHasPendingInvitation(email) {
     console.warn("Could not query invitations for early access check:", err);
     return false;
   }
+}
+
+/**
+ * Verify whether an authenticated user has access (has pending invite or belongs to an org).
+ * Queries server-side Cloud Function checkUserAccess first; falls back to authenticated Firestore query.
+ *
+ * @param {Object} [user]
+ * @returns {Promise<{ allowed: boolean, hasInvite: boolean, isMember: boolean }>}
+ */
+export async function verifyUserAccess(user) {
+  const currentUser = user || (firebaseAuth && firebaseAuth.currentUser);
+  if (!currentUser) {
+    return { allowed: false, hasInvite: false, isMember: false };
+  }
+
+  // 1. Server-side verification via Cloud Function
+  if (firebaseFunctions) {
+    try {
+      const fn = httpsCallable(firebaseFunctions, "checkUserAccess");
+      const res = await fn();
+      if (res && res.data && typeof res.data.allowed === "boolean") {
+        return res.data;
+      }
+    } catch (err) {
+      console.warn("checkUserAccess function unavailable, falling back to authenticated query:", err.message);
+    }
+  }
+
+  // 2. Fallback: authenticated query to invitations
+  const email = (currentUser.email || "").trim().toLowerCase();
+  if (!email) {
+    return { allowed: false, hasInvite: false, isMember: false };
+  }
+
+  const hasInvite = await checkEmailHasPendingInvitation(email);
+  return { allowed: hasInvite, hasInvite, isMember: false };
 }
 
 /**

@@ -252,3 +252,39 @@ export const setMemberRole = onCall(async (request) => {
   });
   return { orgId };
 });
+
+export async function evaluateUserAccess(
+  db: FirebaseFirestore.Firestore,
+  uid: string,
+  email: string
+): Promise<{ allowed: boolean; isMember: boolean; hasInvite: boolean }> {
+  const cleanEmail = (email || "").toLowerCase().trim();
+
+  if (uid) {
+    const orgsSnap = await db.collection("orgs").where("users", "array-contains", uid).limit(1).get();
+    if (!orgsSnap.empty) {
+      return { allowed: true, isMember: true, hasInvite: false };
+    }
+  }
+
+  if (cleanEmail) {
+    const invitesSnap = await db.collectionGroup("invitations").where("email", "==", cleanEmail).limit(1).get();
+    if (!invitesSnap.empty) {
+      return { allowed: true, isMember: false, hasInvite: true };
+    }
+  }
+
+  return { allowed: false, isMember: false, hasInvite: false };
+}
+
+/**
+ * Verifies whether the authenticated user has pending invitations or is already an org member.
+ * Runs on the server so the client does not rely on unauthenticated or brittle queries.
+ */
+export const checkUserAccess = onCall(async (request) => {
+  const auth = requireAuth(request);
+  const email = (auth.token.email || "").toLowerCase().trim();
+  const uid = auth.uid;
+  const db = getFirestore();
+  return evaluateUserAccess(db, uid, email);
+});

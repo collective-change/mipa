@@ -17,15 +17,33 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { isPublicPath } from "@/router/public-paths";
 import { i18n } from "@/boot/i18n";
-import { checkEmailHasPendingInvitation } from "@/utils/earlyAccess";
+import { verifyUserAccess, submitEarlyAccessRequest } from "@/utils/earlyAccess";
 
 async function verifyAccessOrGate(result, router) {
   const additional = getAdditionalUserInfo(result);
   if (additional && additional.isNewUser) {
-    const email = result.user && result.user.email;
-    const hasInvite = await checkEmailHasPendingInvitation(email);
-    if (!hasInvite) {
-      await signOut(firebaseAuth);
+    const user = result.user;
+    const email = (user && user.email) || "";
+    const access = await verifyUserAccess(user);
+    if (!access.allowed) {
+      try {
+        await submitEarlyAccessRequest({
+          email,
+          name: user.displayName || email.split("@")[0],
+          orgName: "",
+          sector: "other",
+          note: "Automatic waitlist routing from gated OAuth signup"
+        });
+      } catch (reqErr) {
+        console.warn("Could not record early access request for gated OAuth user:", reqErr);
+      }
+
+      try {
+        await user.delete();
+      } catch (delErr) {
+        await signOut(firebaseAuth);
+      }
+
       Notify.create({
         message: i18n.global.t("authPrivatePreviewNotice"),
         type: "info",
@@ -39,6 +57,16 @@ async function verifyAccessOrGate(result, router) {
       }
       return false;
     }
+
+    await setDoc(
+      doc(firebaseDb, "users", user.uid),
+      {
+        email,
+        displayName: user.displayName || email.split("@")[0],
+        registrationTime: serverTimestamp()
+      },
+      { merge: true }
+    );
   }
   return true;
 }
@@ -64,36 +92,65 @@ const mutations = {
 const actions = {
   async registerUser({}, payload) {
     Loading.show();
-    const hasInvite = await checkEmailHasPendingInvitation(payload.email);
-    if (!hasInvite) {
-      Loading.hide();
-      Notify.create({
-        message: i18n.global.t("authPrivatePreviewNotice"),
-        type: "info",
-        timeout: 7000
-      });
-      if (this.$router) {
-        this.$router.push({
-          path: "/auth",
-          query: { tab: "waitlist", email: payload.email || "" }
+    try {
+      // 1. Authenticate FIRST: createUserWithEmailAndPassword
+      const cred = await createUserWithEmailAndPassword(firebaseAuth, payload.email, payload.password);
+
+      // 2. Verify access server-side (or via authenticated query)
+      const access = await verifyUserAccess(cred.user);
+      if (!access.allowed) {
+        try {
+          await submitEarlyAccessRequest({
+            email: payload.email,
+            name: payload.email.split("@")[0],
+            orgName: "",
+            sector: "other",
+            note: "Automatic waitlist routing from gated registration"
+          });
+        } catch (reqErr) {
+          console.warn("Could not record early access request for gated registration:", reqErr);
+        }
+
+        try {
+          await cred.user.delete();
+        } catch (delErr) {
+          await signOut(firebaseAuth);
+        }
+
+        Loading.hide();
+        Notify.create({
+          message: i18n.global.t("authPrivatePreviewNotice"),
+          type: "info",
+          timeout: 7000
         });
+        if (this.$router) {
+          this.$router.push({
+            path: "/auth",
+            query: { tab: "waitlist", email: payload.email || "" }
+          });
+        }
+        return;
       }
-      return;
-    }
-    createUserWithEmailAndPassword(firebaseAuth, payload.email, payload.password)
-      .then(cred => {
-        sendEmailVerification(cred.user).catch(error =>
-          console.warn("Could not send verification email:", error.message)
-        );
-        return setDoc(doc(firebaseDb, "users", cred.user.uid), {
-          email: payload.email,
-          displayName: payload.email.split("@")[0],
-          registrationTime: serverTimestamp()
-        });
-      })
-      .catch(error => {
-        showErrorMessage("Error", error.message);
+
+      // 3. User is invited: send verification email and create profile
+      sendEmailVerification(cred.user).catch(error =>
+        console.warn("Could not send verification email:", error.message)
+      );
+
+      await setDoc(doc(firebaseDb, "users", cred.user.uid), {
+        email: payload.email,
+        displayName: payload.email.split("@")[0],
+        registrationTime: serverTimestamp()
       });
+
+      Loading.hide();
+      if (this.$router) {
+        this.$router.push("/orgs");
+      }
+    } catch (error) {
+      Loading.hide();
+      showErrorMessage("Error", error.message);
+    }
   },
   loginUser({}, payload) {
     Loading.show();
