@@ -1204,5 +1204,6 @@ export default {
   parsedPreviewTitle: "Parsed Preview",
   pasteToPreviewHelp: "Paste data or click 'Load Sample Time Series' to preview.",
   dataPoints: "data points",
-  timeSeriesAttachSuccess: "Successfully attached {count} time series points to {factor}."
+  timeSeriesAttachSuccess: "Successfully attached {count} time series points to {factor}.",
+  roleNodeCurrencyLockedHint: "Key role factors must use the organization's default currency ({currency})"
 };

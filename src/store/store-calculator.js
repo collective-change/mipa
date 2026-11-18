@@ -67,6 +67,7 @@ const actions = {
       exchangeRates: payload.exchangeRates,
       simulationParams: payload.simulationParams,
       roleNodes: payload.roleNodes,
+      orgCurrency: payload.orgCurrency,
       customVariables: payload.customVariables || (payload.model && payload.model.customVariables) || null,
       actions: payload.actions ? payload.actions : null,
       currentUserId: firebaseAuth.currentUser.uid

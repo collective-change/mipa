@@ -66,7 +66,9 @@
             <q-input
               v-model="nodeToSubmit.unit"
               :label="$t('Unit')"
-              :hint="$t('unitHint')"
+              :hint="isCurrencyRoleNode ? $t('roleNodeCurrencyLockedHint', { currency: orgCurrency }) : $t('unitHint')"
+              :readonly="isCurrencyRoleNode || readOnly"
+              :disable="isCurrencyRoleNode"
               :rules="[
                 (val) =>
                   typeof val == 'undefined' ||
@@ -74,7 +76,13 @@
                   (val != '' && isNaN(parseInt(val.substring(0, 1)))) ||
                   $t('Cannot start with a number'),
               ]"
-            />
+            >
+              <template v-if="isCurrencyRoleNode" v-slot:append>
+                <q-icon name="lock" size="xs" color="grey-6">
+                  <q-tooltip>{{ $t('roleNodeCurrencyLockedHint', { currency: orgCurrency }) }}</q-tooltip>
+                </q-icon>
+              </template>
+            </q-input>
           </div>
         </div>
         <div class="text-caption text-grey-8 q-mt-sm">{{ $t("Uses these factors") }}</div>
@@ -735,6 +743,7 @@ import {
   ACCOUNTING_CATEGORIES,
   evaluateFactorFreshness
 } from "@/utils/dataIngestion";
+import { isCurrencyRoleNode } from "@/utils/util-model-draft";
 import { analyzeFactorRankingInvariance } from "@/utils/sensitivityAnalysis";
 import { formatNumber } from "@/utils/util-formatNumber";
 import SelectUser from "../Users/SelectUser.vue";
@@ -810,8 +819,23 @@ export default {
     ]),
     ...mapState("calcResults", ["baseline"]),
     ...mapState("model", ["currentModel"]),
+    ...mapState("orgs", ["currentOrg"]),
     ...mapState("actions", ["matchingActions", "actions"]),
     ...mapGetters("model", ["nodes", "links"]),
+
+    orgCurrency() {
+      return (
+        this.currentOrg?.currency ||
+        this.currentModel?.currency ||
+        "USD"
+      );
+    },
+
+    isCurrencyRoleNode() {
+      const node = this.selectedNode || this.nodeToSubmit;
+      if (!node) return false;
+      return isCurrencyRoleNode(node, this.currentModel?.roleNodes);
+    },
 
     selectedNode() {
       let that = this;
@@ -1177,6 +1201,10 @@ export default {
       let symbolChanged = oldSymbol != newSymbol;
       this.nodeToSubmit.isNew = false;
 
+      if (this.isCurrencyRoleNode) {
+        this.nodeToSubmit.unit = this.orgCurrency;
+      }
+
       this.updateNode({
         modelId: this.$route.params.modelId,
         updates: this.nodeToSubmit,
@@ -1330,6 +1358,9 @@ export default {
           "es": this.selectedNode.translations?.name?.["es"] || "",
           "ja": this.selectedNode.translations?.name?.["ja"] || "",
         };
+        if (this.isCurrencyRoleNode && this.nodeToSubmit.unit !== this.orgCurrency) {
+          this.nodeToSubmit.unit = this.orgCurrency;
+        }
         this.$store.commit("ui/setUiNodeChanged", false);
         this.influencerChartsArr = [];
         this.nodeChart = {};
