@@ -110,7 +110,9 @@ export function canonicalizeModelData(model = {}, nodes = []) {
       unit: String(n.unit || "").trim(),
       isEstimate: Boolean(n.isEstimate),
       notes: String(n.notes || "").trim(),
-      group: String(n.group || "").trim()
+      group: String(n.group || "").trim(),
+      ...(n.timeSeries ? { timeSeries: n.timeSeries } : {}),
+      ...(n.seriesProvenance ? { seriesProvenance: n.seriesProvenance } : {})
     }))
     .sort((a, b) => a.id.localeCompare(b.id));
 

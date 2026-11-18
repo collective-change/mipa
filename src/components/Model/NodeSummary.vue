@@ -449,6 +449,35 @@
               />
             </div>
           </div>
+
+          <!-- Time Series Sub-section (MIPA-20) -->
+          <div class="row items-center justify-between q-mt-sm q-pt-xs border-top">
+            <div class="row items-center q-gutter-xs">
+              <q-icon name="timeline" color="primary" size="18px" />
+              <span class="text-caption text-weight-medium text-grey-8">{{ $t('factorSeriesSection') }}:</span>
+              <q-chip
+                v-if="seriesPointsCount > 0"
+                dense
+                size="sm"
+                color="primary"
+                text-color="white"
+              >
+                {{ $t('timeSeriesPointCount', { count: seriesPointsCount, historical: historicalCount, predicted: predictedCount }) }}
+              </q-chip>
+              <span v-else class="text-caption text-grey-6 italic">
+                {{ $t('noTimeSeriesData') }}
+              </span>
+            </div>
+            <q-btn
+              flat
+              dense
+              size="sm"
+              color="primary"
+              icon="tune"
+              :label="$t('manageFactorSeriesBtn')"
+              @click="showSeriesModal = true"
+            />
+          </div>
         </q-expansion-item>
 
         <!-- Organizational Guardrails & Boundaries Section -->
@@ -677,6 +706,14 @@
       :title="$t('noFactorSelectedTitle')"
       :description="$t('noFactorSelectedHint')"
     />
+
+    <!-- Factor Series Modal (MIPA-20) -->
+    <factor-series-modal
+      v-model="showSeriesModal"
+      :factor="nodeToSubmit"
+      :read-only="readOnly"
+      @save-series="onSaveSeries"
+    />
   </div>
 </template>
 
@@ -707,6 +744,7 @@ import Chat from "@/components/Chats/Chat.vue";
 import AddNode from "@/components/Model/Modals/AddNode.vue";
 import AddLink from "@/components/Model/Modals/AddLink.vue";
 import DeleteNode from "@/components/Model/Modals/DeleteNode.vue";
+import FactorSeriesModal from "@/components/Model/Modals/FactorSeriesModal.vue";
 
 export default {
   components: {
@@ -716,6 +754,7 @@ export default {
     "modal-buttons": ModalButtons,
     "select-user": SelectUser,
     "empty-state": EmptyState,
+    "factor-series-modal": FactorSeriesModal,
     chat: Chat,
     gchart: GChart,
     "latex-formula": LatexFormula,
@@ -729,6 +768,7 @@ export default {
 
   data() {
     return {
+      showSeriesModal: false,
       nodeToSubmit: {},
       oldNodeToSubmit: {}, //used for comparing changes to nodeToSubmit
       // "⋯" menu (same actions as right-clicking the factor in the graph)
@@ -789,6 +829,21 @@ export default {
 
     factorFreshness() {
       return evaluateFactorFreshness(this.nodeToSubmit);
+    },
+
+    seriesPointsCount() {
+      const s = this.nodeToSubmit?.timeSeries;
+      return Array.isArray(s) ? s.length : 0;
+    },
+
+    historicalCount() {
+      const s = this.nodeToSubmit?.timeSeries;
+      return Array.isArray(s) ? s.filter(p => !p.isPredicted).length : 0;
+    },
+
+    predictedCount() {
+      const s = this.nodeToSubmit?.timeSeries;
+      return Array.isArray(s) ? s.filter(p => p.isPredicted).length : 0;
     },
 
     influencerNodesInfo() {
@@ -911,6 +966,14 @@ export default {
   },
 
   methods: {
+    onSaveSeries({ timeSeries, seriesProvenance }) {
+      this.nodeToSubmit.timeSeries = timeSeries;
+      this.nodeToSubmit.seriesProvenance = seriesProvenance;
+      if (seriesProvenance && seriesProvenance.sourceCitation && !this.nodeToSubmit.sourceCitation) {
+        this.nodeToSubmit.sourceCitation = seriesProvenance.sourceCitation;
+      }
+      this.fieldChanged("timeSeries");
+    },
     formatSensitivityNumber(num, precision = 2) {
       return formatNumber(num, precision);
     },
