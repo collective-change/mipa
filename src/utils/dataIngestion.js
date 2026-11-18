@@ -77,24 +77,60 @@ export function parseTabularData(rawText = "", options = {}) {
   return results;
 }
 
-function splitLine(line, delimiter) {
+export function splitLine(line, delimiter = ",") {
+  if (typeof line !== "string") return [];
   if (delimiter === "|") {
     return line.replace(/^\|/, "").replace(/\|$/, "").split("|");
   }
-  // Simple regex for CSV handling quoted values
+  // Single-pass state machine for CSV handling quoted values without exponential backtracking (MIPA-26 / CodeQL js/redos)
   if (delimiter === ",") {
-    const matches = [];
-    let match;
-    const re = /(?:,|\n|^)("(?:(?:"")*[^"]*)*"|[^",\n]*|(?:\n|$))/g;
-    while ((match = re.exec(line)) !== null && match.index < line.length) {
-      let val = match[1] || "";
-      if (val.startsWith('"') && val.endsWith('"')) {
-        val = val.slice(1, -1).replace(/""/g, '"');
+    const cleanLine = line.replace(/\r$/, "");
+    const fields = [];
+    let current = "";
+    let inQuotes = false;
+    let isQuotedField = false;
+    let i = 0;
+    const len = cleanLine.length;
+
+    while (i < len) {
+      const char = cleanLine[i];
+
+      if (inQuotes) {
+        if (char === '"') {
+          if (i + 1 < len && cleanLine[i + 1] === '"') {
+            current += '"';
+            i++; // skip escaped quote
+          } else {
+            inQuotes = false;
+          }
+        } else {
+          current += char;
+        }
+      } else {
+        if (char === '"') {
+          if (current.length === 0) {
+            inQuotes = true;
+            isQuotedField = true;
+          } else {
+            current += '"';
+          }
+        } else if (char === ",") {
+          fields.push(current);
+          current = "";
+          inQuotes = false;
+          isQuotedField = false;
+        } else {
+          current += char;
+        }
       }
-      matches.push(val);
-      if (re.lastIndex === match.index) re.lastIndex++;
+      i++;
     }
-    return matches.length > 0 ? matches : line.split(",");
+
+    if (inQuotes && isQuotedField) {
+      current = '"' + current;
+    }
+    fields.push(current);
+    return fields;
   }
   return line.split(delimiter);
 }

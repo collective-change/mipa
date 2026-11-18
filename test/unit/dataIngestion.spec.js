@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   parseTabularData,
+  splitLine,
   evaluateFactorFreshness,
   groupFactorsByCategory,
   createAuditTrailEntry,
@@ -204,6 +205,79 @@ Operating Deficit,"(4,200)"`;
 
       const invalid = parseTimeSeriesData("HeaderOnly,Column\nnotADate,notANumber");
       expect(invalid.series).toEqual([]);
+    });
+  });
+
+  describe("MIPA-26: splitLine ReDoS Immunity & Quoted Parsing", () => {
+    it("handles standard comma-separated fields with empty values and edges", () => {
+      expect(splitLine("a,b,c", ",")).toEqual(["a", "b", "c"]);
+      expect(splitLine("a,,b", ",")).toEqual(["a", "", "b"]);
+      expect(splitLine(",a,b", ",")).toEqual(["", "a", "b"]);
+      expect(splitLine("a,b,", ",")).toEqual(["a", "b", ""]);
+      expect(splitLine("", ",")).toEqual([""]);
+    });
+
+    it("handles quoted fields containing embedded commas and delimiters", () => {
+      const line = 'Program Outreach,"45,000",USD,"Audited Report, Note 4"';
+      expect(splitLine(line, ",")).toEqual([
+        "Program Outreach",
+        "45,000",
+        "USD",
+        "Audited Report, Note 4"
+      ]);
+    });
+
+    it("handles escaped quotes inside quoted fields correctly", () => {
+      const line = '"He said ""Hello""",123,"""Three Quotes"""';
+      expect(splitLine(line, ",")).toEqual([
+        'He said "Hello"',
+        "123",
+        '"Three Quotes"'
+      ]);
+    });
+
+    it("handles pipes and fallback delimiters", () => {
+      expect(splitLine("| Factor | Value | Unit |", "|")).toEqual([" Factor ", " Value ", " Unit "]);
+      expect(splitLine("a\tb\tc", "\t")).toEqual(["a", "b", "c"]);
+    });
+
+    it("defends against pathological input (ReDoS regression test for alert #8)", () => {
+      // Pathological unclosed quote input: '"' + '!' x 40
+      // Under the legacy regex /(?:,|\n|^)("(?:(?:"")*[^"]*)*"|[^",\n]*|(?:\n|$))/g,
+      // backtracking on n=26 was ~3s and n=40 would hang the event loop for days.
+      const pathological = '"' + "!".repeat(40);
+
+      const t0 = performance.now();
+      const result = splitLine(pathological, ",");
+      const elapsed = performance.now() - t0;
+
+      expect(elapsed).toBeLessThan(100); // Must execute in well under 1 second (< 100ms)
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0]).toContain("!");
+
+      // Even on n=1000, execution must be instantaneous (< 50ms)
+      const largePathological = '"' + "!".repeat(1000);
+      const t1 = performance.now();
+      const largeResult = splitLine(largePathological, ",");
+      const largeElapsed = performance.now() - t1;
+
+      expect(largeElapsed).toBeLessThan(50);
+      expect(largeResult.length).toBeGreaterThan(0);
+    });
+
+    it("parses CSV with pathological rows via parseTabularData without hanging", () => {
+      const badCsv = `Factor,Value,Unit
+Normal Factor,100,units
+${'"' + "!".repeat(50)},200,units
+Another Factor,300,USD`;
+
+      const t0 = performance.now();
+      const results = parseTabularData(badCsv);
+      const elapsed = performance.now() - t0;
+
+      expect(elapsed).toBeLessThan(100);
+      expect(results.length).toBeGreaterThanOrEqual(2);
+      expect(results.some((r) => r.name === "Normal Factor")).toBe(true);
     });
   });
 });
