@@ -268,7 +268,7 @@ export default {
   noInfluencersHint:
     "目前沒有。要在公式中使用其他因素，請開啟上方的 ⋯（或在圖上對這個因素按右鍵），選擇「連結到這個因素使用的因素」。",
   "Formula: how this factor is calculated": "公式：這個因素怎麼計算",
-  formulaCharacters: "公式中不能使用這個字元",
+  formulaCharacters: "公式中不能使用這個字元：{char}",
   "How to write formulas": "如何寫公式",
   formulaHelp:
     "• 帶單位的數字：30 USD、5 km，或只寫 12\n• 用代號引用已連結的因素：sales * 0.2\n• 隨時間累積的量：delay(savings, dt, 0) + income - spending。delay(代號, dt, 0) 是該因素前一個時間點的值（一開始為 0）。\n• dt 是一個時間步長，例如 1 個月\n• 條件：profit > 0 ? profit * 0.1 : 0",

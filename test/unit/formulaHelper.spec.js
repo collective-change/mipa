@@ -4,7 +4,8 @@ import {
   validateFormulaSyntax,
   getFactorSuggestions,
   insertSnippetIntoFormula,
-  toSysFormula
+  toSysFormula,
+  getInvalidFormulaCharacters
 } from "@/utils/formulaHelper";
 
 describe("Formula Helper Utilities for Model Builders", () => {
@@ -71,6 +72,78 @@ describe("Formula Helper Utilities for Model Builders", () => {
 
       expect(result.valid).toBe(true);
       expect(result.unknownSymbols).toContain("mysteriousVariable");
+    });
+
+    it("allows $ in valid factor references and resolves linked/unlinked states (MIPA-25)", () => {
+      // 1. Linked factor reference with $<nodeId>
+      const linkedRes = validateFormulaSyntax("$node_volunteers * 2", {
+        availableSymbols: ["volunteers"],
+        allNodes: mockNodes,
+        currentNodeId: "node_meals"
+      });
+      expect(linkedRes.valid).toBe(true);
+      expect(linkedRes.usedSymbols).toContain("$node_volunteers");
+      expect(linkedRes.unlinkedSymbols).toEqual([]);
+      expect(linkedRes.unknownSymbols).toEqual([]);
+
+      // 2. Unlinked factor reference with $<nodeId>
+      const unlinkedRes = validateFormulaSyntax("$node_food_cost * 2", {
+        availableSymbols: ["volunteers"], // costPerMeal not linked yet
+        allNodes: mockNodes,
+        currentNodeId: "node_meals"
+      });
+      expect(unlinkedRes.valid).toBe(true);
+      expect(unlinkedRes.unlinkedSymbols.length).toBe(1);
+      expect(unlinkedRes.unlinkedSymbols[0].nodeId).toBe("node_food_cost");
+      expect(unlinkedRes.unlinkedSymbols[0].symbol).toBe("$node_food_cost");
+
+      // 3. Self-reference with $<currentNodeId> (e.g. in delay)
+      const selfRes = validateFormulaSyntax("delay($node_meals, dt, 0)", {
+        availableSymbols: ["volunteers"],
+        allNodes: mockNodes,
+        currentNodeId: "node_meals"
+      });
+      expect(selfRes.valid).toBe(true);
+      expect(selfRes.unlinkedSymbols).toEqual([]);
+      expect(selfRes.unknownSymbols).toEqual([]);
+
+      // 4. Unknown factor reference with $<unknownNodeId>
+      const unknownRes = validateFormulaSyntax("$nonExistentNode * 2", {
+        availableSymbols: ["volunteers"],
+        allNodes: mockNodes,
+        currentNodeId: "node_meals"
+      });
+      expect(unknownRes.valid).toBe(true);
+      expect(unknownRes.unknownSymbols).toContain("$nonExistentNode");
+
+      // 5. Bare '$' or '$$' or invalid dollar references are rejected as syntax errors
+      const bareDollar = validateFormulaSyntax("$");
+      expect(bareDollar.valid).toBe(false);
+      expect(bareDollar.errorType).toBe("syntax");
+
+      const doubleDollar = validateFormulaSyntax("$$node_volunteers");
+      expect(doubleDollar.valid).toBe(false);
+      expect(doubleDollar.errorType).toBe("syntax");
+
+      const trailingDollar = validateFormulaSyntax("volunteers + $");
+      expect(trailingDollar.valid).toBe(false);
+      expect(trailingDollar.errorType).toBe("syntax");
+    });
+  });
+
+  describe("getInvalidFormulaCharacters (MIPA-25)", () => {
+    it("returns empty array for valid formula characters including $", () => {
+      expect(getInvalidFormulaCharacters("volunteers * 2 + delay(volunteers, dt, 0)")).toEqual([]);
+      expect(getInvalidFormulaCharacters("$node_volunteers * 10.5 - 3 / 2 ^ 2")).toEqual([]);
+      expect(getInvalidFormulaCharacters("a ? b : c")).toEqual([]);
+      expect(getInvalidFormulaCharacters("")).toEqual([]);
+      expect(getInvalidFormulaCharacters(null)).toEqual([]);
+    });
+
+    it("identifies and names offending characters", () => {
+      expect(getInvalidFormulaCharacters("volunteers @ 2")).toEqual(["@"]);
+      expect(getInvalidFormulaCharacters("100 # 50 & 20 ~ 5")).toEqual(["#", "&", "~"]);
+      expect(getInvalidFormulaCharacters("test!value")).toEqual(["!"]);
     });
   });
 
