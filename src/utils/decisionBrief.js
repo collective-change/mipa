@@ -3,6 +3,7 @@ import { generateSensitivityReport } from "./sensitivityAnalysis";
 import { calculateSroiMetrics } from "./sroi";
 import { runMonteCarloSimulation } from "./monteCarlo";
 import { detectFeedbackLoops } from "./systemDynamics";
+import { isWorldFactor } from "./worldModel";
 
 /**
  * Decision Brief and Ranking Explanation Engine (Feature 2)
@@ -530,6 +531,29 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
       title: isZh ? "模型未涵蓋之外部考量" : "Unmodeled Considerations & Scope Limitations",
       narrative: section5Unmodeled
     },
+    worldFactors: (nodes || [])
+      .filter((n) => n.isWorldFactor || isWorldFactor(n) || n.licence || n.citationUrl)
+      .map((n) => ({
+        id: n.id,
+        name: n.name || n.symbol,
+        symbol: n.symbol,
+        value: n.initialValue ?? n.latestValue ?? 0,
+        unit: n.unit || n.units || "",
+        sourceCitation:
+          n.sourceCitation ||
+          (n.provenance && (n.provenance.citation || n.provenance.authority)) ||
+          "",
+        citationUrl:
+          n.citationUrl ||
+          (n.provenance && n.provenance.canonicalCitationUrl) ||
+          "",
+        licence:
+          n.licence ||
+          n.license ||
+          (n.provenance && (n.provenance.licence || n.provenance.license)) ||
+          "CC BY 4.0",
+        version: n.version || ""
+      })),
     verifiedNumbers: Array.from(verifiedNumbers)
   };
 }
@@ -587,6 +611,7 @@ export function validateBriefNumbers(narrativeText = "", allowedNumbers = [], op
  * Export the decision brief as structured Markdown document.
  */
 export function formatBriefAsMarkdown(brief) {
+  if (!brief) return "";
   if (!brief) return "";
   const isZh = (brief.metadata.locale || "").startsWith("zh");
   const currency = brief.metadata.currency ? ` (${brief.metadata.currency})` : "";
@@ -668,7 +693,24 @@ export function formatBriefAsMarkdown(brief) {
     "",
     `## 5. ${brief.section5.title}`,
     "",
-    brief.section5.narrative,
+    brief.section5.narrative
+  );
+
+  if (brief.worldFactors && brief.worldFactors.length > 0) {
+    lines.push(
+      "",
+      `## ${isZh ? "世界模型因子與數據出處" : "World Factors & Data Provenance"}`,
+      "",
+      `| ${isZh ? "因子名稱" : "Factor"} | ${isZh ? "代號" : "Symbol"} | ${isZh ? "基準值" : "Value"} | ${isZh ? "單位" : "Unit"} | ${isZh ? "數據出處" : "Source Citation"} | ${isZh ? "引用網址" : "Citation URL"} | ${isZh ? "授權條款" : "License"} |`,
+      "|---|---|---|---|---|---|---|",
+      ...brief.worldFactors.map(
+        (f) =>
+          `| ${f.name} | \`${f.symbol}\` | ${f.value} | ${f.unit || "-"} | ${f.sourceCitation || "-"} | ${f.citationUrl ? `[${f.citationUrl}](${f.citationUrl})` : "-"} | ${f.licence} |`
+      )
+    );
+  }
+
+  lines.push(
     "",
     "---",
     `*${isZh ? "本備忘錄之數據全數由 mipa 系統動態學推演引擎計算驗證。" : "All figures and rankings calculated and verified by mipa's simulation engine."}*`
@@ -708,3 +750,5 @@ export function formatBriefAsCsv(brief) {
 
   return rows.join("\n");
 }
+
+export const exportDecisionBriefMarkdown = formatBriefAsMarkdown;

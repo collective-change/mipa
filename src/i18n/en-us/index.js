@@ -1210,5 +1210,18 @@ export default {
   pasteToPreviewHelp: "Paste data or click 'Load Sample Time Series' to preview.",
   dataPoints: "data points",
   timeSeriesAttachSuccess: "Successfully attached {count} time series points to {factor}.",
-  roleNodeCurrencyLockedHint: "Key role factors must use the organization's default currency ({currency})"
+  roleNodeCurrencyLockedHint: "Key role factors must use the organization's default currency ({currency})",
+  catWorldMacro: "World & Macro",
+  worldModelCategory: "World & Macro",
+  worldModelTitle: "Country Model (World Bank WDI)",
+  worldModelProvenanceTitle: "World Factors & Data Provenance",
+  worldModelProvenanceDesc: "Standard factors sourced from verified international datasets with canonical citations and open licenses.",
+  showWorldFactors: "Show World Factors",
+  hideWorldFactors: "Hide World Factors",
+  worldModelImportedSuccess: "Country model imported successfully",
+  importCountryModelBtn: "Import Country Model",
+  importCountryModelConfirmPrompt: "Import the versioned Layer 1 Country Model (12 World Bank WDI indicators) into this model? Existing factors with matching IDs will be updated.",
+  auditedProvenance: "Audited Provenance",
+  citationUrl: "Citation URL",
+  licence: "License"
 };

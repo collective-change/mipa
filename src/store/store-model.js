@@ -24,6 +24,7 @@ import { i18n } from "@/boot/i18n";
 import { camelize } from "@/utils/util-camelize";
 import { toSysFormula } from "@/utils/formulaHelper";
 import { isCurrencyRoleNode, CURRENCY_ROLE_KEYS } from "@/utils/util-model-draft";
+import { getShippedCountryModel } from "@/utils/worldModel";
 
 // Starter factors are named in the user's current language.
 const t = key => i18n.global.t(key);
@@ -399,8 +400,15 @@ const actions = {
       node.unit = orgCurrency;
     }
     node.createTime = serverTimestamp();
-    node.createdBy = firebaseAuth.currentUser.uid;
-    addDoc(collection(firebaseDb, "models", payload.modelId, "nodes"), node)
+    node.createdBy = firebaseAuth.currentUser ? firebaseAuth.currentUser.uid : "system";
+
+    const stableId = node.id || payload.nodeId;
+    const savePromise = stableId
+      ? setDoc(doc(firebaseDb, "models", payload.modelId, "nodes", stableId), node, { merge: true })
+          .then(() => ({ id: stableId }))
+      : addDoc(collection(firebaseDb, "models", payload.modelId, "nodes"), node);
+
+    return savePromise
       .then(function(docRef) {
         //add in default sysFormula
         //docRef.update({ sysFormula: `delay( ${docRef.id} , dt, 0)` });
@@ -424,10 +432,60 @@ const actions = {
             }
           });
         }
+        return docRef.id;
       })
       .catch(function(error) {
         showErrorMessage("Error adding node", error.message);
       });
+  },
+
+  async importCountryModel({ dispatch, state }, payload = {}) {
+    const modelId = payload.modelId || state.currentModel?.id;
+    if (!modelId) {
+      showErrorMessage("No active model found to import country model into.");
+      return;
+    }
+    const countryCode = payload.countryCode || "USA";
+    const version = payload.version || "1.0.0";
+    const countryModel = getShippedCountryModel(countryCode, version, payload.overrideValues || {});
+
+    let addedCount = 0;
+    let updatedCount = 0;
+    for (const node of countryModel.nodes) {
+      const existing = (state.nodes || []).find((n) => n.id === node.id || n.symbol === node.symbol);
+      if (existing) {
+        await dispatch("updateNode", {
+          modelId,
+          updates: {
+            id: existing.id,
+            latestValue: node.latestValue,
+            initialValue: node.initialValue,
+            notes: node.notes,
+            sourceCitation: node.sourceCitation,
+            citationUrl: node.citationUrl,
+            licence: node.licence,
+            isWorldFactor: true,
+            version: node.version,
+            provenance: node.provenance
+          }
+        });
+        updatedCount++;
+      } else {
+        await dispatch("addNode", {
+          modelId,
+          node: {
+            ...node
+          }
+        });
+        addedCount++;
+      }
+    }
+    Notify.create({
+      type: "positive",
+      message: `${i18n.global.t("worldModelImportedSuccess") || "Country model imported successfully"} (${addedCount} added, ${updatedCount} updated)`,
+      position: "top"
+    });
+    return { addedCount, updatedCount };
   },
 
   updateNode({ dispatch, getters, state, rootState }, payload) {

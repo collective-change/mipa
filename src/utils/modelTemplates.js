@@ -7,6 +7,8 @@
  * Licensed under Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0).
  */
 
+import { getShippedCountryModel } from "./worldModel";
+
 export const PUBLIC_MODEL_TEMPLATES = [
   {
     id: "disaster_relief_surge",
@@ -397,17 +399,17 @@ export const PUBLIC_MODEL_TEMPLATES = [
 ];
 
 /**
- * Returns all public model templates.
+ * Returns all public model templates, including shipped standard world models.
  */
 export function getPublicTemplates() {
-  return PUBLIC_MODEL_TEMPLATES;
+  return [...PUBLIC_MODEL_TEMPLATES, getShippedCountryModel("USA")];
 }
 
 /**
  * Retrieves a specific template by ID.
  */
 export function getTemplateById(templateId) {
-  return PUBLIC_MODEL_TEMPLATES.find((t) => t.id === templateId) || null;
+  return getPublicTemplates().find((t) => t.id === templateId) || null;
 }
 
 /**
@@ -421,6 +423,7 @@ export function getTemplateById(templateId) {
  */
 export function exportModelAsShareableTemplate(model = {}, nodes = [], actions = [], metadata = {}) {
   const sanitizedNodes = (nodes || []).map((node) => ({
+    ...(node.id ? { id: node.id } : {}),
     symbol: node.symbol || "",
     name: node.name || node.symbol || "",
     unit: node.unit || "",
@@ -428,7 +431,12 @@ export function exportModelAsShareableTemplate(model = {}, nodes = [], actions =
     formula: node.formula || "",
     costCategory: node.costCategory || "operational",
     isEstimate: Boolean(node.isEstimate),
-    notes: node.notes || ""
+    notes: node.notes || "",
+    ...(node.sourceCitation ? { sourceCitation: node.sourceCitation } : {}),
+    ...(node.citationUrl ? { citationUrl: node.citationUrl } : {}),
+    ...(node.licence || node.license ? { licence: node.licence || node.license } : {}),
+    ...(node.isWorldFactor ? { isWorldFactor: true } : {}),
+    ...(node.provenance ? { provenance: node.provenance } : {})
   }));
 
   const sanitizedActions = (actions || []).map((action) => ({
@@ -499,6 +507,7 @@ export function validateAndParseTemplate(input) {
     }
     symbols.add(symbol);
     return {
+      ...(n.id ? { id: String(n.id).trim() } : {}),
       symbol,
       name: String(n.name || symbol).trim(),
       unit: String(n.unit || "").trim(),
@@ -506,7 +515,12 @@ export function validateAndParseTemplate(input) {
       formula: String(n.formula || "").trim(),
       costCategory: String(n.costCategory || "operational").trim(),
       isEstimate: Boolean(n.isEstimate),
-      notes: String(n.notes || "").trim()
+      notes: String(n.notes || "").trim(),
+      ...(n.sourceCitation ? { sourceCitation: String(n.sourceCitation) } : {}),
+      ...(n.citationUrl ? { citationUrl: String(n.citationUrl) } : {}),
+      ...(n.licence || n.license ? { licence: String(n.licence || n.license) } : {}),
+      ...(n.isWorldFactor ? { isWorldFactor: true } : {}),
+      ...(n.provenance ? { provenance: n.provenance } : {})
     };
   });
 

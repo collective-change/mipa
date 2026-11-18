@@ -195,6 +195,54 @@
           </div>
         </div>
 
+        <!-- Section 4: World Factors & Data Provenance -->
+        <div v-if="dossier.worldFactors && dossier.worldFactors.length > 0" class="q-mb-lg bg-white q-pa-md rounded-borders border-grey">
+          <div class="row items-center justify-between q-mb-sm">
+            <div class="text-subtitle1 text-weight-bold text-grey-9 row items-center">
+              <q-icon name="public" color="primary" class="q-mr-xs" size="20px" />
+              {{ $t("worldModelProvenanceTitle") }}
+            </div>
+            <q-chip dense color="teal-1" text-color="teal-9" icon="verified" size="sm">
+              {{ $t("auditedProvenance") }}
+            </q-chip>
+          </div>
+          <p class="text-caption text-grey-7 q-mb-md">
+            {{ $t("worldModelProvenanceDesc") }}
+          </p>
+
+          <q-table
+            flat
+            dense
+            :rows="dossier.worldFactors"
+            :columns="worldFactorColumns"
+            row-key="id"
+            :pagination="{ rowsPerPage: 15 }"
+            class="dossier-table"
+          >
+            <template v-slot:body-cell-citationUrl="props">
+              <q-td :props="props">
+                <a
+                  v-if="props.value"
+                  :href="props.value"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-primary text-weight-medium"
+                >
+                  {{ props.value }}
+                </a>
+                <span v-else class="text-grey-5">-</span>
+              </q-td>
+            </template>
+            <template v-slot:body-cell-licence="props">
+              <q-td :props="props">
+                <q-badge color="grey-3" text-color="grey-9" class="text-weight-bold">
+                  {{ props.value || "CC BY 4.0" }}
+                </q-badge>
+              </q-td>
+            </template>
+          </q-table>
+        </div>
+
         <!-- Attribution Footer -->
         <div class="dossier-footer text-center q-py-md text-caption text-grey-6">
           <div v-if="dossier.attributionFooter">
@@ -258,6 +306,16 @@ export default {
         { name: "leverage", label: this.$t("Leverage") + " (效應比)", field: "actionLeverage", align: "center", sortable: true },
         { name: "benefit", label: this.$t("marginalTotalBenefitNpv"), field: "marginalTotalBenefitNpv", align: "right" },
         { name: "roi", label: this.$t("totalRoi"), field: "totalRoi", align: "right" }
+      ];
+    },
+    worldFactorColumns() {
+      return [
+        { name: "name", label: this.$t("factorName") || "Factor Name", field: "name", align: "left", sortable: true },
+        { name: "symbol", label: this.$t("shortName") || "Short Name", field: "symbol", align: "left" },
+        { name: "value", label: this.$t("initialValue") || "Value", field: (row) => `${row.baseValue} ${row.units}`, align: "right" },
+        { name: "source", label: this.$t("sourceCitation") || "Source Citation", field: "sourceCitation", align: "left" },
+        { name: "citationUrl", label: this.$t("citationUrl") || "Citation URL", field: "citationUrl", align: "left" },
+        { name: "licence", label: this.$t("licence") || "License", field: "licence", align: "center" }
       ];
     }
   },

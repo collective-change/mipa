@@ -1181,5 +1181,18 @@ export default {
   pasteToPreviewHelp: "粘贴数据或点击“载入示例时间序列”以预览。",
   dataPoints: "个数据点",
   timeSeriesAttachSuccess: "已成功将 {count} 个时间序列数据点附加至 {factor}。",
-  roleNodeCurrencyLockedHint: "关键角色要素必须使用组织的默认货币（{currency}）"
+  roleNodeCurrencyLockedHint: "关键角色要素必须使用组织的默认货币（{currency}）",
+  catWorldMacro: "世界与宏观经济",
+  worldModelCategory: "世界与宏观模型",
+  worldModelTitle: "国家模型（世界银行 WDI）",
+  worldModelProvenanceTitle: "世界模型因子与数据出处",
+  worldModelProvenanceDesc: "源自权威国际数据集之标准因子，具备标准引用来源与开放授权。",
+  showWorldFactors: "显示世界模型因子",
+  hideWorldFactors: "隐藏世界模型因子",
+  worldModelImportedSuccess: "成功导入国家模型",
+  importCountryModelBtn: "导入国家标准模型",
+  importCountryModelConfirmPrompt: "是否将第一层国家标准模型（12 项世界银行 WDI 指标）导入此模型？现有具相同标识码之因子将同步更新。",
+  auditedProvenance: "已审核数据出处",
+  citationUrl: "引用网址",
+  licence: "授权条款"
 };

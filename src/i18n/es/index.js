@@ -1196,5 +1196,18 @@ export default {
   "pasteToPreviewHelp": "Pegue datos o haga clic en 'Cargar Serie de Muestra' para ver la vista previa.",
   "dataPoints": "puntos de datos",
   "timeSeriesAttachSuccess": "Se adjuntaron exitosamente {count} puntos de serie temporal a {factor}.",
-  "roleNodeCurrencyLockedHint": "Los factores de rol clave deben usar la moneda predeterminada de la organización ({currency})"
+  "roleNodeCurrencyLockedHint": "Los factores de rol clave deben usar la moneda predeterminada de la organización ({currency})",
+  "catWorldMacro": "Mundo y Macroeconomía",
+  "worldModelCategory": "Modelos Mundiales y Macro",
+  "worldModelTitle": "Modelo de País (Banco Mundial WDI)",
+  "worldModelProvenanceTitle": "Factores Mundiales y Procedencia de Datos",
+  "worldModelProvenanceDesc": "Factores estándar procedentes de conjuntos de datos internacionales verificados con citas canónicas y licencias abiertas.",
+  "showWorldFactors": "Mostrar Factores del Modelo Mundial",
+  "hideWorldFactors": "Ocultar Factores del Modelo Mundial",
+  "worldModelImportedSuccess": "Modelo de país importado con éxito",
+  "importCountryModelBtn": "Importar Modelo de País",
+  "importCountryModelConfirmPrompt": "¿Importar el modelo de país Capa 1 versionado (12 indicadores del Banco Mundial WDI) en este modelo? Los factores existentes con identificadores coincidentes se actualizarán.",
+  "auditedProvenance": "Procedencia Auditada",
+  "citationUrl": "URL de Cita",
+  "licence": "Licencia"
 };
