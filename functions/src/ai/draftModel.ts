@@ -82,7 +82,9 @@ export const draftModel = onCall(
     if (!model.exists) throw new HttpsError("not-found", "Model not found.");
     const editors: string[] = model.get("editors.users") || [];
     const viewerOrgs: string[] = model.get("viewers.org") || [];
-    if (!editors.includes(uid) || !viewerOrgs.includes(orgId)) {
+    const modelOrgId = model.get("orgId");
+    const isOrgMatch = modelOrgId === orgId || modelId === orgId || viewerOrgs.includes(orgId);
+    if (!editors.includes(uid) || !isOrgMatch) {
       throw new HttpsError("permission-denied", "Only the model's editors can draft it.");
     }
 

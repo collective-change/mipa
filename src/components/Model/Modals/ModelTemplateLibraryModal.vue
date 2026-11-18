@@ -304,6 +304,7 @@
 import { mapActions, mapState } from "vuex";
 import {
   PUBLIC_MODEL_TEMPLATES,
+  getPublicTemplates,
   exportModelAsShareableTemplate,
   validateAndParseTemplate
 } from "@/utils/modelTemplates";
@@ -338,7 +339,7 @@ export default {
       isCloning: false,
       showImportDialog: false,
       importJsonText: "",
-      templates: PUBLIC_MODEL_TEMPLATES,
+      templates: getPublicTemplates(),
       nodeColumns: [
         { name: "name", label: "Factor Name", align: "left", field: "name" },
         { name: "symbol", label: "Short Name", align: "left", field: "symbol" },
@@ -361,6 +362,7 @@ export default {
     categoryOptions() {
       return [
         { value: "all", label: this.$t("allCategories") },
+        { value: "World & Macro", label: this.$t("catWorldMacro") || "World & Macro" },
         { value: "Disaster Response", label: this.$t("catDisasterResponse") },
         { value: "Public Health", label: this.$t("catPublicHealth") },
         { value: "Education", label: this.$t("catEducation") },
@@ -400,12 +402,13 @@ export default {
         for (const node of template.nodes) {
           // Check if factor already exists
           const exists = (this.nodes || []).some(
-            (n) => n.symbol === node.symbol || n.name.toLowerCase() === node.name.toLowerCase()
+            (n) => (node.id && n.id === node.id) || n.symbol === node.symbol || n.name.toLowerCase() === node.name.toLowerCase()
           );
           if (!exists) {
             await this.addNode({
               modelId,
               node: {
+                ...(node.id ? { id: node.id } : {}),
                 name: node.name,
                 symbol: node.symbol,
                 unit: node.unit || "",
@@ -415,7 +418,12 @@ export default {
                 costCategory: node.costCategory || "operational",
                 notes: node.notes || "",
                 isHourlyCost: false,
-                isEstimate: Boolean(node.isEstimate)
+                isEstimate: Boolean(node.isEstimate),
+                sourceCitation: node.sourceCitation || "",
+                citationUrl: node.citationUrl || "",
+                licence: node.licence || node.license || "",
+                isWorldFactor: Boolean(node.isWorldFactor),
+                provenance: node.provenance || null
               }
             });
             addedCount++;

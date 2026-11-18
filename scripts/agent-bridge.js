@@ -255,6 +255,7 @@ export function getMipaStatus(options = {}) {
     recentCompleted: backlogData.completed.slice(0, 5),
     recentCommits,
     leverageFormula: '(netBenefitNpv * totalRoi / outstandingDirectCosts) * sign(net)',
+    leverageSensitivity: 'Quadratic in net benefit relative to direct spending (sign(net) * net^2 / (C * (C + E))), strongly rewarding high net benefits achieved with minimal outstanding direct spending.',
     chineseLeverageTerm: '效應比',
     pricingTiers
   };
@@ -273,7 +274,7 @@ export function queryKnowledge(query, options = {}) {
   if (q.includes('formula') || q.includes('leverage') || q.includes('效應比') || q.includes('roi')) {
     results.push({
       topic: 'Leverage Calculation',
-      details: 'Formula: actionLeverage = (netBenefitNpv * totalRoi / outstandingDirectCosts) * sign(net). Leverage is NOT "good done per hour". Traditional Chinese term is 效應比.'
+      details: 'Formula: actionLeverage = (netBenefitNpv * totalRoi / outstandingDirectCosts) * sign(net). The metric scales quadratically with net benefit relative to direct costs, strongly rewarding high net gains achieved with minimal direct spending. Traditional Chinese term is 效應比.'
     });
   }
 

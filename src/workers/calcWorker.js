@@ -1,6 +1,7 @@
 // Calculation web worker (bundled by Vite as an ES module worker).
 import { create, all } from "mathjs";
 import { evaluateGuardrailViolations } from "@/utils/guardrails";
+import { isCurrencyRoleNode } from "@/utils/util-model-draft";
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import {
@@ -370,12 +371,17 @@ async function simulateActionWithDependencies(
   }
   //sort blockees by descending leverage
   blockees.sort(function(a, b) {
-    return b.actionLeverage - a.actionLeverage;
+    return (b.actionLeverage ?? -Infinity) - (a.actionLeverage ?? -Infinity);
   });
   let testCostsAndImpactsExcludingSelf = getEmptyCostsAndImpacts();
   //if (blockees.length) console.log("blockees for", action.title, blockees);
   //include each blockee until resulting leverage drops
-  while (blockees.length && blockees[0].actionLeverage > highestLeverageFound) {
+  while (
+    blockees.length &&
+    blockees[0].actionLeverage != null &&
+    (highestLeverageFound == null ||
+      blockees[0].actionLeverage > highestLeverageFound)
+  ) {
     //console.log("blockee leverage", blockees[0].actionLeverage);
     testCostsAndImpacts = includeActionInCostsAndImpacts(
       blockees[0],
@@ -396,8 +402,10 @@ async function simulateActionWithDependencies(
       action.nodeIdsToChart
     );
     if (
-      testActionResults.actionResultsNumbers.actionLeverage >
-      highestLeverageFound
+      testActionResults.actionResultsNumbers.actionLeverage != null &&
+      (highestLeverageFound == null ||
+        testActionResults.actionResultsNumbers.actionLeverage >
+          highestLeverageFound)
     ) {
       highestLeverageFound =
         testActionResults.actionResultsNumbers.actionLeverage;
@@ -427,20 +435,26 @@ function composeCostsAndImpactsOfSelf(action, averageEffortCostPerHour) {
   }
   let estEffortHrs = isNaN(action.estEffortHrs) ? 0 : 0 + action.estEffortHrs;
   let estEffortCosts = estEffortHrs * effortCostPerHour;
-  let outstandingDirectEffortHrs =
+  let outstandingDirectEffortHrs = Math.max(
+    0,
     estEffortHrs *
-    (100 -
-      (isNaN(action.effortCompletionPercentage)
-        ? 0
-        : action.effortCompletionPercentage)) *
-    0.01;
+      (100 -
+        (isNaN(action.effortCompletionPercentage)
+          ? 0
+          : action.effortCompletionPercentage)) *
+      0.01
+  );
   let outstandingDirectEffortCosts =
     outstandingDirectEffortHrs * effortCostPerHour;
+  // Clamped non-negative: outstanding spending cannot be negative when an initiative
+  // is complete or over-budget, preventing inverted leverage rankings.
   let outstandingSpending = isNaN(action.outstandingSpending)
     ? 0
-    : 0 + action.outstandingSpending;
-  let outstandingDirectCosts =
-    outstandingDirectEffortCosts + outstandingSpending;
+    : Math.max(0, 0 + action.outstandingSpending);
+  let outstandingDirectCosts = Math.max(
+    0,
+    outstandingDirectEffortCosts + outstandingSpending
+  );
   let estSpending = isNaN(action.estSpending) ? 0 : 0 + action.estSpending;
   let spentAmount = isNaN(action.spentAmount) ? 0 : 0 + action.spentAmount;
   let estDirectCosts = estEffortCosts + estSpending;
@@ -823,20 +837,31 @@ function calcActionResultsFromTimeSeries(
     marginalOrgCostNpv * orgWeightingFactor +
     marginalWorldCostNpv * worldWeightingFactor;
 
-  //calculate actionLeverage and prepare results
+  // Calculate actionLeverage and prepare results
   const marginalNetTotalBenefitNpv =
     marginalTotalBenefitNpv - marginalTotalCostNpv;
   const marginalTotalCostExcludingAction =
     marginalTotalCostNpv - outstandingDirectCosts;
-  let totalRoi =
-    marginalNetTotalBenefitNpv /
-    (outstandingDirectCosts + math.max(0, marginalTotalCostExcludingAction));
-  let actionLeverage =
-    ((marginalNetTotalBenefitNpv * totalRoi) / outstandingDirectCosts) *
-    Math.sign(marginalNetTotalBenefitNpv);
+  const totalCostDenominator =
+    outstandingDirectCosts + Math.max(0, marginalTotalCostExcludingAction);
 
-  if (isNaN(totalRoi)) totalRoi = null;
-  if (isNaN(actionLeverage)) actionLeverage = null;
+  let totalRoi = null;
+  if (totalCostDenominator > 0) {
+    totalRoi = marginalNetTotalBenefitNpv / totalCostDenominator;
+  }
+
+  // Leverage is sign(net) * net^2 / (C * (C + E)) where C = outstandingDirectCosts.
+  // Defined as null when C <= 0 (e.g. fully complete or zero outstanding cost),
+  // preventing unbounded Infinity or NaN values from dominating action rankings.
+  let actionLeverage = null;
+  if (outstandingDirectCosts > 0 && totalRoi !== null) {
+    actionLeverage =
+      ((marginalNetTotalBenefitNpv * totalRoi) / outstandingDirectCosts) *
+      Math.sign(marginalNetTotalBenefitNpv);
+  }
+
+  if (isNaN(totalRoi) || !isFinite(totalRoi)) totalRoi = null;
+  if (isNaN(actionLeverage) || !isFinite(actionLeverage)) actionLeverage = null;
 
   // SROI (Social Return on Investment) calculation
   const deadweight = Math.min(100, Math.max(0, Number(actionAdjustments.deadweight) || 0)) / 100;
@@ -941,22 +966,34 @@ function iterateThroughTime(sim, scenario) {
           sim.scope.currentNodeId = sim.sortedNodes[nodeIndex].id;
           sim.scope.currentNodeName = sim.sortedNodes[nodeIndex].name;
 
-          try {
-            const t0 = performance.now();
-            code.evaluate(sim.scope);
-            const t1 = performance.now();
-            perf.evalCount += 1;
-            perf.evalTime += t1 - t0;
-          } catch (err) {
-            sim.errorOccurred = true;
-            self.postMessage({
-              errorType: "Evaluation error",
-              errorMessage: `For node "${
-                sim.sortedNodes[nodeIndex].name
-              }",  <br/> ${err} <br/> (node ${nodeIndex +
-                1} of ${totalNodeCount})`,
-              errorData: { nodeId: sim.sortedNodes[nodeIndex].id }
-            });
+          const currentNode = sim.sortedNodes[nodeIndex];
+          const imported = sim.nodeTimeSeries && sim.nodeTimeSeries[currentNode.id];
+          const isPureSeriesNode = imported && imported.timeSPoints && imported.timeSPoints.length > 0 &&
+            (!currentNode.sysFormula || currentNode.sysFormula === "0" || !currentNode.sysFormula.includes("$"));
+
+          if (isPureSeriesNode) {
+            const interpolatedVal = interpolateFromLookup(imported.timeSPoints, imported.values, timeS);
+            if (interpolatedVal !== undefined) {
+              sim.scope["$" + currentNode.id] = getValueWithUnitIfAvailable(interpolatedVal, currentNode.unit);
+            }
+          } else {
+            try {
+              const t0 = performance.now();
+              code.evaluate(sim.scope);
+              const t1 = performance.now();
+              perf.evalCount += 1;
+              perf.evalTime += t1 - t0;
+            } catch (err) {
+              sim.errorOccurred = true;
+              self.postMessage({
+                errorType: "Evaluation error",
+                errorMessage: `For node "${
+                  sim.sortedNodes[nodeIndex].name
+                }",  <br/> ${err} <br/> (node ${nodeIndex +
+                  1} of ${totalNodeCount})`,
+                errorData: { nodeId: sim.sortedNodes[nodeIndex].id }
+              });
+            }
           }
 
           if (sim.errorOccurred) return;
@@ -1173,6 +1210,8 @@ function prepSim(data) {
   sim.nodes = prepNodesForSort(sim);
   if (sim.errorOccurred) return sim;
 
+  sim.nodeTimeSeries = prepNodeTimeSeries(data.modelNodes || data.nodes || sim.nodes);
+
   sim.sortedNodes = topoSortNodes(sim);
   if (sim.errorOccurred) return sim;
 
@@ -1218,6 +1257,21 @@ function prepEnvironment(data) {
   sim.calcTimeLog.push({ stage: "start", endTime: new Date() });
   self.postMessage({ progressValue: 0 });
   sim.lastProgressReportTime = new Date();
+
+  const orgCurrency =
+    data.orgCurrency ||
+    data.simulationParams?.currency ||
+    (data.exchangeRates && data.exchangeRates.base) ||
+    "USD";
+  if (Array.isArray(data.modelNodes)) {
+    data.modelNodes.forEach(node => {
+      if (node && isCurrencyRoleNode(node, data.roleNodes)) {
+        if (!node.unit || node.unit !== orgCurrency) {
+          node.unit = orgCurrency;
+        }
+      }
+    });
+  }
 
   modelNodes = data.modelNodes; //make modelNodes globally accessible
 
@@ -1283,7 +1337,175 @@ function prepEnvironment(data) {
   });
 
   sim.calcTimeLog.push({ stage: "prepEnv", endTime: new Date() });
+  sim.customVariables = data.customVariables || data.model?.customVariables || null;
+  registerCustomVariableUnits(sim.customVariables);
+  sim.nodeTimeSeries = prepNodeTimeSeries(sim.nodes);
   return sim;
+}
+
+function registerCustomVariableUnits(customVars) {
+  if (!customVars) return;
+  const entries = Array.isArray(customVars)
+    ? customVars
+    : Object.values(customVars);
+  for (const v of entries) {
+    if (v && v.unit && typeof v.unit === "string" && v.unit.trim()) {
+      const u = v.unit.trim();
+      try {
+        math.unit(u);
+      } catch (e) {
+        try {
+          math.createUnit(u);
+        } catch {
+          // ignore duplicate or invalid unit
+        }
+      }
+    }
+  }
+}
+
+function loadCustomVariables(sim) {
+  const customVars = sim.customVariables || sim.data?.customVariables || sim.data?.model?.customVariables;
+  if (!customVars || !sim.scope) return;
+
+  const entries = Array.isArray(customVars)
+    ? customVars
+    : Object.entries(customVars).map(([name, item]) => ({
+        name,
+        ...(typeof item === "object" && item !== null ? item : { value: item })
+      }));
+
+  for (const v of entries) {
+    if (!v || !v.name) continue;
+    const name = String(v.name).trim();
+    if (!name) continue;
+    try {
+      const numVal = Number(v.value);
+      if (v.unit && typeof v.unit === "string" && v.unit.trim()) {
+        const u = v.unit.trim();
+        try {
+          sim.scope[name] = math.unit(numVal, u);
+        } catch (errUnit) {
+          try {
+            math.createUnit(u);
+            sim.scope[name] = math.unit(numVal, u);
+          } catch {
+            sim.scope[name] = numVal;
+          }
+        }
+      } else {
+        sim.scope[name] = numVal;
+      }
+    } catch {
+      sim.scope[name] = Number(v.value) || 0;
+    }
+  }
+}
+
+function prepNodeTimeSeries(nodes) {
+  const result = {};
+  if (!Array.isArray(nodes)) return result;
+
+  nodes.forEach(node => {
+    if (!node || !node.id) return;
+    const series = node.timeSeries || node.series;
+    if (!Array.isArray(series) || series.length === 0) return;
+
+    const points = [];
+    series.forEach(item => {
+      if (!item) return;
+      let timeS = null;
+      if (item.timeS !== undefined && item.timeS !== null) {
+        timeS = Number(item.timeS);
+      } else if (item.date) {
+        const d = new Date(item.date);
+        if (!isNaN(d.getTime())) {
+          timeS = Math.floor(d.getTime() / 1000);
+        }
+      } else if (item.timestamp) {
+        timeS = Math.floor(Number(item.timestamp) / 1000);
+      }
+
+      const val = Number(item.value);
+      if (timeS !== null && !isNaN(timeS) && !isNaN(val)) {
+        points.push({
+          timeS,
+          value: val,
+          isPredicted: Boolean(item.isPredicted)
+        });
+      }
+    });
+
+    if (points.length > 0) {
+      points.sort((a, b) => a.timeS - b.timeS);
+      result[node.id] = {
+        timeSPoints: points.map(p => p.timeS),
+        values: points.map(p => p.value),
+        rawPoints: points
+      };
+    }
+  });
+
+  return result;
+}
+
+function getEffectiveTimeSeriesForNode(nodeId, scope) {
+  const simTimeSPoints = (scope.timeSeries && scope.timeSeries.timeSPoints) || [];
+  const simValues = (scope.timeSeries && scope.timeSeries.nodes && scope.timeSeries.nodes[nodeId]) || [];
+  const imported = (scope.importedSeries && scope.importedSeries[nodeId]) || null;
+
+  if (!imported || imported.timeSPoints.length === 0) {
+    return {
+      timeSPoints: simTimeSPoints,
+      values: simValues
+    };
+  }
+
+  const node = Array.isArray(scope.sortedNodes) ? scope.sortedNodes.find(n => n.id === nodeId) : null;
+  const isPureSeriesNode = !node || !node.sysFormula || node.sysFormula === "0" || !node.sysFormula.includes("$");
+
+  if (isPureSeriesNode && simTimeSPoints.length === 0) {
+    return {
+      timeSPoints: imported.timeSPoints,
+      values: imported.values
+    };
+  }
+
+  const combinedTimeS = [];
+  const combinedValues = [];
+
+  for (let i = 0; i < imported.timeSPoints.length; i++) {
+    if (imported.timeSPoints[i] < scope.initialTimeS) {
+      combinedTimeS.push(imported.timeSPoints[i]);
+      combinedValues.push(imported.values[i]);
+    }
+  }
+
+  for (let i = 0; i < simTimeSPoints.length; i++) {
+    combinedTimeS.push(simTimeSPoints[i]);
+    combinedValues.push(simValues[i]);
+  }
+
+  if (isPureSeriesNode) {
+    for (let i = 0; i < imported.timeSPoints.length; i++) {
+      const ptTime = imported.timeSPoints[i];
+      if (ptTime >= scope.initialTimeS && !combinedTimeS.includes(ptTime)) {
+        combinedTimeS.push(ptTime);
+        combinedValues.push(imported.values[i]);
+      }
+    }
+    const combined = combinedTimeS.map((t, idx) => ({ t, v: combinedValues[idx] }))
+      .sort((a, b) => a.t - b.t);
+    return {
+      timeSPoints: combined.map(c => c.t),
+      values: combined.map(c => c.v)
+    };
+  }
+
+  return {
+    timeSPoints: combinedTimeS,
+    values: combinedValues
+  };
 }
 
 function prepScope(sim) {
@@ -1294,8 +1516,10 @@ function prepScope(sim) {
     initialTimeS: Math.floor(calcDate / 1000), //this will remain constant throughout the simulation
     //timeS: initialTimeS, //timeS will increment with each iteration
     timeSeries: { timeSPoints: [], nodes: {} },
-    compiledDelayArg1s: {}
-  }; //TODO: load timeSeries with current or historical values
+    compiledDelayArg1s: {},
+    importedSeries: sim.nodeTimeSeries || {},
+    sortedNodes: sim.sortedNodes || []
+  };
 
   sim.sortedNodes.forEach(function(node) {
     scope.timeSeries.nodes[node.id] = [];
@@ -1305,6 +1529,8 @@ function prepScope(sim) {
     stage: "prep timeSeries",
     endTime: new Date()
   });
+  sim.scope = scope;
+  loadCustomVariables(sim);
   return scope;
 }
 
@@ -1330,11 +1556,14 @@ function prepDefaultTimeSPoints(sim) {
 
 function resetScope(sim) {
   sim.scope.timeSeries = { timeSPoints: [], nodes: {} };
+  sim.scope.importedSeries = sim.nodeTimeSeries || {};
+  sim.scope.sortedNodes = sim.sortedNodes || [];
   sim.sortedNodes.forEach(function(node) {
     sim.scope.timeSeries.nodes[node.id] = [];
     delete sim.scope["$" + node.id];
   });
   loadLatestValues(sim);
+  loadCustomVariables(sim);
 }
 
 function loadLatestValues(sim) {
@@ -1375,7 +1604,25 @@ function prepExpressionsArray(sim) {
     if (!sim.errorOccurred)
       try {
         // A factor just added has no formula yet; it counts as 0.
-        if (node.sysFormula.trim() === "") node.sysFormula = "0";
+        if (typeof node.sysFormula !== "string" || node.sysFormula.trim() === "") {
+          node.sysFormula = "0";
+        }
+
+        // Defensive resolution for bare short names (e.g. from existing models or imports)
+        if (!node.sysFormula.includes("$") && Array.isArray(sim.sortedNodes)) {
+          let resolved = node.sysFormula;
+          const candidates = sim.sortedNodes
+            .filter(n => n && n.symbol)
+            .sort((a, b) => (b.symbol || "").length - (a.symbol || "").length);
+          for (const cand of candidates) {
+            const reg = new RegExp(`(?<![\\$\\p{L}\\p{N}_])${cand.symbol.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}_])`, "gu");
+            if (reg.test(resolved)) {
+              resolved = resolved.replace(reg, () => "$" + cand.id);
+            }
+          }
+          node.sysFormula = resolved;
+        }
+
         //if formula includes a variable then save it
         if (node.sysFormula.includes("$")) {
           expressionsArray.push("$" + node.id + " = " + node.sysFormula);
@@ -1608,6 +1855,30 @@ function topoSortNodes(sim) {
 
 function prepNodesForSort(sim) {
   nodes = sim.data.modelNodes;
+
+  // Resolve short names to $<id> and detect blocking dependencies for unlinked/legacy models
+  nodes.forEach(function(outerNode) {
+    if (outerNode.sysFormula && typeof outerNode.sysFormula === "string" && !outerNode.sysFormula.includes("$")) {
+      const candidates = nodes
+        .filter(n => n && n.symbol && n.id !== outerNode.id)
+        .sort((a, b) => (b.symbol || "").length - (a.symbol || "").length);
+      let resolved = outerNode.sysFormula;
+      for (const cand of candidates) {
+        const reg = new RegExp(`(?<![\\$\\p{L}\\p{N}_])${cand.symbol.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}_])`, "gu");
+        if (reg.test(resolved)) {
+          resolved = resolved.replace(reg, () => "$" + cand.id);
+          if (!Array.isArray(outerNode.blockingInfluencers)) {
+            outerNode.blockingInfluencers = [];
+          }
+          if (!outerNode.blockingInfluencers.includes(cand.id)) {
+            outerNode.blockingInfluencers.push(cand.id);
+          }
+        }
+      }
+      outerNode.sysFormula = resolved;
+    }
+  });
+
   let preppedNodes = [];
   nodes.forEach(function(outerNode) {
     // calculate blockedInfluencees
@@ -1627,6 +1898,7 @@ function prepNodesForSort(sim) {
     preppedNodes.push({
       id: outerNode.id,
       name: outerNode.name,
+      symbol: outerNode.symbol,
       blockingInDegree:
         typeof outerNode.blockingInfluencers !== "undefined"
           ? outerNode.blockingInfluencers.length
@@ -1640,7 +1912,8 @@ function prepNodesForSort(sim) {
       latestValue:
         typeof outerNode.latestValue !== "undefined"
           ? outerNode.latestValue
-          : ""
+          : "",
+      timeSeries: outerNode.timeSeries || outerNode.series || null
     });
   });
   sim.calcTimeLog.push({ stage: "prepNodesForSort", endTime: new Date() });
@@ -1738,13 +2011,13 @@ function delay(args, math, scope) {
   const t1 = performance.now();
   perf.compileEvalTimeInDelayFunc += t1 - t0;
 
-  const values = scope.timeSeries.nodes[nodeId];
-  const timeSPoints = scope.timeSeries.timeSPoints;
-  //let defaultValue = scope[$nodeId];
+  const effective = getEffectiveTimeSeriesForNode(nodeId, scope);
+  const values = effective.values;
+  const timeSPoints = effective.timeSPoints;
   let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
 
   //quick case: if the last value in the time series is for the target time, then return it
-  if (timeSPoints[timeSPoints.length - 1] == targetTimeS && values) {
+  if (timeSPoints.length > 0 && timeSPoints[timeSPoints.length - 1] == targetTimeS && values.length > 0) {
     return values[values.length - 1];
   }
 
@@ -1786,7 +2059,8 @@ function delay(args, math, scope) {
   );
   const delayT1 = performance.now();
   perf.delayFuncTime += delayT1 - delayT0;
-  return interpolated;
+  const unit = scope["$" + nodeId + "_unit"];
+  return getValueWithUnitIfAvailable(interpolated, unit);
 }
 
 function interpolate(
@@ -1993,18 +2267,20 @@ function replaceNodeIdsWithName(workingString) {
 
 function replace$NodeIdsWithSymbol(workingString) {
   modelNodes.forEach(
-    node => (workingString = workingString.replace("$" + node.id, node.symbol))
+    node => (workingString = workingString.replaceAll("$" + node.id, node.symbol))
   );
   return workingString;
 }
 
 function changedSignificantly(newObj, oldObj, propertyName) {
-  if (isNaN(newObj[propertyName]) && !isNaN(oldObj[propertyName])) return true;
-  if (!isNaN(newObj[propertyName]) && isNaN(oldObj[propertyName])) return true;
-  if (Math.abs(newObj[propertyName] / oldObj[propertyName]) > 1.001)
-    return true;
-  if (Math.abs(oldObj[propertyName] / newObj[propertyName]) > 1.001)
-    return true;
+  const vNew = newObj ? newObj[propertyName] : undefined;
+  const vOld = oldObj ? oldObj[propertyName] : undefined;
+  if (vNew === vOld) return false;
+  if ((vNew == null && vOld != null) || (vNew != null && vOld == null)) return true;
+  if (isNaN(vNew) && !isNaN(vOld)) return true;
+  if (!isNaN(vNew) && isNaN(vOld)) return true;
+  if (Math.abs(vNew / vOld) > 1.001) return true;
+  if (Math.abs(vOld / vNew) > 1.001) return true;
   return false;
 }
 
@@ -2107,8 +2383,10 @@ async function writeInheritedResultsOfActions(
       );
       foundResults.inheritedResultsNumbers = branchAndBlockeesResultsNumbers;
       if (
-        branchAndBlockeesResultsNumbers.actionLeverage >
-        foundResults.effectiveResultsNumbers.actionLeverage
+        branchAndBlockeesResultsNumbers.actionLeverage != null &&
+        (foundResults.effectiveResultsNumbers.actionLeverage == null ||
+          branchAndBlockeesResultsNumbers.actionLeverage >
+            foundResults.effectiveResultsNumbers.actionLeverage)
       ) {
         foundResults.effectiveResultsNumbers = branchAndBlockeesResultsNumbers;
       }

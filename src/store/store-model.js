@@ -7,7 +7,10 @@ import {
   collection,
   deleteDoc,
   doc,
+  getCountFromServer,
   getDocs,
+  limit,
+  query,
   runTransaction,
   serverTimestamp,
   setDoc,
@@ -19,16 +22,29 @@ import { showErrorMessage } from "@/utils/util-show-error-message";
 import { classifyInfluencers } from "@/utils/util-node-operations";
 import { i18n } from "@/boot/i18n";
 import { camelize } from "@/utils/util-camelize";
+import { toSysFormula } from "@/utils/formulaHelper";
+import { isCurrencyRoleNode, CURRENCY_ROLE_KEYS } from "@/utils/util-model-draft";
+import { getShippedCountryModel } from "@/utils/worldModel";
 
 // Starter factors are named in the user's current language.
 const t = key => i18n.global.t(key);
 
+export const DEFAULT_NODES_LIMIT = 50;
+
 const state = {
   currentModel: null,
-  nodes: []
+  nodes: [],
+  nodesTotalCount: null,
+  nodesLimit: DEFAULT_NODES_LIMIT
 };
 
 const mutations = {
+  setNodesTotalCount(state, count) {
+    state.nodesTotalCount = count;
+  },
+  setNodesLimit(state, limit) {
+    state.nodesLimit = limit;
+  },
   deleteLink(state, payload) {
     let influencerId = payload.influencerId;
     let influenceeId = payload.influenceeId;
@@ -56,7 +72,8 @@ const actions = {
     model.isPublic = false;
     model.owners = { users: [firebaseAuth.currentUser.uid] };
     model.editors = { users: [firebaseAuth.currentUser.uid] };
-    model.viewers = { org: [payload.orgId] };
+    model.viewers = { users: [], emails: [] };
+    model.orgId = payload.orgId;
     model.isOrgMainModel = true;
     model.name = "Main";
     model.unwrittenChanges = [];
@@ -189,8 +206,34 @@ const actions = {
     });
   },
 
-  async updateModel({ dispatch }, payload) {
+  async updateModel({ dispatch, getters, state, rootState }, payload) {
     let modelId = payload.modelId;
+
+    if (payload.updates && payload.updates.roleNodes) {
+      const orgCurrency =
+        payload.orgCurrency ||
+        rootState?.orgs?.currentOrg?.currency ||
+        state.currentModel?.currency ||
+        "USD";
+      const allNodes = (getters && getters.nodes) || (state && state.nodes) || [];
+      const changedNodes = [];
+      CURRENCY_ROLE_KEYS.forEach(roleKey => {
+        const nodeId = payload.updates.roleNodes[roleKey];
+        if (nodeId) {
+          const targetNode = allNodes.find(n => n.id === nodeId);
+          if (targetNode && targetNode.unit !== orgCurrency) {
+            changedNodes.push({ id: nodeId, changes: { unit: orgCurrency } });
+          }
+        }
+      });
+      if (changedNodes.length > 0) {
+        dispatch("updateNodes", {
+          modelId,
+          changedNodes,
+          orgCurrency
+        });
+      }
+    }
 
     //let formulaChanged = false;
     payload.updates.updateTime = serverTimestamp();
@@ -204,6 +247,48 @@ const actions = {
       console.error("Error updating model", error.message);
       showErrorMessage("Error updating model", error.message);
     }
+  },
+
+  async setCustomVariables({ dispatch }, { modelId, variables }) {
+    await dispatch("updateModel", {
+      modelId,
+      updates: { customVariables: variables }
+    });
+  },
+
+  async addCustomVariable({ dispatch, state }, { modelId, variable }) {
+    const currentVars = Array.isArray(state.currentModel?.customVariables)
+      ? [...state.currentModel.customVariables]
+      : [];
+    currentVars.push(variable);
+    await dispatch("updateModel", {
+      modelId,
+      updates: { customVariables: currentVars }
+    });
+  },
+
+  async updateCustomVariable({ dispatch, state }, { modelId, variableName, updates }) {
+    const currentVars = Array.isArray(state.currentModel?.customVariables)
+      ? [...state.currentModel.customVariables]
+      : [];
+    const idx = currentVars.findIndex(v => v.name === variableName);
+    if (idx !== -1) {
+      currentVars[idx] = { ...currentVars[idx], ...updates };
+      await dispatch("updateModel", {
+        modelId,
+        updates: { customVariables: currentVars }
+      });
+    }
+  },
+
+  async deleteCustomVariable({ dispatch, state }, { modelId, variableName }) {
+    const currentVars = Array.isArray(state.currentModel?.customVariables)
+      ? state.currentModel.customVariables.filter(v => v.name !== variableName)
+      : [];
+    await dispatch("updateModel", {
+      modelId,
+      updates: { customVariables: currentVars }
+    });
   },
 
   deleteModel({}, modelId) {
@@ -226,7 +311,6 @@ const actions = {
       "currentModel",
       doc(firebaseDb, "models", modelId),
       {
-        maxRefDepth: 1,
         wait: false,
         reset: true
       }
@@ -237,21 +321,38 @@ const actions = {
     unbindFirestoreRef("currentModel", true);
   }),
 
-  bindNodes: firestoreAction(({ bindFirestoreRef }, modelId) => {
-    let userId = firebaseAuth.currentUser.uid;
-    // return the promise returned by `bindFirestoreRef`
+  bindNodes: firestoreAction(async ({ bindFirestoreRef, commit }, payload) => {
+    const modelId = typeof payload === "string" ? payload : payload?.modelId;
+    const isUnbounded = typeof payload === "object" && (payload?.limit === null || payload?.limit === "all");
+    const nodesLimit =
+      typeof payload === "object" && typeof payload?.limit === "number" && payload.limit > 0
+        ? payload.limit
+        : DEFAULT_NODES_LIMIT;
+
+    const baseQuery = collection(firebaseDb, "models", modelId, "nodes");
+    const nodesQuery = isUnbounded
+      ? collection(firebaseDb, "models", modelId, "nodes")
+      : query(collection(firebaseDb, "models", modelId, "nodes"), limit(nodesLimit));
+
+    try {
+      const countSnap = await getCountFromServer(baseQuery);
+      commit("setNodesTotalCount", countSnap.data().count);
+    } catch {
+      commit("setNodesTotalCount", null);
+    }
+
     return bindFirestoreRef(
       "nodes",
-      collection(firebaseDb, "models", modelId, "nodes"),
+      nodesQuery,
       {
-        maxRefDepth: 1,
         wait: false,
         reset: true
       }
     );
   }),
 
-  unbindNodes: firestoreAction(({ unbindFirestoreRef }) => {
+  unbindNodes: firestoreAction(({ unbindFirestoreRef, commit }) => {
+    commit("setNodesTotalCount", null);
     unbindFirestoreRef("nodes", true);
   }),
 
@@ -286,12 +387,28 @@ const actions = {
     return docRef.id;
   },
 
-  addNode({ dispatch }, payload) {
+  addNode({ dispatch, getters, state, rootState }, payload) {
     //console.log(payload);
     let node = payload.node;
+    const orgCurrency =
+      payload.orgCurrency ||
+      rootState?.orgs?.currentOrg?.currency ||
+      state.currentModel?.currency ||
+      "USD";
+    const roleNodes = payload.roleNodes || state.currentModel?.roleNodes || {};
+    if (isCurrencyRoleNode(node, roleNodes)) {
+      node.unit = orgCurrency;
+    }
     node.createTime = serverTimestamp();
-    node.createdBy = firebaseAuth.currentUser.uid;
-    addDoc(collection(firebaseDb, "models", payload.modelId, "nodes"), node)
+    node.createdBy = firebaseAuth.currentUser ? firebaseAuth.currentUser.uid : "system";
+
+    const stableId = node.id || payload.nodeId;
+    const savePromise = stableId
+      ? setDoc(doc(firebaseDb, "models", payload.modelId, "nodes", stableId), node, { merge: true })
+          .then(() => ({ id: stableId }))
+      : addDoc(collection(firebaseDb, "models", payload.modelId, "nodes"), node);
+
+    return savePromise
       .then(function(docRef) {
         //add in default sysFormula
         //docRef.update({ sysFormula: `delay( ${docRef.id} , dt, 0)` });
@@ -315,15 +432,103 @@ const actions = {
             }
           });
         }
+        return docRef.id;
       })
       .catch(function(error) {
         showErrorMessage("Error adding node", error.message);
       });
   },
 
-  updateNode({ dispatch }, payload) {
+  async importCountryModel({ dispatch, state }, payload = {}) {
+    const modelId = payload.modelId || state.currentModel?.id;
+    if (!modelId) {
+      showErrorMessage("No active model found to import country model into.");
+      return;
+    }
+    const countryCode = payload.countryCode || "USA";
+    const version = payload.version || "1.0.0";
+    const countryModel = getShippedCountryModel(countryCode, version, payload.overrideValues || {});
+
+    let addedCount = 0;
+    let updatedCount = 0;
+    for (const node of countryModel.nodes) {
+      const existing = (state.nodes || []).find((n) => n.id === node.id || n.symbol === node.symbol);
+      if (existing) {
+        await dispatch("updateNode", {
+          modelId,
+          updates: {
+            id: existing.id,
+            latestValue: node.latestValue,
+            initialValue: node.initialValue,
+            notes: node.notes,
+            sourceCitation: node.sourceCitation,
+            citationUrl: node.citationUrl,
+            licence: node.licence,
+            isWorldFactor: true,
+            version: node.version,
+            provenance: node.provenance
+          }
+        });
+        updatedCount++;
+      } else {
+        await dispatch("addNode", {
+          modelId,
+          node: {
+            ...node
+          }
+        });
+        addedCount++;
+      }
+    }
+    Notify.create({
+      type: "positive",
+      message: `${i18n.global.t("worldModelImportedSuccess") || "Country model imported successfully"} (${addedCount} added, ${updatedCount} updated)`,
+      position: "top"
+    });
+    return { addedCount, updatedCount };
+  },
+
+  updateNode({ dispatch, getters, state, rootState }, payload) {
     let modelId = payload.modelId;
     let nodeId = payload.updates.id;
+
+    const orgCurrency =
+      payload.orgCurrency ||
+      rootState?.orgs?.currentOrg?.currency ||
+      state.currentModel?.currency ||
+      "USD";
+    const roleNodes = payload.roleNodes || state.currentModel?.roleNodes || {};
+    const allNodes = (getters && getters.nodes) || (state && state.nodes) || [];
+    const existingNode = allNodes.find(n => n.id === nodeId);
+    const nodeToCheck = Object.assign({}, existingNode, payload.updates);
+
+    if (isCurrencyRoleNode(nodeToCheck, roleNodes)) {
+      if (payload.updates.unit !== undefined || (existingNode && existingNode.unit !== orgCurrency)) {
+        payload.updates.unit = orgCurrency;
+      }
+    }
+
+    if (payload.updates && typeof payload.updates.symbolFormula === "string" && payload.updates.symbolFormula.trim()) {
+      const allNodes = (getters && getters.nodes) || (state && state.nodes) || [];
+      const { sysFormula, referencedNodeIds } = toSysFormula(
+        payload.updates.symbolFormula,
+        allNodes,
+        payload.updates
+      );
+      if (!payload.updates.sysFormula || !payload.updates.sysFormula.includes("$")) {
+        payload.updates.sysFormula = sysFormula;
+      }
+      if (Array.isArray(referencedNodeIds) && referencedNodeIds.length > 0) {
+        if (!Array.isArray(payload.updates.influencers)) {
+          payload.updates.influencers = [];
+        }
+        referencedNodeIds.forEach(refId => {
+          if (!payload.updates.influencers.includes(refId)) {
+            payload.updates.influencers.push(refId);
+          }
+        });
+      }
+    }
 
     //let formulaChanged = false;
     payload.updates.updateTime = serverTimestamp();
@@ -705,7 +910,20 @@ const actions = {
       await runTransaction(firebaseDb, async t => {
         const modelDoc = await t.get(modelRef);
         let nodeGroups = modelDoc.data().nodeGroups;
-        nodeGroups = nodeGroups.filter(group => group.id != nodeGroupId);
+        // Child groups stay in the model. Re-attach them to the disbanded group's
+        // own parent (or the top level if it has none) so they keep their place
+        // in the hierarchy.
+        const disbanded = nodeGroups.find(group => group.id == nodeGroupId);
+        const grandparentId = disbanded?.parentId ?? null;
+        nodeGroups = nodeGroups
+          .filter(group => group.id != nodeGroupId)
+          .map(group => {
+            if (group.parentId == nodeGroupId) {
+              if (grandparentId) group.parentId = grandparentId;
+              else delete group.parentId;
+            }
+            return group;
+          });
         t.update(modelRef, { nodeGroups: nodeGroups });
       });
       Notify.create(i18n.global.t("toastUngrouped"));
@@ -715,8 +933,16 @@ const actions = {
     }
   },
 
-  async updateNodes({ dispatch }, payload) {
+  async updateNodes({ dispatch, getters, state, rootState }, payload) {
     var nodesRef = collection(firebaseDb, "models", payload.modelId, "nodes");
+
+    const orgCurrency =
+      payload.orgCurrency ||
+      rootState?.orgs?.currentOrg?.currency ||
+      state.currentModel?.currency ||
+      "USD";
+    const roleNodes = payload.roleNodes || state.currentModel?.roleNodes || {};
+    const allNodes = (getters && getters.nodes) || (state && state.nodes) || [];
 
     const batchArray = [];
     batchArray.push(writeBatch(firebaseDb));
@@ -724,6 +950,14 @@ const actions = {
     let batchIndex = 0;
 
     payload.changedNodes.forEach(changedNode => {
+      const existingNode = allNodes.find(n => n.id === changedNode.id);
+      const nodeToCheck = Object.assign({}, existingNode, changedNode.changes, { id: changedNode.id });
+      if (isCurrencyRoleNode(nodeToCheck, roleNodes)) {
+        if (changedNode.changes.unit !== undefined || (existingNode && existingNode.unit !== orgCurrency)) {
+          changedNode.changes.unit = orgCurrency;
+        }
+      }
+
       batchArray[batchIndex].update(doc(nodesRef, changedNode.id), {
         ...changedNode.changes,
         updateTime: serverTimestamp(),
@@ -769,6 +1003,8 @@ const actions = {
 };
 
 const getters = {
+  nodesTotalCount: state => state.nodesTotalCount,
+  nodesLimit: state => state.nodesLimit,
   nodes: state => {
     if (!state.nodes) {
       return [];

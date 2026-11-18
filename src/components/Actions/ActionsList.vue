@@ -166,6 +166,34 @@
         />
       </template>
     </q-table>
+    <!-- Bounded Actions Query & Load More Bar (MIPA-10) -->
+    <div
+      v-if="hasMoreActionsToLoad"
+      class="row items-center justify-between q-pa-sm bg-blue-1 text-primary rounded-borders q-mt-sm"
+    >
+      <div class="row items-center text-caption text-weight-medium">
+        <q-icon name="info" class="q-mr-xs" size="16px" />
+        {{ $t("showingBoundedActions", { loaded: matchingActions.length, total: matchingActionsTotalCount }) }}
+      </div>
+      <div class="row q-gutter-xs">
+        <q-btn
+          size="sm"
+          unelevated
+          color="primary"
+          no-caps
+          :label="$t('loadMoreActionsButton', { count: 50 })"
+          @click="loadMoreActions"
+        />
+        <q-btn
+          size="sm"
+          outline
+          color="primary"
+          no-caps
+          :label="$t('loadAllActionsButton')"
+          @click="loadAllActions"
+        />
+      </div>
+    </div>
     <q-dialog v-model="showAddAction">
       <add-action @close="showAddAction = false" />
     </q-dialog>
@@ -242,6 +270,7 @@ export default {
       actionStatesToSearch: this.options.actionStatesToSearch,
       responsiblePersonToSearch: this.options.responsiblePersonToSearch,
       accountablePersonToSearch: this.options.accountablePersonToSearch,
+      actionsLimit: 50,
       //rowCount: 10, //only used in sample code; delete when not needed anymore
       pagination: {
         sortBy: "actionLeverage",
@@ -255,11 +284,17 @@ export default {
 
   computed: {
     //...mapGetters("settings", ["settings"]),
-    ...mapState("actions", ["matchingActions"]),
+    ...mapState("actions", ["matchingActions", "matchingActionsTotalCount"]),
     ...mapState("uiAction", ["uiActionChanged"]),
     ...mapState("ui", ["selectedActionId"]),
     ...mapState("orgs", ["currentOrg"]),
     ...mapGetters("users", ["currentOrgUsers"]),
+    hasMoreActionsToLoad() {
+      return (
+        typeof this.matchingActionsTotalCount === "number" &&
+        this.matchingActionsTotalCount > (this.matchingActions || []).length
+      );
+    },
     columnsI18n() {
       let columns = [
         {
@@ -269,7 +304,8 @@ export default {
           align: "right",
           label: this.$t("Leverage"),
           field: "actionLeverage",
-          format: (val) => `${formatNumber(val, 2)}`,
+          format: (val) =>
+            val != null && isFinite(val) ? `${formatNumber(val, 2)}` : "-",
           sortable: true,
           sortBy: "desc",
         },
@@ -371,7 +407,8 @@ export default {
           align: "right",
           label: this.$t("totalRoi"),
           field: "totalRoi",
-          format: (val) => `${formatNumber(val, 2)}`,
+          format: (val) =>
+            val != null && isFinite(val) ? `${formatNumber(val, 2)}` : "-",
           sortable: true,
           sortBy: "desc",
         },
@@ -489,6 +526,18 @@ export default {
         this.loading = false;
       }, 500);
     },
+    loadMoreActions() {
+      this.actionsLimit += 50;
+      this.dispatchBindMatchingActions();
+    },
+    loadAllActions() {
+      if (this.matchingActionsTotalCount) {
+        this.actionsLimit = this.matchingActionsTotalCount;
+      } else {
+        this.actionsLimit += 100;
+      }
+      this.dispatchBindMatchingActions();
+    },
     dispatchBindMatchingActions() {
       if (this.currentOrg)
         this.$store.dispatch("actions/bindMatchingActions", {
@@ -499,6 +548,7 @@ export default {
               ? firebaseAuth.currentUser.uid
               : this.responsiblePersonToSearch,
           accountablePersonToSearch: this.accountablePersonToSearch,
+          limit: this.actionsLimit,
         });
     },
   },

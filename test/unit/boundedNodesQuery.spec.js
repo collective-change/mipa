@@ -1,0 +1,160 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// Mock Firebase modular SDK to inspect queries and limits
+let countQueries = [];
+
+vi.mock("firebase/firestore", async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    collection: vi.fn((_db, ...parts) => ({ type: "collection", path: parts.join("/") })),
+    doc: vi.fn((_db, ...parts) => ({ type: "doc", path: parts.join("/") })),
+    where: vi.fn((field, op, val) => ({ type: "where", field, op, val })),
+    limit: vi.fn((n) => ({ type: "limit", limit: n })),
+    query: vi.fn((col, ...constraints) => ({
+      type: "query",
+      col,
+      constraints
+    })),
+    getCountFromServer: vi.fn(async (q) => {
+      countQueries.push(q);
+      return {
+        data: () => ({ count: 120 })
+      };
+    }),
+  };
+});
+
+let boundRefs = [];
+vi.mock("@/store/firestore-bind", () => {
+  return {
+    firestoreAction: (fn) => (context, payload) => {
+      const bindFirestoreRef = vi.fn((key, q, options) => {
+        boundRefs.push({ key, query: q, options });
+        return Promise.resolve([]);
+      });
+      const unbindFirestoreRef = vi.fn();
+      return fn({ ...context, bindFirestoreRef, unbindFirestoreRef }, payload);
+    }
+  };
+});
+
+vi.mock("@/boot/firebase", () => ({
+  firebaseDb: {},
+  firebaseAuth: { currentUser: { uid: "test-user-123" } }
+}));
+
+const { DEFAULT_NODES_LIMIT, default: modelModule } = await import("@/store/store-model");
+const { default: chatsModule } = await import("@/store/store-chats");
+const { default: usersModule } = await import("@/store/store-users");
+
+describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
+  beforeEach(() => {
+    countQueries = [];
+    boundRefs = [];
+  });
+
+  it("exports DEFAULT_NODES_LIMIT as 50", () => {
+    expect(DEFAULT_NODES_LIMIT).toBe(50);
+  });
+
+  it("bindNodes applies default limit(50) and issues getCountFromServer when called with string modelId", async () => {
+    const commit = vi.fn();
+    const actionFn = modelModule.actions.bindNodes;
+
+    await actionFn({ commit }, "model-test-123");
+
+    expect(boundRefs).toHaveLength(1);
+    const bound = boundRefs[0];
+    expect(bound.key).toBe("nodes");
+    expect(bound.options.maxRefDepth).toBeUndefined(); // maxRefDepth removed
+
+    // Check limit constraint in query
+    const limitConstraint = bound.query.constraints.find((c) => c.type === "limit");
+    expect(limitConstraint).toBeDefined();
+    expect(limitConstraint.limit).toBe(50);
+
+    // Check getCountFromServer was called and count committed
+    expect(countQueries).toHaveLength(1);
+    expect(commit).toHaveBeenCalledWith("setNodesTotalCount", 120);
+  });
+
+  it("bindNodes applies default limit(50) when called with object without limit", async () => {
+    const commit = vi.fn();
+    const actionFn = modelModule.actions.bindNodes;
+
+    await actionFn({ commit }, { modelId: "model-test-456" });
+
+    expect(boundRefs).toHaveLength(1);
+    const bound = boundRefs[0];
+    const limitConstraint = bound.query.constraints.find((c) => c.type === "limit");
+    expect(limitConstraint).toBeDefined();
+    expect(limitConstraint.limit).toBe(50);
+  });
+
+  it("bindNodes respects custom limit when provided in payload object", async () => {
+    const commit = vi.fn();
+    const actionFn = modelModule.actions.bindNodes;
+
+    await actionFn({ commit }, { modelId: "model-test-123", limit: 25 });
+
+    expect(boundRefs).toHaveLength(1);
+    const bound = boundRefs[0];
+    const limitConstraint = bound.query.constraints.find((c) => c.type === "limit");
+    expect(limitConstraint).toBeDefined();
+    expect(limitConstraint.limit).toBe(25);
+  });
+
+  it("bindNodes supports unbounding when limit is null or 'all'", async () => {
+    const commit = vi.fn();
+    const actionFn = modelModule.actions.bindNodes;
+
+    await actionFn({ commit }, { modelId: "model-test-123", limit: null });
+
+    expect(boundRefs).toHaveLength(1);
+    const bound = boundRefs[0];
+    // When unbounded, query is the raw collection reference without limit constraints
+    expect(bound.query.type).toBe("collection");
+  });
+
+  it("bindCurrentModel does not request maxRefDepth: 1", () => {
+    const actionFn = modelModule.actions.bindCurrentModel;
+    actionFn({}, "model-test-123");
+
+    expect(boundRefs).toHaveLength(1);
+    const bound = boundRefs[0];
+    expect(bound.key).toBe("currentModel");
+    expect(bound.options.maxRefDepth).toBeUndefined();
+  });
+
+  it("store-chats binds do not request maxRefDepth: 1", () => {
+    chatsModule.actions.bindUnreadChats({});
+    chatsModule.actions.bindCurrentChat({}, "chat-1");
+
+    expect(boundRefs).toHaveLength(2);
+    expect(boundRefs[0].options.maxRefDepth).toBeUndefined();
+    expect(boundRefs[1].options.maxRefDepth).toBeUndefined();
+  });
+
+  it("store-users binds do not request maxRefDepth: 1", () => {
+    usersModule.actions.bindCurrentUser({});
+    usersModule.actions.bindCurrentOrgUsers({}, "org-1");
+
+    expect(boundRefs).toHaveLength(2);
+    expect(boundRefs[0].options.maxRefDepth).toBeUndefined();
+    expect(boundRefs[1].options.maxRefDepth).toBeUndefined();
+  });
+
+  it("store mutations update total counts and limit state", () => {
+    const state = {
+      nodesTotalCount: null,
+      nodesLimit: 50
+    };
+
+    modelModule.mutations.setNodesTotalCount(state, 462);
+    expect(state.nodesTotalCount).toBe(462);
+
+    modelModule.mutations.setNodesLimit(state, 100);
+    expect(state.nodesLimit).toBe(100);
+  });
+});

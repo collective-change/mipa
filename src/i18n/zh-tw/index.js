@@ -17,6 +17,7 @@ export default {
   SendFeedback: "回饋",
   Logout: "登出",
   About: "關於",
+  Documentation: "說明文件",
   Copyright: "著作權",
   "Contact us": "聯絡我們",
   Terms: "條款",
@@ -267,7 +268,7 @@ export default {
   noInfluencersHint:
     "目前沒有。要在公式中使用其他因素，請開啟上方的 ⋯（或在圖上對這個因素按右鍵），選擇「連結到這個因素使用的因素」。",
   "Formula: how this factor is calculated": "公式：這個因素怎麼計算",
-  formulaCharacters: "公式中不能使用這個字元",
+  formulaCharacters: "公式中不能使用這個字元：{char}",
   "How to write formulas": "如何寫公式",
   formulaHelp:
     "• 帶單位的數字：30 USD、5 km，或只寫 12\n• 用代號引用已連結的因素：sales * 0.2\n• 隨時間累積的量：delay(savings, dt, 0) + income - spending。delay(代號, dt, 0) 是該因素前一個時間點的值（一開始為 0）。\n• dt 是一個時間步長，例如 1 個月\n• 條件：profit > 0 ? profit * 0.1 : 0",
@@ -357,6 +358,8 @@ export default {
   errEvalTitle: "無法計算公式",
   errEvalAdvice:
     "請確認公式中的每個代號都屬於已連結的因素，而且單位可以相加減（例如 kg 不能加 USD）。圖上已選取這個因素。",
+  errEvalAdviceAlreadyLinked:
+    "請檢查公式中的單位是否可以結合（例如 kg 不能與 USD 相加）以及運算是否有效。圖上已選取這個因素。",
   errUnknownUnitTitle: "不明的單位",
   errUnknownUnitAdvice: "請使用 mipa 認得的單位，例如 USD、TWD、kg、km、hours 或 people，純數字請將單位留空。",
   errValueTitle: "無法讀取目前數值",
@@ -374,7 +377,7 @@ export default {
     action: { term: "行動", text: "組織可以做的一件事，包含所需工時和金錢的估計。" },
     impact: { term: "影響", text: "行動如何改變一個因素：改變多少、持續多久。" },
     netBenefit: { term: "淨效益", text: "行動對組織和世界的效益減去成本，隨時間加總，越晚的年份權重略低。" },
-    leverage: { term: "效應比", text: "行動的淨效益相對於它的成本有多大。效應比越高的行動越值得先做。" }
+    leverage: { term: "效應比", text: "行動的淨效益相對於它的成本有多大。效應比對淨效益具二次敏感度，高度獎勵以精簡之直接投入獲取龐大成果之方案。" }
   },
 
   // plain wording for actions
@@ -388,7 +391,7 @@ export default {
   Responsible: "負責",
   Accountable: "當責",
   "Search actions": "搜尋行動",
-  helpLeverage: "行動的淨效益相對於它的成本有多大。效應比越高，越值得先做。",
+  helpLeverage: "行動的淨效益相對於其直接成本之比率。效應比對淨效益呈二次敏感度（net² / [C · (C + E)]），高度獎勵以極少直接支出創造龐大淨效益之行動。",
   helpState: "行動目前所處的階段：提案中、已核准、已完成等。",
   helpResponsibleAccountable: "負責：實際做事的人。當責：對結果負最終責任的人。",
   helpBenefit: "行動在 mipa 計算的整段期間內，為組織和世界帶來的所有效益，越晚的年份權重略低。",
@@ -806,6 +809,29 @@ export default {
   tabComparison: "方案對照總覽",
   tabRobustness: "穩健性與翻轉點",
 
+  // MIPA-12: Ranking Sensitivity & Invariance for Value Factors
+  rankingInvarianceTitle: "排名敏感度與穩健性",
+  rankingInvariantBadge: "不影響排名",
+  rankingCanMoveBadge: "可能改變排名",
+  rankingInvariantDesc: "此因子同比例縮放所有行動之效益。在 mipa 中，效應比對效益量級具尺度不變性（以 k² 等比縮放），因此調整其數值大小不會改變行動優先順序。",
+  rankingSubsetDesc: "此因子僅影響部分行動（{total} 項中的 {fed} 項）。調整其數值會改變相對效益，可能影響行動優先順序。",
+  rankingTurningPointHint: "決策翻轉點：若此數值{direction} {percent}% 至 {threshold}，「{runnerUp}」將超越「{topAction}」。",
+  rankingHighlyRobustHint: "高度穩健：在合理的數值變動範圍（±50%）內，頂尖行動之排名均維持穩定。",
+  rankingDirectionIncrease: "增加",
+  rankingDirectionDecrease: "減少",
+  rankingNoActionsHint: "新增行動後即可評估調整此因子是否會影響決策排名。",
+  rankingSingleActionHint: "目前僅有一項行動；排名敏感度需至少兩項行動以進行比較。",
+
+  // MIPA-10: Bounded Actions Query & Pagination
+  showingBoundedActions: "顯示 {loaded} / {total} 項行動。",
+  loadMoreActionsButton: "載入更多（+{count}）",
+  loadAllActionsButton: "載入全部",
+
+  // MIPA-23: Bounded Nodes Query & Pagination
+  showingBoundedFactors: "顯示 {loaded} / {total} 個要素。",
+  loadMoreFactorsButton: "載入更多（+{count}）",
+  loadAllFactorsButton: "載入全部",
+
   // Feature 4: Idea to Complete Action
   tabSmartDraft: "點子智慧建案",
   tabManualEntry: "手動建立",
@@ -1095,5 +1121,88 @@ export default {
 
   // Starter AI Allowance
   aiStarterAllowanceTitle: "已啟用先導 AI 免費額度",
-  aiStarterAllowanceDesc: "包含 10 次免費 AI 建模生成額度（由 Claude 3.5 Haiku / GPT-4o-mini 驅動）。您隨時可在下方連接自備 API 金鑰以享有無限使用次數。"
+  aiStarterAllowanceDesc: "包含 10 次免費 AI 建模生成額度（由 Claude 3.5 Haiku / GPT-4o-mini 驅動）。您隨時可在下方連接自備 API 金鑰以享有無限使用次數。",
+
+  // Stakeholder Viewers
+  stakeholderViewersTitle: "利益關係人檢視者",
+  stakeholderViewersHelp: "透過電子信箱邀請唯讀利益關係人。檢視者可開啟模型、檢視要素並執行模擬，且不消耗成員席位。",
+  viewerEmailLabel: "檢視者電子信箱",
+  addViewerBtn: "新增檢視者",
+  noViewersConfigured: "尚未設定利益關係人檢視者。",
+  alreadyViewer: "此電子信箱已在檢視者清單中。",
+  stakeholderViewerNotice: "您正以唯讀利益關係人身分檢視此模型。",
+  invalidViewerEmail: "請輸入有效的電子信箱地址。",
+
+  // Currency Selection
+  currency: "幣別",
+  noMatchingCurrencies: "無相符幣別",
+
+  // Custom Variables (MIPA-19)
+  customVariablesTitle: "自訂變數",
+  customVariablesBtn: "自訂變數",
+  customVariablesHelp: "定義要素圖表外的全域常數與參數（如產品單價、稅率、營運換算係數），計算式可直接引用，且不佔用圖表節點與計算負擔。",
+  varNameLabel: "變數名稱",
+  varValueLabel: "數值",
+  varUnitLabel: "單位（選填）",
+  varDescLabel: "說明（選填）",
+  addVariableBtn: "新增變數",
+  editVariableBtn: "儲存變數",
+  deleteVariableBtn: "刪除變數",
+  noCustomVariables: "尚未定義自訂變數。",
+  varNameInvalid: "變數名稱開頭必須為英文字母或底線，且僅能包含英文字母、數字與底線。",
+  varNameDuplicate: "已有同名的變數。",
+  varValueInvalid: "請輸入有效的數值。",
+  customVarBadge: "變數",
+  formulaCustomVariablesUsed: "計算式中引用的自訂變數",
+  clickToCopy: "點擊複製",
+
+  // Factor Time Series (MIPA-20)
+  tabTimeSeriesIngestion: "時間序列數據",
+  factorSeriesSection: "歷史與預測序列",
+  factorSeriesModalTitle: "因素時間序列與出處",
+  factorSeriesHelp: "附加帶日期的實際數據（歷史）與推估數據（預測），以供 delay() 函數與模擬計算使用。",
+  manageFactorSeriesBtn: "管理時間序列",
+  tabCurrentSeries: "現有序列",
+  tabImportSeries: "匯入 / 更新序列",
+  seriesProvenanceTitle: "序列出處與範圍",
+  noTimeSeriesData: "尚未附加時間序列數據",
+  noTimeSeriesHelp: "匯入帶日期的歷史實際值或未來預測，以供模擬步長與 delay() 運算式使用。",
+  timeSeriesPointCount: "{count} 個數據點（{historical} 歷史、{predicted} 預測）",
+  importSeriesTitle: "匯入因素時間序列",
+  importSeriesHelp: "貼上帶日期的數值（CSV、TSV 或表格），包含日期、數值，以及可選的類型（歷史/預測）或來源欄位。",
+  importSeriesBtn: "匯入序列",
+  importSeriesPasteTitle: "貼上帶日期的數值（CSV / 表格）",
+  importSeriesPlaceholder: "日期,數值,類型,來源\n2024-01-01,100,historical,FY2024 審計\n2025-01-01,150,predicted,FY2025 計畫",
+  loadSampleTimeSeries: "載入範例時間序列",
+  targetFactorLabel: "目標因素",
+  seriesSourceCitation: "序列來源 / 出處引文",
+  seriesSourceHint: "例如：2020-2025 經審計銷售報告、NOAA 氣候預測",
+  seriesHistorical: "歷史數據",
+  seriesPredicted: "預測數據",
+  overwriteWarningTitle: "檢測到現有時間序列",
+  overwriteWarningMsg: "此因素已包含來自「{source}」的 {count} 個數據點。請選擇處理方式。",
+  overwriteOptionReplace: "完全替換現有序列",
+  overwriteOptionMerge: "與現有序列合併 / 追加",
+  confirmSaveSeries: "儲存序列至因素",
+  clearSeriesBtn: "清除序列",
+  clearSeriesConfirm: "確定要從此因素中移除時間序列嗎？",
+  filterSeriesPointsPlaceholder: "依日期、來源或備註篩選數據點...",
+  parsedPreviewTitle: "解析預覽",
+  pasteToPreviewHelp: "貼上數據或點擊「載入範例時間序列」以預覽。",
+  dataPoints: "個數據點",
+  timeSeriesAttachSuccess: "已成功將 {count} 個時間序列數據點附加至 {factor}。",
+  roleNodeCurrencyLockedHint: "關鍵角色要素必須使用組織的預設貨幣（{currency}）",
+  catWorldMacro: "世界與總體經濟",
+  worldModelCategory: "世界與總體模型",
+  worldModelTitle: "國家模型（世界銀行 WDI）",
+  worldModelProvenanceTitle: "世界模型因子與數據出處",
+  worldModelProvenanceDesc: "源自權威國際數據集之標準因子，具備標準引用來源與開放授權。",
+  showWorldFactors: "顯示世界模型因子",
+  hideWorldFactors: "隱藏世界模型因子",
+  worldModelImportedSuccess: "成功匯入國家模型",
+  importCountryModelBtn: "匯入國家標準模型",
+  importCountryModelConfirmPrompt: "是否將第一層國家標準模型（12 項世界銀行 WDI 指標）匯入此模型？既有具相同識別碼之因子將同步更新。",
+  auditedProvenance: "已稽核數據出處",
+  citationUrl: "引用網址",
+  licence: "授權條款"
 };

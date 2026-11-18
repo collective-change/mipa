@@ -318,7 +318,7 @@ import { httpsCallable } from "firebase/functions";
 import { firebaseDb, firebaseFunctions, useEmulators } from "@/boot/firebase";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 
-const PRESETS = [
+export const PRESETS = [
   {
     id: "anthropic",
     label: "Anthropic (Claude)",
@@ -350,8 +350,8 @@ const PRESETS = [
     label: "OpenRouter",
     provider: "openai-compatible",
     baseUrl: "https://openrouter.ai/api/v1",
-    defaultModel: "anthropic/claude-3.5-sonnet",
-    models: ["anthropic/claude-3.5-sonnet", "openai/gpt-4o", "google/gemini-2.5-pro", "meta-llama/llama-3.3-70b-instruct"],
+    defaultModel: "anthropic/claude-sonnet-5-5",
+    models: ["anthropic/claude-sonnet-5-5", "anthropic/claude-haiku-5-5", "openai/gpt-4o", "google/gemini-2.5-pro", "meta-llama/llama-3.3-70b-instruct"],
     descriptionKey: "presetOpenRouterDesc",
     dashboardUrl: "https://openrouter.ai/keys",
     providerDisplayName: "OpenRouter",

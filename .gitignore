@@ -42,7 +42,12 @@ ui-debug.log
 docs/BACKLOG.md
 docs/BACKLOG*.md
 
+# Test output
+test-results/
+playwright-report/
+
 # Local service operations - not part of the product.
+hermes/
 .agents/skills/
 .agents/rules/ops-private.md
 scripts/mipa-bridge.js

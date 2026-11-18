@@ -67,6 +67,8 @@ const actions = {
       exchangeRates: payload.exchangeRates,
       simulationParams: payload.simulationParams,
       roleNodes: payload.roleNodes,
+      orgCurrency: payload.orgCurrency,
+      customVariables: payload.customVariables || (payload.model && payload.model.customVariables) || null,
       actions: payload.actions ? payload.actions : null,
       currentUserId: firebaseAuth.currentUser.uid
     }));
@@ -84,10 +86,32 @@ const actions = {
       } else if ("errorType" in e.data) {
         let data = e.data;
         const friendly = FRIENDLY_ERRORS[data.errorType];
+        let adviceText = friendly ? i18n.global.t(friendly.advice) : "";
+
+        // If evaluation failed on an affected node whose referenced factors are already linked,
+        // do not misleadingly advise the user to link factors that are already linked.
+        if (data.errorType === "Evaluation error" && data.errorData && data.errorData.nodeId && Array.isArray(payload.nodes)) {
+          const affectedNode = payload.nodes.find(n => n.id === data.errorData.nodeId);
+          if (affectedNode) {
+            const formulaText = affectedNode.symbolFormula || affectedNode.sysFormula || "";
+            const referencedNodes = payload.nodes.filter(
+              n => n.id !== affectedNode.id && (
+                (affectedNode.sysFormula && affectedNode.sysFormula.includes("$" + n.id)) ||
+                (n.symbol && new RegExp(`(?<![\\$\\p{L}\\p{N}_])${n.symbol.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}_])`, "u").test(formulaText))
+              )
+            );
+            const influencers = Array.isArray(affectedNode.influencers) ? affectedNode.influencers : [];
+            const allLinked = referencedNodes.length > 0 && referencedNodes.every(n => influencers.includes(n.id));
+            if (allLinked) {
+              adviceText = i18n.global.t("errEvalAdviceAlreadyLinked");
+            }
+          }
+        }
+
         showErrorMessage(
           friendly ? i18n.global.t(friendly.title) : data.errorType,
           friendly
-            ? `${i18n.global.t(friendly.advice)}<br/><br/><small>${i18n.global.t("Details")}: ${data.errorMessage || ""}</small>`
+            ? `${adviceText}<br/><br/><small>${i18n.global.t("Details")}: ${data.errorMessage || ""}</small>`
             : data.errorMessage,
           true //useHtml
         );

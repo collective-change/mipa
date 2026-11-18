@@ -6,11 +6,12 @@
           <q-input
             class="text-h6 col"
             v-model="nodeToSubmit.name"
+            :readonly="readOnly"
             :placeholder="$t('Name of the factor')"
             :rules="[(val) => !!val || $t('Required')]"
             ref="nodeName"
           />
-          <q-btn flat round icon="more_horiz" class="q-mt-sm" :aria-label="$t('More options')">
+          <q-btn v-if="!readOnly" flat round icon="more_horiz" class="q-mt-sm" :aria-label="$t('More options')">
             <q-tooltip>{{ $t("More options") }}</q-tooltip>
             <q-menu auto-close>
               <q-list style="min-width: 260px">
@@ -65,7 +66,9 @@
             <q-input
               v-model="nodeToSubmit.unit"
               :label="$t('Unit')"
-              :hint="$t('unitHint')"
+              :hint="isCurrencyRoleNode ? $t('roleNodeCurrencyLockedHint', { currency: orgCurrency }) : $t('unitHint')"
+              :readonly="isCurrencyRoleNode || readOnly"
+              :disable="isCurrencyRoleNode"
               :rules="[
                 (val) =>
                   typeof val == 'undefined' ||
@@ -73,7 +76,13 @@
                   (val != '' && isNaN(parseInt(val.substring(0, 1)))) ||
                   $t('Cannot start with a number'),
               ]"
-            />
+            >
+              <template v-if="isCurrencyRoleNode" v-slot:append>
+                <q-icon name="lock" size="xs" color="grey-6">
+                  <q-tooltip>{{ $t('roleNodeCurrencyLockedHint', { currency: orgCurrency }) }}</q-tooltip>
+                </q-icon>
+              </template>
+            </q-input>
           </div>
         </div>
         <div class="text-caption text-grey-8 q-mt-sm">{{ $t("Uses these factors") }}</div>
@@ -172,7 +181,7 @@
           @click="updateCursorPos"
           @focus="updateCursorPos"
           :rules="[
-            (val) => isAllowedInFormula(val) || $t('formulaCharacters'),
+            (val) => validateFormulaCharacters(val),
             () => formulaValidation.valid || $t('formulaSyntaxErrorBlock')
           ]"
         />
@@ -200,11 +209,20 @@
                 <span class="text-weight-bold text-primary q-mr-xs">{{ sug.symbol }}</span>
                 <span class="text-caption text-grey-8">({{ sug.name }})</span>
                 <q-icon
+                  v-if="!sug.isCustomVariable"
                   :name="isInfluencerLinked(sug.id) ? 'check_circle' : 'add_link'"
                   :color="isInfluencerLinked(sug.id) ? 'positive' : 'grey-6'"
                   size="14px"
                   class="q-ml-xs"
                 />
+                <q-badge
+                  v-else
+                  color="blue-1"
+                  text-color="primary"
+                  class="q-ml-xs text-caption"
+                >
+                  {{ $t('customVarBadge') }}
+                </q-badge>
               </q-chip>
             </div>
           </q-card>
@@ -257,6 +275,15 @@
           </div>
         </q-banner>
 
+        <!-- Custom Variables in Formula Notice -->
+        <div
+          v-if="formulaValidation.valid && formulaValidation.usedCustomVariables && formulaValidation.usedCustomVariables.length > 0"
+          class="text-caption text-primary q-mt-xs q-mb-xs row items-center"
+        >
+          <q-icon name="data_object" class="q-mr-xs" size="14px" />
+          {{ $t('formulaCustomVariablesUsed') }}: {{ formulaValidation.usedCustomVariables.join(', ') }}
+        </div>
+
         <!-- Unrecognized Symbols Notice -->
         <div
           v-if="formulaValidation.valid && formulaValidation.unknownSymbols.length > 0"
@@ -289,6 +316,75 @@
           :hint="$t('currentValueHint')"
           debounce="300"
         />
+
+        <!-- Ranking Sensitivity & Invariance Card (MIPA-12) -->
+        <q-card
+          v-if="rankingSensitivity && rankingSensitivity.isConstant"
+          flat
+          bordered
+          class="q-my-sm bg-grey-1"
+        >
+          <q-card-section class="q-pa-sm">
+            <div class="row items-center justify-between q-mb-xs">
+              <div class="row items-center q-gutter-xs">
+                <q-icon name="tune" color="primary" size="18px" />
+                <span class="text-subtitle2 text-weight-bold text-grey-9">
+                  {{ $t("sensitivityAnalysis") }}
+                </span>
+              </div>
+              <q-badge
+                :color="rankingSensitivity.canMoveRanking ? 'warning' : 'positive'"
+                text-color="white"
+                class="text-weight-bold q-px-sm q-py-xs"
+              >
+                <q-icon
+                  :name="rankingSensitivity.canMoveRanking ? 'shuffle' : 'lock'"
+                  size="12px"
+                  class="q-mr-xs"
+                />
+                {{ rankingSensitivity.canMoveRanking ? $t("rankingCanMoveBadge") : $t("rankingInvariantBadge") }}
+              </q-badge>
+            </div>
+
+            <!-- Description -->
+            <div class="text-caption text-grey-8 q-mb-xs">
+              <span v-if="rankingSensitivity.isRankingInvariant">
+                {{ $t("rankingInvariantDesc") }}
+              </span>
+              <span v-else-if="rankingSensitivity.canMoveRanking">
+                {{ $t("rankingSubsetDesc", { fed: rankingSensitivity.fedCount, total: rankingSensitivity.totalCount }) }}
+              </span>
+              <span v-else-if="rankingSensitivity.reason === 'insufficient_actions'">
+                {{ rankingSensitivity.totalCount === 1 ? $t("rankingSingleActionHint") : $t("rankingNoActionsHint") }}
+              </span>
+            </div>
+
+            <!-- Turning Point Details (when factor can move ranking) -->
+            <div
+              v-if="rankingSensitivity.canMoveRanking"
+              class="q-mt-xs q-pa-xs rounded-borders bg-white border"
+            >
+              <div v-if="rankingSensitivity.turningPoint !== null" class="row items-center text-caption text-grey-9">
+                <q-icon name="crisis_alert" color="primary" size="14px" class="q-mr-xs" />
+                <span>
+                  {{
+                    $t("rankingTurningPointHint", {
+                      topAction: rankingSensitivity.topActionTitle,
+                      runnerUp: rankingSensitivity.runnerUpTitle,
+                      direction: rankingSensitivity.direction === "decrease" ? $t("rankingDirectionDecrease") : $t("rankingDirectionIncrease"),
+                      percent: Math.abs(rankingSensitivity.percentShift).toFixed(1),
+                      threshold: formatSensitivityNumber(rankingSensitivity.turningPoint, 2)
+                    })
+                  }}
+                </span>
+              </div>
+              <div v-else class="row items-center text-caption text-grey-7">
+                <q-icon name="shield" color="positive" size="14px" class="q-mr-xs" />
+                <span>{{ $t("rankingHighlyRobustHint") }}</span>
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
 
         <!-- Data Provenance & Freshness section -->
         <q-expansion-item
@@ -360,6 +456,35 @@
                 :hint="$t('sourceCitationHint')"
               />
             </div>
+          </div>
+
+          <!-- Time Series Sub-section (MIPA-20) -->
+          <div class="row items-center justify-between q-mt-sm q-pt-xs border-top">
+            <div class="row items-center q-gutter-xs">
+              <q-icon name="timeline" color="primary" size="18px" />
+              <span class="text-caption text-weight-medium text-grey-8">{{ $t('factorSeriesSection') }}:</span>
+              <q-chip
+                v-if="seriesPointsCount > 0"
+                dense
+                size="sm"
+                color="primary"
+                text-color="white"
+              >
+                {{ $t('timeSeriesPointCount', { count: seriesPointsCount, historical: historicalCount, predicted: predictedCount }) }}
+              </q-chip>
+              <span v-else class="text-caption text-grey-6 italic">
+                {{ $t('noTimeSeriesData') }}
+              </span>
+            </div>
+            <q-btn
+              flat
+              dense
+              size="sm"
+              color="primary"
+              icon="tune"
+              :label="$t('manageFactorSeriesBtn')"
+              @click="showSeriesModal = true"
+            />
           </div>
         </q-expansion-item>
 
@@ -492,7 +617,7 @@
           </div>
         </q-expansion-item>
 
-        <modal-buttons />
+        <modal-buttons v-if="!readOnly" />
       </q-form>
       <div class="text-h6">{{ $t("Chat") }}</div>
       <chat
@@ -589,6 +714,14 @@
       :title="$t('noFactorSelectedTitle')"
       :description="$t('noFactorSelectedHint')"
     />
+
+    <!-- Factor Series Modal (MIPA-20) -->
+    <factor-series-modal
+      v-model="showSeriesModal"
+      :factor="nodeToSubmit"
+      :read-only="readOnly"
+      @save-series="onSaveSeries"
+    />
   </div>
 </template>
 
@@ -603,12 +736,17 @@ import {
   FORMULA_PRIMITIVES,
   validateFormulaSyntax,
   getFactorSuggestions,
-  insertSnippetIntoFormula
+  insertSnippetIntoFormula,
+  toSysFormula,
+  getInvalidFormulaCharacters
 } from "@/utils/formulaHelper";
 import {
   ACCOUNTING_CATEGORIES,
   evaluateFactorFreshness
 } from "@/utils/dataIngestion";
+import { isCurrencyRoleNode } from "@/utils/util-model-draft";
+import { analyzeFactorRankingInvariance } from "@/utils/sensitivityAnalysis";
+import { formatNumber } from "@/utils/util-formatNumber";
 import SelectUser from "../Users/SelectUser.vue";
 import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
 import EmptyState from "@/components/Shared/EmptyState.vue";
@@ -616,6 +754,7 @@ import Chat from "@/components/Chats/Chat.vue";
 import AddNode from "@/components/Model/Modals/AddNode.vue";
 import AddLink from "@/components/Model/Modals/AddLink.vue";
 import DeleteNode from "@/components/Model/Modals/DeleteNode.vue";
+import FactorSeriesModal from "@/components/Model/Modals/FactorSeriesModal.vue";
 
 export default {
   components: {
@@ -625,13 +764,21 @@ export default {
     "modal-buttons": ModalButtons,
     "select-user": SelectUser,
     "empty-state": EmptyState,
+    "factor-series-modal": FactorSeriesModal,
     chat: Chat,
     gchart: GChart,
     "latex-formula": LatexFormula,
   },
+  props: {
+    readOnly: {
+      type: Boolean,
+      default: false,
+    },
+  },
 
   data() {
     return {
+      showSeriesModal: false,
       nodeToSubmit: {},
       oldNodeToSubmit: {}, //used for comparing changes to nodeToSubmit
       // "⋯" menu (same actions as right-clicking the factor in the graph)
@@ -673,7 +820,23 @@ export default {
     ]),
     ...mapState("calcResults", ["baseline"]),
     ...mapState("model", ["currentModel"]),
+    ...mapState("orgs", ["currentOrg"]),
+    ...mapState("actions", ["matchingActions", "actions"]),
     ...mapGetters("model", ["nodes", "links"]),
+
+    orgCurrency() {
+      return (
+        this.currentOrg?.currency ||
+        this.currentModel?.currency ||
+        "USD"
+      );
+    },
+
+    isCurrencyRoleNode() {
+      const node = this.selectedNode || this.nodeToSubmit;
+      if (!node) return false;
+      return isCurrencyRoleNode(node, this.currentModel?.roleNodes);
+    },
 
     selectedNode() {
       let that = this;
@@ -691,6 +854,21 @@ export default {
 
     factorFreshness() {
       return evaluateFactorFreshness(this.nodeToSubmit);
+    },
+
+    seriesPointsCount() {
+      const s = this.nodeToSubmit?.timeSeries;
+      return Array.isArray(s) ? s.length : 0;
+    },
+
+    historicalCount() {
+      const s = this.nodeToSubmit?.timeSeries;
+      return Array.isArray(s) ? s.filter(p => !p.isPredicted).length : 0;
+    },
+
+    predictedCount() {
+      const s = this.nodeToSubmit?.timeSeries;
+      return Array.isArray(s) ? s.filter(p => p.isPredicted).length : 0;
     },
 
     influencerNodesInfo() {
@@ -728,12 +906,19 @@ export default {
       return validateFormulaSyntax(this.nodeToSubmit?.symbolFormula || "", {
         availableSymbols,
         allNodes: this.nodes || [],
-        currentNodeId: this.nodeToSubmit?.id
+        currentNodeId: this.nodeToSubmit?.id,
+        customVariables: this.currentModel?.customVariables || []
       });
     },
 
     allFactorSuggestions() {
-      return getFactorSuggestions("", this.nodes, this.nodeToSubmit?.id, this.nodeToSubmit?.influencers);
+      return getFactorSuggestions(
+        "",
+        this.nodes,
+        this.nodeToSubmit?.id,
+        this.nodeToSubmit?.influencers,
+        this.currentModel?.customVariables || []
+      );
     },
 
     autocompleteSuggestions() {
@@ -742,7 +927,8 @@ export default {
         this.currentFormulaToken,
         this.nodes,
         this.nodeToSubmit?.id,
-        this.nodeToSubmit?.influencers
+        this.nodeToSubmit?.influencers,
+        this.currentModel?.customVariables || []
       ).slice(0, 8);
     },
 
@@ -760,8 +946,13 @@ export default {
 
     watchedObjectForNodePropertyRecalculation() {
       return {
-        latestValue: this.nodeToSubmit.latestValue,
+        latestValue: this.nodeToSubmit?.latestValue,
         parsedFormula: this.parsedSymbolFormula,
+        symbolFormula: this.nodeToSubmit?.symbolFormula,
+        influencers: Array.isArray(this.nodeToSubmit?.influencers)
+          ? this.nodeToSubmit.influencers.slice().sort().join(",")
+          : "",
+        nodesCount: (this.nodes || []).length
       };
     },
 
@@ -774,9 +965,44 @@ export default {
           })
         : "";
     },
+
+    // Ranking sensitivity & invariance analysis (MIPA-12)
+    rankingSensitivity() {
+      if (!this.nodeToSubmit) return null;
+      const formula = String(this.nodeToSubmit.symbolFormula ?? "").trim();
+      const isNumeric = formula !== "" && !isNaN(Number(formula));
+      const isConstantClass = this.nodeToSubmit.class === "constant";
+      const hasNoInfluencers = !this.nodeToSubmit.influencers || (Array.isArray(this.nodeToSubmit.influencers) && this.nodeToSubmit.influencers.length === 0);
+      const hasDollar = formula.includes("$") || String(this.nodeToSubmit.sysFormula ?? "").includes("$");
+      const isValueFactor = isNumeric || isConstantClass || (hasNoInfluencers && formula !== "" && !hasDollar);
+
+      if (!isValueFactor) return null;
+
+      const actionsList = (this.matchingActions && this.matchingActions.length > 0)
+        ? this.matchingActions
+        : (this.actions && this.actions.length > 0 ? this.actions : []);
+
+      return analyzeFactorRankingInvariance(
+        this.nodeToSubmit,
+        actionsList,
+        this.nodes || [],
+        this.currentModel?.simulationParams || {}
+      );
+    },
   },
 
   methods: {
+    onSaveSeries({ timeSeries, seriesProvenance }) {
+      this.nodeToSubmit.timeSeries = timeSeries;
+      this.nodeToSubmit.seriesProvenance = seriesProvenance;
+      if (seriesProvenance && seriesProvenance.sourceCitation && !this.nodeToSubmit.sourceCitation) {
+        this.nodeToSubmit.sourceCitation = seriesProvenance.sourceCitation;
+      }
+      this.fieldChanged("timeSeries");
+    },
+    formatSensitivityNumber(num, precision = 2) {
+      return formatNumber(num, precision);
+    },
     openAddFactor(role) {
       this.addFactorRole = role;
       this.showAddFactor = true;
@@ -803,7 +1029,13 @@ export default {
     },
     isAllowedInFormula(str) {
       if (!str) return true;
-      return str.match(/^[a-z0-9 _,=<>/:%\-\(\)\+\^\.\?\*]+$/i) !== null;
+      return getInvalidFormulaCharacters(str).length === 0;
+    },
+    validateFormulaCharacters(str) {
+      if (!str) return true;
+      const invalid = getInvalidFormulaCharacters(str);
+      if (invalid.length === 0) return true;
+      return this.$t("formulaCharacters", { char: invalid.join(", ") });
     },
     isInfluencerLinked(nodeId) {
       return Array.isArray(this.nodeToSubmit?.influencers) && this.nodeToSubmit.influencers.includes(nodeId);
@@ -898,6 +1130,7 @@ export default {
       });
     },
     submitForm() {
+      if (this.readOnly) return;
       if (this.$refs.nodeName) {
         this.$refs.nodeName.validate();
         if (this.$refs.nodeName.hasError) return;
@@ -914,6 +1147,50 @@ export default {
       this.submitNode();
     },
     submitNode() {
+      // 1. Resolve sysFormula and referenced factors from bare short names
+      const { sysFormula, referencedNodeIds } = toSysFormula(
+        this.nodeToSubmit.symbolFormula,
+        this.nodes,
+        this.nodeToSubmit
+      );
+      this.nodeToSubmit.sysFormula = sysFormula;
+
+      // 2. Auto-link any referenced factors as inputs so "not yet linked" banner is not needed
+      if (!Array.isArray(this.nodeToSubmit.influencers)) {
+        this.nodeToSubmit.influencers = [];
+      }
+      const newlyLinkedIds = [];
+      referencedNodeIds.forEach((refId) => {
+        if (!this.nodeToSubmit.influencers.includes(refId)) {
+          this.nodeToSubmit.influencers.push(refId);
+          newlyLinkedIds.push(refId);
+        }
+      });
+
+      // 3. Dispatch addLink so the link is persisted to Firestore and graph
+      newlyLinkedIds.forEach((influencerId) => {
+        if (this.selectedNode?.id && this.$route?.params?.modelId && this.addLink) {
+          this.addLink({
+            modelId: this.$route.params.modelId,
+            link: {
+              sourceNodeId: this.selectedNode.id,
+              targetNodeId: influencerId,
+              targetType: "influencer"
+            }
+          });
+        }
+      });
+
+      // 4. Update classified influencers
+      let classifiedInfluencers = classifyInfluencers({
+        thisNode: this.nodeToSubmit,
+      });
+      this.nodeToSubmit.blockingInfluencers = classifiedInfluencers.blocking;
+      this.nodeToSubmit.unusedInfluencers = classifiedInfluencers.unused;
+      this.nodeToSubmit.isSelfBlocking = classifiedInfluencers.blocking.includes(
+        this.nodeToSubmit.id
+      );
+
       let oldLatestVal = this.selectedNode.latestValue;
       let newLatestVal = this.nodeToSubmit.latestValue;
       let oldLatestValIsANumber =
@@ -932,15 +1209,15 @@ export default {
       let symbolChanged = oldSymbol != newSymbol;
       this.nodeToSubmit.isNew = false;
 
+      if (this.isCurrencyRoleNode) {
+        this.nodeToSubmit.unit = this.orgCurrency;
+      }
+
       this.updateNode({
         modelId: this.$route.params.modelId,
         updates: this.nodeToSubmit,
         latestValueExistenceChanged: latestValueExistenceChanged,
         symbolChanged: symbolChanged,
-        /* "symbolChanged" doesn't actually work yet to classify influencers
-        of node's influencees, because classifyInfluencers currently
-        starts with sysFormula, which would not change until it's recomposed.
-        */
       });
     },
     updateChartData() {
@@ -1078,6 +1355,7 @@ export default {
         if (!this.selectedNode) return;
         this.nodeToSubmitIsFreshlyAssigned = true;
         this.nodeToSubmit = Object.assign({}, this.selectedNode, {
+          symbolFormula: this.selectedNode.symbolFormula ?? this.selectedNode.formula ?? "",
           influencers: [...(this.selectedNode.influencers || [])],
           blockingInfluencers: [...(this.selectedNode.blockingInfluencers || [])],
           unusedInfluencers: [...(this.selectedNode.unusedInfluencers || [])]
@@ -1089,6 +1367,9 @@ export default {
           "es": this.selectedNode.translations?.name?.["es"] || "",
           "ja": this.selectedNode.translations?.name?.["ja"] || "",
         };
+        if (this.isCurrencyRoleNode && this.nodeToSubmit.unit !== this.orgCurrency) {
+          this.nodeToSubmit.unit = this.orgCurrency;
+        }
         this.$store.commit("ui/setUiNodeChanged", false);
         this.influencerChartsArr = [];
         this.nodeChart = {};
@@ -1141,46 +1422,11 @@ export default {
       if (parsedSymbolFormula.toString() == "") {
         this.nodeToSubmit.sysFormula = "";
       } else {
-        var nodes = this.nodes;
-        var influencerNode = {};
-
-        //gather up ids of self, influencers, and their symbols
-        var potentials = [];
-        potentials.push({
-          symbol: this.nodeToSubmit.symbol,
-          id: this.nodeToSubmit.id,
-        });
-        if (
-          "influencers" in this.nodeToSubmit &&
-          this.nodeToSubmit.influencers.length > 0
-        ) {
-          this.nodeToSubmit.influencers.forEach(function (influencerNodeId) {
-            influencerNode = nodes.find(function (node) {
-              return node.id == influencerNodeId;
-            });
-            if (influencerNode && influencerNode.symbol) {
-              potentials.push({
-                symbol: influencerNode.symbol,
-                id: influencerNodeId,
-              });
-            }
-          });
-        }
-        potentials.sort(function (a, b) {
-          return (b.symbol || "").length - (a.symbol || "").length;
-        });
-
-        var sysFormula = parsedSymbolFormula.toString();
-        if (sysFormula) {
-          potentials.forEach(function (node) {
-            sysFormula = sysFormula.replace(
-              new RegExp("\\b" + node.symbol + "\\b", "g"), //global replacement
-              "$" + node.id
-            );
-          });
-        }
-        sysFormula.trim(); //trim whitespace from both sides
-        sysFormula = sysFormula.replace(/  +/g, " "); //replace multiple spaces with single space
+        const { sysFormula } = toSysFormula(
+          this.nodeToSubmit.symbolFormula,
+          this.nodes,
+          this.nodeToSubmit
+        );
         this.nodeToSubmit.sysFormula = sysFormula;
       }
 

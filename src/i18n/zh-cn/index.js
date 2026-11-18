@@ -17,6 +17,7 @@ export default {
   SendFeedback: "回饋",
   Logout: "退出登录",
   About: "關於",
+  Documentation: "说明文件",
   Copyright: "著作權",
   "Contact us": "聯絡我們",
   Terms: "條款",
@@ -267,7 +268,7 @@ export default {
   noInfluencersHint:
     "目前沒有。要在公式中使用其他因素，請開啟上方的 ⋯（或在圖上對這個因素按右鍵），选择「链接到這個因素使用的因素」。",
   "Formula: how this factor is calculated": "公式：這個因素怎麼计算",
-  formulaCharacters: "公式中不能使用這個字元",
+  formulaCharacters: "公式中不能使用这个字符：{char}",
   "How to write formulas": "如何寫公式",
   formulaHelp:
     "• 帶单位的數字：30 USD、5 km，或只寫 12\n• 用代號引用已链接的因素：sales * 0.2\n• 隨時間累積的量：delay(savings, dt, 0) + income - spending。delay(代號, dt, 0) 是該因素前一個時間點的值（一開始為 0）。\n• dt 是一個時間步長，例如 1 個月\n• 條件：profit > 0 ? profit * 0.1 : 0",
@@ -357,6 +358,8 @@ export default {
   errEvalTitle: "無法计算公式",
   errEvalAdvice:
     "請確認公式中的每個代號都屬於已链接的因素，而且单位可以相加減（例如 kg 不能加 USD）。圖上已選取這個因素。",
+  errEvalAdviceAlreadyLinked:
+    "请检查公式中的单位是否可以结合（例如 kg 不能与 USD 相加）以及运算是否有效。图上已选取这个因素。",
   errUnknownUnitTitle: "不明的单位",
   errUnknownUnitAdvice: "請使用 mipa 認得的单位，例如 USD、TWD、kg、km、hours 或 people，純數字請將单位留空。",
   errValueTitle: "無法讀取目前数值",
@@ -374,7 +377,7 @@ export default {
     action: { term: "行动", text: "组织可以做的一件事，包含所需工时和金錢的估計。" },
     impact: { term: "影响", text: "行动如何改變一個因素：改變多少、持續多久。" },
     netBenefit: { term: "净效益", text: "行动對组织和世界的效益減去成本，隨時間加總，越晚的年份權重略低。" },
-    leverage: { term: "效应比", text: "行动的净效益相對於它的成本有多大。效应比越高的行动越值得先做。" }
+    leverage: { term: "效应比", text: "行动的净效益相對於它的成本有多大。效应比对净效益具二次敏感度，高度奖励以精简之直接投入获取庞大成果之方案。" }
   },
 
   // plain wording for actions
@@ -388,7 +391,7 @@ export default {
   Responsible: "負責",
   Accountable: "當責",
   "Search actions": "搜索行动",
-  helpLeverage: "行动的净效益相對於它的成本有多大。效应比越高，越值得先做。",
+  helpLeverage: "行动的净效益相對於其直接成本之比率。效应比对净效益呈二次敏感度（net² / [C · (C + E)]），高度奖励以极少直接支出创造庞大净效益之行动。",
   helpState: "行动目前所處的階段：提案中、已核准、已完成等。",
   helpResponsibleAccountable: "負責：实际做事的人。當責：對結果負最終責任的人。",
   helpBenefit: "行动在 mipa 计算的整段期間內，為组织和世界帶來的所有效益，越晚的年份權重略低。",
@@ -806,6 +809,29 @@ export default {
   tabComparison: "方案對照總覽",
   tabRobustness: "穩健性與翻轉點",
 
+  // MIPA-12: Ranking Sensitivity & Invariance for Value Factors
+  rankingInvarianceTitle: "排名敏感度与稳健性",
+  rankingInvariantBadge: "不影响排名",
+  rankingCanMoveBadge: "可能改变排名",
+  rankingInvariantDesc: "此因子同比例缩放所有行动之效益。在 mipa 中，效应比对效益量级具尺度不变性（以 k² 等比缩放），因此调整其数值大小不会改变行动优先顺序。",
+  rankingSubsetDesc: "此因子仅影响部分行动（{total} 项中的 {fed} 项）。调整其数值会改变相对效益，可能影响行动优先顺序。",
+  rankingTurningPointHint: "决策翻转点：若此数值{direction} {percent}% 至 {threshold}，「{runnerUp}」将超越「{topAction}」。",
+  rankingHighlyRobustHint: "高度稳健：在合理的数值变动范围（±50%）内，顶尖行动之排名均维持稳定。",
+  rankingDirectionIncrease: "增加",
+  rankingDirectionDecrease: "减少",
+  rankingNoActionsHint: "新增行动后即可评估调整此因子是否会影响决策排名。",
+  rankingSingleActionHint: "目前仅有一项行动；排名敏感度需至少两项行动以进行比较。",
+
+  // MIPA-10: Bounded Actions Query & Pagination
+  showingBoundedActions: "显示 {loaded} / {total} 项行动。",
+  loadMoreActionsButton: "加载更多（+{count}）",
+  loadAllActionsButton: "加载全部",
+
+  // MIPA-23: Bounded Nodes Query & Pagination
+  showingBoundedFactors: "显示 {loaded} / {total} 个要素。",
+  loadMoreFactorsButton: "加载更多（+{count}）",
+  loadAllFactorsButton: "加载全部",
+
   // Feature 4: Idea to Complete Action
   tabSmartDraft: "點子智慧建案",
   tabManualEntry: "手動创建",
@@ -1095,5 +1121,78 @@ export default {
 
   // Starter AI Allowance
   aiStarterAllowanceTitle: "已启用先导 AI 免费额度",
-  aiStarterAllowanceDesc: "包含 10 次免费 AI 建模生成额度（由 Claude 3.5 Haiku / GPT-4o-mini 驱动）。您随时可在下方连接自备 API 密钥以享有无限使用次数。"
+  aiStarterAllowanceDesc: "包含 10 次免费 AI 建模生成额度（由 Claude 3.5 Haiku / GPT-4o-mini 驱动）。您随时可在下方连接自备 API 密钥以享有无限使用次数。",
+
+  // Currency Selection
+  currency: "币种",
+  noMatchingCurrencies: "无匹配币种",
+
+  // Custom Variables (MIPA-19)
+  customVariablesTitle: "自定义变量",
+  customVariablesBtn: "自定义变量",
+  customVariablesHelp: "定义要素图表外的全局常量与参数（如产品单价、税率、运营换算系数），计算式可直接引用，且不占用图表节点与计算负担。",
+  varNameLabel: "变量名称",
+  varValueLabel: "数值",
+  varUnitLabel: "单位（选填）",
+  varDescLabel: "说明（选填）",
+  addVariableBtn: "新增变量",
+  editVariableBtn: "保存变量",
+  deleteVariableBtn: "删除变量",
+  noCustomVariables: "尚未定义自定义变量。",
+  varNameInvalid: "变量名称开头必须为英文字母或下划线，且仅能包含英文字母、数字与下划线。",
+  varNameDuplicate: "已有同名的变量。",
+  varValueInvalid: "请输入有效的数值。",
+  customVarBadge: "变量",
+  formulaCustomVariablesUsed: "计算式中引用的自定义变量",
+  clickToCopy: "点击复制",
+
+  // Factor Time Series (MIPA-20)
+  tabTimeSeriesIngestion: "时间序列数据",
+  factorSeriesSection: "历史与预测序列",
+  factorSeriesModalTitle: "因素时间序列与出处",
+  factorSeriesHelp: "附加带日期的实际数据（历史）与推估数据（预测），以供 delay() 函数与模拟计算使用。",
+  manageFactorSeriesBtn: "管理时间序列",
+  tabCurrentSeries: "现有序列",
+  tabImportSeries: "导入 / 更新序列",
+  seriesProvenanceTitle: "序列出处与范围",
+  noTimeSeriesData: "尚未附加时间序列数据",
+  noTimeSeriesHelp: "导入带日期的历史实际值或未来预测，以供模拟步长与 delay() 运算式使用。",
+  timeSeriesPointCount: "{count} 个数据点（{historical} 历史、{predicted} 预测）",
+  importSeriesTitle: "导入因素时间序列",
+  importSeriesHelp: "粘贴带日期的数值（CSV、TSV 或表格），包含日期、数值，以及可选的类型（历史/预测）或来源字段。",
+  importSeriesBtn: "导入序列",
+  importSeriesPasteTitle: "粘贴带日期的数值（CSV / 表格）",
+  importSeriesPlaceholder: "日期,数值,类型,来源\n2024-01-01,100,historical,FY2024 审计\n2025-01-01,150,predicted,FY2025 计划",
+  loadSampleTimeSeries: "载入示例时间序列",
+  targetFactorLabel: "目标因素",
+  seriesSourceCitation: "序列来源 / 出处引文",
+  seriesSourceHint: "例如：2020-2025 经审计销售报告、NOAA 气候预测",
+  seriesHistorical: "历史数据",
+  seriesPredicted: "预测数据",
+  overwriteWarningTitle: "检测到现有时间序列",
+  overwriteWarningMsg: "此因素已包含来自“{source}”的 {count} 个数据点。请选择处理方式。",
+  overwriteOptionReplace: "完全替换现有序列",
+  overwriteOptionMerge: "与现有序列合并 / 追加",
+  confirmSaveSeries: "保存序列至因素",
+  clearSeriesBtn: "清除序列",
+  clearSeriesConfirm: "确定要从此因素中移除时间序列吗？",
+  filterSeriesPointsPlaceholder: "按日期、来源或备注筛选数据点...",
+  parsedPreviewTitle: "解析预览",
+  pasteToPreviewHelp: "粘贴数据或点击“载入示例时间序列”以预览。",
+  dataPoints: "个数据点",
+  timeSeriesAttachSuccess: "已成功将 {count} 个时间序列数据点附加至 {factor}。",
+  roleNodeCurrencyLockedHint: "关键角色要素必须使用组织的默认货币（{currency}）",
+  catWorldMacro: "世界与宏观经济",
+  worldModelCategory: "世界与宏观模型",
+  worldModelTitle: "国家模型（世界银行 WDI）",
+  worldModelProvenanceTitle: "世界模型因子与数据出处",
+  worldModelProvenanceDesc: "源自权威国际数据集之标准因子，具备标准引用来源与开放授权。",
+  showWorldFactors: "显示世界模型因子",
+  hideWorldFactors: "隐藏世界模型因子",
+  worldModelImportedSuccess: "成功导入国家模型",
+  importCountryModelBtn: "导入国家标准模型",
+  importCountryModelConfirmPrompt: "是否将第一层国家标准模型（12 项世界银行 WDI 指标）导入此模型？现有具相同标识码之因子将同步更新。",
+  auditedProvenance: "已审核数据出处",
+  citationUrl: "引用网址",
+  licence: "授权条款"
 };

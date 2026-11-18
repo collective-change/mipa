@@ -88,12 +88,10 @@ export default {
       )
         await new Promise((resolve) => setTimeout(resolve, 200));
 
-      // Recalculate needs the model, its factors and every action of the org,
-      // even when this is the first page opened.
+      // Actions are bound with pagination / bounding by ActionsList.
       let orgId = this.$route.params.orgId;
       this.$store.dispatch("model/bindCurrentModel", orgId);
       this.$store.dispatch("model/bindNodes", orgId);
-      this.$store.dispatch("actions/bindActions", orgId);
     })();
   },
 

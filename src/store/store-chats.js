@@ -145,7 +145,6 @@ const actions = {
         where(`unreadBy.${userId}`, "==", true)
       ),
       {
-        maxRefDepth: 1,
         wait: true //this also forces reset: false
       }
     );
@@ -161,7 +160,6 @@ const actions = {
       "currentChat",
       doc(firebaseDb, "chats", chatId),
       {
-        maxRefDepth: 1,
         wait: true //this also forces reset: false
       }
     );

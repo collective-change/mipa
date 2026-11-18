@@ -40,12 +40,6 @@ export default {
   mounted() {},
 
   watch: {
-    "$route.params.orgId": {
-      handler: function (orgId) {
-        this.$store.dispatch("actions/bindActions", orgId);
-      },
-      immediate: true,
-    },
     "$route.params.actionId": {
       handler: function (actionId) {
         this.$store.dispatch("actions/bindCurrentAction", actionId);

@@ -8,7 +8,7 @@ export default {
   "Unread messages": "Unread messages",
   "No unread messages": "No unread messages",
   Notifications: "Notifications",
-  Login: "Log in",
+  Login: "Sign in",
   Account: "Account",
   Home: "Home",
   home: "home",
@@ -17,6 +17,7 @@ export default {
   SendFeedback: "Send feedback",
   Logout: "Log out",
   About: "About",
+  Documentation: "Documentation",
   Copyright: "Copyright",
   "Contact us": "Contact us",
   Terms: "Terms",
@@ -272,7 +273,7 @@ export default {
   noInfluencersHint:
     "None yet. To use another factor in this formula, open ⋯ above (or right-click this factor in the graph) and choose \"Link to a factor this one uses\".",
   "Formula: how this factor is calculated": "Formula: how this factor is calculated",
-  formulaCharacters: "This character can't be used in a formula",
+  formulaCharacters: "This character can't be used in a formula: {char}",
   "How to write formulas": "How to write formulas",
   formulaHelp:
     "• A number with a unit: 30 USD, 5 km, or just 12\n• Use linked factors by their short names: sales * 0.2\n• Something that builds up over time: delay(savings, dt, 0) + income - spending. delay(name, dt, 0) is the factor's value one step earlier (0 at the start).\n• dt is the length of one step, e.g. 1 month\n• Conditions: profit > 0 ? profit * 0.1 : 0",
@@ -367,6 +368,8 @@ export default {
   errEvalTitle: "A formula couldn't be calculated",
   errEvalAdvice:
     "Check that every short name in the formula belongs to a linked factor, and that the units can be combined (for example, kg can't be added to USD). The factor is selected in the graph.",
+  errEvalAdviceAlreadyLinked:
+    "Check that the units can be combined (for example, kg can't be added to USD) and that the formula operations are valid. The factor is selected in the graph.",
   errUnknownUnitTitle: "Unknown unit",
   errUnknownUnitAdvice:
     "Use a unit mipa knows, such as USD, TWD, kg, km, hours or people, or leave the unit empty for plain numbers.",
@@ -385,7 +388,7 @@ export default {
     action: { term: "Action", text: "Something your organization could do, with an estimate of the work hours and money it needs." },
     impact: { term: "Impact", text: "How an action changes a factor: by how much, and for how long." },
     netBenefit: { term: "Net benefit", text: "An action's benefits minus its costs, to the organization and to the world, added up over time with later years counting a little less." },
-    leverage: { term: "Leverage", text: "How strongly an action's net benefit outweighs what it costs. Actions with higher leverage are worth doing first." }
+    leverage: { term: "Leverage", text: "How strongly an action's net benefit outweighs what it costs. Leverage is quadratic in net benefit relative to direct spending, rewarding outsized societal gains from lean direct resource commitments." }
   },
 
   // plain wording for actions
@@ -400,7 +403,7 @@ export default {
   Accountable: "Accountable",
   "Search actions": "Search actions",
   helpLeverage:
-    "How strongly the action's net benefit outweighs what it costs. Higher leverage: worth doing sooner.",
+    "How strongly the action's net benefit outweighs what it costs. The metric scales quadratically with net benefit (net² / [C · (C + E)]), strongly rewarding high net benefits achieved with minimal direct spending.",
   helpState: "Where the action is in its life: being proposed, approved, done, and so on.",
   helpResponsibleAccountable:
     "Responsible: the person doing the work. Accountable: the person who answers for the result.",
@@ -825,6 +828,29 @@ export default {
   tabComparison: "Comparison overview",
   tabRobustness: "Robustness & Turning points",
 
+  // MIPA-12: Ranking Sensitivity & Invariance for Value Factors
+  rankingInvarianceTitle: "Ranking Sensitivity",
+  rankingInvariantBadge: "Ranking-Invariant",
+  rankingCanMoveBadge: "Can Change Ranking",
+  rankingInvariantDesc: "This factor scales all actions' benefits equally. In mipa, leverage is scale-invariant in benefit value (scales by k²), so tuning its magnitude will not alter the action priority ranking.",
+  rankingSubsetDesc: "This factor feeds a subset of actions ({fed} of {total}). Adjusting its value changes relative benefits and can move action rankings.",
+  rankingTurningPointHint: "Turning point: {runnerUp} overtakes {topAction} if this value shifts {direction} by {percent}% to {threshold}.",
+  rankingHighlyRobustHint: "High stability: Ranking between top actions remains stable across a wide range of values (+/- 50%).",
+  rankingDirectionIncrease: "up",
+  rankingDirectionDecrease: "down",
+  rankingNoActionsHint: "Add actions to evaluate whether tuning this factor affects decision rankings.",
+  rankingSingleActionHint: "Single action defined; ranking sensitivity requires at least two actions to compare.",
+
+  // MIPA-10: Bounded Actions Query & Pagination
+  showingBoundedActions: "Showing {loaded} of {total} actions.",
+  loadMoreActionsButton: "Load more (+{count})",
+  loadAllActionsButton: "Load all",
+
+  // MIPA-23: Bounded Nodes Query & Pagination
+  showingBoundedFactors: "Showing {loaded} of {total} factors.",
+  loadMoreFactorsButton: "Load more (+{count})",
+  loadAllFactorsButton: "Load all",
+
   // Feature 4: Idea to Complete Action
   tabSmartDraft: "Smart draft from idea",
   tabManualEntry: "Manual entry",
@@ -1114,5 +1140,88 @@ export default {
 
   // Starter AI Allowance
   aiStarterAllowanceTitle: "Complimentary Starter AI Active",
-  aiStarterAllowanceDesc: "10 free AI drafting operations included (Claude 3.5 Haiku / GPT-4o-mini). Connect your own API key below anytime for unlimited operations."
+  aiStarterAllowanceDesc: "10 free AI drafting operations included (Claude 3.5 Haiku / GPT-4o-mini). Connect your own API key below anytime for unlimited operations.",
+
+  // Stakeholder Viewers
+  stakeholderViewersTitle: "Stakeholder Viewers",
+  stakeholderViewersHelp: "Invite read-only stakeholder viewers by email. Viewers can open the model, view factors, and run simulations without consuming member seats.",
+  viewerEmailLabel: "Viewer email",
+  addViewerBtn: "Add viewer",
+  noViewersConfigured: "No stakeholder viewers configured yet.",
+  alreadyViewer: "This email is already in the viewers list.",
+  stakeholderViewerNotice: "You are viewing this model as a read-only stakeholder viewer.",
+  invalidViewerEmail: "Please enter a valid email address.",
+
+  // Currency Selection
+  currency: "Currency",
+  noMatchingCurrencies: "No matching currencies",
+
+  // Custom Variables (MIPA-19)
+  customVariablesTitle: "Custom Variables",
+  customVariablesBtn: "Custom Variables",
+  customVariablesHelp: "Define model-wide constants and parameters outside the graph (e.g. unit prices, tax rates, operational conversion factors) that formulas can reference directly without cluttering the graph.",
+  varNameLabel: "Variable name",
+  varValueLabel: "Value",
+  varUnitLabel: "Unit (optional)",
+  varDescLabel: "Description (optional)",
+  addVariableBtn: "Add variable",
+  editVariableBtn: "Save variable",
+  deleteVariableBtn: "Delete variable",
+  noCustomVariables: "No custom variables defined yet.",
+  varNameInvalid: "Variable name must start with a letter or underscore and contain only letters, numbers, and underscores.",
+  varNameDuplicate: "A variable with this name already exists.",
+  varValueInvalid: "Please enter a valid numeric value.",
+  customVarBadge: "Variable",
+  formulaCustomVariablesUsed: "Custom variables in formula",
+  clickToCopy: "Click to copy",
+
+  // Factor Time Series (MIPA-20)
+  tabTimeSeriesIngestion: "Time Series Data",
+  factorSeriesSection: "Historical & Predicted Series",
+  factorSeriesModalTitle: "Factor Time Series & Provenance",
+  factorSeriesHelp: "Attach dated actuals (historical) and projections (predicted) to feed delay() functions and simulation steps.",
+  manageFactorSeriesBtn: "Manage Time Series",
+  tabCurrentSeries: "Current Series",
+  tabImportSeries: "Import / Update Series",
+  seriesProvenanceTitle: "Series Provenance & Coverage",
+  noTimeSeriesData: "No time series data attached",
+  noTimeSeriesHelp: "Import dated historical actuals or future predictions to feed simulation steps and delay() expressions.",
+  timeSeriesPointCount: "{count} data points ({historical} historical, {predicted} predicted)",
+  importSeriesTitle: "Import Factor Time Series",
+  importSeriesHelp: "Paste dated values (CSV, TSV, or table) with Date, Value, and optional Type (historical/predicted) or Source columns.",
+  importSeriesBtn: "Import Series",
+  importSeriesPasteTitle: "Paste Dated Values (CSV / Table)",
+  importSeriesPlaceholder: "Date,Value,Type,Source\n2024-01-01,100,historical,FY2024 Audit\n2025-01-01,150,predicted,FY2025 Plan",
+  loadSampleTimeSeries: "Load Sample Time Series",
+  targetFactorLabel: "Target Factor",
+  seriesSourceCitation: "Series Source / Citation",
+  seriesSourceHint: "e.g. 2020-2025 Audited Sales Reports, NOAA Climate Forecast",
+  seriesHistorical: "Historical",
+  seriesPredicted: "Predicted / Forecast",
+  overwriteWarningTitle: "Existing Time Series Detected",
+  overwriteWarningMsg: "This factor already has {count} data points from '{source}'. Please choose how to proceed.",
+  overwriteOptionReplace: "Replace entire existing series",
+  overwriteOptionMerge: "Merge with existing series (match by date)",
+  confirmSaveSeries: "Save Series to Factor",
+  clearSeriesBtn: "Clear Series",
+  clearSeriesConfirm: "Are you sure you want to remove the time series from this factor?",
+  filterSeriesPointsPlaceholder: "Filter data points by date, source, or notes...",
+  parsedPreviewTitle: "Parsed Preview",
+  pasteToPreviewHelp: "Paste data or click 'Load Sample Time Series' to preview.",
+  dataPoints: "data points",
+  timeSeriesAttachSuccess: "Successfully attached {count} time series points to {factor}.",
+  roleNodeCurrencyLockedHint: "Key role factors must use the organization's default currency ({currency})",
+  catWorldMacro: "World & Macro",
+  worldModelCategory: "World & Macro",
+  worldModelTitle: "Country Model (World Bank WDI)",
+  worldModelProvenanceTitle: "World Factors & Data Provenance",
+  worldModelProvenanceDesc: "Standard factors sourced from verified international datasets with canonical citations and open licenses.",
+  showWorldFactors: "Show World Factors",
+  hideWorldFactors: "Hide World Factors",
+  worldModelImportedSuccess: "Country model imported successfully",
+  importCountryModelBtn: "Import Country Model",
+  importCountryModelConfirmPrompt: "Import the versioned Layer 1 Country Model (12 World Bank WDI indicators) into this model? Existing factors with matching IDs will be updated.",
+  auditedProvenance: "Audited Provenance",
+  citationUrl: "Citation URL",
+  licence: "License"
 };

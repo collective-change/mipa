@@ -77,24 +77,60 @@ export function parseTabularData(rawText = "", options = {}) {
   return results;
 }
 
-function splitLine(line, delimiter) {
+export function splitLine(line, delimiter = ",") {
+  if (typeof line !== "string") return [];
   if (delimiter === "|") {
     return line.replace(/^\|/, "").replace(/\|$/, "").split("|");
   }
-  // Simple regex for CSV handling quoted values
+  // Single-pass state machine for CSV handling quoted values without exponential backtracking (MIPA-26 / CodeQL js/redos)
   if (delimiter === ",") {
-    const matches = [];
-    let match;
-    const re = /(?:,|\n|^)("(?:(?:"")*[^"]*)*"|[^",\n]*|(?:\n|$))/g;
-    while ((match = re.exec(line)) !== null && match.index < line.length) {
-      let val = match[1] || "";
-      if (val.startsWith('"') && val.endsWith('"')) {
-        val = val.slice(1, -1).replace(/""/g, '"');
+    const cleanLine = line.replace(/\r$/, "");
+    const fields = [];
+    let current = "";
+    let inQuotes = false;
+    let isQuotedField = false;
+    let i = 0;
+    const len = cleanLine.length;
+
+    while (i < len) {
+      const char = cleanLine[i];
+
+      if (inQuotes) {
+        if (char === '"') {
+          if (i + 1 < len && cleanLine[i + 1] === '"') {
+            current += '"';
+            i++; // skip escaped quote
+          } else {
+            inQuotes = false;
+          }
+        } else {
+          current += char;
+        }
+      } else {
+        if (char === '"') {
+          if (current.length === 0) {
+            inQuotes = true;
+            isQuotedField = true;
+          } else {
+            current += '"';
+          }
+        } else if (char === ",") {
+          fields.push(current);
+          current = "";
+          inQuotes = false;
+          isQuotedField = false;
+        } else {
+          current += char;
+        }
       }
-      matches.push(val);
-      if (re.lastIndex === match.index) re.lastIndex++;
+      i++;
     }
-    return matches.length > 0 ? matches : line.split(",");
+
+    if (inQuotes && isQuotedField) {
+      current = '"' + current;
+    }
+    fields.push(current);
+    return fields;
   }
   return line.split(delimiter);
 }
@@ -289,4 +325,213 @@ export function createAuditTrailEntry(factor, oldValue, newValue, userEmail, sou
     sourceCitation: sourceCitation || factor.sourceCitation || "",
     reportingPeriod: reportingPeriod || factor.reportingPeriod || ""
   };
+}
+
+export const SAMPLE_TIME_SERIES = `Date,Value,Type,Source
+2023-01-01,85000,historical,FY2023 Audited Report
+2023-07-01,92000,historical,FY2023 Midyear Ledger
+2024-01-01,104000,historical,FY2024 Audited Report
+2024-07-01,115000,historical,FY2024 Midyear Ledger
+2025-01-01,128000,historical,FY2025 Audited Report
+2025-07-01,139000,historical,FY2025 Midyear Ledger
+2026-01-01,150000,historical,FY2026 Opening Balance
+2026-07-01,162000,predicted,Executive Committee Forecast
+2027-01-01,175000,predicted,Strategic Plan 2027`;
+
+/**
+ * Normalizes an arbitrary date string (ISO, YYYY-MM, YYYY/MM/DD, YYYY-QX) to YYYY-MM-DD.
+ * @param {string} dateStr
+ * @returns {string}
+ */
+export function normalizeSeriesDate(dateStr) {
+  if (!dateStr) return "";
+  const s = String(dateStr).trim();
+
+  // Handle Quarter formats: 2024-Q1, 2024 Q2, Q3 2024
+  const qMatch = s.match(/^(\d{4})[-\s]?[Qq]([1-4])$/) || s.match(/^[Qq]([1-4])[-\s]?(\d{4})$/);
+  if (qMatch) {
+    const year = qMatch[1].length === 4 ? qMatch[1] : qMatch[2];
+    const quarter = qMatch[1].length === 4 ? qMatch[2] : qMatch[1];
+    const monthMap = { "1": "01", "2": "04", "3": "07", "4": "10" };
+    return `${year}-${monthMap[quarter]}-01`;
+  }
+
+  // Handle YYYY-MM format: 2024-06 -> 2024-06-01
+  if (/^\d{4}-\d{2}$/.test(s)) {
+    return `${s}-01`;
+  }
+
+  // Handle standard date parsing
+  const parsed = new Date(s);
+  if (!isNaN(parsed.getTime())) {
+    return parsed.toISOString().split("T")[0];
+  }
+
+  return s;
+}
+
+/**
+ * Parses time-series CSV, TSV, or table text into dated factor data points with provenance.
+ * @param {string} rawText
+ * @param {Object} [options]
+ * @param {string} [options.sourceCitation]
+ * @param {string} [options.userEmail]
+ * @param {string|Date} [options.referenceDate]
+ * @returns {{ series: Array<Object>, provenance: Object }}
+ */
+export function parseTimeSeriesData(rawText = "", options = {}) {
+  const text = (rawText || "").trim();
+  if (!text) {
+    return {
+      series: [],
+      provenance: {
+        sourceCitation: options.sourceCitation || "",
+        importedAt: new Date().toISOString(),
+        importedBy: options.userEmail || "",
+        pointCount: 0,
+        historicalCount: 0,
+        predictedCount: 0,
+        startDate: "",
+        endDate: ""
+      }
+    };
+  }
+
+  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+  if (lines.length === 0) {
+    return { series: [], provenance: {} };
+  }
+
+  // Detect delimiter
+  const firstLine = lines[0];
+  let delimiter = ",";
+  if (firstLine.includes("\t")) {
+    delimiter = "\t";
+  } else if (firstLine.includes("|")) {
+    delimiter = "|";
+  } else if (firstLine.includes(";")) {
+    delimiter = ";";
+  }
+
+  const rawHeaders = splitLine(firstLine, delimiter).map((h) => h.trim().toLowerCase());
+  const headerMap = {
+    date: -1,
+    value: -1,
+    type: -1,
+    source: -1,
+    notes: -1
+  };
+
+  rawHeaders.forEach((h, idx) => {
+    const clean = h.replace(/[^a-z0-9]/g, "");
+    if (/^(date|time|period|year|month|timestamp|day|datetime|asof)$/.test(clean)) headerMap.date = idx;
+    else if (/^(value|amount|number|val|latestvalue|metric|price|level|cost|sales|actual|forecast)$/.test(clean)) headerMap.value = idx;
+    else if (/^(type|status|category|kind|classification)$/.test(clean)) headerMap.type = idx;
+    else if (/^(source|citation|reference|provenance|sourcecitation)$/.test(clean)) headerMap.source = idx;
+    else if (/^(notes|note|comment|description)$/.test(clean)) headerMap.notes = idx;
+  });
+
+  // Fallback column positions if unmapped
+  if (headerMap.date === -1 && rawHeaders.length > 0) headerMap.date = 0;
+  if (headerMap.value === -1 && rawHeaders.length > 1) headerMap.value = 1;
+
+  // Check if first line was actually a data row without headers (e.g. "2024-01-01,100")
+  let startIndex = 1;
+  const firstColAsDate = normalizeSeriesDate(splitLine(firstLine, delimiter)[0]?.trim());
+  const secondColAsVal = parseNumericValue(splitLine(firstLine, delimiter)[1]?.trim());
+  if (!isNaN(new Date(firstColAsDate).getTime()) && !isNaN(secondColAsVal)) {
+    startIndex = 0;
+  }
+
+  const points = [];
+  const detectedSources = [];
+
+  for (let i = startIndex; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (/^[|\-\s:]+$/.test(line)) continue;
+
+    const cells = splitLine(line, delimiter).map((c) => c.trim());
+    if (cells.length === 0 || cells.every((c) => c === "")) continue;
+
+    const rowObj = {};
+    for (const [key, colIdx] of Object.entries(headerMap)) {
+      if (colIdx >= 0 && colIdx < cells.length) {
+        rowObj[key] = cells[colIdx];
+      }
+    }
+
+    const date = normalizeSeriesDate(rowObj.date);
+    const value = parseNumericValue(rowObj.value);
+    if (!date || isNaN(value)) continue;
+
+    const rawType = (rowObj.type || "").toLowerCase();
+    let isPredicted = false;
+    if (/(predict|forecast|project|estimate|plan|future)/i.test(rawType)) {
+      isPredicted = true;
+    } else if (/(history|historical|actual|past)/i.test(rawType)) {
+      isPredicted = false;
+    } else if (options.referenceDate) {
+      const refDateStr = normalizeSeriesDate(options.referenceDate);
+      if (refDateStr && date > refDateStr) {
+        isPredicted = true;
+      }
+    }
+
+    const sourceCitation = rowObj.source || options.sourceCitation || "";
+    if (sourceCitation && !detectedSources.includes(sourceCitation)) {
+      detectedSources.push(sourceCitation);
+    }
+
+    points.push({
+      date,
+      value,
+      isPredicted,
+      sourceCitation,
+      notes: rowObj.notes || ""
+    });
+  }
+
+  // Sort ascending by date
+  points.sort((a, b) => a.date.localeCompare(b.date));
+
+  const resolvedSource = options.sourceCitation || detectedSources.join(", ") || "";
+
+  const provenance = {
+    sourceCitation: resolvedSource,
+    importedAt: new Date().toISOString(),
+    importedBy: options.userEmail || "system",
+    pointCount: points.length,
+    historicalCount: points.filter((p) => !p.isPredicted).length,
+    predictedCount: points.filter((p) => p.isPredicted).length,
+    startDate: points.length > 0 ? points[0].date : "",
+    endDate: points.length > 0 ? points[points.length - 1].date : ""
+  };
+
+  return { series: points, provenance };
+}
+
+/**
+ * Merges a newly parsed time-series with an existing series using the specified mode.
+ * @param {Array<Object>} existingSeries
+ * @param {Array<Object>} newSeries
+ * @param {"replace"|"merge"} [mode]
+ * @returns {Array<Object>}
+ */
+export function mergeTimeSeries(existingSeries = [], newSeries = [], mode = "replace") {
+  if (mode === "replace" || !Array.isArray(existingSeries) || existingSeries.length === 0) {
+    return [...(newSeries || [])].sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  const map = new Map();
+  existingSeries.forEach((p) => {
+    if (p && p.date) map.set(p.date, { ...p });
+  });
+
+  (newSeries || []).forEach((p) => {
+    if (p && p.date) {
+      map.set(p.date, { ...p });
+    }
+  });
+
+  return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date));
 }

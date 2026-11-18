@@ -3,14 +3,29 @@
     <div v-if="currentOrg && currentOrg.goal" class="q-px-md q-pt-sm text-subtitle1 text-grey-8">
       {{ currentOrg.goal }}
     </div>
+    <q-banner
+      v-if="isReadOnly"
+      dense
+      rounded
+      class="bg-blue-1 text-primary q-mx-sm q-mb-sm print-hide"
+    >
+      <template v-slot:avatar>
+        <q-icon name="visibility" color="primary" />
+      </template>
+      <div class="text-body2 text-weight-medium">
+        {{ $t("stakeholderViewerNotice") }}
+      </div>
+    </q-banner>
+
     <getting-started
+      v-if="!isReadOnly"
       class="q-mt-sm print-hide"
       @add-factor="showAddNode = true"
       @open-templates="showTemplateLibrary = true"
       @open-tour="showOnboardingTour = true"
     />
     <q-banner
-      v-if="showDraftInvite"
+      v-if="showDraftInvite && !isReadOnly"
       rounded
       class="bg-blue-1 q-mx-sm q-mb-sm print-hide"
     >
@@ -37,6 +52,7 @@
               class="full-width"
             />
             <q-btn
+              v-if="!isReadOnly"
               @click="showConfigOrgModel = true"
               class="full-width print-hide"
               color="primary"
@@ -46,6 +62,7 @@
               :label="$t('Model settings')"
             />
             <q-btn
+              v-if="!isReadOnly"
               @click="showDraftModel = true"
               class="full-width print-hide"
               color="primary"
@@ -55,6 +72,7 @@
               :label="$t('Draft with AI')"
             />
             <q-btn
+              v-if="!isReadOnly"
               @click="showIngestData = true"
               class="full-width print-hide"
               color="primary"
@@ -62,6 +80,15 @@
               no-caps
               icon="cloud_upload"
               :label="$t('ingestDataBtn')"
+            />
+            <q-btn
+              @click="showCustomVariables = true"
+              class="full-width print-hide"
+              color="primary"
+              outline
+              no-caps
+              icon="data_object"
+              :label="$t('customVariablesBtn')"
             />
             <q-btn
               @click="showModelSnapshots = true"
@@ -91,6 +118,16 @@
               :label="$t('templateLibraryBtn')"
             />
             <q-btn
+              v-if="!isReadOnly"
+              @click="confirmImportCountryModel"
+              class="full-width print-hide"
+              color="teal-8"
+              outline
+              no-caps
+              icon="public"
+              :label="$t('importCountryModelBtn')"
+            />
+            <q-btn
               @click="showOnboardingTour = true"
               class="full-width print-hide"
               color="grey-8"
@@ -100,7 +137,7 @@
               :label="$t('guidedTourBtn')"
             />
             <q-btn
-              v-if="latestAiDraft"
+              v-if="latestAiDraft && !isReadOnly"
               @click="confirmRemoveDraft"
               class="full-width print-hide"
               color="grey-8"
@@ -187,13 +224,41 @@
       </div>
 
       <div class="col-12 col-md-7">
+        <div
+          v-if="hasMoreNodesToLoad"
+          class="row items-center justify-between q-pa-sm bg-blue-1 text-primary rounded-borders q-mx-sm q-mb-sm print-hide"
+        >
+          <div class="row items-center text-caption text-weight-medium">
+            <q-icon name="info" class="q-mr-xs" size="16px" />
+            {{ $t("showingBoundedFactors", { loaded: nodes.length, total: nodesTotalCount }) }}
+          </div>
+          <div class="row q-gutter-xs">
+            <q-btn
+              size="sm"
+              unelevated
+              color="primary"
+              no-caps
+              :label="$t('loadMoreFactorsButton', { count: 50 })"
+              @click="loadMoreNodes"
+            />
+            <q-btn
+              size="sm"
+              outline
+              color="primary"
+              no-caps
+              :label="$t('loadAllFactorsButton')"
+              @click="loadAllNodes"
+            />
+          </div>
+        </div>
         <dependency-graph
           :initialCirclePositions="initialCirclePositions"
+          :readOnly="isReadOnly"
         ></dependency-graph>
       </div>
       <div class="col-12 col-md-3">
         <div class="node-panel q-pa-sm">
-          <node-summary />
+          <node-summary :readOnly="isReadOnly" />
         </div>
       </div>
     </div>
@@ -207,6 +272,11 @@
       <config-org-model @close="showConfigOrgModel = false" />
     </q-dialog>
     <ingest-data-dialog v-model="showIngestData" />
+    <custom-variables-modal
+      v-model="showCustomVariables"
+      :model="currentModel"
+      :read-only="isReadOnly"
+    />
     <model-snapshots-modal
       v-model="showModelSnapshots"
       :model="currentModel"
@@ -247,6 +317,7 @@ import ModelSnapshotsModal from "@/components/Model/Modals/ModelSnapshotsModal.v
 import SystemDynamicsModal from "@/components/Model/Modals/SystemDynamicsModal.vue";
 import ModelTemplateLibraryModal from "@/components/Model/Modals/ModelTemplateLibraryModal.vue";
 import OnboardingTourModal from "@/components/Model/Modals/OnboardingTourModal.vue";
+import CustomVariablesModal from "@/components/Model/Modals/CustomVariablesModal.vue";
 import { planDraftRemoval, removeDraft } from "@/utils/util-aiDraft";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 //import ExportCalcResults from "../components/Calc/ExportCalcResults.vue";
@@ -271,6 +342,7 @@ export default {
     "system-dynamics-modal": SystemDynamicsModal,
     "model-template-library-modal": ModelTemplateLibraryModal,
     "onboarding-tour-modal": OnboardingTourModal,
+    "custom-variables-modal": CustomVariablesModal,
     "calculator-ui": CalculatorUi,
     "export-calc-results": ExportCalcResults,
     "dependency-graph": DependencyGraph,
@@ -288,14 +360,22 @@ export default {
       showSystemDynamics: false,
       showTemplateLibrary: false,
       showOnboardingTour: false,
+      showCustomVariables: false,
       models: null,
       //selectedNodeGroupId: null,
       expanded: [],
       initialCirclePositions: null,
+      nodesLimit: 50,
     };
   },
   computed: {
-    ...mapGetters("model", ["nodes"]),
+    ...mapGetters("model", ["nodes", "nodesTotalCount"]),
+    hasMoreNodesToLoad() {
+      return (
+        typeof this.nodesTotalCount === "number" &&
+        this.nodesTotalCount > this.nodes.length
+      );
+    },
     // Offer AI drafting while the model has only its starter factors.
     showDraftInvite() {
       return (
@@ -309,6 +389,29 @@ export default {
     latestAiDraft() {
       const drafts = (this.currentModel && this.currentModel.appliedAiDrafts) || [];
       return drafts.length ? drafts[drafts.length - 1] : null;
+    },
+    isEditor() {
+      const uid = firebaseAuth.currentUser?.uid;
+      if (!uid || !this.currentModel) return false;
+      const editors = this.currentModel.editors?.users || [];
+      const owners = this.currentModel.owners?.users || [];
+      return editors.includes(uid) || owners.includes(uid);
+    },
+    isViewer() {
+      const user = firebaseAuth.currentUser;
+      if (!user || !this.currentModel) return false;
+      if (this.isEditor) return false;
+      const viewerUsers = this.currentModel.viewers?.users || [];
+      const viewerEmails = (this.currentModel.viewers?.emails || []).map((e) =>
+        e.toLowerCase()
+      );
+      return (
+        viewerUsers.includes(user.uid) ||
+        (user.email && viewerEmails.includes(user.email.toLowerCase()))
+      );
+    },
+    isReadOnly() {
+      return this.isViewer || !this.isEditor;
     },
     ...mapState("orgs", ["currentOrg"]),
     ...mapState("model", ["currentModel"]),
@@ -367,6 +470,7 @@ export default {
           exchangeRates: this.$store.state.adHocDocs.exchangeRates,
           simulationParams: this.currentModel.simulationParams,
           roleNodes: this.currentModel.roleNodes,
+          customVariables: this.currentModel?.customVariables || null,
         });
       }, 1500);
     },
@@ -390,6 +494,26 @@ export default {
         });
     },
     ...mapActions("ui", ["setSelectedNodeId"]),
+    ...mapActions("model", ["importCountryModel"]),
+
+    async confirmImportCountryModel() {
+      const modelId = this.currentModel?.id || this.$route.params.modelId;
+      if (!modelId) return;
+      this.$q
+        .dialog({
+          title: this.$t("importCountryModelBtn"),
+          message: this.$t("importCountryModelConfirmPrompt"),
+          cancel: true,
+          persistent: true
+        })
+        .onOk(async () => {
+          try {
+            await this.importCountryModel({ modelId, countryCode: "USA" });
+          } catch (err) {
+            showErrorMessage(this.$t("importCountryModelBtn"), err.message);
+          }
+        });
+    },
 
     saveNodeGroupName(groupId, name) {
       let clonedNodeGroups = JSON.parse(
@@ -429,13 +553,40 @@ export default {
       this.expandedNodeGroups = [];
     },
 
+    loadMoreNodes() {
+      this.nodesLimit += 50;
+      this.dispatchBindNodes();
+    },
+
+    loadAllNodes() {
+      if (this.nodesTotalCount) {
+        this.nodesLimit = this.nodesTotalCount;
+      } else {
+        this.nodesLimit += 100;
+      }
+      this.dispatchBindNodes();
+    },
+
+    dispatchBindNodes() {
+      const modelId = this.$route.params.modelId;
+      if (modelId) {
+        this.$store.dispatch("model/bindNodes", {
+          modelId,
+          limit: this.nodesLimit
+        });
+      }
+    },
+
     async loadData() {
       //bind to list of models the org-user can view
       //(user is in model's owners, editors, or viewers)
       //this.$store.dispatch("orgs/bindReadableModels", this.$route.params.orgId);
       let modelId = this.$route.params.modelId;
       this.$store.dispatch("model/bindCurrentModel", modelId);
-      this.$store.dispatch("model/bindNodes", modelId);
+      this.$store.dispatch("model/bindNodes", {
+        modelId,
+        limit: this.nodesLimit
+      });
       this.$store.dispatch("adHocDocs/bindExchangeRates");
       this.$store.dispatch("calcResults/loadBaseline", modelId);
 
@@ -477,7 +628,10 @@ export default {
     "$route.params.modelId": {
       handler: function (modelId, oldModelId) {
         //if we are changing from one model to another one
-        if (oldModelId) this.loadData();
+        if (oldModelId) {
+          this.nodesLimit = 50;
+          this.loadData();
+        }
       },
       immediate: true,
     },

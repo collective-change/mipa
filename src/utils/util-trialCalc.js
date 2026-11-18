@@ -8,7 +8,7 @@ import { toPlain } from "@/utils/util-toPlain";
 const TIMEOUT_MS = 60000;
 
 // Resolves { ok: true, baseline } or { ok: false, errorType, errorMessage }.
-export function trialCalculate({ nodes, simulationParams, roleNodes, exchangeRates, orgId, modelId }) {
+export function trialCalculate({ nodes, simulationParams, roleNodes, exchangeRates, orgId, modelId, customVariables }) {
   return new Promise(resolve => {
     const worker = new Worker(new URL("../workers/calcWorker.js", import.meta.url), {
       type: "module"
@@ -41,6 +41,8 @@ export function trialCalculate({ nodes, simulationParams, roleNodes, exchangeRat
         exchangeRates,
         simulationParams,
         roleNodes,
+        orgCurrency: simulationParams?.currency || (exchangeRates && exchangeRates.base) || "USD",
+        customVariables: customVariables || null,
         actions: null,
         currentUserId: firebaseAuth.currentUser.uid
       })

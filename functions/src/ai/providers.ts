@@ -81,6 +81,17 @@ export const RECOMMENDED_CLAUDE_MODELS = [
   "claude-fable-5-2",
   "claude-haiku-5-5"
 ];
+
+// Single source of truth for system backend default models
+export const DEFAULT_SYSTEM_ANTHROPIC_MODEL = "claude-haiku-5-5";
+
+export const RECOMMENDED_OPENAI_MODELS = [
+  "gpt-4o",
+  "gpt-4o-mini",
+  "o1",
+  "o3-mini"
+];
+export const DEFAULT_SYSTEM_OPENAI_MODEL = "gpt-4o-mini";
 // Models that accept server-side refusal fallbacks.
 const CLAUDE_FALLBACK_MODELS = new Set([
   "claude-fable-5-2",

@@ -12,7 +12,7 @@ Production: Firebase project `mipa-2` → https://collective-change.org (canonic
 - **What mipa is**: A strategic coordination web application for collective-change.org. Organizations build a system-dynamics model of how they work (factors + formulas), add actions with their impacts, and mipa simulates them to rank actions by leverage.
 - **First users**: Tzu Chi Foundation (CEO's office); UI in English and Traditional Chinese.
 - **Leverage calculation**: Leverage is NOT "good done per hour".
-  Formula: `actionLeverage = (netBenefitNpv * totalRoi / outstandingDirectCosts) * sign(net)`.
+  Formula: `actionLeverage = (netBenefitNpv * totalRoi / outstandingDirectCosts) * sign(net)`. The metric scales quadratically with net benefit (net² / [C · (C + E)]), strongly rewarding high net gains achieved with minimal direct spending. When outstanding direct costs C <= 0, leverage is null.
 - **Naming & Language**:
   - Use plain language: "factor" (not node), "short name" (not symbol), "uses / used by".
   - Chinese leverage term is 效應比.

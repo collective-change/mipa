@@ -13,7 +13,9 @@
 # variable APP_ENV_FILE, optional variable FUNCTIONS_ENV_FILE), plus the
 # secret FIXER_IO_ACCESS_KEY when the project has no such secret yet.
 # AI_KEY_ENCRYPTION_KEY is generated inside the job if it is missing, so
-# nobody ever sees it.
+# nobody ever sees it. SYSTEM_AI_PROVIDER_KEY is a provider key and cannot
+# be generated; migrate requires it in Secret Manager or as a repository secret
+# (set via firebase functions:secrets:set SYSTEM_AI_PROVIDER_KEY).
 
 name: Production setup
 
@@ -90,11 +92,39 @@ jobs:
         env:
           PROJECT: ${{ steps.config.outputs.project }}
         run: |
-          for name in FIXER_IO_ACCESS_KEY AI_KEY_ENCRYPTION_KEY; do
-            if gcloud secrets describe "$name" --project "$PROJECT" >/dev/null 2>&1; then
-              echo "$name: exists"
+          # Probes every secret defined in functions/src via defineSecret.
+          # Keep this list in step with: grep -rn defineSecret functions/src
+          SECRETS=$(grep -roE "defineSecret\(['\"][^'\"]+['\"]\)" functions/src | sed -E "s/.*defineSecret\(['\"]([^'\"]+)['\"]\).*/\1/" | sort -u)
+          if [ -z "$SECRETS" ]; then
+            SECRETS="AI_KEY_ENCRYPTION_KEY FIXER_IO_ACCESS_KEY SYSTEM_AI_PROVIDER_KEY"
+          fi
+
+          for name in $SECRETS; do
+            describe_err=$(gcloud secrets describe "$name" --project "$PROJECT" 2>&1 >/dev/null)
+            describe_status=$?
+
+            if [ $describe_status -eq 0 ]; then
+              # Secret exists in Secret Manager; probe readability without printing value
+              if gcloud secrets versions access latest --secret="$name" --project "$PROJECT" >/dev/null 2>&1; then
+                echo "$name: exists"
+              else
+                access_err=$(gcloud secrets versions access latest --secret="$name" --project "$PROJECT" 2>&1 >/dev/null)
+                if echo "$access_err" | grep -qiE "permission|denied|unauthorized|403"; then
+                  echo "$name: unreadable (permission denied)"
+                elif echo "$access_err" | grep -qiE "not found|no versions|404|DESTROYED|DISABLED"; then
+                  echo "$name: unreadable (no active version)"
+                else
+                  echo "$name: unreadable"
+                fi
+              fi
             else
-              echo "$name: missing"
+              if echo "$describe_err" | grep -qiE "not found|404"; then
+                echo "$name: absent"
+              elif echo "$describe_err" | grep -qiE "permission|denied|unauthorized|403"; then
+                echo "$name: unreadable (permission denied)"
+              else
+                echo "$name: absent"
+              fi
             fi
           done
 
@@ -154,6 +184,7 @@ jobs:
         env:
           PROJECT: ${{ steps.config.outputs.project }}
           FIXER_IO_ACCESS_KEY: ${{ secrets.FIXER_IO_ACCESS_KEY }}
+          SYSTEM_AI_PROVIDER_KEY: ${{ secrets.SYSTEM_AI_PROVIDER_KEY }}
         run: |
           if ! gcloud secrets describe AI_KEY_ENCRYPTION_KEY --project "$PROJECT" >/dev/null 2>&1; then
             openssl rand -base64 32 | tr -d '\n' | gcloud secrets create AI_KEY_ENCRYPTION_KEY --quiet \
@@ -173,6 +204,27 @@ jobs:
             printf '%s' "$FIXER_IO_ACCESS_KEY" | gcloud secrets create FIXER_IO_ACCESS_KEY --quiet \
               --project "$PROJECT" --replication-policy=automatic --data-file=-
             echo "Created FIXER_IO_ACCESS_KEY."
+          fi
+          if ! gcloud secrets describe SYSTEM_AI_PROVIDER_KEY --project "$PROJECT" >/dev/null 2>&1; then
+            if [ -n "$SYSTEM_AI_PROVIDER_KEY" ]; then
+              echo "::add-mask::$SYSTEM_AI_PROVIDER_KEY"
+              printf '%s' "$SYSTEM_AI_PROVIDER_KEY" | gcloud secrets create SYSTEM_AI_PROVIDER_KEY --quiet \
+                --project "$PROJECT" --replication-policy=automatic --data-file=-
+              echo "Created SYSTEM_AI_PROVIDER_KEY from repository secret."
+            else
+              echo "::error::The project has no SYSTEM_AI_PROVIDER_KEY secret. Provider keys cannot be generated automatically. Run the following command locally to set it: firebase functions:secrets:set SYSTEM_AI_PROVIDER_KEY"
+              exit 1
+            fi
+          elif ! gcloud secrets versions access latest --secret=SYSTEM_AI_PROVIDER_KEY --project "$PROJECT" >/dev/null 2>&1; then
+            if [ -n "$SYSTEM_AI_PROVIDER_KEY" ]; then
+              echo "::add-mask::$SYSTEM_AI_PROVIDER_KEY"
+              printf '%s' "$SYSTEM_AI_PROVIDER_KEY" | gcloud secrets versions add SYSTEM_AI_PROVIDER_KEY --quiet \
+                --project "$PROJECT" --data-file=-
+              echo "Added active version for SYSTEM_AI_PROVIDER_KEY from repository secret."
+            else
+              echo "::error::SYSTEM_AI_PROVIDER_KEY exists in Secret Manager but has no active readable version. Run the following command locally to set it: firebase functions:secrets:set SYSTEM_AI_PROVIDER_KEY"
+              exit 1
+            fi
           fi
 
       - name: Delete the old 1st-generation updateExchangeRates
