@@ -24,7 +24,16 @@ export interface LemonSqueezySubscriptionAttributes {
   };
   renews_at?: string | null;
   ends_at?: string | null;
+  subtotal?: number;
+  total?: number;
+  subtotal_usd?: number;
+  total_usd?: number;
+  currency?: string;
+  currency_rate?: string | number;
   first_subscription_item?: {
+    price?: number;
+    subtotal?: number;
+    total?: number;
     meta?: {
       custom_data?: {
         orgId?: string;
@@ -78,6 +87,33 @@ export function resolveTierInfo(variantName = "", productName = ""): TierInfo {
 }
 
 /**
+ * Static fallback pricing table keyed by tier and billing cycle (in USD).
+ * Used when calculating MRR revenue basis for orgs without recorded paid amounts.
+ */
+export const FALLBACK_TIER_PRICES: Record<string, Record<"monthly" | "annual", number>> = {
+  community: {
+    monthly: 0,
+    annual: 0
+  },
+  starter: {
+    monthly: 29,
+    annual: 290
+  },
+  growth: {
+    monthly: 79,
+    annual: 790
+  },
+  pro: {
+    monthly: 199,
+    annual: 1990
+  },
+  enterprise: {
+    monthly: 499,
+    annual: 4990
+  }
+};
+
+/**
  * Verify cryptographic HMAC-SHA256 signature from Lemon Squeezy webhook header.
  */
 export function verifyLemonSqueezySignature(rawBody: string | Buffer, signatureHeader: string | undefined, secret: string): boolean {
@@ -129,12 +165,23 @@ export async function processWebhookPayload(payload: LemonSqueezyWebhookPayload,
   const tierInfo = resolveTierInfo(attributes.variant_name || "", attributes.product_name || "");
 
   if (eventName === "subscription_created" || eventName === "subscription_updated") {
+    const subtotal = attributes.subtotal ?? attributes.first_subscription_item?.subtotal;
+    const total = attributes.total ?? attributes.first_subscription_item?.total ?? attributes.first_subscription_item?.price;
+    const paidAmount = typeof total === "number" ? total : typeof subtotal === "number" ? subtotal : null;
+    const currency = attributes.currency || "USD";
+
     await orgRef.set(
       {
         subscriptionTier: tierInfo.tier,
         seatLimit: tierInfo.seatLimit,
         billingCycle: tierInfo.billingCycle,
         subscriptionStatus: status,
+        paidAmount,
+        subtotal: subtotal ?? null,
+        total: total ?? null,
+        currency,
+        subscriptionPaidAmount: paidAmount,
+        subscriptionCurrency: currency,
         lemonSqueezySubscriptionId: String(payload.data.id),
         lemonSqueezyCustomerId: String(attributes.customer_id),
         customerPortalUrl: attributes.urls?.customer_portal || null,

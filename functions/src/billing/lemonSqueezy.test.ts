@@ -4,6 +4,7 @@ import * as crypto from "crypto";
 import {
   resolveTierInfo,
   verifyLemonSqueezySignature,
+  FALLBACK_TIER_PRICES,
   LemonSqueezyWebhookPayload
 } from "./lemonSqueezy";
 
@@ -82,4 +83,47 @@ test("LemonSqueezyWebhookPayload schema typing conforms to spec", () => {
   assert.equal(mockPayload.meta.event_name, "subscription_created");
   assert.equal(mockPayload.meta.custom_data?.orgId, "org-test-123");
   assert.equal(mockPayload.data.attributes.status, "active");
+});
+
+test("MIPA-27: FALLBACK_TIER_PRICES contains correct monthly and annual prices in USD", () => {
+  assert.equal(FALLBACK_TIER_PRICES.community.monthly, 0);
+  assert.equal(FALLBACK_TIER_PRICES.community.annual, 0);
+
+  assert.equal(FALLBACK_TIER_PRICES.starter.monthly, 29);
+  assert.equal(FALLBACK_TIER_PRICES.starter.annual, 290);
+
+  assert.equal(FALLBACK_TIER_PRICES.growth.monthly, 79);
+  assert.equal(FALLBACK_TIER_PRICES.growth.annual, 790);
+
+  assert.equal(FALLBACK_TIER_PRICES.pro.monthly, 199);
+  assert.equal(FALLBACK_TIER_PRICES.pro.annual, 1990);
+
+  assert.equal(FALLBACK_TIER_PRICES.enterprise.monthly, 499);
+  assert.equal(FALLBACK_TIER_PRICES.enterprise.annual, 4990);
+});
+
+test("MIPA-27: LemonSqueezyWebhookPayload supports paidAmount, subtotal, total and currency", () => {
+  const payloadWithAmount: LemonSqueezyWebhookPayload = {
+    meta: {
+      event_name: "subscription_created",
+      custom_data: { orgId: "org-paid-1" }
+    },
+    data: {
+      id: "sub_100",
+      type: "subscriptions",
+      attributes: {
+        customer_id: 888,
+        status: "active",
+        product_name: "Mipa Strategy",
+        variant_name: "Starter Monthly",
+        subtotal: 2900,
+        total: 2900,
+        currency: "USD"
+      }
+    }
+  };
+
+  assert.equal(payloadWithAmount.data.attributes.total, 2900);
+  assert.equal(payloadWithAmount.data.attributes.subtotal, 2900);
+  assert.equal(payloadWithAmount.data.attributes.currency, "USD");
 });

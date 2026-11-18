@@ -6,6 +6,7 @@ import {
   DEFAULT_SYSTEM_OPENAI_MODEL
 } from "./providers";
 import { systemAiProviderKey } from "./keyBox";
+import { FALLBACK_TIER_PRICES } from "../billing/lemonSqueezy";
 
 export interface AllowanceEvaluationParams {
   userCreditsUsed: number;
@@ -43,18 +44,54 @@ export const TIER_AI_ALLOWANCES: Record<string, number> = {
 export const STARTER_VERIFIED_ALLOWANCE = 10;
 export const STARTER_UNVERIFIED_TEASER = 2;
 
-// Business plan stated monthly spend ceiling: ~$25/month total LLM spend.
-// At ~$0.005/turn on lightweight models, 5,000 operations/month = $25.
-export const DEFAULT_GLOBAL_MONTHLY_AI_CEILING = 5000;
+// Margin guard AI spend ceiling configuration (MIPA-27)
+// ceiling_ops = clamp(floor, revenue_basis * MARGIN_PCT / UNIT_COST_USD, absolute_cap)
+export const DEFAULT_AI_MARGIN_PCT = 0.10;
+export const DEFAULT_AI_UNIT_COST_USD = 0.005;
+export const DEFAULT_AI_CEILING_FLOOR = 5000;
+export const DEFAULT_AI_CEILING_ABSOLUTE_CAP = 100000;
+
+export const DEFAULT_GLOBAL_MONTHLY_AI_CEILING = DEFAULT_AI_CEILING_FLOOR;
+
+// Note: DEFAULT_ORG_STARTER_MONTHLY_CEILING = 50 can never fire in normal practice
+// because the user's lifetime 10 credits bind first. We retain this constant as an
+// organizational backstop against potential abuse.
 export const DEFAULT_ORG_STARTER_MONTHLY_CEILING = 50;
 
-export function getGlobalMonthlyCeiling(): number {
-  const envVal = process.env.GLOBAL_AI_MONTHLY_CEILING;
+export function getMarginPct(): number {
+  const envVal = process.env.AI_MARGIN_PCT || process.env.MARGIN_PCT;
+  if (envVal) {
+    const parsed = parseFloat(envVal);
+    if (!isNaN(parsed) && parsed > 0) return parsed;
+  }
+  return DEFAULT_AI_MARGIN_PCT;
+}
+
+export function getUnitCostUsd(): number {
+  const envVal = process.env.AI_UNIT_COST_USD || process.env.UNIT_COST_USD;
+  if (envVal) {
+    const parsed = parseFloat(envVal);
+    if (!isNaN(parsed) && parsed > 0) return parsed;
+  }
+  return DEFAULT_AI_UNIT_COST_USD;
+}
+
+export function getCeilingFloor(): number {
+  const envVal = process.env.AI_CEILING_FLOOR || process.env.GLOBAL_AI_MONTHLY_CEILING_FLOOR || process.env.GLOBAL_AI_MONTHLY_CEILING;
   if (envVal) {
     const parsed = parseInt(envVal, 10);
     if (!isNaN(parsed) && parsed > 0) return parsed;
   }
-  return DEFAULT_GLOBAL_MONTHLY_AI_CEILING;
+  return DEFAULT_AI_CEILING_FLOOR;
+}
+
+export function getCeilingAbsoluteCap(): number {
+  const envVal = process.env.AI_CEILING_ABSOLUTE_CAP || process.env.GLOBAL_AI_MONTHLY_CEILING_CAP;
+  if (envVal) {
+    const parsed = parseInt(envVal, 10);
+    if (!isNaN(parsed) && parsed > 0) return parsed;
+  }
+  return DEFAULT_AI_CEILING_ABSOLUTE_CAP;
 }
 
 export function getOrgStarterMonthlyCeiling(): number {
@@ -64,6 +101,123 @@ export function getOrgStarterMonthlyCeiling(): number {
     if (!isNaN(parsed) && parsed > 0) return parsed;
   }
   return DEFAULT_ORG_STARTER_MONTHLY_CEILING;
+}
+
+export function getGlobalMonthlyCeiling(): number {
+  return getCeilingFloor();
+}
+
+export interface CeilingComputationResult {
+  ceilingOps: number;
+  revenueBasis: number;
+  marginPct: number;
+  unitCostUsd: number;
+  floor: number;
+  absoluteCap: number;
+}
+
+/**
+ * Computes dynamic margin guard AI ceiling:
+ * ceiling_ops = clamp(floor, revenue_basis * MARGIN_PCT / UNIT_COST_USD, absolute_cap)
+ */
+export function computeMarginGuardCeiling(params: {
+  revenueBasis: number;
+  marginPct?: number;
+  unitCostUsd?: number;
+  floor?: number;
+  absoluteCap?: number;
+}): CeilingComputationResult {
+  const marginPct = params.marginPct ?? getMarginPct();
+  const unitCostUsd = params.unitCostUsd ?? getUnitCostUsd();
+  const floor = params.floor ?? getCeilingFloor();
+  const absoluteCap = params.absoluteCap ?? getCeilingAbsoluteCap();
+  const revenueBasis = Math.max(0, params.revenueBasis || 0);
+
+  const allocatedBudgetUsd = revenueBasis * marginPct;
+  const rawOps = unitCostUsd > 0 ? allocatedBudgetUsd / unitCostUsd : 0;
+  const ceilingOps = Math.min(absoluteCap, Math.max(floor, Math.round(rawOps)));
+
+  return {
+    ceilingOps,
+    revenueBasis,
+    marginPct,
+    unitCostUsd,
+    floor,
+    absoluteCap
+  };
+}
+
+/**
+ * Reads active subscriptions from Firestore to determine current MRR (revenue basis).
+ * If revenue read fails, fails closed to 0 MRR (which yields the floor ceiling).
+ */
+export async function computeCurrentMrr(db: Firestore): Promise<number> {
+  try {
+    if (typeof db.collection !== "function") return 0;
+    const orgsColl = db.collection("orgs");
+    if (!("where" in orgsColl) || typeof orgsColl.where !== "function") return 0;
+
+    const snapshot = await orgsColl.where("subscriptionStatus", "==", "active").get();
+    let totalMrr = 0;
+
+    for (const doc of snapshot.docs) {
+      const data = typeof doc.data === "function" ? doc.data() : (doc as unknown as Record<string, unknown>);
+      const tier = String(data.subscriptionTier || "community").toLowerCase();
+      if (tier === "community") continue;
+
+      const cycle: "monthly" | "annual" =
+        String(data.billingCycle || "monthly").toLowerCase() === "annual" ? "annual" : "monthly";
+
+      const rawAmount = data.paidAmount ?? data.subscriptionPaidAmount ?? data.total ?? data.subtotal;
+
+      if (typeof rawAmount === "number" && rawAmount > 0) {
+        // Lemon Squeezy amounts in cents (e.g. 2900 cents = $29, 29000 cents = $290).
+        // If rawAmount >= 1000, convert cents to dollars.
+        const dollars = rawAmount >= 1000 ? rawAmount / 100 : rawAmount;
+        const orgMrr = cycle === "annual" ? dollars / 12 : dollars;
+        totalMrr += orgMrr;
+      } else {
+        const fallbackTable = FALLBACK_TIER_PRICES[tier] || FALLBACK_TIER_PRICES.starter;
+        const fallbackNominal = fallbackTable[cycle] ?? fallbackTable.monthly;
+        const fallbackMrr = cycle === "annual" ? fallbackNominal / 12 : fallbackNominal;
+        console.log(
+          `[AI Margin Guard] Using fallback price for org ${doc.id}: tier=${tier}, billingCycle=${cycle}, fallbackMRR=$${fallbackMrr.toFixed(2)}`
+        );
+        totalMrr += fallbackMrr;
+      }
+    }
+
+    return Math.round(totalMrr * 100) / 100;
+  } catch (err) {
+    console.error("[AI Margin Guard] Failed to read subscription revenue from Firestore, failing closed to 0 MRR:", err);
+    return 0;
+  }
+}
+
+/**
+ * Resolves the dynamic global monthly ceiling in operations.
+ * Logs computed revenue_basis, percentage, unit cost, and resulting ceiling without secrets.
+ */
+export async function resolveGlobalMonthlyCeiling(
+  db?: Firestore,
+  options?: { revenueBasis?: number; globalMonthlyCeiling?: number }
+): Promise<number> {
+  if (options?.globalMonthlyCeiling !== undefined) {
+    return options.globalMonthlyCeiling;
+  }
+
+  let revenueBasis = options?.revenueBasis;
+  if (revenueBasis === undefined) {
+    revenueBasis = db ? await computeCurrentMrr(db) : 0;
+  }
+
+  const guard = computeMarginGuardCeiling({ revenueBasis });
+
+  console.log(
+    `[AI Margin Guard] Evaluated dynamic ceiling: revenue_basis=$${guard.revenueBasis.toFixed(2)}, margin_pct=${(guard.marginPct * 100).toFixed(1)}%, unit_cost=$${guard.unitCostUsd}, resulting_ceiling=${guard.ceilingOps} ops (floor=${guard.floor}, cap=${guard.absoluteCap})`
+  );
+
+  return guard.ceilingOps;
 }
 
 export function getCurrentYearMonth(d: Date = new Date(), timeZone = "Asia/Taipei"): string {
@@ -102,7 +256,7 @@ export function evaluateAiAllowance(params: AllowanceEvaluationParams): Allowanc
       creditsRemaining: 0,
       source: "tier_pooled",
       reason:
-        "System AI monthly capacity ceiling reached for this month ($25 limit). To continue immediately, please connect your organization's own Anthropic or OpenAI API key in AI Settings."
+        "System AI monthly capacity ceiling reached for this month. To continue immediately, please connect your organization's own Anthropic or OpenAI API key in AI Settings."
     };
   }
 
@@ -331,10 +485,11 @@ export async function verifyAndConsumeAiCredit(
     globalMonthlyCeiling?: number;
     orgMonthlyCeiling?: number;
     auditKey?: string;
+    revenueBasis?: number;
   } = {}
 ): Promise<AllowanceResult> {
   const yearMonth = options.yearMonth || getCurrentYearMonth();
-  const globalCeiling = options.globalMonthlyCeiling ?? getGlobalMonthlyCeiling();
+  const globalCeiling = options.globalMonthlyCeiling ?? (await resolveGlobalMonthlyCeiling(db, { revenueBasis: options.revenueBasis }));
   const orgStarterCeiling = options.orgMonthlyCeiling ?? getOrgStarterMonthlyCeiling();
 
   // 1. Create audit record OUTSIDE transaction blast radius with outcome: 'unknown'
@@ -369,12 +524,12 @@ export async function verifyAndConsumeAiCredit(
       const monthlyUsageMap = (orgDoc.get("monthlyAiUsage") as Record<string, number>) || {};
       const orgMonthlyUsed = monthlyUsageMap[yearMonth] || 0;
 
-      // 1. Check Global Spend Ceiling ($25 monthly spend cap)
+      // 1. Check Global Spend Ceiling (Margin guard dynamic spend cap)
       if (globalMonthlyUsed >= globalCeiling) {
         console.warn(`[AI Spend Ceiling] Global ceiling reached: ${globalMonthlyUsed}/${globalCeiling} in ${yearMonth}`);
         throw new HttpsError(
           "resource-exhausted",
-          `System AI monthly capacity ceiling reached for this month ($25 limit). To continue drafting models immediately, please connect your organization's own Anthropic or OpenAI API key in AI Settings.`,
+          `System AI monthly capacity ceiling reached for this month. To continue drafting models immediately, please connect your organization's own Anthropic or OpenAI API key in AI Settings.`,
           { reason: "global-ceiling-reached", degraded: true, yearMonth, globalMonthlyUsed, globalCeiling }
         );
       }
@@ -501,6 +656,7 @@ export const getAiAllowanceStatus = onCall(async (request) => {
   const globalMonthlyUsed = (globalDoc.get("creditsUsed") as number) || 0;
   const monthlyUsageMap = (orgDoc.get("monthlyAiUsage") as Record<string, number>) || {};
   const orgMonthlyUsed = monthlyUsageMap[yearMonth] || 0;
+  const dynamicGlobalCeiling = await resolveGlobalMonthlyCeiling(db);
 
   return evaluateAiAllowance({
     userCreditsUsed,
@@ -509,7 +665,7 @@ export const getAiAllowanceStatus = onCall(async (request) => {
     subscriptionTier,
     hasByoKey,
     globalMonthlyUsed,
-    globalMonthlyCeiling: getGlobalMonthlyCeiling(),
+    globalMonthlyCeiling: dynamicGlobalCeiling,
     orgMonthlyUsed,
     orgMonthlyCeiling: getOrgStarterMonthlyCeiling()
   });

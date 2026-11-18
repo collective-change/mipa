@@ -9,7 +9,14 @@ import {
   AuditOutcome,
   STARTER_VERIFIED_ALLOWANCE,
   STARTER_UNVERIFIED_TEASER,
-  TIER_AI_ALLOWANCES
+  TIER_AI_ALLOWANCES,
+  computeMarginGuardCeiling,
+  computeCurrentMrr,
+  resolveGlobalMonthlyCeiling,
+  DEFAULT_AI_CEILING_FLOOR,
+  DEFAULT_AI_CEILING_ABSOLUTE_CAP,
+  DEFAULT_AI_MARGIN_PCT,
+  DEFAULT_AI_UNIT_COST_USD
 } from "./starterAllowance";
 import {
   DEFAULT_SYSTEM_ANTHROPIC_MODEL,
@@ -250,7 +257,9 @@ interface MockDatabaseOptions {
   orgStore?: Record<string, unknown>;
   globalStore?: Record<string, unknown>;
   auditLogs?: Record<string, unknown>[];
+  orgsCollection?: Record<string, unknown>[];
   onTransactionThrow?: () => void;
+  throwOnOrgsQuery?: boolean;
 }
 
 function createTransactionalMockDb(options: MockDatabaseOptions = {}) {
@@ -275,6 +284,27 @@ function createTransactionalMockDb(options: MockDatabaseOptions = {}) {
       }
     }),
     collection: (name: string) => ({
+      where: (field: string, op: string, value: unknown) => ({
+        get: async () => {
+          if (options.throwOnOrgsQuery) {
+            throw new Error("Simulated Firestore read failure");
+          }
+          if (name === "orgs") {
+            const orgs = options.orgsCollection || [];
+            const filtered = orgs.filter((org) => {
+              if (op === "==") return org[field] === value;
+              return true;
+            });
+            return {
+              docs: filtered.map((docData, idx) => ({
+                id: (docData.id as string) || `org-${idx}`,
+                data: () => docData
+              }))
+            };
+          }
+          return { docs: [] };
+        }
+      }),
       doc: (id?: string) => {
         const docId = id || `audit-${auditLogs.length + 1}`;
         const docPath = `${name}/${docId}`;
@@ -410,7 +440,7 @@ test("verifyAndConsumeAiCredit: Global monthly ceiling refusal logs audit and th
     (err: unknown) => {
       const httpsErr = err as { code?: string; message?: string; details?: { reason?: string } };
       assert.equal(httpsErr.code, "resource-exhausted");
-      assert.ok(httpsErr.message?.includes("$25 limit"));
+      assert.ok(httpsErr.message?.includes("System AI monthly capacity ceiling reached"));
       assert.equal(httpsErr.details?.reason, "global-ceiling-reached");
       return true;
     }
@@ -609,7 +639,7 @@ test("evaluateAiAllowance: Independent per-org and global ceiling evaluation", (
     globalMonthlyCeiling: 5000
   });
   assert.equal(globalRefused.allowed, false);
-  assert.ok(globalRefused.reason?.includes("$25 limit"));
+  assert.ok(globalRefused.reason?.includes("System AI monthly capacity ceiling reached"));
 
   // Per-org ceiling reached refusal
   const orgRefused = evaluateAiAllowance({
@@ -641,4 +671,131 @@ test("evaluateAiAllowance: Independent per-org and global ceiling evaluation", (
   assert.equal(byoBypass.allowed, true);
   assert.equal(byoBypass.source, "byo");
   assert.equal(byoBypass.maxCredits, Infinity);
+});
+
+test("MIPA-27: computeMarginGuardCeiling clamps to floor, scales with margin, and respects absolute cap", () => {
+  assert.equal(DEFAULT_AI_MARGIN_PCT, 0.10);
+  assert.equal(DEFAULT_AI_UNIT_COST_USD, 0.005);
+
+  // Case 1: Pre-revenue ($0 MRR) -> floor of 5,000 ops
+  const zeroRev = computeMarginGuardCeiling({ revenueBasis: 0 });
+  assert.equal(zeroRev.ceilingOps, DEFAULT_AI_CEILING_FLOOR);
+  assert.equal(zeroRev.revenueBasis, 0);
+
+  // Case 2: Low revenue ($29 MRR for 1 starter) -> 29 * 0.10 / 0.005 = 580 ops -> clamped to floor 5,000 ops
+  const starterRev = computeMarginGuardCeiling({ revenueBasis: 29 });
+  assert.equal(starterRev.ceilingOps, 5000);
+
+  // Case 3: Normal revenue ($1,000 MRR) -> 1,000 * 0.10 / 0.005 = 20,000 ops
+  const normalRev = computeMarginGuardCeiling({ revenueBasis: 1000 });
+  assert.equal(normalRev.ceilingOps, 20000);
+
+  // Case 4: Enterprise scale ($10,000 MRR) -> 10,000 * 0.10 / 0.005 = 200,000 ops -> clamped to absolute cap 100,000 ops
+  const enterpriseRev = computeMarginGuardCeiling({ revenueBasis: 10000 });
+  assert.equal(enterpriseRev.ceilingOps, DEFAULT_AI_CEILING_ABSOLUTE_CAP);
+
+  // Case 5: Custom parameters
+  const custom = computeMarginGuardCeiling({
+    revenueBasis: 500,
+    marginPct: 0.20,
+    unitCostUsd: 0.002,
+    floor: 2000,
+    absoluteCap: 80000
+  });
+  // 500 * 0.20 / 0.002 = 50,000 ops
+  assert.equal(custom.ceilingOps, 50000);
+});
+
+test("MIPA-27: computeCurrentMrr aggregates active subscriptions with stored amounts and fallbacks", async () => {
+  const activeOrgs = [
+    // 1. Starter monthly with stored cents (2900 cents = $29)
+    {
+      id: "org-1",
+      subscriptionStatus: "active",
+      subscriptionTier: "starter",
+      billingCycle: "monthly",
+      paidAmount: 2900
+    },
+    // 2. Growth monthly with fallback pricing (no stored amount -> $79)
+    {
+      id: "org-2",
+      subscriptionStatus: "active",
+      subscriptionTier: "growth",
+      billingCycle: "monthly"
+    },
+    // 3. Pro annual with fallback pricing ($1990/year -> $165.83/mo)
+    {
+      id: "org-3",
+      subscriptionStatus: "active",
+      subscriptionTier: "pro",
+      billingCycle: "annual"
+    },
+    // 4. Inactive org (should be excluded)
+    {
+      id: "org-4",
+      subscriptionStatus: "cancelled",
+      subscriptionTier: "enterprise",
+      billingCycle: "monthly",
+      paidAmount: 49900
+    },
+    // 5. Community org (should be excluded)
+    {
+      id: "org-5",
+      subscriptionStatus: "active",
+      subscriptionTier: "community",
+      billingCycle: "monthly"
+    }
+  ];
+
+  const mockDb = createTransactionalMockDb({ orgsCollection: activeOrgs });
+  const mrr = await computeCurrentMrr(mockDb as unknown as import("firebase-admin/firestore").Firestore);
+
+  // Expected MRR: 29 + 79 + (1990 / 12 = 165.8333) = 273.83
+  assert.ok(Math.abs(mrr - 273.83) < 0.05);
+});
+
+test("MIPA-27 Fixture Cases: revenue 0 (floor), normal revenue (10%), and revenue read failure (fail closed)", async () => {
+  // Fixture Case 1: Revenue 0 (Floor)
+  const emptyDb = createTransactionalMockDb({ orgsCollection: [] });
+  const floorCeiling = await resolveGlobalMonthlyCeiling(emptyDb as unknown as import("firebase-admin/firestore").Firestore);
+  assert.equal(floorCeiling, 5000, "Revenue 0 must evaluate to the floor (5000 ops)");
+
+  // Fixture Case 2: Normal Revenue (10% conversion)
+  // MRR = $1,000 -> 1000 * 0.10 / 0.005 = 20,000 ops
+  const normalCeiling = await resolveGlobalMonthlyCeiling(
+    emptyDb as unknown as import("firebase-admin/firestore").Firestore,
+    { revenueBasis: 1000 }
+  );
+  assert.equal(normalCeiling, 20000, "MRR of $1000 with 10% margin at $0.005 must evaluate to 20,000 ops");
+
+  // Fixture Case 3: Revenue read failure (Fails closed to floor)
+  const failingDb = createTransactionalMockDb({ throwOnOrgsQuery: true });
+  const failedReadMrr = await computeCurrentMrr(failingDb as unknown as import("firebase-admin/firestore").Firestore);
+  assert.equal(failedReadMrr, 0, "Revenue read failure must fail closed to 0 MRR");
+
+  const failClosedCeiling = await resolveGlobalMonthlyCeiling(failingDb as unknown as import("firebase-admin/firestore").Firestore);
+  assert.equal(failClosedCeiling, 5000, "Revenue read failure must evaluate to floor (5000 ops), not throw or maximize");
+
+  // Test that verifyAndConsumeAiCredit succeeds and applies floor ceiling when revenue read fails
+  const mockUserStore: Record<string, unknown> = { aiCreditsUsed: 0 };
+  const mockOrgStore: Record<string, unknown> = { aiCreditsUsed: 0, subscriptionTier: "community" };
+  const mockGlobalStore: Record<string, unknown> = { creditsUsed: 100 }; // Room under 5000
+  const auditLogs: Record<string, unknown>[] = [];
+
+  const failingQueryDb = createTransactionalMockDb({
+    userStore: mockUserStore,
+    orgStore: mockOrgStore,
+    globalStore: mockGlobalStore,
+    auditLogs,
+    throwOnOrgsQuery: true
+  });
+
+  const consumeResult = await verifyAndConsumeAiCredit(
+    failingQueryDb as unknown as import("firebase-admin/firestore").Firestore,
+    "uid-fail-closed",
+    "org-fail-closed",
+    { token: { email_verified: true } }
+  );
+  assert.equal(consumeResult.allowed, true);
+  assert.equal(consumeResult.source, "starter_verified");
 });
