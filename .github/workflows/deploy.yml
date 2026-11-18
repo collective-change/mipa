@@ -91,6 +91,36 @@ jobs:
             package-lock.json
             functions/package-lock.json
 
+      # Tests run BEFORE the production configuration is written (MIPA-48). This is the
+      # order node.js.yml uses: no .env exists yet, so the app can only see the emulator
+      # settings from the test environment, and nothing the test step does can reach the
+      # build below. Do not move this after "Write configuration files": that step writes
+      # the production .env (useEmulators=false), and a test run against it would reach
+      # for the real Firestore.
+      - name: Install dependencies
+        if: steps.migrated.outputs.ready == 'true'
+        run: |
+          npm ci
+          npm ci --prefix src-pwa
+          npm ci --prefix functions
+
+      - name: Lint
+        if: steps.migrated.outputs.ready == 'true'
+        run: npm run lint
+
+      # firebase-tools needs Java 21 for the Firestore emulator.
+      - uses: actions/setup-java@v5
+        if: steps.migrated.outputs.ready == 'true'
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # emulators:exec exits non-zero when the command fails, so a failing test stops
+      # the job here and "Deploy to Firebase" is skipped.
+      - name: Unit tests (with Auth + Firestore emulators)
+        if: steps.migrated.outputs.ready == 'true'
+        run: npx --yes firebase-tools@15.36.0 emulators:exec --only auth,firestore --project demo-mipa "npm test"
+
       - name: Write configuration files
         if: steps.migrated.outputs.ready == 'true'
         env:
@@ -104,25 +134,9 @@ jobs:
             cp functions/.env.example functions/.env
           fi
 
-      # `npm test` used to run here, bare - no emulator, no Java. The moment
-      # emulator-backed specs (MIPA-15, MIPA-9) reached master, this step died with
-      # ECONNREFUSED 127.0.0.1:5002 and "Deploy to Firebase" was skipped (run
-      # 44313765200, 2026-11-18). The full suite still gates every PR in node.js.yml and
-      # master only moves through a green PR, so the gate is not lost by removing the
-      # duplicate here. Restoring it *properly* is MIPA-48: it must NOT be wrapped in
-      # emulators:exec naively, because the step above writes the production .env
-      # (useEmulators=false) into the repo - the app would then reach the real Firestore,
-      # and any emulator env leaking into the build below would ship a production build
-      # pointing at the emulators.
       - name: Build the app
         if: steps.migrated.outputs.ready == 'true'
-        run: |
-          npm ci
-          npm ci --prefix src-pwa
-          npm ci --prefix functions
-          npm run lint
-          npm run build
-
+        run: npm run build
       - name: Keep only recent container images of functions (cleanup policy)
         if: steps.migrated.outputs.ready == 'true'
         env:
