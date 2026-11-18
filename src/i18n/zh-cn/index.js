@@ -298,6 +298,8 @@ export default {
   "Remove from group": "從群組移除",
   "Collapse group": "收起群組",
   Ungroup: "解散群組",
+  confirmDisbandGroup: "确定要解散群组吗？",
+  confirmDisbandGroupMessage: "此操作无法撤销。",
   "No matching factors": "沒有符合的因素",
   deleteFactorConfirm: "确定要删除「{name}」嗎？此動作無法復原。",
   "This factor can't be deleted yet": "這個因素還不能删除",

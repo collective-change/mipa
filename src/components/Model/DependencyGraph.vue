@@ -1323,8 +1323,8 @@ export default {
                 handler: async function () {
                   that.$q
                     .dialog({
-                      title: "Really disband group?",
-                      message: "This cannot be undone.",
+                      title: that.$t("confirmDisbandGroup"),
+                      message: that.$t("confirmDisbandGroupMessage"),
                       cancel: true,
                       persistent: true,
                     })

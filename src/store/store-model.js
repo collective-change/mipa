@@ -833,6 +833,7 @@ const actions = {
     //console.log("end updateClassifiedInfluencersOf");
   },
 
+  // Top-level representation: parentId is omitted entirely (key absent, never null).
   async createNodeGroup({}, payload) {
     let success = false;
     let nodeGroup = {
@@ -920,7 +921,7 @@ const actions = {
           .map(group => {
             if (group.parentId == nodeGroupId) {
               if (grandparentId) group.parentId = grandparentId;
-              else delete group.parentId;
+              else delete group.parentId; // Top level is represented as key absent (never parentId: null)
             }
             return group;
           });

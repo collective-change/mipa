@@ -36,7 +36,7 @@ describe("disbandNodeGroup", () => {
   it("clears parentId on child groups so they stay listed at the top level", async () => {
     state.currentModel = { id: "model1" };
     currentNodeGroups = [
-      { id: "parent", nodeIds: [], parentId: null },
+      { id: "parent", nodeIds: [] },
       { id: "child", nodeIds: [], parentId: "parent" },
       { id: "grandchild", nodeIds: [], parentId: "child" }
     ];
@@ -46,9 +46,11 @@ describe("disbandNodeGroup", () => {
     const groups = written.nodeGroups;
     expect(groups.map(g => g.id)).toEqual(["child", "grandchild"]);
     // The child is no longer attached to the deleted parent, so the
-    // node group list (which nests from parentId == null) can still show it.
+    // node group list (which nests from parentId == undefined / key absent) can still show it.
     const child = groups.find(g => g.id === "child");
-    expect(child.parentId ?? null).toBeNull();
+    // Top-level groups omit parentId entirely (key absent). Strictly assert the representation.
+    expect(child).not.toHaveProperty("parentId");
+    expect("parentId" in child).toBe(false);
     // Its own children keep pointing at it.
     expect(groups.find(g => g.id === "grandchild").parentId).toBe("child");
   });
@@ -56,7 +58,7 @@ describe("disbandNodeGroup", () => {
   it("re-attaches child groups to the disbanded group's parent in a three-level tree", async () => {
     state.currentModel = { id: "model1" };
     currentNodeGroups = [
-      { id: "root", nodeIds: [], parentId: null },
+      { id: "root", nodeIds: [] },
       { id: "parent", nodeIds: [], parentId: "root" },
       { id: "child", nodeIds: [], parentId: "parent" }
     ];
@@ -66,5 +68,43 @@ describe("disbandNodeGroup", () => {
     const groups = written.nodeGroups;
     expect(groups.map(g => g.id)).toEqual(["root", "child"]);
     expect(groups.find(g => g.id === "child").parentId).toBe("root");
+  });
+
+  it("MIPA-31: uses one consistent word across menu item, confirm dialog and both toasts in all 5 locales", async () => {
+    const enUs = (await import("@/i18n/en-us/index.js")).default;
+    const es = (await import("@/i18n/es/index.js")).default;
+    const ja = (await import("@/i18n/ja/index.js")).default;
+    const zhCn = (await import("@/i18n/zh-cn/index.js")).default;
+    const zhTw = (await import("@/i18n/zh-tw/index.js")).default;
+
+    // English: 'disband'
+    expect(enUs.Ungroup.toLowerCase()).toContain("disband");
+    expect(enUs.confirmDisbandGroup.toLowerCase()).toContain("disband");
+    expect(enUs.toastUngrouped.toLowerCase()).toContain("disband");
+    expect(enUs.toastUngroupFailed.toLowerCase()).toContain("disband");
+
+    // Traditional Chinese: '解散'
+    expect(zhTw.Ungroup).toContain("解散");
+    expect(zhTw.confirmDisbandGroup).toContain("解散");
+    expect(zhTw.toastUngrouped).toContain("解散");
+    expect(zhTw.toastUngroupFailed).toContain("解散");
+
+    // Simplified Chinese: '解散'
+    expect(zhCn.Ungroup).toContain("解散");
+    expect(zhCn.confirmDisbandGroup).toContain("解散");
+    expect(zhCn.toastUngrouped).toContain("解散");
+    expect(zhCn.toastUngroupFailed).toContain("解散");
+
+    // Spanish: 'disolver'
+    expect(es.Ungroup.toLowerCase()).toContain("disolver");
+    expect(es.confirmDisbandGroup.toLowerCase()).toContain("disolver");
+    expect(es.toastUngrouped.toLowerCase()).toContain("disuelt");
+    expect(es.toastUngroupFailed.toLowerCase()).toContain("disolver");
+
+    // Japanese: '解散'
+    expect(ja.Ungroup).toContain("解散");
+    expect(ja.confirmDisbandGroup).toContain("解散");
+    expect(ja.toastUngrouped).toContain("解散");
+    expect(ja.toastUngroupFailed).toContain("解散");
   });
 });
