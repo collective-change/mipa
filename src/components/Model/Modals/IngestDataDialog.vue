@@ -21,6 +21,7 @@
         indicator-color="primary"
       >
         <q-tab name="ingest" icon="upload_file" :label="$t('tabDocumentIngestion')" />
+        <q-tab name="timeseries" icon="timeline" :label="$t('tabTimeSeriesIngestion')" />
         <q-tab name="freshness" icon="update" :label="$t('tabFreshnessAudit')">
           <q-badge v-if="staleFactorsCount > 0" color="negative" floating rounded>
             {{ staleFactorsCount }}
@@ -187,6 +188,167 @@
           </div>
         </q-tab-panel>
 
+        <!-- Tab: Time Series Ingestion (MIPA-20) -->
+        <q-tab-panel name="timeseries" class="q-pa-md column">
+          <div class="row q-col-gutter-md col">
+            <!-- Left panel: factor selection & text input -->
+            <div class="col-12 col-md-5 column">
+              <q-card flat bordered class="bg-white q-pa-sm col column">
+                <div class="text-subtitle2 text-weight-medium q-mb-xs">
+                  {{ $t("importSeriesTitle") }}
+                </div>
+                <div class="text-caption text-grey-7 q-mb-sm">
+                  {{ $t("importSeriesHelp") }}
+                </div>
+
+                <q-select
+                  v-model="targetFactorId"
+                  :options="factorOptions"
+                  emit-value
+                  map-options
+                  outlined
+                  dense
+                  class="q-mb-sm"
+                  :label="$t('targetFactorLabel')"
+                />
+
+                <div class="row q-gutter-xs q-mb-sm">
+                  <q-btn
+                    outline
+                    dense
+                    size="sm"
+                    color="primary"
+                    icon="content_paste"
+                    :label="$t('loadSampleTimeSeries')"
+                    @click="loadSampleTimeSeries"
+                  />
+                  <q-btn
+                    flat
+                    dense
+                    size="sm"
+                    color="grey-8"
+                    icon="clear"
+                    :label="$t('clearInput')"
+                    @click="rawTimeSeriesText = ''"
+                  />
+                </div>
+
+                <q-input
+                  v-model="rawTimeSeriesText"
+                  type="textarea"
+                  outlined
+                  dense
+                  class="col font-mono"
+                  :placeholder="$t('importSeriesPlaceholder')"
+                />
+
+                <q-input
+                  v-model="tsSourceCitation"
+                  dense
+                  outlined
+                  class="q-mt-xs"
+                  :label="$t('seriesSourceCitation')"
+                  :hint="$t('seriesSourceHint')"
+                />
+              </q-card>
+            </div>
+
+            <!-- Right panel: live preview & non-silent overwrite guard -->
+            <div class="col-12 col-md-7 column">
+              <q-card flat bordered class="bg-white q-pa-sm col column">
+                <div class="row items-center justify-between q-mb-xs">
+                  <div>
+                    <div class="text-subtitle2 text-weight-medium">
+                      {{ $t("parsedPreviewTitle") }}
+                    </div>
+                    <div class="text-caption text-grey-7">
+                      <span v-if="parsedTimeSeriesPoints.length > 0">
+                        {{ $t("timeSeriesPointCount", {
+                          count: parsedTimeSeriesPoints.length,
+                          historical: parsedTimeSeriesHistoricalCount,
+                          predicted: parsedTimeSeriesPredictedCount
+                        }) }}
+                      </span>
+                      <span v-else>{{ $t("pasteToPreviewHelp") }}</span>
+                    </div>
+                  </div>
+                  <q-btn
+                    unelevated
+                    dense
+                    no-caps
+                    color="primary"
+                    icon="save"
+                    :label="$t('confirmSaveSeries')"
+                    :disable="!targetFactorId || parsedTimeSeriesPoints.length === 0"
+                    :loading="isImportingSeries"
+                    @click="attachTimeSeriesToFactor"
+                  />
+                </div>
+
+                <!-- Overwrite Warning Banner if target factor already has series -->
+                <q-banner
+                  v-if="targetFactorSeriesCount > 0 && parsedTimeSeriesPoints.length > 0"
+                  dense
+                  rounded
+                  class="bg-amber-1 text-amber-10 border-amber q-mb-sm"
+                >
+                  <template v-slot:avatar>
+                    <q-icon name="warning" color="amber-9" />
+                  </template>
+                  <div class="text-caption text-weight-bold">
+                    {{ $t("overwriteWarningTitle") }}
+                  </div>
+                  <div class="text-caption">
+                    {{ $t("overwriteWarningMsg", {
+                      count: targetFactorSeriesCount,
+                      source: targetFactor?.seriesProvenance?.sourceCitation || $t("unspecifiedSource")
+                    }) }}
+                  </div>
+                  <div class="row q-gutter-sm q-mt-xs">
+                    <q-radio v-model="tsSaveMode" val="replace" dense size="xs" :label="$t('overwriteOptionReplace')" />
+                    <q-radio v-model="tsSaveMode" val="merge" dense size="xs" :label="$t('overwriteOptionMerge')" />
+                  </div>
+                </q-banner>
+
+                <div v-if="parsedTimeSeriesPoints.length === 0" class="col flex flex-center text-grey-6">
+                  <div class="text-center">
+                    <q-icon name="timeline" size="48px" class="q-mb-sm text-grey-5" />
+                    <div>{{ $t("pasteToPreviewHelp") }}</div>
+                  </div>
+                </div>
+
+                <q-table
+                  v-else
+                  flat
+                  bordered
+                  dense
+                  :rows="parsedTimeSeriesPoints"
+                  :columns="timeSeriesPreviewColumns"
+                  row-key="date"
+                  class="col"
+                  virtual-scroll
+                  :rows-per-page-options="[0]"
+                >
+                  <template v-slot:body-cell-type="props">
+                    <q-td :props="props">
+                      <q-badge
+                        dense
+                        :color="props.row.isPredicted ? 'purple' : 'teal'"
+                        :label="props.row.isPredicted ? $t('seriesPredicted') : $t('seriesHistorical')"
+                      />
+                    </q-td>
+                  </template>
+                  <template v-slot:body-cell-value="props">
+                    <q-td :props="props" class="font-mono text-weight-bold">
+                      {{ formatValue(props.row.value) }}
+                    </q-td>
+                  </template>
+                </q-table>
+              </q-card>
+            </div>
+          </div>
+        </q-tab-panel>
+
         <!-- Tab 2: Freshness & Stale Data Audit -->
         <q-tab-panel name="freshness" class="q-pa-md">
           <q-card flat bordered class="bg-white q-pa-md q-mb-md">
@@ -319,7 +481,10 @@ import {
   parseTabularData,
   evaluateFactorFreshness,
   groupFactorsByCategory,
-  createAuditTrailEntry
+  createAuditTrailEntry,
+  parseTimeSeriesData,
+  mergeTimeSeries,
+  SAMPLE_TIME_SERIES
 } from "@/utils/dataIngestion";
 
 export const SAMPLE_FINANCIAL_TABLE = `Account / Metric,Baseline Value,Unit,Category,Reporting Period,Effective Date,Source Citation
@@ -344,6 +509,17 @@ export default {
       allSelected: true,
       isImporting: false,
       accountingCategories: ACCOUNTING_CATEGORIES,
+      targetFactorId: "",
+      rawTimeSeriesText: "",
+      tsSourceCitation: "",
+      tsSaveMode: "replace",
+      isImportingSeries: false,
+      timeSeriesPreviewColumns: [
+        { name: "date", label: this.$t("seriesColDate"), align: "left", field: "date", sortable: true },
+        { name: "value", label: this.$t("seriesColValue"), align: "right", field: "value", sortable: true },
+        { name: "type", label: this.$t("seriesColType"), align: "center", field: "isPredicted" },
+        { name: "sourceCitation", label: this.$t("seriesColSource"), align: "left", field: row => row.sourceCitation || this.tsSourceCitation || "", sortable: true }
+      ],
       proposalColumns: [
         { name: "selected", label: "", align: "center", field: "selected" },
         { name: "name", label: this.$t("factorName"), align: "left", field: "name" },
@@ -403,6 +579,41 @@ export default {
 
     groupedFactors() {
       return groupFactorsByCategory(this.nodes || []);
+    },
+
+    factorOptions() {
+      return (this.nodes || []).map((n) => ({
+        label: `${n.name} ($${n.symbol || n.id})`,
+        value: n.id
+      }));
+    },
+
+    targetFactor() {
+      return (this.nodes || []).find((n) => n.id === this.targetFactorId);
+    },
+
+    targetFactorSeriesCount() {
+      const s = this.targetFactor?.timeSeries || this.targetFactor?.series;
+      return Array.isArray(s) ? s.length : 0;
+    },
+
+    parsedTimeSeriesResult() {
+      return parseTimeSeriesData(this.rawTimeSeriesText, {
+        sourceCitation: this.tsSourceCitation,
+        userEmail: this.userEmail || "user"
+      });
+    },
+
+    parsedTimeSeriesPoints() {
+      return this.parsedTimeSeriesResult.series;
+    },
+
+    parsedTimeSeriesHistoricalCount() {
+      return this.parsedTimeSeriesPoints.filter((p) => !p.isPredicted).length;
+    },
+
+    parsedTimeSeriesPredictedCount() {
+      return this.parsedTimeSeriesPoints.filter((p) => p.isPredicted).length;
     }
   },
   methods: {
@@ -506,6 +717,65 @@ export default {
         });
       }
       this.$emit("update:modelValue", false);
+    },
+
+    loadSampleTimeSeries() {
+      this.rawTimeSeriesText = SAMPLE_TIME_SERIES;
+      if (!this.tsSourceCitation) {
+        this.tsSourceCitation = "Sample Historical & Forecast Ledger";
+      }
+    },
+
+    async attachTimeSeriesToFactor() {
+      if (!this.targetFactorId || this.parsedTimeSeriesPoints.length === 0) return;
+      this.isImportingSeries = true;
+
+      try {
+        const modelId = this.currentModel?.id || this.$route?.params?.modelId;
+        const existing = this.targetFactor?.timeSeries || this.targetFactor?.series || [];
+
+        const finalSeries = mergeTimeSeries(
+          existing,
+          this.parsedTimeSeriesPoints,
+          this.tsSaveMode
+        );
+
+        const provenance = {
+          sourceCitation: this.tsSourceCitation || this.parsedTimeSeriesResult.provenance.sourceCitation || "",
+          importedAt: new Date().toISOString(),
+          importedBy: this.userEmail || "user",
+          pointCount: finalSeries.length,
+          historicalCount: finalSeries.filter((p) => !p.isPredicted).length,
+          predictedCount: finalSeries.filter((p) => p.isPredicted).length,
+          startDate: finalSeries[0]?.date || "",
+          endDate: finalSeries[finalSeries.length - 1]?.date || "",
+          lastUpdated: new Date().toISOString()
+        };
+
+        await this.updateNode({
+          modelId,
+          updates: {
+            id: this.targetFactorId,
+            timeSeries: finalSeries,
+            seriesProvenance: provenance
+          }
+        });
+
+        if (this.$q && typeof this.$q.notify === "function") {
+          this.$q.notify({
+            type: "positive",
+            message: this.$t("timeSeriesAttachSuccess", {
+              factor: this.targetFactor?.name || "",
+              count: finalSeries.length
+            })
+          });
+        }
+
+        this.rawTimeSeriesText = "";
+        this.$emit("update:modelValue", false);
+      } finally {
+        this.isImportingSeries = false;
+      }
     }
   }
 };

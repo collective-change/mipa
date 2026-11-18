@@ -3,7 +3,11 @@ import {
   parseTabularData,
   evaluateFactorFreshness,
   groupFactorsByCategory,
-  createAuditTrailEntry
+  createAuditTrailEntry,
+  parseTimeSeriesData,
+  mergeTimeSeries,
+  normalizeSeriesDate,
+  SAMPLE_TIME_SERIES
 } from "@/utils/dataIngestion";
 
 describe("Data Ingestion & Financial Currency Utilities", () => {
@@ -122,6 +126,84 @@ Operating Deficit,"(4,200)"`;
       expect(record.reportingPeriod).toBe("FY2025");
       expect(record.userEmail).toBe("auditor@org.org");
       expect(record.timestamp).toBeDefined();
+    });
+  });
+
+  describe("MIPA-20: parseTimeSeriesData & mergeTimeSeries", () => {
+    it("parses CSV time series text into sorted dated points with provenance", () => {
+      const csv = `Date,Value,Type,Source
+2024-01-01,100,historical,FY2024 Audit
+2024-07-01,120,historical,FY2024 Midyear
+2025-01-01,150,predicted,FY2025 Projection`;
+
+      const result = parseTimeSeriesData(csv, { sourceCitation: "Default Source", userEmail: "tester@mipa.org" });
+      expect(result.series.length).toBe(3);
+      expect(result.series[0].date).toBe("2024-01-01");
+      expect(result.series[0].value).toBe(100);
+      expect(result.series[0].isPredicted).toBe(false);
+      expect(result.series[0].sourceCitation).toBe("FY2024 Audit");
+
+      expect(result.series[2].date).toBe("2025-01-01");
+      expect(result.series[2].value).toBe(150);
+      expect(result.series[2].isPredicted).toBe(true);
+
+      expect(result.provenance.pointCount).toBe(3);
+      expect(result.provenance.historicalCount).toBe(2);
+      expect(result.provenance.predictedCount).toBe(1);
+      expect(result.provenance.startDate).toBe("2024-01-01");
+      expect(result.provenance.endDate).toBe("2025-01-01");
+      expect(result.provenance.importedBy).toBe("tester@mipa.org");
+    });
+
+    it("parses SAMPLE_TIME_SERIES successfully", () => {
+      const result = parseTimeSeriesData(SAMPLE_TIME_SERIES);
+      expect(result.series.length).toBe(9);
+      expect(result.provenance.historicalCount).toBe(7);
+      expect(result.provenance.predictedCount).toBe(2);
+    });
+
+    it("normalizes quarters and dates cleanly", () => {
+      expect(normalizeSeriesDate("2024-Q1")).toBe("2024-01-01");
+      expect(normalizeSeriesDate("2024-Q2")).toBe("2024-04-01");
+      expect(normalizeSeriesDate("2024-Q3")).toBe("2024-07-01");
+      expect(normalizeSeriesDate("2024-Q4")).toBe("2024-10-01");
+      expect(normalizeSeriesDate("2024-06")).toBe("2024-06-01");
+      expect(normalizeSeriesDate("2024-05-18")).toBe("2024-05-18");
+    });
+
+    it("supports merge and replace strategies for non-silent overwrites", () => {
+      const existing = [
+        { date: "2024-01-01", value: 100, isPredicted: false },
+        { date: "2024-07-01", value: 120, isPredicted: false }
+      ];
+      const incoming = [
+        { date: "2024-07-01", value: 130, isPredicted: false },
+        { date: "2025-01-01", value: 160, isPredicted: true }
+      ];
+
+      // Replace mode
+      const replaced = mergeTimeSeries(existing, incoming, "replace");
+      expect(replaced.length).toBe(2);
+      expect(replaced[0].date).toBe("2024-07-01");
+
+      // Merge mode
+      const merged = mergeTimeSeries(existing, incoming, "merge");
+      expect(merged.length).toBe(3);
+      expect(merged[0].date).toBe("2024-01-01");
+      expect(merged[0].value).toBe(100);
+      expect(merged[1].date).toBe("2024-07-01");
+      expect(merged[1].value).toBe(130); // updated
+      expect(merged[2].date).toBe("2025-01-01");
+      expect(merged[2].value).toBe(160); // appended
+    });
+
+    it("handles empty or malformed inputs without throwing", () => {
+      const empty = parseTimeSeriesData("");
+      expect(empty.series).toEqual([]);
+      expect(empty.provenance.pointCount).toBe(0);
+
+      const invalid = parseTimeSeriesData("HeaderOnly,Column\nnotADate,notANumber");
+      expect(invalid.series).toEqual([]);
     });
   });
 });

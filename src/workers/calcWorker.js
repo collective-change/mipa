@@ -965,22 +965,34 @@ function iterateThroughTime(sim, scenario) {
           sim.scope.currentNodeId = sim.sortedNodes[nodeIndex].id;
           sim.scope.currentNodeName = sim.sortedNodes[nodeIndex].name;
 
-          try {
-            const t0 = performance.now();
-            code.evaluate(sim.scope);
-            const t1 = performance.now();
-            perf.evalCount += 1;
-            perf.evalTime += t1 - t0;
-          } catch (err) {
-            sim.errorOccurred = true;
-            self.postMessage({
-              errorType: "Evaluation error",
-              errorMessage: `For node "${
-                sim.sortedNodes[nodeIndex].name
-              }",  <br/> ${err} <br/> (node ${nodeIndex +
-                1} of ${totalNodeCount})`,
-              errorData: { nodeId: sim.sortedNodes[nodeIndex].id }
-            });
+          const currentNode = sim.sortedNodes[nodeIndex];
+          const imported = sim.nodeTimeSeries && sim.nodeTimeSeries[currentNode.id];
+          const isPureSeriesNode = imported && imported.timeSPoints && imported.timeSPoints.length > 0 &&
+            (!currentNode.sysFormula || currentNode.sysFormula === "0" || !currentNode.sysFormula.includes("$"));
+
+          if (isPureSeriesNode) {
+            const interpolatedVal = interpolateFromLookup(imported.timeSPoints, imported.values, timeS);
+            if (interpolatedVal !== undefined) {
+              sim.scope["$" + currentNode.id] = getValueWithUnitIfAvailable(interpolatedVal, currentNode.unit);
+            }
+          } else {
+            try {
+              const t0 = performance.now();
+              code.evaluate(sim.scope);
+              const t1 = performance.now();
+              perf.evalCount += 1;
+              perf.evalTime += t1 - t0;
+            } catch (err) {
+              sim.errorOccurred = true;
+              self.postMessage({
+                errorType: "Evaluation error",
+                errorMessage: `For node "${
+                  sim.sortedNodes[nodeIndex].name
+                }",  <br/> ${err} <br/> (node ${nodeIndex +
+                  1} of ${totalNodeCount})`,
+                errorData: { nodeId: sim.sortedNodes[nodeIndex].id }
+              });
+            }
           }
 
           if (sim.errorOccurred) return;
@@ -1197,6 +1209,8 @@ function prepSim(data) {
   sim.nodes = prepNodesForSort(sim);
   if (sim.errorOccurred) return sim;
 
+  sim.nodeTimeSeries = prepNodeTimeSeries(data.modelNodes || data.nodes || sim.nodes);
+
   sim.sortedNodes = topoSortNodes(sim);
   if (sim.errorOccurred) return sim;
 
@@ -1309,6 +1323,7 @@ function prepEnvironment(data) {
   sim.calcTimeLog.push({ stage: "prepEnv", endTime: new Date() });
   sim.customVariables = data.customVariables || data.model?.customVariables || null;
   registerCustomVariableUnits(sim.customVariables);
+  sim.nodeTimeSeries = prepNodeTimeSeries(sim.nodes);
   return sim;
 }
 
@@ -1358,17 +1373,123 @@ function loadCustomVariables(sim) {
           try {
             math.createUnit(u);
             sim.scope[name] = math.unit(numVal, u);
-          } catch (e2) {
+          } catch {
             sim.scope[name] = numVal;
           }
         }
       } else {
         sim.scope[name] = numVal;
       }
-    } catch (err) {
+    } catch {
       sim.scope[name] = Number(v.value) || 0;
     }
   }
+}
+
+function prepNodeTimeSeries(nodes) {
+  const result = {};
+  if (!Array.isArray(nodes)) return result;
+
+  nodes.forEach(node => {
+    if (!node || !node.id) return;
+    const series = node.timeSeries || node.series;
+    if (!Array.isArray(series) || series.length === 0) return;
+
+    const points = [];
+    series.forEach(item => {
+      if (!item) return;
+      let timeS = null;
+      if (item.timeS !== undefined && item.timeS !== null) {
+        timeS = Number(item.timeS);
+      } else if (item.date) {
+        const d = new Date(item.date);
+        if (!isNaN(d.getTime())) {
+          timeS = Math.floor(d.getTime() / 1000);
+        }
+      } else if (item.timestamp) {
+        timeS = Math.floor(Number(item.timestamp) / 1000);
+      }
+
+      const val = Number(item.value);
+      if (timeS !== null && !isNaN(timeS) && !isNaN(val)) {
+        points.push({
+          timeS,
+          value: val,
+          isPredicted: Boolean(item.isPredicted)
+        });
+      }
+    });
+
+    if (points.length > 0) {
+      points.sort((a, b) => a.timeS - b.timeS);
+      result[node.id] = {
+        timeSPoints: points.map(p => p.timeS),
+        values: points.map(p => p.value),
+        rawPoints: points
+      };
+    }
+  });
+
+  return result;
+}
+
+function getEffectiveTimeSeriesForNode(nodeId, scope) {
+  const simTimeSPoints = (scope.timeSeries && scope.timeSeries.timeSPoints) || [];
+  const simValues = (scope.timeSeries && scope.timeSeries.nodes && scope.timeSeries.nodes[nodeId]) || [];
+  const imported = (scope.importedSeries && scope.importedSeries[nodeId]) || null;
+
+  if (!imported || imported.timeSPoints.length === 0) {
+    return {
+      timeSPoints: simTimeSPoints,
+      values: simValues
+    };
+  }
+
+  const node = Array.isArray(scope.sortedNodes) ? scope.sortedNodes.find(n => n.id === nodeId) : null;
+  const isPureSeriesNode = !node || !node.sysFormula || node.sysFormula === "0" || !node.sysFormula.includes("$");
+
+  if (isPureSeriesNode && simTimeSPoints.length === 0) {
+    return {
+      timeSPoints: imported.timeSPoints,
+      values: imported.values
+    };
+  }
+
+  const combinedTimeS = [];
+  const combinedValues = [];
+
+  for (let i = 0; i < imported.timeSPoints.length; i++) {
+    if (imported.timeSPoints[i] < scope.initialTimeS) {
+      combinedTimeS.push(imported.timeSPoints[i]);
+      combinedValues.push(imported.values[i]);
+    }
+  }
+
+  for (let i = 0; i < simTimeSPoints.length; i++) {
+    combinedTimeS.push(simTimeSPoints[i]);
+    combinedValues.push(simValues[i]);
+  }
+
+  if (isPureSeriesNode) {
+    for (let i = 0; i < imported.timeSPoints.length; i++) {
+      const ptTime = imported.timeSPoints[i];
+      if (ptTime >= scope.initialTimeS && !combinedTimeS.includes(ptTime)) {
+        combinedTimeS.push(ptTime);
+        combinedValues.push(imported.values[i]);
+      }
+    }
+    const combined = combinedTimeS.map((t, idx) => ({ t, v: combinedValues[idx] }))
+      .sort((a, b) => a.t - b.t);
+    return {
+      timeSPoints: combined.map(c => c.t),
+      values: combined.map(c => c.v)
+    };
+  }
+
+  return {
+    timeSPoints: combinedTimeS,
+    values: combinedValues
+  };
 }
 
 function prepScope(sim) {
@@ -1379,8 +1500,10 @@ function prepScope(sim) {
     initialTimeS: Math.floor(calcDate / 1000), //this will remain constant throughout the simulation
     //timeS: initialTimeS, //timeS will increment with each iteration
     timeSeries: { timeSPoints: [], nodes: {} },
-    compiledDelayArg1s: {}
-  }; //TODO: load timeSeries with current or historical values
+    compiledDelayArg1s: {},
+    importedSeries: sim.nodeTimeSeries || {},
+    sortedNodes: sim.sortedNodes || []
+  };
 
   sim.sortedNodes.forEach(function(node) {
     scope.timeSeries.nodes[node.id] = [];
@@ -1417,6 +1540,8 @@ function prepDefaultTimeSPoints(sim) {
 
 function resetScope(sim) {
   sim.scope.timeSeries = { timeSPoints: [], nodes: {} };
+  sim.scope.importedSeries = sim.nodeTimeSeries || {};
+  sim.scope.sortedNodes = sim.sortedNodes || [];
   sim.sortedNodes.forEach(function(node) {
     sim.scope.timeSeries.nodes[node.id] = [];
     delete sim.scope["$" + node.id];
@@ -1771,7 +1896,8 @@ function prepNodesForSort(sim) {
       latestValue:
         typeof outerNode.latestValue !== "undefined"
           ? outerNode.latestValue
-          : ""
+          : "",
+      timeSeries: outerNode.timeSeries || outerNode.series || null
     });
   });
   sim.calcTimeLog.push({ stage: "prepNodesForSort", endTime: new Date() });
@@ -1869,13 +1995,13 @@ function delay(args, math, scope) {
   const t1 = performance.now();
   perf.compileEvalTimeInDelayFunc += t1 - t0;
 
-  const values = scope.timeSeries.nodes[nodeId];
-  const timeSPoints = scope.timeSeries.timeSPoints;
-  //let defaultValue = scope[$nodeId];
+  const effective = getEffectiveTimeSeriesForNode(nodeId, scope);
+  const values = effective.values;
+  const timeSPoints = effective.timeSPoints;
   let targetTimeS = scope.timeS - delayTime.toNumber("seconds");
 
   //quick case: if the last value in the time series is for the target time, then return it
-  if (timeSPoints[timeSPoints.length - 1] == targetTimeS && values) {
+  if (timeSPoints.length > 0 && timeSPoints[timeSPoints.length - 1] == targetTimeS && values.length > 0) {
     return values[values.length - 1];
   }
 
@@ -1917,7 +2043,8 @@ function delay(args, math, scope) {
   );
   const delayT1 = performance.now();
   perf.delayFuncTime += delayT1 - delayT0;
-  return interpolated;
+  const unit = scope["$" + nodeId + "_unit"];
+  return getValueWithUnitIfAvailable(interpolated, unit);
 }
 
 function interpolate(
