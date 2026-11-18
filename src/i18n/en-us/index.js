@@ -1223,5 +1223,22 @@ export default {
   importCountryModelConfirmPrompt: "Import the versioned Layer 1 Country Model (12 World Bank WDI indicators) into this model? Existing factors with matching IDs will be updated.",
   auditedProvenance: "Audited Provenance",
   citationUrl: "Citation URL",
-  licence: "License"
+  licence: "License",
+  climatePressure: "Climate Pressure",
+  climatePressureDesc: "Action pressure on global climate boundary (tCO2e) computed using GHG Protocol and IPCC AR6 GWP-100.",
+  portfolioClimatePressure: "Portfolio Climate Pressure",
+  actionClimateProvenanceTitle: "Action Climate Pressures and Emission Factor Provenance",
+  actionClimateProvenanceDesc: "Canonical action pressures computed in tCO2e using verified emission factors with audited citations, licenses, and versions.",
+  emissionFactor: "Emission Factor",
+  activityQuantity: "Activity Quantity",
+  activityUnit: "Activity Unit",
+  pressureUnit: "Pressure Unit",
+  scope: "Scope",
+  geography: "Geography",
+  authority: "Authority",
+  version: "Version",
+  unitMismatchError: "Activity unit does not match factor expected unit. Silent coercion is prohibited.",
+  attachClimatePressure: "Attach Climate Pressure",
+  removeClimatePressure: "Remove Climate Pressure",
+  physicalOnlyNotice: "Physical quantity (tCO2e) is stored. In accordance with Decision M-5, boundary pressure is never converted into money or added to net benefit."
 };

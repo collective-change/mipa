@@ -1,6 +1,7 @@
 import { detectFeedbackLoops, detectSystemArchetypes } from "@/utils/systemDynamics";
 import { runMonteCarloSimulation } from "@/utils/monteCarlo";
 import { isWorldFactor } from "@/utils/worldModel";
+import { sumPortfolioPressures } from "@/utils/conversionFactors";
 
 /**
  * Builds a structured, self-contained executive model dossier.
@@ -83,6 +84,16 @@ export function buildDossierSummary({
   const loops = detectFeedbackLoops(nodes || []);
   const archetypes = detectSystemArchetypes(nodes || [], loops);
 
+  // Sum climate pressures across the ranked actions portfolio (MIPA-30 / Layer 3)
+  const portfolioPressures = sumPortfolioPressures(rankedActions);
+  const actionPressures = rankedActions
+    .filter(a => a.climatePressure && typeof a.climatePressure.pressureValue === "number")
+    .map(a => ({
+      actionId: a.id,
+      actionTitle: a.title,
+      ...a.climatePressure
+    }));
+
   // Monte Carlo distribution across top actions
   let monteCarloSummary = null;
   if (rankedActions.length > 0) {
@@ -107,6 +118,8 @@ export function buildDossierSummary({
     factors: factorSummaries,
     worldFactors,
     rankedActions,
+    portfolioPressures,
+    actionPressures,
     loopsCount: loops.length,
     reinforcingLoopsCount: loops.filter(l => l.polarity === "reinforcing").length,
     balancingLoopsCount: loops.filter(l => l.polarity === "balancing").length,

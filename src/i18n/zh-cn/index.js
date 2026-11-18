@@ -1194,5 +1194,22 @@ export default {
   importCountryModelConfirmPrompt: "是否将第一层国家标准模型（12 项世界银行 WDI 指标）导入此模型？现有具相同标识码之因子将同步更新。",
   auditedProvenance: "已审核数据出处",
   citationUrl: "引用网址",
-  licence: "授权条款"
+  licence: "授权条款",
+  climatePressure: "气候压力",
+  climatePressureDesc: "依据 GHG Protocol 与 IPCC AR6 GWP-100 计算之行动对全球气候界限压力（tCO2e）。",
+  portfolioClimatePressure: "组合气候压力总计",
+  actionClimateProvenanceTitle: "行动气候压力与排放因子数据出处",
+  actionClimateProvenanceDesc: "依据经验证之排放因子、权威引用来源、开放授权及版本计算之标准 tCO2e 行动气候压力。",
+  emissionFactor: "排放因子",
+  activityQuantity: "活动量",
+  activityUnit: "活动单位",
+  pressureUnit: "压力单位",
+  scope: "范畴",
+  geography: "适用地理区域",
+  authority: "权威机构",
+  version: "版本",
+  unitMismatchError: "活动单位与排放因子预期单位不符，严禁隐性单位强制转换。",
+  attachClimatePressure: "附加气候压力",
+  removeClimatePressure: "移除气候压力",
+  physicalOnlyNotice: "系统仅记录物理量（tCO2e）。依据决策规范 M-5，界限压力绝不转换为货币金额亦不计入净效益。"
 };

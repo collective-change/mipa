@@ -90,6 +90,17 @@
                 <div class="text-caption">{{ $t("dossierMaxLeverageMetric") }}</div>
               </q-card>
             </div>
+            <div v-if="dossier.portfolioPressures && dossier.portfolioPressures.actionsWithPressureCount > 0" class="col-12 col-sm-3">
+              <q-card flat class="metric-card bg-teal-1 text-teal-9 q-pa-sm text-center">
+                <div class="text-h6 text-weight-bolder">
+                  {{ dossier.portfolioPressures.totalTCO2e }} {{ dossier.portfolioPressures.unit }}
+                </div>
+                <div class="text-caption">{{ $t("portfolioClimatePressure") || "Portfolio Climate Pressure" }}</div>
+                <div class="text-caption text-grey-7" style="font-size: 10px;">
+                  S1: {{ dossier.portfolioPressures.byScope.scope1 }} · S2: {{ dossier.portfolioPressures.byScope.scope2 }} · S3: {{ dossier.portfolioPressures.byScope.scope3 }}
+                </div>
+              </q-card>
+            </div>
           </div>
         </div>
 
@@ -117,6 +128,19 @@
                 <q-chip dense color="blue-1" text-color="primary" class="text-weight-bold">
                   {{ Number(props.value || 0).toFixed(2) }}x
                 </q-chip>
+              </q-td>
+            </template>
+            <template v-slot:body-cell-climatePressure="props">
+              <q-td :props="props">
+                <div v-if="props.row.climatePressure && typeof props.row.climatePressure.pressureValue === 'number'">
+                  <q-chip dense color="teal-1" text-color="teal-9" class="text-weight-bold">
+                    {{ props.row.climatePressure.pressureValue }} {{ props.row.climatePressure.pressureUnit || "tCO2e" }}
+                  </q-chip>
+                  <div class="text-caption text-grey-7" style="font-size: 10px;">
+                    Scope {{ props.row.climatePressure.scope }}
+                  </div>
+                </div>
+                <span v-else class="text-grey-5">-</span>
               </q-td>
             </template>
           </q-table>
@@ -243,6 +267,68 @@
           </q-table>
         </div>
 
+        <!-- Section 5: Action Climate Pressures & Emission Factor Provenance -->
+        <div v-if="dossier.actionPressures && dossier.actionPressures.length > 0" class="q-mb-lg bg-white q-pa-md rounded-borders border-grey">
+          <div class="row items-center justify-between q-mb-sm">
+            <div class="text-subtitle1 text-weight-bold text-grey-9 row items-center">
+              <q-icon name="eco" color="teal-8" class="q-mr-xs" size="20px" />
+              {{ $t("actionClimateProvenanceTitle") || "Action Climate Pressures & Emission Factor Provenance" }}
+            </div>
+            <q-chip dense color="teal-1" text-color="teal-9" icon="verified" size="sm">
+              IPCC AR6 / GHG Protocol
+            </q-chip>
+          </div>
+          <p class="text-caption text-grey-7 q-mb-md">
+            {{ $t("actionClimateProvenanceDesc") || "Canonical action pressures computed in tCO2e using verified emission factors with audited citations, licenses, and versions." }}
+          </p>
+
+          <q-table
+            flat
+            dense
+            :rows="dossier.actionPressures"
+            :columns="actionPressureColumns"
+            row-key="actionId"
+            :pagination="{ rowsPerPage: 10 }"
+            class="dossier-table"
+          >
+            <template v-slot:body-cell-pressureValue="props">
+              <q-td :props="props">
+                <q-chip dense color="teal-1" text-color="teal-9" class="text-weight-bold">
+                  {{ props.value }} {{ props.row.pressureUnit || "tCO2e" }}
+                </q-chip>
+              </q-td>
+            </template>
+            <template v-slot:body-cell-scope="props">
+              <q-td :props="props">
+                <q-badge color="grey-3" text-color="grey-9" class="text-weight-bold">
+                  Scope {{ props.value }}
+                </q-badge>
+              </q-td>
+            </template>
+            <template v-slot:body-cell-citationUrl="props">
+              <q-td :props="props">
+                <a
+                  v-if="props.value"
+                  :href="props.value"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-primary text-weight-medium"
+                >
+                  {{ props.value }}
+                </a>
+                <span v-else class="text-grey-5">-</span>
+              </q-td>
+            </template>
+            <template v-slot:body-cell-licence="props">
+              <q-td :props="props">
+                <q-badge color="grey-3" text-color="grey-9" class="text-weight-bold">
+                  {{ props.value || "Open Data" }}
+                </q-badge>
+              </q-td>
+            </template>
+          </q-table>
+        </div>
+
         <!-- Attribution Footer -->
         <div class="dossier-footer text-center q-py-md text-caption text-grey-6">
           <div v-if="dossier.attributionFooter">
@@ -305,7 +391,17 @@ export default {
         { name: "title", label: this.$t("Title"), field: "title", align: "left", sortable: true },
         { name: "leverage", label: this.$t("Leverage") + " (效應比)", field: "actionLeverage", align: "center", sortable: true },
         { name: "benefit", label: this.$t("marginalTotalBenefitNpv"), field: "marginalTotalBenefitNpv", align: "right" },
-        { name: "roi", label: this.$t("totalRoi"), field: "totalRoi", align: "right" }
+        { name: "roi", label: this.$t("totalRoi"), field: "totalRoi", align: "right" },
+        {
+          name: "climatePressure",
+          label: this.$t("climatePressure") || "Climate Pressure",
+          field: (row) =>
+            row.climatePressure && typeof row.climatePressure.pressureValue === "number"
+              ? `${row.climatePressure.pressureValue} ${row.climatePressure.pressureUnit || "tCO2e"}`
+              : "-",
+          align: "right",
+          sortable: true
+        }
       ];
     },
     worldFactorColumns() {
@@ -316,6 +412,19 @@ export default {
         { name: "source", label: this.$t("sourceCitation") || "Source Citation", field: "sourceCitation", align: "left" },
         { name: "citationUrl", label: this.$t("citationUrl") || "Citation URL", field: "citationUrl", align: "left" },
         { name: "licence", label: this.$t("licence") || "License", field: "licence", align: "center" }
+      ];
+    },
+    actionPressureColumns() {
+      return [
+        { name: "actionTitle", label: this.$t("Title") || "Action", field: "actionTitle", align: "left", sortable: true },
+        { name: "factorName", label: this.$t("factorName") || "Emission Factor", field: "factorName", align: "left", sortable: true },
+        { name: "scope", label: this.$t("scope") || "Scope", field: "scope", align: "center" },
+        { name: "geography", label: this.$t("geography") || "Geography", field: "geography", align: "center" },
+        { name: "pressureValue", label: this.$t("climatePressure") || "Pressure (tCO2e)", field: "pressureValue", align: "right", sortable: true },
+        { name: "authority", label: this.$t("authority") || "Authority", field: "authority", align: "left" },
+        { name: "citationUrl", label: this.$t("citationUrl") || "Citation URL", field: "citationUrl", align: "left" },
+        { name: "licence", label: this.$t("licence") || "License", field: "licence", align: "center" },
+        { name: "version", label: this.$t("version") || "Version", field: "version", align: "center" }
       ];
     }
   },
