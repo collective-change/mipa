@@ -251,4 +251,73 @@ describe("NodeSummary.vue - Formula Autocomplete & Syntax Helpers", () => {
       })
     );
   });
+
+  describe("Formula validation and $ factor references (MIPA-25)", () => {
+    it("allows $ in formula characters and reports offending characters by name", () => {
+      const { wrapper } = mountNodeSummary("node_meals", "en-us");
+
+      // Valid formula with $
+      expect(wrapper.vm.isAllowedInFormula("$node_volunteers * 2")).toBe(true);
+      expect(wrapper.vm.validateFormulaCharacters("$node_volunteers * 2")).toBe(true);
+
+      // Invalid character: names the offending character in error message
+      expect(wrapper.vm.isAllowedInFormula("volunteers @ 2")).toBe(false);
+      const errSingle = wrapper.vm.validateFormulaCharacters("volunteers @ 2");
+      expect(errSingle).toContain("@");
+      expect(errSingle).toBe("This character can't be used in a formula: @");
+
+      // Multiple invalid characters: lists all of them
+      const errMulti = wrapper.vm.validateFormulaCharacters("volunteers # 2 & 5");
+      expect(errMulti).toContain("#, &");
+      expect(errMulti).toBe("This character can't be used in a formula: #, &");
+    });
+
+    it("names offending character in Traditional Chinese locale", () => {
+      const { wrapper } = mountNodeSummary("node_meals", "zh-tw");
+      const err = wrapper.vm.validateFormulaCharacters("volunteers @ 2");
+      expect(err).toBe("公式中不能使用這個字元：@");
+    });
+
+    it("can open, edit and re-save a formula containing $ without losing meaning", async () => {
+      const { wrapper, actions } = mountNodeSummary("node_meals");
+      // Node loaded with a formula containing $
+      wrapper.vm.nodeToSubmit.symbolFormula = "$node_volunteers * 15";
+      await wrapper.vm.$nextTick();
+
+      // Passes character validation
+      expect(wrapper.vm.validateFormulaCharacters(wrapper.vm.nodeToSubmit.symbolFormula)).toBe(true);
+      // Passes syntax validation
+      expect(wrapper.vm.formulaValidation.valid).toBe(true);
+
+      // Submit node
+      wrapper.vm.submitNode();
+
+      expect(actions.updateNode).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          updates: expect.objectContaining({
+            symbolFormula: "$node_volunteers * 15",
+            sysFormula: "$node_volunteers * 15",
+            influencers: expect.arrayContaining(["node_volunteers"])
+          })
+        })
+      );
+    });
+
+    it("ensures validator and rankingSensitivity agree on $ factor references", () => {
+      const { wrapper } = mountNodeSummary("node_budget");
+      // node_budget has formula: "10000" (constant numeric value factor, no influencers)
+      wrapper.vm.nodeToSubmit.influencers = [];
+      wrapper.vm.nodeToSubmit.symbolFormula = "10000";
+      // Constant value factor has sensitivity analysis
+      expect(wrapper.vm.nodeToSubmit.symbolFormula.includes("$")).toBe(false);
+
+      // When formula contains $, it references a factor and is NOT a constant value factor
+      wrapper.vm.nodeToSubmit.symbolFormula = "$node_volunteers * 2";
+      expect(wrapper.vm.rankingSensitivity).toBeNull();
+      // But the formula validator accepts it as valid
+      expect(wrapper.vm.validateFormulaCharacters(wrapper.vm.nodeToSubmit.symbolFormula)).toBe(true);
+      expect(wrapper.vm.formulaValidation.valid).toBe(true);
+    });
+  });
 });

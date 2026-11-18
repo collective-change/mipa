@@ -64,6 +64,28 @@ export const FORMULA_PRIMITIVES = [
   }
 ];
 
+export const ALLOWED_FORMULA_CHAR_REGEX = /^[a-z0-9 _,=<>/:%\-\(\)\+\^\.\?\*\$]+$/i;
+
+/**
+ * Returns any characters in str that are not allowed in a formula.
+ * @param {string} str
+ * @returns {string[]} Array of unique invalid characters
+ */
+export function getInvalidFormulaCharacters(str) {
+  if (!str) return [];
+  const invalid = [];
+  const seen = new Set();
+  for (const ch of str) {
+    if (!ch.match(/[a-z0-9 _,=<>/:%\-\(\)\+\^\.\?\*\$]/i)) {
+      if (!seen.has(ch)) {
+        seen.add(ch);
+        invalid.push(ch);
+      }
+    }
+  }
+  return invalid;
+}
+
 /**
  * Validate formula syntax with mathjs and inspect variables.
  * @param {string} formula
@@ -83,7 +105,8 @@ export function validateFormulaSyntax(formula = "", options = {}) {
       errorType: null,
       usedSymbols: [],
       unlinkedSymbols: [],
-      unknownSymbols: []
+      unknownSymbols: [],
+      usedCustomVariables: []
     };
   }
 
@@ -108,20 +131,41 @@ export function validateFormulaSyntax(formula = "", options = {}) {
       errorType,
       usedSymbols: [],
       unlinkedSymbols: [],
-      unknownSymbols: []
+      unknownSymbols: [],
+      usedCustomVariables: []
     };
   }
 
   // Extract variables from AST
   const usedSymbolsSet = new Set();
+  let invalidDollarRef = false;
   try {
     ast.traverse((node) => {
       if (node.isSymbolNode && !BUILTIN_FORMULA_IDENTIFIERS.has(node.name)) {
         usedSymbolsSet.add(node.name);
+        if (node.name.startsWith("$")) {
+          // Reject bare '$' or '$$' or invalid non-identifier dollar references
+          if (!/^\$[a-zA-Z0-9_]+$/.test(node.name)) {
+            invalidDollarRef = true;
+          }
+        }
       }
     });
   } catch (e) {
     // If traversal fails for any reason
+  }
+
+  if (invalidDollarRef) {
+    return {
+      valid: false,
+      empty: false,
+      error: "Invalid factor reference starting with '$'",
+      errorType: "syntax",
+      usedSymbols: Array.from(usedSymbolsSet),
+      unlinkedSymbols: [],
+      unknownSymbols: [],
+      usedCustomVariables: []
+    };
   }
 
   const usedSymbols = Array.from(usedSymbolsSet);
@@ -141,6 +185,28 @@ export function validateFormulaSyntax(formula = "", options = {}) {
   for (const sym of usedSymbols) {
     if (customVarNames.has(sym)) {
       usedCustomVariables.push(sym);
+    } else if (sym.startsWith("$")) {
+      const refIdOrSymbol = sym.slice(1);
+      if (refIdOrSymbol === options.currentNodeId) {
+        // Self reference (e.g. in delay($self, dt, 0))
+      } else {
+        const matchedNode = allNodes.find(
+          (n) => (n.id === refIdOrSymbol || n.symbol === refIdOrSymbol) && n.id !== options.currentNodeId
+        );
+        if (matchedNode) {
+          const isLinked = availableSet.has(matchedNode.symbol) || availableSet.has(matchedNode.id) || availableSet.has(sym);
+          if (!isLinked) {
+            unlinkedSymbols.push({
+              symbol: sym,
+              nodeId: matchedNode.id,
+              name: matchedNode.name,
+              unit: matchedNode.unit || ""
+            });
+          }
+        } else {
+          unknownSymbols.push(sym);
+        }
+      }
     } else if (!availableSet.has(sym)) {
       const matchedNode = allNodes.find((n) => n.symbol === sym && n.id !== options.currentNodeId);
       if (matchedNode) {
@@ -377,13 +443,20 @@ export function toSysFormula(formula = "", allNodes = [], currentNode = null) {
     }
   }
 
-  // Also collect any existing $<id> references
+  // Also collect any existing $<id> or $<symbol> references
   const dollarMatches = sysFormula.match(/\$([a-zA-Z0-9_-]+)/g);
   if (dollarMatches) {
     dollarMatches.forEach(m => {
-      const id = m.substring(1);
-      if (id !== currentNodeId && nodes.some(n => n.id === id)) {
-        referencedNodeIdsSet.add(id);
+      const ref = m.substring(1);
+      const nodeById = nodes.find(n => n.id === ref);
+      if (nodeById && nodeById.id !== currentNodeId) {
+        referencedNodeIdsSet.add(nodeById.id);
+      } else {
+        const nodeBySymbol = nodes.find(n => n.symbol === ref);
+        if (nodeBySymbol && nodeBySymbol.id !== currentNodeId) {
+          referencedNodeIdsSet.add(nodeBySymbol.id);
+          sysFormula = sysFormula.replace(new RegExp(`\\$${escapeRegex(ref)}(?![\\p{L}\\p{N}_])`, "gu"), "$" + nodeBySymbol.id);
+        }
       }
     });
   }

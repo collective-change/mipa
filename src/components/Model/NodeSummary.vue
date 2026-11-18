@@ -181,7 +181,7 @@
           @click="updateCursorPos"
           @focus="updateCursorPos"
           :rules="[
-            (val) => isAllowedInFormula(val) || $t('formulaCharacters'),
+            (val) => validateFormulaCharacters(val),
             () => formulaValidation.valid || $t('formulaSyntaxErrorBlock')
           ]"
         />
@@ -737,7 +737,8 @@ import {
   validateFormulaSyntax,
   getFactorSuggestions,
   insertSnippetIntoFormula,
-  toSysFormula
+  toSysFormula,
+  getInvalidFormulaCharacters
 } from "@/utils/formulaHelper";
 import {
   ACCOUNTING_CATEGORIES,
@@ -972,7 +973,8 @@ export default {
       const isNumeric = formula !== "" && !isNaN(Number(formula));
       const isConstantClass = this.nodeToSubmit.class === "constant";
       const hasNoInfluencers = !this.nodeToSubmit.influencers || (Array.isArray(this.nodeToSubmit.influencers) && this.nodeToSubmit.influencers.length === 0);
-      const isValueFactor = isNumeric || isConstantClass || (hasNoInfluencers && formula !== "" && !formula.includes("$"));
+      const hasDollar = formula.includes("$") || String(this.nodeToSubmit.sysFormula ?? "").includes("$");
+      const isValueFactor = isNumeric || isConstantClass || (hasNoInfluencers && formula !== "" && !hasDollar);
 
       if (!isValueFactor) return null;
 
@@ -1027,7 +1029,13 @@ export default {
     },
     isAllowedInFormula(str) {
       if (!str) return true;
-      return str.match(/^[a-z0-9 _,=<>/:%\-\(\)\+\^\.\?\*]+$/i) !== null;
+      return getInvalidFormulaCharacters(str).length === 0;
+    },
+    validateFormulaCharacters(str) {
+      if (!str) return true;
+      const invalid = getInvalidFormulaCharacters(str);
+      if (invalid.length === 0) return true;
+      return this.$t("formulaCharacters", { char: invalid.join(", ") });
     },
     isInfluencerLinked(nodeId) {
       return Array.isArray(this.nodeToSubmit?.influencers) && this.nodeToSubmit.influencers.includes(nodeId);
@@ -1347,6 +1355,7 @@ export default {
         if (!this.selectedNode) return;
         this.nodeToSubmitIsFreshlyAssigned = true;
         this.nodeToSubmit = Object.assign({}, this.selectedNode, {
+          symbolFormula: this.selectedNode.symbolFormula ?? this.selectedNode.formula ?? "",
           influencers: [...(this.selectedNode.influencers || [])],
           blockingInfluencers: [...(this.selectedNode.blockingInfluencers || [])],
           unusedInfluencers: [...(this.selectedNode.unusedInfluencers || [])]

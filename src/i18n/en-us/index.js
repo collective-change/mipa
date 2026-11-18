@@ -273,7 +273,7 @@ export default {
   noInfluencersHint:
     "None yet. To use another factor in this formula, open ⋯ above (or right-click this factor in the graph) and choose \"Link to a factor this one uses\".",
   "Formula: how this factor is calculated": "Formula: how this factor is calculated",
-  formulaCharacters: "This character can't be used in a formula",
+  formulaCharacters: "This character can't be used in a formula: {char}",
   "How to write formulas": "How to write formulas",
   formulaHelp:
     "• A number with a unit: 30 USD, 5 km, or just 12\n• Use linked factors by their short names: sales * 0.2\n• Something that builds up over time: delay(savings, dt, 0) + income - spending. delay(name, dt, 0) is the factor's value one step earlier (0 at the start).\n• dt is the length of one step, e.g. 1 month\n• Conditions: profit > 0 ? profit * 0.1 : 0",
