@@ -846,6 +846,11 @@ export default {
   loadMoreActionsButton: "Load more (+{count})",
   loadAllActionsButton: "Load all",
 
+  // MIPA-23: Bounded Nodes Query & Pagination
+  showingBoundedFactors: "Showing {loaded} of {total} factors.",
+  loadMoreFactorsButton: "Load more (+{count})",
+  loadAllFactorsButton: "Load all",
+
   // Feature 4: Idea to Complete Action
   tabSmartDraft: "Smart draft from idea",
   tabManualEntry: "Manual entry",

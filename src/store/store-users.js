@@ -39,7 +39,6 @@ const actions = {
       "currentUser",
       doc(firebaseDb, "users", userId),
       {
-        maxRefDepth: 1,
         wait: true //this also forces reset: false
       }
     );
@@ -57,7 +56,6 @@ const actions = {
       "currentOrgUsers",
       collection(firebaseDb, "orgs", orgId, "members"),
       {
-        maxRefDepth: 1,
         wait: true //this also forces reset: false
       }
     );

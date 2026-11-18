@@ -7,7 +7,10 @@ import {
   collection,
   deleteDoc,
   doc,
+  getCountFromServer,
   getDocs,
+  limit,
+  query,
   runTransaction,
   serverTimestamp,
   setDoc,
@@ -25,12 +28,22 @@ import { isCurrencyRoleNode, CURRENCY_ROLE_KEYS } from "@/utils/util-model-draft
 // Starter factors are named in the user's current language.
 const t = key => i18n.global.t(key);
 
+export const DEFAULT_NODES_LIMIT = 50;
+
 const state = {
   currentModel: null,
-  nodes: []
+  nodes: [],
+  nodesTotalCount: null,
+  nodesLimit: DEFAULT_NODES_LIMIT
 };
 
 const mutations = {
+  setNodesTotalCount(state, count) {
+    state.nodesTotalCount = count;
+  },
+  setNodesLimit(state, limit) {
+    state.nodesLimit = limit;
+  },
   deleteLink(state, payload) {
     let influencerId = payload.influencerId;
     let influenceeId = payload.influenceeId;
@@ -297,7 +310,6 @@ const actions = {
       "currentModel",
       doc(firebaseDb, "models", modelId),
       {
-        maxRefDepth: 1,
         wait: false,
         reset: true
       }
@@ -308,21 +320,38 @@ const actions = {
     unbindFirestoreRef("currentModel", true);
   }),
 
-  bindNodes: firestoreAction(({ bindFirestoreRef }, modelId) => {
-    let userId = firebaseAuth.currentUser.uid;
-    // return the promise returned by `bindFirestoreRef`
+  bindNodes: firestoreAction(async ({ bindFirestoreRef, commit }, payload) => {
+    const modelId = typeof payload === "string" ? payload : payload?.modelId;
+    const isUnbounded = typeof payload === "object" && (payload?.limit === null || payload?.limit === "all");
+    const nodesLimit =
+      typeof payload === "object" && typeof payload?.limit === "number" && payload.limit > 0
+        ? payload.limit
+        : DEFAULT_NODES_LIMIT;
+
+    const baseQuery = collection(firebaseDb, "models", modelId, "nodes");
+    const nodesQuery = isUnbounded
+      ? collection(firebaseDb, "models", modelId, "nodes")
+      : query(collection(firebaseDb, "models", modelId, "nodes"), limit(nodesLimit));
+
+    try {
+      const countSnap = await getCountFromServer(baseQuery);
+      commit("setNodesTotalCount", countSnap.data().count);
+    } catch {
+      commit("setNodesTotalCount", null);
+    }
+
     return bindFirestoreRef(
       "nodes",
-      collection(firebaseDb, "models", modelId, "nodes"),
+      nodesQuery,
       {
-        maxRefDepth: 1,
         wait: false,
         reset: true
       }
     );
   }),
 
-  unbindNodes: firestoreAction(({ unbindFirestoreRef }) => {
+  unbindNodes: firestoreAction(({ unbindFirestoreRef, commit }) => {
+    commit("setNodesTotalCount", null);
     unbindFirestoreRef("nodes", true);
   }),
 
@@ -916,6 +945,8 @@ const actions = {
 };
 
 const getters = {
+  nodesTotalCount: state => state.nodesTotalCount,
+  nodesLimit: state => state.nodesLimit,
   nodes: state => {
     if (!state.nodes) {
       return [];

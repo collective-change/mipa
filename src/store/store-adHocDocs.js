@@ -15,7 +15,6 @@ const actions = {
       "appSummary",
       doc(firebaseDb, "adHocDocs", "appSummary"),
       {
-        maxRefDepth: 1,
         wait: true //this also forces reset: false
       }
     );
@@ -29,7 +28,6 @@ const actions = {
       "exchangeRates",
       doc(firebaseDb, "adHocDocs", "exchangeRates"),
       {
-        maxRefDepth: 1,
         wait: true //this also forces reset: false
       }
     );

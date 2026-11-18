@@ -214,6 +214,33 @@
       </div>
 
       <div class="col-12 col-md-7">
+        <div
+          v-if="hasMoreNodesToLoad"
+          class="row items-center justify-between q-pa-sm bg-blue-1 text-primary rounded-borders q-mx-sm q-mb-sm print-hide"
+        >
+          <div class="row items-center text-caption text-weight-medium">
+            <q-icon name="info" class="q-mr-xs" size="16px" />
+            {{ $t("showingBoundedFactors", { loaded: nodes.length, total: nodesTotalCount }) }}
+          </div>
+          <div class="row q-gutter-xs">
+            <q-btn
+              size="sm"
+              unelevated
+              color="primary"
+              no-caps
+              :label="$t('loadMoreFactorsButton', { count: 50 })"
+              @click="loadMoreNodes"
+            />
+            <q-btn
+              size="sm"
+              outline
+              color="primary"
+              no-caps
+              :label="$t('loadAllFactorsButton')"
+              @click="loadAllNodes"
+            />
+          </div>
+        </div>
         <dependency-graph
           :initialCirclePositions="initialCirclePositions"
           :readOnly="isReadOnly"
@@ -328,10 +355,17 @@ export default {
       //selectedNodeGroupId: null,
       expanded: [],
       initialCirclePositions: null,
+      nodesLimit: 50,
     };
   },
   computed: {
-    ...mapGetters("model", ["nodes"]),
+    ...mapGetters("model", ["nodes", "nodesTotalCount"]),
+    hasMoreNodesToLoad() {
+      return (
+        typeof this.nodesTotalCount === "number" &&
+        this.nodesTotalCount > this.nodes.length
+      );
+    },
     // Offer AI drafting while the model has only its starter factors.
     showDraftInvite() {
       return (
@@ -489,13 +523,40 @@ export default {
       this.expandedNodeGroups = [];
     },
 
+    loadMoreNodes() {
+      this.nodesLimit += 50;
+      this.dispatchBindNodes();
+    },
+
+    loadAllNodes() {
+      if (this.nodesTotalCount) {
+        this.nodesLimit = this.nodesTotalCount;
+      } else {
+        this.nodesLimit += 100;
+      }
+      this.dispatchBindNodes();
+    },
+
+    dispatchBindNodes() {
+      const modelId = this.$route.params.modelId;
+      if (modelId) {
+        this.$store.dispatch("model/bindNodes", {
+          modelId,
+          limit: this.nodesLimit
+        });
+      }
+    },
+
     async loadData() {
       //bind to list of models the org-user can view
       //(user is in model's owners, editors, or viewers)
       //this.$store.dispatch("orgs/bindReadableModels", this.$route.params.orgId);
       let modelId = this.$route.params.modelId;
       this.$store.dispatch("model/bindCurrentModel", modelId);
-      this.$store.dispatch("model/bindNodes", modelId);
+      this.$store.dispatch("model/bindNodes", {
+        modelId,
+        limit: this.nodesLimit
+      });
       this.$store.dispatch("adHocDocs/bindExchangeRates");
       this.$store.dispatch("calcResults/loadBaseline", modelId);
 
@@ -537,7 +598,10 @@ export default {
     "$route.params.modelId": {
       handler: function (modelId, oldModelId) {
         //if we are changing from one model to another one
-        if (oldModelId) this.loadData();
+        if (oldModelId) {
+          this.nodesLimit = 50;
+          this.loadData();
+        }
       },
       immediate: true,
     },
