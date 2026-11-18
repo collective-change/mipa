@@ -67,6 +67,13 @@ listed under "Automatic deploys" below:
 
 After that, every push to `master` deploys through `deploy.yml`.
 
+**Master is the only integration branch, and merging to it is a production event.**
+Since 2026-11-18 the intermediate `modernize-2026` branch is gone: work branches off
+`master`, pull requests target `master`, and the merge itself ships. This is deliberate -
+continuous deployment, chosen by the maintainer on 2026-11-18 - so treat a merge to
+`master` as a release, not as bookkeeping. A red Deploy run on `master` means production
+did **not** move.
+
 The same steps by hand, for a project owner with the Firebase CLI:
 
 1. Merge into `master` and check it out. Create `.env` from `.env_sample` with
@@ -106,10 +113,19 @@ clears its caches and reloads the tab.
 
 ### Automatic deploys
 
-`.github/workflows/deploy.yml` deploys every push to `master` (and can be run
-by hand from the Actions tab). It runs lint, tests and the build first, and
-skips the deploy until these are set in the repository settings
+`.github/workflows/deploy.yml` deploys **every push to `master`** - the merge
+*is* the release, with no separate release step (continuous deployment, 2026-11-18) - and
+can also be run by hand from the Actions tab. It runs lint and the build first, and skips
+the deploy until these are set in the repository settings
 (Settings > Secrets and variables > Actions):
+
+The unit suite is **not** run by this workflow: it has no emulator and no Java, so the
+emulator-backed specs (`stakeholderViewerRules.spec.js` and friends) cannot run in it. The
+full suite gates every pull request in `node.js.yml`, and `master` only moves through a
+green pull request. Restoring the suite here *properly* is MIPA-48 - it must not simply be
+wrapped in `emulators:exec`, because the step above writes the production `.env` into the
+repository and an emulator environment leaking into the build would ship a production
+build pointing at the emulators.
 
 - Secret `FIREBASE_SERVICE_ACCOUNT`: a JSON key for a service account in the
   Firebase project (Google Cloud console > IAM > Service accounts). It needs
