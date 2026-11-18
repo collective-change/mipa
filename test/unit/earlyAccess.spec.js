@@ -3,12 +3,20 @@ import {
   validateWaitlistPayload,
   submitEarlyAccessRequest,
   checkEmailHasPendingInvitation,
+  verifyUserAccess,
   ALLOWED_SECTORS
 } from "@/utils/earlyAccess";
 
 // Mock firebase
 vi.mock("@/boot/firebase", () => ({
-  firebaseDb: {}
+  firebaseDb: {},
+  firebaseFunctions: {},
+  firebaseAuth: { currentUser: null }
+}));
+
+const mockCallable = vi.fn();
+vi.mock("firebase/functions", () => ({
+  httpsCallable: vi.fn(() => mockCallable)
 }));
 
 vi.mock("firebase/firestore", () => {
@@ -130,6 +138,36 @@ describe("earlyAccess.js utility", () => {
       });
       expect(result.success).toBe(true);
       expect(result.id).toBe("mock-doc-123");
+    });
+  });
+
+  describe("verifyUserAccess", () => {
+    it("returns allowed: false when user is null", async () => {
+      const res = await verifyUserAccess(null);
+      expect(res.allowed).toBe(false);
+    });
+
+    it("uses Cloud Function checkUserAccess when available", async () => {
+      mockCallable.mockResolvedValueOnce({
+        data: { allowed: true, hasInvite: true, isMember: false }
+      });
+      const res = await verifyUserAccess({ uid: "user-1", email: "invited@tzuchi.org" });
+      expect(res.allowed).toBe(true);
+      expect(res.hasInvite).toBe(true);
+    });
+
+    it("falls back to authenticated query when Cloud Function fails", async () => {
+      mockCallable.mockRejectedValueOnce(new Error("Functions emulator not running"));
+      const res = await verifyUserAccess({ uid: "user-2", email: "invited@tzuchi.org" });
+      expect(res.allowed).toBe(true);
+      expect(res.hasInvite).toBe(true);
+    });
+
+    it("denies access when user has no invite and Cloud Function fails", async () => {
+      mockCallable.mockRejectedValueOnce(new Error("Network error"));
+      const res = await verifyUserAccess({ uid: "user-3", email: "notinvited@example.com" });
+      expect(res.allowed).toBe(false);
+      expect(res.hasInvite).toBe(false);
     });
   });
 });

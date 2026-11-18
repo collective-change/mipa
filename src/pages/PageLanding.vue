@@ -20,7 +20,7 @@
           {{ $t("landingHeroSubtitle") }}
         </p>
 
-        <div class="row items-center justify-center q-gutter-md q-mb-xl">
+        <div class="row items-center justify-center q-gutter-md q-mb-sm">
           <q-btn
             to="/auth?tab=waitlist"
             color="primary"
@@ -51,6 +51,13 @@
             icon="code"
             :label="$t('landingViewSource')"
           />
+        </div>
+
+        <div class="row items-center justify-center q-mb-xl text-caption text-grey-7">
+          <span>{{ $t("earlyAccessAlreadyInvited") }}</span>
+          <router-link to="/auth?tab=register" class="text-primary text-weight-medium q-ml-xs">
+            {{ $t("Create account") }}
+          </router-link>
         </div>
 
         <!-- Highlight Pills -->
