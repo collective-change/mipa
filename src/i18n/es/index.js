@@ -1137,5 +1137,24 @@ export default {
 
   // Currency Selection
   "currency": "Moneda",
-  "noMatchingCurrencies": "No hay monedas coincidentes"
+  "noMatchingCurrencies": "No hay monedas coincidentes",
+
+  // Custom Variables (MIPA-19)
+  "customVariablesTitle": "Variables Personalizadas",
+  "customVariablesBtn": "Variables Personalizadas",
+  "customVariablesHelp": "Defina constantes y parámetros globales fuera del gráfico (p. ej. precios unitarios, tasas de impuestos, factores de conversión) que las fórmulas pueden referenciar directamente.",
+  "varNameLabel": "Nombre de variable",
+  "varValueLabel": "Valor",
+  "varUnitLabel": "Unidad (opcional)",
+  "varDescLabel": "Descripción (opcional)",
+  "addVariableBtn": "Agregar variable",
+  "editVariableBtn": "Guardar variable",
+  "deleteVariableBtn": "Eliminar variable",
+  "noCustomVariables": "Aún no se han definido variables personalizadas.",
+  "varNameInvalid": "El nombre de variable debe comenzar con una letra o guión bajo y contener solo letras, números y guiones bajos.",
+  "varNameDuplicate": "Ya existe una variable con este nombre.",
+  "varValueInvalid": "Por favor ingrese un valor numérico válido.",
+  "customVarBadge": "Variable",
+  "formulaCustomVariablesUsed": "Variables personalizadas en fórmula",
+  "clickToCopy": "Haga clic para copiar"
 };

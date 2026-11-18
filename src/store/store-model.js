@@ -208,6 +208,48 @@ const actions = {
     }
   },
 
+  async setCustomVariables({ dispatch }, { modelId, variables }) {
+    await dispatch("updateModel", {
+      modelId,
+      updates: { customVariables: variables }
+    });
+  },
+
+  async addCustomVariable({ dispatch, state }, { modelId, variable }) {
+    const currentVars = Array.isArray(state.currentModel?.customVariables)
+      ? [...state.currentModel.customVariables]
+      : [];
+    currentVars.push(variable);
+    await dispatch("updateModel", {
+      modelId,
+      updates: { customVariables: currentVars }
+    });
+  },
+
+  async updateCustomVariable({ dispatch, state }, { modelId, variableName, updates }) {
+    const currentVars = Array.isArray(state.currentModel?.customVariables)
+      ? [...state.currentModel.customVariables]
+      : [];
+    const idx = currentVars.findIndex(v => v.name === variableName);
+    if (idx !== -1) {
+      currentVars[idx] = { ...currentVars[idx], ...updates };
+      await dispatch("updateModel", {
+        modelId,
+        updates: { customVariables: currentVars }
+      });
+    }
+  },
+
+  async deleteCustomVariable({ dispatch, state }, { modelId, variableName }) {
+    const currentVars = Array.isArray(state.currentModel?.customVariables)
+      ? state.currentModel.customVariables.filter(v => v.name !== variableName)
+      : [];
+    await dispatch("updateModel", {
+      modelId,
+      updates: { customVariables: currentVars }
+    });
+  },
+
   deleteModel({}, modelId) {
     //let modelId = payload.modelId;
     //let node = payload.node;

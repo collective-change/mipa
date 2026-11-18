@@ -82,6 +82,15 @@
               :label="$t('ingestDataBtn')"
             />
             <q-btn
+              @click="showCustomVariables = true"
+              class="full-width print-hide"
+              color="primary"
+              outline
+              no-caps
+              icon="data_object"
+              :label="$t('customVariablesBtn')"
+            />
+            <q-btn
               @click="showModelSnapshots = true"
               class="full-width print-hide"
               color="primary"
@@ -226,6 +235,11 @@
       <config-org-model @close="showConfigOrgModel = false" />
     </q-dialog>
     <ingest-data-dialog v-model="showIngestData" />
+    <custom-variables-modal
+      v-model="showCustomVariables"
+      :model="currentModel"
+      :read-only="isReadOnly"
+    />
     <model-snapshots-modal
       v-model="showModelSnapshots"
       :model="currentModel"
@@ -266,6 +280,7 @@ import ModelSnapshotsModal from "@/components/Model/Modals/ModelSnapshotsModal.v
 import SystemDynamicsModal from "@/components/Model/Modals/SystemDynamicsModal.vue";
 import ModelTemplateLibraryModal from "@/components/Model/Modals/ModelTemplateLibraryModal.vue";
 import OnboardingTourModal from "@/components/Model/Modals/OnboardingTourModal.vue";
+import CustomVariablesModal from "@/components/Model/Modals/CustomVariablesModal.vue";
 import { planDraftRemoval, removeDraft } from "@/utils/util-aiDraft";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 //import ExportCalcResults from "../components/Calc/ExportCalcResults.vue";
@@ -290,6 +305,7 @@ export default {
     "system-dynamics-modal": SystemDynamicsModal,
     "model-template-library-modal": ModelTemplateLibraryModal,
     "onboarding-tour-modal": OnboardingTourModal,
+    "custom-variables-modal": CustomVariablesModal,
     "calculator-ui": CalculatorUi,
     "export-calc-results": ExportCalcResults,
     "dependency-graph": DependencyGraph,
@@ -307,6 +323,7 @@ export default {
       showSystemDynamics: false,
       showTemplateLibrary: false,
       showOnboardingTour: false,
+      showCustomVariables: false,
       models: null,
       //selectedNodeGroupId: null,
       expanded: [],
@@ -409,6 +426,7 @@ export default {
           exchangeRates: this.$store.state.adHocDocs.exchangeRates,
           simulationParams: this.currentModel.simulationParams,
           roleNodes: this.currentModel.roleNodes,
+          customVariables: this.currentModel?.customVariables || null,
         });
       }, 1500);
     },

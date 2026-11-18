@@ -1120,5 +1120,24 @@ export default {
 
   // Currency Selection
   currency: "币种",
-  noMatchingCurrencies: "无匹配币种"
+  noMatchingCurrencies: "无匹配币种",
+
+  // Custom Variables (MIPA-19)
+  customVariablesTitle: "自定义变量",
+  customVariablesBtn: "自定义变量",
+  customVariablesHelp: "定义要素图表外的全局常量与参数（如产品单价、税率、运营换算系数），计算式可直接引用，且不占用图表节点与计算负担。",
+  varNameLabel: "变量名称",
+  varValueLabel: "数值",
+  varUnitLabel: "单位（选填）",
+  varDescLabel: "说明（选填）",
+  addVariableBtn: "新增变量",
+  editVariableBtn: "保存变量",
+  deleteVariableBtn: "删除变量",
+  noCustomVariables: "尚未定义自定义变量。",
+  varNameInvalid: "变量名称开头必须为英文字母或下划线，且仅能包含英文字母、数字与下划线。",
+  varNameDuplicate: "已有同名的变量。",
+  varValueInvalid: "请输入有效的数值。",
+  customVarBadge: "变量",
+  formulaCustomVariablesUsed: "计算式中引用的自定义变量",
+  clickToCopy: "点击复制"
 };

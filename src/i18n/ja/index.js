@@ -1137,5 +1137,24 @@ export default {
 
   // Currency Selection
   "currency": "通貨",
-  "noMatchingCurrencies": "一致する通貨がありません"
+  "noMatchingCurrencies": "一致する通貨がありません",
+
+  // Custom Variables (MIPA-19)
+  "customVariablesTitle": "カスタム変数",
+  "customVariablesBtn": "カスタム変数",
+  "customVariablesHelp": "モデル全体の定数やパラメータ（単価、税率、換算係数など）をグラフ外で定義します。計算式から直接参照可能で、グラフを乱しません。",
+  "varNameLabel": "変数名",
+  "varValueLabel": "値",
+  "varUnitLabel": "単位（任意）",
+  "varDescLabel": "説明（任意）",
+  "addVariableBtn": "変数を追加",
+  "editVariableBtn": "変数を保存",
+  "deleteVariableBtn": "変数を削除",
+  "noCustomVariables": "カスタム変数はまだ定義されていません。",
+  "varNameInvalid": "変数名は英字またはアンダースコアで始まり、英数字とアンダースコアのみ使用できます。",
+  "varNameDuplicate": "同名の変数が既に存在します。",
+  "varValueInvalid": "有効な数値を入力してください。",
+  "customVarBadge": "変数",
+  "formulaCustomVariablesUsed": "式で参照されているカスタム変数",
+  "clickToCopy": "クリックしてコピー"
 };

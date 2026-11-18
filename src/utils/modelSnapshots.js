@@ -96,7 +96,8 @@ export function canonicalizeModelData(model = {}, nodes = []) {
     modelName: model.modelName || model.name || "",
     discountRate: Number(model.discountRate) || 0,
     timeHorizonYears: Number(model.timeHorizonYears || model.timeHorizon) || 0,
-    currency: model.currency || ""
+    currency: model.currency || "",
+    ...(model.customVariables ? { customVariables: model.customVariables } : {})
   };
 
   const cleanNodes = (Array.isArray(nodes) ? nodes : [])

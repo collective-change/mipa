@@ -201,11 +201,20 @@
                 <span class="text-weight-bold text-primary q-mr-xs">{{ sug.symbol }}</span>
                 <span class="text-caption text-grey-8">({{ sug.name }})</span>
                 <q-icon
+                  v-if="!sug.isCustomVariable"
                   :name="isInfluencerLinked(sug.id) ? 'check_circle' : 'add_link'"
                   :color="isInfluencerLinked(sug.id) ? 'positive' : 'grey-6'"
                   size="14px"
                   class="q-ml-xs"
                 />
+                <q-badge
+                  v-else
+                  color="blue-1"
+                  text-color="primary"
+                  class="q-ml-xs text-caption"
+                >
+                  {{ $t('customVarBadge') }}
+                </q-badge>
               </q-chip>
             </div>
           </q-card>
@@ -257,6 +266,15 @@
             />
           </div>
         </q-banner>
+
+        <!-- Custom Variables in Formula Notice -->
+        <div
+          v-if="formulaValidation.valid && formulaValidation.usedCustomVariables && formulaValidation.usedCustomVariables.length > 0"
+          class="text-caption text-primary q-mt-xs q-mb-xs row items-center"
+        >
+          <q-icon name="data_object" class="q-mr-xs" size="14px" />
+          {{ $t('formulaCustomVariablesUsed') }}: {{ formulaValidation.usedCustomVariables.join(', ') }}
+        </div>
 
         <!-- Unrecognized Symbols Notice -->
         <div
@@ -808,12 +826,19 @@ export default {
       return validateFormulaSyntax(this.nodeToSubmit?.symbolFormula || "", {
         availableSymbols,
         allNodes: this.nodes || [],
-        currentNodeId: this.nodeToSubmit?.id
+        currentNodeId: this.nodeToSubmit?.id,
+        customVariables: this.currentModel?.customVariables || []
       });
     },
 
     allFactorSuggestions() {
-      return getFactorSuggestions("", this.nodes, this.nodeToSubmit?.id, this.nodeToSubmit?.influencers);
+      return getFactorSuggestions(
+        "",
+        this.nodes,
+        this.nodeToSubmit?.id,
+        this.nodeToSubmit?.influencers,
+        this.currentModel?.customVariables || []
+      );
     },
 
     autocompleteSuggestions() {
@@ -822,7 +847,8 @@ export default {
         this.currentFormulaToken,
         this.nodes,
         this.nodeToSubmit?.id,
-        this.nodeToSubmit?.influencers
+        this.nodeToSubmit?.influencers,
+        this.currentModel?.customVariables || []
       ).slice(0, 8);
     },
 
