@@ -41,6 +41,7 @@ export function trialCalculate({ nodes, simulationParams, roleNodes, exchangeRat
         exchangeRates,
         simulationParams,
         roleNodes,
+        orgCurrency: simulationParams?.currency || (exchangeRates && exchangeRates.base) || "USD",
         customVariables: customVariables || null,
         actions: null,
         currentUserId: firebaseAuth.currentUser.uid

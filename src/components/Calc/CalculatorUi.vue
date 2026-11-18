@@ -34,6 +34,7 @@ export default {
   computed: {
     ...mapGetters("model", ["nodes"]),
     ...mapState("model", ["currentModel"]),
+    ...mapState("orgs", ["currentOrg"]),
     ...mapState("calculator", [
       "calculatorIsRunning",
       "calculationProgress",
@@ -55,6 +56,7 @@ export default {
         exchangeRates: this.exchangeRates,
         simulationParams: this.currentModel.simulationParams,
         roleNodes: this.currentModel.roleNodes,
+        orgCurrency: this.currentOrg?.currency || this.currentModel?.currency || "USD",
         customVariables: this.currentModel?.customVariables || null,
       };
       switch (this.calculationType) {

@@ -18,7 +18,7 @@ import { showErrorMessage } from "@/utils/util-show-error-message";
 import { slugify } from "@/utils/util-slugify";
 import { i18n } from "@/boot/i18n";
 import { buildSampleOrg, sampleCurrencyFor } from "@/utils/sample-org";
-import { compileDraftNodes, roleNodesOf } from "@/utils/util-model-draft";
+import { compileDraftNodes, roleNodesOf, isCurrencyRoleNode } from "@/utils/util-model-draft";
 
 const state = {
   currentOrg: null,
@@ -31,11 +31,12 @@ const mutations = {
   }
 };
 const actions = {
-  updateOrg({ dispatch }, payload) {
+  updateOrg({ dispatch, rootState }, payload) {
     console.log(payload);
     if (payload.updates.name) {
       payload.updates.nameSlug = slugify(payload.updates.name);
     }
+    const newCurrency = payload.updates.currency;
     setDoc(doc(firebaseDb, "orgs", payload.id), payload.updates, {
       merge: true
     })
@@ -43,6 +44,24 @@ const actions = {
         let keys = Object.keys(payload.updates);
         //console.log("keys: ", keys);
         Notify.create(i18n.global.t("toastOrgUpdated"));
+        if (newCurrency && rootState?.model?.currentModel?.id) {
+          const modelId = rootState.model.currentModel.id;
+          const roleNodes = rootState.model.currentModel.roleNodes || {};
+          const nodes = rootState.model.nodes || [];
+          const changedNodes = [];
+          nodes.forEach(node => {
+            if (isCurrencyRoleNode(node, roleNodes) && node.unit !== newCurrency) {
+              changedNodes.push({ id: node.id, changes: { unit: newCurrency } });
+            }
+          });
+          if (changedNodes.length > 0) {
+            dispatch(
+              "model/updateNodes",
+              { modelId, changedNodes, orgCurrency: newCurrency },
+              { root: true }
+            );
+          }
+        }
       })
       .catch(function(error) {
         showErrorMessage("Error updating organization", error.message);

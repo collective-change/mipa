@@ -1185,5 +1185,6 @@ export default {
   parsedPreviewTitle: "解析預覽",
   pasteToPreviewHelp: "貼上數據或點擊「載入範例時間序列」以預覽。",
   dataPoints: "個數據點",
-  timeSeriesAttachSuccess: "已成功將 {count} 個時間序列數據點附加至 {factor}。"
+  timeSeriesAttachSuccess: "已成功將 {count} 個時間序列數據點附加至 {factor}。",
+  roleNodeCurrencyLockedHint: "關鍵角色要素必須使用組織的預設貨幣（{currency}）"
 };

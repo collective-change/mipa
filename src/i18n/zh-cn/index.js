@@ -1175,5 +1175,6 @@ export default {
   parsedPreviewTitle: "解析预览",
   pasteToPreviewHelp: "粘贴数据或点击“载入示例时间序列”以预览。",
   dataPoints: "个数据点",
-  timeSeriesAttachSuccess: "已成功将 {count} 个时间序列数据点附加至 {factor}。"
+  timeSeriesAttachSuccess: "已成功将 {count} 个时间序列数据点附加至 {factor}。",
+  roleNodeCurrencyLockedHint: "关键角色要素必须使用组织的默认货币（{currency}）"
 };

@@ -1192,5 +1192,6 @@ export default {
   "parsedPreviewTitle": "Vista Previa Analizada",
   "pasteToPreviewHelp": "Pegue datos o haga clic en 'Cargar Serie de Muestra' para ver la vista previa.",
   "dataPoints": "puntos de datos",
-  "timeSeriesAttachSuccess": "Se adjuntaron exitosamente {count} puntos de serie temporal a {factor}."
+  "timeSeriesAttachSuccess": "Se adjuntaron exitosamente {count} puntos de serie temporal a {factor}.",
+  "roleNodeCurrencyLockedHint": "Los factores de rol clave deben usar la moneda predeterminada de la organización ({currency})"
 };

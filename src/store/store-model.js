@@ -20,6 +20,7 @@ import { classifyInfluencers } from "@/utils/util-node-operations";
 import { i18n } from "@/boot/i18n";
 import { camelize } from "@/utils/util-camelize";
 import { toSysFormula } from "@/utils/formulaHelper";
+import { isCurrencyRoleNode, CURRENCY_ROLE_KEYS } from "@/utils/util-model-draft";
 
 // Starter factors are named in the user's current language.
 const t = key => i18n.global.t(key);
@@ -191,8 +192,34 @@ const actions = {
     });
   },
 
-  async updateModel({ dispatch }, payload) {
+  async updateModel({ dispatch, getters, state, rootState }, payload) {
     let modelId = payload.modelId;
+
+    if (payload.updates && payload.updates.roleNodes) {
+      const orgCurrency =
+        payload.orgCurrency ||
+        rootState?.orgs?.currentOrg?.currency ||
+        state.currentModel?.currency ||
+        "USD";
+      const allNodes = (getters && getters.nodes) || (state && state.nodes) || [];
+      const changedNodes = [];
+      CURRENCY_ROLE_KEYS.forEach(roleKey => {
+        const nodeId = payload.updates.roleNodes[roleKey];
+        if (nodeId) {
+          const targetNode = allNodes.find(n => n.id === nodeId);
+          if (targetNode && targetNode.unit !== orgCurrency) {
+            changedNodes.push({ id: nodeId, changes: { unit: orgCurrency } });
+          }
+        }
+      });
+      if (changedNodes.length > 0) {
+        dispatch("updateNodes", {
+          modelId,
+          changedNodes,
+          orgCurrency
+        });
+      }
+    }
 
     //let formulaChanged = false;
     payload.updates.updateTime = serverTimestamp();
@@ -330,9 +357,18 @@ const actions = {
     return docRef.id;
   },
 
-  addNode({ dispatch }, payload) {
+  addNode({ dispatch, getters, state, rootState }, payload) {
     //console.log(payload);
     let node = payload.node;
+    const orgCurrency =
+      payload.orgCurrency ||
+      rootState?.orgs?.currentOrg?.currency ||
+      state.currentModel?.currency ||
+      "USD";
+    const roleNodes = payload.roleNodes || state.currentModel?.roleNodes || {};
+    if (isCurrencyRoleNode(node, roleNodes)) {
+      node.unit = orgCurrency;
+    }
     node.createTime = serverTimestamp();
     node.createdBy = firebaseAuth.currentUser.uid;
     addDoc(collection(firebaseDb, "models", payload.modelId, "nodes"), node)
@@ -365,9 +401,25 @@ const actions = {
       });
   },
 
-  updateNode({ dispatch, getters, state }, payload) {
+  updateNode({ dispatch, getters, state, rootState }, payload) {
     let modelId = payload.modelId;
     let nodeId = payload.updates.id;
+
+    const orgCurrency =
+      payload.orgCurrency ||
+      rootState?.orgs?.currentOrg?.currency ||
+      state.currentModel?.currency ||
+      "USD";
+    const roleNodes = payload.roleNodes || state.currentModel?.roleNodes || {};
+    const allNodes = (getters && getters.nodes) || (state && state.nodes) || [];
+    const existingNode = allNodes.find(n => n.id === nodeId);
+    const nodeToCheck = Object.assign({}, existingNode, payload.updates);
+
+    if (isCurrencyRoleNode(nodeToCheck, roleNodes)) {
+      if (payload.updates.unit !== undefined || (existingNode && existingNode.unit !== orgCurrency)) {
+        payload.updates.unit = orgCurrency;
+      }
+    }
 
     if (payload.updates && typeof payload.updates.symbolFormula === "string" && payload.updates.symbolFormula.trim()) {
       const allNodes = (getters && getters.nodes) || (state && state.nodes) || [];
@@ -794,8 +846,16 @@ const actions = {
     }
   },
 
-  async updateNodes({ dispatch }, payload) {
+  async updateNodes({ dispatch, getters, state, rootState }, payload) {
     var nodesRef = collection(firebaseDb, "models", payload.modelId, "nodes");
+
+    const orgCurrency =
+      payload.orgCurrency ||
+      rootState?.orgs?.currentOrg?.currency ||
+      state.currentModel?.currency ||
+      "USD";
+    const roleNodes = payload.roleNodes || state.currentModel?.roleNodes || {};
+    const allNodes = (getters && getters.nodes) || (state && state.nodes) || [];
 
     const batchArray = [];
     batchArray.push(writeBatch(firebaseDb));
@@ -803,6 +863,14 @@ const actions = {
     let batchIndex = 0;
 
     payload.changedNodes.forEach(changedNode => {
+      const existingNode = allNodes.find(n => n.id === changedNode.id);
+      const nodeToCheck = Object.assign({}, existingNode, changedNode.changes, { id: changedNode.id });
+      if (isCurrencyRoleNode(nodeToCheck, roleNodes)) {
+        if (changedNode.changes.unit !== undefined || (existingNode && existingNode.unit !== orgCurrency)) {
+          changedNode.changes.unit = orgCurrency;
+        }
+      }
+
       batchArray[batchIndex].update(doc(nodesRef, changedNode.id), {
         ...changedNode.changes,
         updateTime: serverTimestamp(),

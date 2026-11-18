@@ -1192,5 +1192,6 @@ export default {
   "parsedPreviewTitle": "解析プレビュー",
   "pasteToPreviewHelp": "データを貼り付けるか「サンプル時系列を読み込む」をクリックしてプレビューします。",
   "dataPoints": "データ点",
-  "timeSeriesAttachSuccess": "{factor} に {count} 件の時系列データを正常に関連付けました。"
+  "timeSeriesAttachSuccess": "{factor} に {count} 件の時系列データを正常に関連付けました。",
+  "roleNodeCurrencyLockedHint": "主要な役割要素は組織のデフォルト通貨（{currency}）を使用する必要があります"
 };

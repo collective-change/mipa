@@ -1,6 +1,7 @@
 // Calculation web worker (bundled by Vite as an ES module worker).
 import { create, all } from "mathjs";
 import { evaluateGuardrailViolations } from "@/utils/guardrails";
+import { isCurrencyRoleNode } from "@/utils/util-model-draft";
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import {
@@ -1256,6 +1257,21 @@ function prepEnvironment(data) {
   sim.calcTimeLog.push({ stage: "start", endTime: new Date() });
   self.postMessage({ progressValue: 0 });
   sim.lastProgressReportTime = new Date();
+
+  const orgCurrency =
+    data.orgCurrency ||
+    data.simulationParams?.currency ||
+    (data.exchangeRates && data.exchangeRates.base) ||
+    "USD";
+  if (Array.isArray(data.modelNodes)) {
+    data.modelNodes.forEach(node => {
+      if (node && isCurrencyRoleNode(node, data.roleNodes)) {
+        if (!node.unit || node.unit !== orgCurrency) {
+          node.unit = orgCurrency;
+        }
+      }
+    });
+  }
 
   modelNodes = data.modelNodes; //make modelNodes globally accessible
 

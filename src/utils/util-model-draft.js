@@ -25,6 +25,51 @@ export const ROLE_SYMBOLS = {
   worldBenefit: "benefitToWorldDuringInterval"
 };
 
+// Role keys and symbols that represent monetary values and must match the organisation's default currency.
+// Note: effort is in workhours and must not be coerced to currency.
+export const CURRENCY_ROLE_KEYS = [
+  "averageEffortCostPerHour",
+  "spending",
+  "orgCost",
+  "worldCost",
+  "orgBenefit",
+  "worldBenefit",
+  "combinedBenefit",
+  "combinedCost"
+];
+
+export const CURRENCY_ROLE_SYMBOLS = [
+  ROLE_SYMBOLS.averageEffortCostPerHour,
+  ROLE_SYMBOLS.spending,
+  ROLE_SYMBOLS.orgCost,
+  ROLE_SYMBOLS.worldCost,
+  ROLE_SYMBOLS.orgBenefit,
+  ROLE_SYMBOLS.worldBenefit
+];
+
+export function isCurrencyRoleNode(node, roleNodes = {}) {
+  if (!node) return false;
+  if (roleNodes && typeof roleNodes === "object") {
+    for (const key of CURRENCY_ROLE_KEYS) {
+      if (roleNodes[key] && roleNodes[key] === node.id) {
+        return true;
+      }
+    }
+  }
+  if (node.symbol && CURRENCY_ROLE_SYMBOLS.includes(node.symbol)) {
+    return true;
+  }
+  return false;
+}
+
+export function coerceRoleNodeCurrency(node, orgCurrency, roleNodes = {}) {
+  if (!node || !orgCurrency) return node;
+  if (isCurrencyRoleNode(node, roleNodes)) {
+    return { ...node, unit: orgCurrency };
+  }
+  return node;
+}
+
 const SYMBOL_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 function symbolsUsedIn(parsedFormula) {
