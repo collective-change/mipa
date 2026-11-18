@@ -5,7 +5,7 @@ trigger: always_on
 # Mipa Project Instructions & Guidelines
 
 Repository: https://github.com/collective-change/mipa
-Working branch: `modernize-2026`
+Working branch: `master`
 Production: Firebase project `mipa-2` → https://collective-change.org (canonical) / https://mipa.collective-change.org
 
 ## Core System & Domain
