@@ -5,7 +5,11 @@ trigger: always_on
 # Mipa Project Instructions & Guidelines
 
 Repository: https://github.com/collective-change/mipa
-Working branch: `master`
+Working branch: `master` - the only integration branch since 2026-11-18, when
+`modernize-2026` was merged into it and retired.
+**Every push to `master` deploys to production**: the merge *is* the release
+(continuous deployment, 2026-11-18). Branch off `master`, target `master`, and treat
+a merge as a release rather than as bookkeeping.
 Production: Firebase project `mipa-2` → https://collective-change.org (canonical) / https://mipa.collective-change.org
 
 ## Core System & Domain
