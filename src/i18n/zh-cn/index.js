@@ -827,6 +827,11 @@ export default {
   loadMoreActionsButton: "加载更多（+{count}）",
   loadAllActionsButton: "加载全部",
 
+  // MIPA-23: Bounded Nodes Query & Pagination
+  showingBoundedFactors: "显示 {loaded} / {total} 个要素。",
+  loadMoreFactorsButton: "加载更多（+{count}）",
+  loadAllFactorsButton: "加载全部",
+
   // Feature 4: Idea to Complete Action
   tabSmartDraft: "點子智慧建案",
   tabManualEntry: "手動创建",

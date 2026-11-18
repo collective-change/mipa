@@ -203,7 +203,6 @@ const actions = {
         orderBy("goal", "asc")
       ),
       {
-        maxRefDepth: 1,
         wait: true //this also forces reset: false
       }
     );
@@ -218,7 +217,6 @@ const actions = {
       "currentOrg",
       doc(firebaseDb, "orgs", orgId),
       {
-        maxRefDepth: 1,
         wait: true //this also forces reset: false
       }
     );

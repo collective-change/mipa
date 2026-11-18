@@ -133,7 +133,7 @@ const actions = {
     return bindFirestoreRef(
       "myInvitations",
       query(collectionGroup(firebaseDb, "invitations"), where("email", "==", email)),
-      { maxRefDepth: 1, wait: true }
+      { wait: true }
     );
   }),
   unbindMyInvitations: firestoreAction(({ unbindFirestoreRef }) => {
@@ -144,7 +144,7 @@ const actions = {
     return bindFirestoreRef(
       "orgInvitations",
       collection(firebaseDb, "orgs", orgId, "invitations"),
-      { maxRefDepth: 1, wait: true }
+      { wait: true }
     );
   }),
   unbindOrgInvitations: firestoreAction(({ unbindFirestoreRef }) => {
