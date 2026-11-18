@@ -104,14 +104,23 @@ jobs:
             cp functions/.env.example functions/.env
           fi
 
-      - name: Build and test the app
+      # `npm test` used to run here, bare - no emulator, no Java. The moment
+      # emulator-backed specs (MIPA-15, MIPA-9) reached master, this step died with
+      # ECONNREFUSED 127.0.0.1:5002 and "Deploy to Firebase" was skipped (run
+      # 44313765200, 2026-11-18). The full suite still gates every PR in node.js.yml and
+      # master only moves through a green PR, so the gate is not lost by removing the
+      # duplicate here. Restoring it *properly* is MIPA-48: it must NOT be wrapped in
+      # emulators:exec naively, because the step above writes the production .env
+      # (useEmulators=false) into the repo - the app would then reach the real Firestore,
+      # and any emulator env leaking into the build below would ship a production build
+      # pointing at the emulators.
+      - name: Build the app
         if: steps.migrated.outputs.ready == 'true'
         run: |
           npm ci
           npm ci --prefix src-pwa
           npm ci --prefix functions
           npm run lint
-          npm test
           npm run build
 
       - name: Keep only recent container images of functions (cleanup policy)
