@@ -222,4 +222,21 @@ describe("ActionSummary.vue - Consolidated Progress & Actuals Tracker", () => {
     const chineseRegex = /[\u4e00-\u9fff]/;
     expect(chineseRegex.test(html)).toBe(false);
   });
+
+  it("renders the Climate Pressure card and manages climatePressure field (MIPA-30)", () => {
+    const { wrapper } = mountActionSummary({
+      climatePressure: {
+        activityQuantity: 10000,
+        activityUnit: "kWh",
+        pressureValue: 4.95,
+        pressureUnit: "tCO2e",
+        scope: 2,
+        authority: "Bureau of Energy, MOEA & IPCC AR6"
+      }
+    });
+
+    expect(wrapper.text()).toContain("Climate Pressure");
+    expect(wrapper.vm.climatePressure).toBeDefined();
+    expect(wrapper.vm.climatePressure.pressureValue).toBe(4.95);
+  });
 });

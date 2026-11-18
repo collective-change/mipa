@@ -1204,5 +1204,22 @@ export default {
   importCountryModelConfirmPrompt: "是否將第一層國家標準模型（12 項世界銀行 WDI 指標）匯入此模型？既有具相同識別碼之因子將同步更新。",
   auditedProvenance: "已稽核數據出處",
   citationUrl: "引用網址",
-  licence: "授權條款"
+  licence: "授權條款",
+  climatePressure: "氣候壓力",
+  climatePressureDesc: "依據 GHG Protocol 與 IPCC AR6 GWP-100 計算之行動對全球氣候界限壓力（tCO2e）。",
+  portfolioClimatePressure: "組合氣候壓力總計",
+  actionClimateProvenanceTitle: "行動氣候壓力與排放因子數據出處",
+  actionClimateProvenanceDesc: "依據經驗證之排放因子、權威引用來源、開放授權及版本計算之標準 tCO2e 行動氣候壓力。",
+  emissionFactor: "排放因子",
+  activityQuantity: "活動量",
+  activityUnit: "活動單位",
+  pressureUnit: "壓力單位",
+  scope: "範疇",
+  geography: "適用地理區域",
+  authority: "權威機構",
+  version: "版本",
+  unitMismatchError: "活動單位與排放因子預期單位不符，嚴禁隱性單位強制轉換。",
+  attachClimatePressure: "附加氣候壓力",
+  removeClimatePressure: "移除氣候壓力",
+  physicalOnlyNotice: "系統僅記錄物理量（tCO2e）。依據決策規範 M-5，界限壓力絕不轉換為貨幣金額亦不計入淨效益。"
 };

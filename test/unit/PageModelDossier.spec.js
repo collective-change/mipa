@@ -155,6 +155,50 @@ describe("PageModelDossier.vue", () => {
     expect(wrapper.vm.perturbations["n1"]).toBe(30);
 
     wrapper.vm.resetPerturbations();
+    expect(wrapper.vm.resetPerturbations).toBeDefined();
     expect(wrapper.vm.perturbations["n1"]).toBe(0);
+  });
+
+  it("renders portfolio climate pressure and action climate pressure provenance (MIPA-30)", async () => {
+    mockGetActions.mockResolvedValue({
+      data: {
+        actions: [
+          {
+            id: "act-solar",
+            title: "Solar Deployment",
+            actionLeverage: 5.5,
+            climatePressure: {
+              activityQuantity: 100000,
+              activityUnit: "kWh",
+              pressureValue: 49.5,
+              pressureUnit: "tCO2e",
+              scope: 2,
+              factorId: "elec-grid-tw-2023",
+              factorName: "Electricity Grid Mix (Taiwan)",
+              authority: "Bureau of Energy, MOEA & IPCC AR6",
+              citationUrl: "https://www.moeaea.gov.tw",
+              licence: "Open Government Data Licence v1.0",
+              version: "AR6-2023v1",
+              geography: "TW"
+            }
+          }
+        ]
+      }
+    });
+
+    const wrapper = mountDossier("en-us");
+    await wrapper.vm.fetchDossierData();
+
+    expect(wrapper.vm.dossier.portfolioPressures).toBeDefined();
+    expect(wrapper.vm.dossier.portfolioPressures.totalTCO2e).toBe(49.5);
+    expect(wrapper.vm.dossier.portfolioPressures.byScope.scope2).toBe(49.5);
+    expect(wrapper.vm.dossier.actionPressures).toHaveLength(1);
+    expect(wrapper.vm.dossier.actionPressures[0].authority).toBe("Bureau of Energy, MOEA & IPCC AR6");
+    expect(wrapper.vm.dossier.actionPressures[0].citationUrl).toBe("https://www.moeaea.gov.tw");
+
+    const text = wrapper.text();
+    expect(text).toContain("Portfolio Climate Pressure");
+    expect(text).toContain("49.5 tCO2e");
+    expect(text).toContain("Action Climate Pressures and Emission Factor Provenance");
   });
 });

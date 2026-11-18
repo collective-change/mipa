@@ -684,6 +684,8 @@
             @updateAdjustments="onSroiAdjustmentsUpdated"
           />
 
+          <climate-pressure-card v-model="climatePressure" />
+
           <q-card-actions align="right">
             <q-btn :label="$t('Save')" color="primary" type="submit" unelevated no-caps />
           </q-card-actions>
@@ -861,6 +863,7 @@ import Chat from "@/components/Chats/Chat.vue";
 import DecisionBriefModal from "@/components/Actions/Modals/DecisionBriefModal.vue";
 import ExplainRankingModal from "@/components/Actions/Modals/ExplainRankingModal.vue";
 import SroiImpactMapModal from "@/components/Actions/Modals/SroiImpactMapModal.vue";
+import ClimatePressureCard from "@/components/Actions/ClimatePressureCard.vue";
 import { calculateSroiMetrics, formatSroiRatio } from "@/utils/sroi";
 
 const { mapFields } = createHelpers({
@@ -884,6 +887,7 @@ export default {
     "decision-brief-modal": DecisionBriefModal,
     "explain-ranking-modal": ExplainRankingModal,
     "sroi-impact-map-modal": SroiImpactMapModal,
+    "climate-pressure-card": ClimatePressureCard,
   },
 
   props: ["action"],
@@ -950,6 +954,7 @@ export default {
       "uiAction.responsiblePerson",
       "uiAction.accountablePerson",
       "uiAction.departmentTag",
+      "uiAction.climatePressure",
       "uiAction.chatId",
     ]),
     ...mapMultiRowFields(["uiAction.impacts"]),
