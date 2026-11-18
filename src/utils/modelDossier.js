@@ -1,5 +1,6 @@
 import { detectFeedbackLoops, detectSystemArchetypes } from "@/utils/systemDynamics";
 import { runMonteCarloSimulation } from "@/utils/monteCarlo";
+import { isWorldFactor } from "@/utils/worldModel";
 
 /**
  * Builds a structured, self-contained executive model dossier.
@@ -31,6 +32,21 @@ export function buildDossierSummary({
     const baseVal = Number(node.initialValue) || 0;
     const perturbedVal = shiftPercent !== 0 ? baseVal * (1 + shiftPercent / 100) : baseVal;
 
+    const sourceCitation =
+      node.sourceCitation ||
+      (node.provenance && (node.provenance.citation || node.provenance.authority)) ||
+      "";
+    const citationUrl =
+      node.citationUrl ||
+      (node.provenance && node.provenance.canonicalCitationUrl) ||
+      "";
+    const licence =
+      node.licence ||
+      node.license ||
+      (node.provenance && (node.provenance.licence || node.provenance.license)) ||
+      "";
+    const isWorld = Boolean(node.isWorldFactor || isWorldFactor(node));
+
     return {
       id: node.id,
       symbol: node.symbol || node.name || "F",
@@ -39,10 +55,22 @@ export function buildDossierSummary({
       perturbedValue: Number(perturbedVal.toFixed(2)),
       shiftPercent,
       formula: node.formula || "",
-      units: node.units || "",
-      description: node.description || ""
+      units: node.units || node.unit || "",
+      description: node.description || node.notes || "",
+      sourceCitation,
+      citationUrl,
+      licence,
+      license: licence,
+      isWorldFactor: isWorld,
+      version: node.version || "",
+      provenance: node.provenance || null
     };
   });
+
+  // Collect shipped world factors and sourced factors for provenance audit
+  const worldFactors = factorSummaries.filter(
+    (f) => f.isWorldFactor || f.licence || f.citationUrl
+  );
 
   // Sort candidate actions by simulated leverage descending
   const rankedActions = [...(actions || [])].sort((a, b) => {
@@ -77,6 +105,7 @@ export function buildDossierSummary({
     factorsCount: factorSummaries.length,
     actionsCount: rankedActions.length,
     factors: factorSummaries,
+    worldFactors,
     rankedActions,
     loopsCount: loops.length,
     reinforcingLoopsCount: loops.filter(l => l.polarity === "reinforcing").length,

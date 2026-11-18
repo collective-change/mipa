@@ -75,6 +75,19 @@
       >
         <q-tooltip>{{ $t("resetZoom") }}</q-tooltip>
       </q-btn>
+      <q-separator vertical class="q-mx-xs" />
+      <q-btn
+        flat
+        round
+        dense
+        size="sm"
+        :icon="showWorldFactors ? 'public' : 'public_off'"
+        :color="showWorldFactors ? 'primary' : 'grey-7'"
+        :aria-label="showWorldFactors ? $t('hideWorldFactors') : $t('showWorldFactors')"
+        @click="toggleShowWorldFactors"
+      >
+        <q-tooltip>{{ showWorldFactors ? $t("hideWorldFactors") : $t("showWorldFactors") }}</q-tooltip>
+      </q-btn>
     </div>
 
     <svg
@@ -119,6 +132,7 @@ import { showErrorMessage } from "@/utils/util-show-error-message";
 import AddNode from "@/components/Model/Modals/AddNode.vue";
 import DeleteNode from "@/components/Model/Modals/DeleteNode.vue";
 import AddLink from "@/components/Model/Modals/AddLink.vue";
+import { isWorldFactor } from "@/utils/worldModel";
 
 // based on https://bl.ocks.org/agnjunio/fd86583e176ecd94d37f3d2de3a56814
 
@@ -140,6 +154,7 @@ export default {
       showAddNode: false,
       showDeleteNode: false,
       showAddLink: false,
+      showWorldFactors: false,
       nodeToSearch: null,
       filteredNodeOptions: [],
       linkTargetType: "",
@@ -215,9 +230,11 @@ export default {
       });
     },*/
     nodeOptions() {
-      return this.nodes.map((node) => {
-        return { label: node.name, value: node.id };
-      });
+      return this.nodes
+        .filter((node) => this.showWorldFactors || !isWorldFactor(node))
+        .map((node) => {
+          return { label: node.name, value: node.id };
+        });
     },
     expandedNodeGroups: {
       get() {
@@ -585,6 +602,15 @@ export default {
 
       let nodes = [...this.storeData.nodes];
       let links = [...this.storeData.links];
+
+      // Hiding is display-only: The world model is hidden from the user's canvas by default,
+      // and can be unhidden by the user. Hiding must NEVER be implemented as calculation exclusion —
+      // the values flow into the user's numbers whether or not anyone looks.
+      if (!this.showWorldFactors) {
+        const hiddenIds = new Set(nodes.filter((n) => isWorldFactor(n)).map((n) => n.id));
+        nodes = nodes.filter((n) => !hiddenIds.has(n.id));
+        links = links.filter((l) => !hiddenIds.has(l.source) && !hiddenIds.has(l.target));
+      }
 
       //update "isInCircularDependency" attribute
       nodes.forEach(function (node) {
@@ -1507,6 +1533,10 @@ export default {
         .transition()
         .duration(400)
         .call(this.zoom.transform, d3.zoomIdentity);
+    },
+    toggleShowWorldFactors() {
+      this.showWorldFactors = !this.showWorldFactors;
+      this.prepD3DataAndUpdate();
     },
     nodeDragStarted(event, d) {
       if (!event.active) {

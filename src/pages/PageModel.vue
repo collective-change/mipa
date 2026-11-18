@@ -118,6 +118,16 @@
               :label="$t('templateLibraryBtn')"
             />
             <q-btn
+              v-if="!isReadOnly"
+              @click="confirmImportCountryModel"
+              class="full-width print-hide"
+              color="teal-8"
+              outline
+              no-caps
+              icon="public"
+              :label="$t('importCountryModelBtn')"
+            />
+            <q-btn
               @click="showOnboardingTour = true"
               class="full-width print-hide"
               color="grey-8"
@@ -484,6 +494,26 @@ export default {
         });
     },
     ...mapActions("ui", ["setSelectedNodeId"]),
+    ...mapActions("model", ["importCountryModel"]),
+
+    async confirmImportCountryModel() {
+      const modelId = this.currentModel?.id || this.$route.params.modelId;
+      if (!modelId) return;
+      this.$q
+        .dialog({
+          title: this.$t("importCountryModelBtn"),
+          message: this.$t("importCountryModelConfirmPrompt"),
+          cancel: true,
+          persistent: true
+        })
+        .onOk(async () => {
+          try {
+            await this.importCountryModel({ modelId, countryCode: "USA" });
+          } catch (err) {
+            showErrorMessage(this.$t("importCountryModelBtn"), err.message);
+          }
+        });
+    },
 
     saveNodeGroupName(groupId, name) {
       let clonedNodeGroups = JSON.parse(

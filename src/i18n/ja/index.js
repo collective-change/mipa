@@ -1196,5 +1196,18 @@ export default {
   "pasteToPreviewHelp": "データを貼り付けるか「サンプル時系列を読み込む」をクリックしてプレビューします。",
   "dataPoints": "データ点",
   "timeSeriesAttachSuccess": "{factor} に {count} 件の時系列データを正常に関連付けました。",
-  "roleNodeCurrencyLockedHint": "主要な役割要素は組織のデフォルト通貨（{currency}）を使用する必要があります"
+  "roleNodeCurrencyLockedHint": "主要な役割要素は組織のデフォルト通貨（{currency}）を使用する必要があります",
+  "catWorldMacro": "世界とマクロ経済",
+  "worldModelCategory": "世界・標準モデル",
+  "worldModelTitle": "国別モデル（世界銀行 WDI）",
+  "worldModelProvenanceTitle": "世界モデル要素と出所・ライセンス",
+  "worldModelProvenanceDesc": "国際機関の検証済みデータセットから標準引用URLとオープンライセンスを付与して提供される標準要素です。",
+  "showWorldFactors": "世界モデル要素を表示",
+  "hideWorldFactors": "世界モデル要素を非表示",
+  "worldModelImportedSuccess": "国別モデルが正常にインポートされました",
+  "importCountryModelBtn": "国別標準モデルをインポート",
+  "importCountryModelConfirmPrompt": "バージョン管理されたレイヤー1国別モデル（世界銀行WDIの12指標）をこのモデルにインポートしますか？一致するIDを持つ既存要素は更新されます。",
+  "auditedProvenance": "監査済み出所情報",
+  "citationUrl": "引用URL",
+  "licence": "ライセンス"
 };
