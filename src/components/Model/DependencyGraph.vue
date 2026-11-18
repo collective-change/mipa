@@ -152,6 +152,8 @@ export default {
       },
       simulation: null,
       iterationCount: 0,
+      isRampingForces: false,
+      rampDuration: 50,
       forceProperties: {
         gravity: {
           strength: 80,
@@ -436,15 +438,29 @@ export default {
 
     tick() {
       let that = this;
-      // If no data is ready, do nothing
-      if (!this.d3Data) {
+      // If no data is ready or graph element not ready, do nothing
+      if (!this.d3Data || !this.selections.graph) {
         return;
       }
       //this.simulation.stop();
 
+      let ramp = 1;
+      if (this.isRampingForces) {
+        if (this.iterationCount < this.rampDuration) {
+          // Smooth progressive ramp from small initial fraction (0.05) up to 1.0
+          const progress = this.iterationCount / this.rampDuration;
+          // Smoothstep curve for seamless acceleration without jerks
+          const smoothProgress = progress * progress * (3 - 2 * progress);
+          ramp = 0.05 + 0.95 * smoothProgress;
+        } else {
+          this.isRampingForces = false;
+          ramp = 1;
+        }
+      }
+
       this.simulation
         .force("collide")
-        .strength(that.forceProperties.collide.strength)
+        .strength(that.forceProperties.collide.strength * ramp)
         .radius(function (node) {
           if (node.toRemove) return 0;
           else return nodeRadius * 1.3; // * (1 - that.simulation.alpha());
@@ -452,17 +468,38 @@ export default {
         .iterations(that.forceProperties.collide.iterations);
 
       this.simulation
+        .force("charge")
+        .strength(that.forceProperties.charge.strength * ramp);
+
+      this.simulation
+        .force("gravity")
+        .strength(that.forceProperties.gravity.strength * ramp);
+
+      this.simulation
         .force("link")
         .distance(function (link) {
           if (link.newlyEntered)
             return (
               that.forceProperties.link.distance *
-              Math.min(1, that.iterationCount / 50)
+              Math.min(1, Math.max(0.2, ramp))
             );
           else return that.forceProperties.link.distance;
         })
-        //.strength(that.forceProperties.link.strength)
+        .strength(function (link) {
+          const baseStrength =
+            that.forceProperties.link.strength * (link.strengthFactor || 1);
+          return baseStrength * ramp;
+        })
         .iterations(that.forceProperties.link.iterations);
+
+      if (this.isRampingForces) {
+        // High damping (0.35) during initial adjustment prevents high velocities,
+        // relaxing smoothly to standard 0.1 at full ramp.
+        const decay = 0.35 - 0.25 * ((ramp - 0.05) / 0.95);
+        this.simulation.velocityDecay(decay);
+      } else {
+        this.simulation.velocityDecay(0.1);
+      }
 
       const transform = (d) => {
         if (d.x != null && !isNaN(d.x) && d.y != null && !isNaN(d.y)) {
@@ -535,7 +572,9 @@ export default {
         if (circlePositions.length && !isNaN(circlePositions[0].x)) {
           //console.log("saving positions");
           //console.log("iterationCount", this.iterationCount);
-          idb.saveDependencyGraphDisplay(saveFile);
+          if (typeof window !== "undefined" && window.indexedDB) {
+            idb.saveDependencyGraphDisplay(saveFile);
+          }
         }
       })();
     },
@@ -644,6 +683,9 @@ export default {
           if (collapsedD3NodesInGroupCount) {
             nodeForCollapsedGroup.x = xSum / collapsedD3NodesInGroupCount;
             nodeForCollapsedGroup.y = ySum / collapsedD3NodesInGroupCount;
+            nodeForCollapsedGroup.vx = 0;
+            nodeForCollapsedGroup.vy = 0;
+            nodeForCollapsedGroup.newlyEntered = true;
           }
           nodes.push(nodeForCollapsedGroup);
 
@@ -688,25 +730,29 @@ export default {
           (n) => n.id == newlyExpandedGroup.id
         );
         //console.log("exiting groupNode", exitingGroupNode);
-        let nodeInGroupCount = 0;
-        newlyExpandedGroup.nodeIds.forEach(function (nodeId) {
-          let nodeInGroup = nodes.find((n) => n.id == nodeId);
-          if (exitingGroupNode && nodeInGroup) {
-            //set position to be around the exiting group node
-            nodeInGroup.x =
-              exitingGroupNode.x +
-              that.forceProperties.link.distance *
-                0.05 *
-                Math.sin(nodeInGroupCount * 10);
-            nodeInGroup.y =
-              exitingGroupNode.y +
-              that.forceProperties.link.distance *
-                0.05 *
-                Math.cos(nodeInGroupCount * 10);
-            nodeInGroup.newlyEntered = true;
-            nodeInGroupCount++;
-          }
-        });
+        if (newlyExpandedGroup && exitingGroupNode) {
+          let nodeInGroupCount = 0;
+          let totalNodesInGroup = newlyExpandedGroup.nodeIds.length;
+          newlyExpandedGroup.nodeIds.forEach(function (nodeId) {
+            let nodeInGroup = nodes.find((n) => n.id == nodeId);
+            if (nodeInGroup) {
+              // Symmetrically space entering nodes in a gentle radius around exiting group node
+              let angle =
+                totalNodesInGroup > 1
+                  ? (2 * Math.PI * nodeInGroupCount) / totalNodesInGroup
+                  : 0;
+              let spreadRadius = Math.min(24, nodeRadius * 0.7);
+              nodeInGroup.x =
+                exitingGroupNode.x + spreadRadius * Math.cos(angle);
+              nodeInGroup.y =
+                exitingGroupNode.y + spreadRadius * Math.sin(angle);
+              nodeInGroup.vx = 0;
+              nodeInGroup.vy = 0;
+              nodeInGroup.newlyEntered = true;
+              nodeInGroupCount++;
+            }
+          });
+        }
       }
 
       //if nothing in d3Data (meaning the simulation is new)
@@ -918,7 +964,15 @@ export default {
             ? -1
             : 0
         );
-        this.updateData({ modifyingExistingGraph });
+        this.updateData({
+          modifyingExistingGraph,
+          isGroupToggle: Boolean(
+            payload &&
+              (payload.isGroupToggle ||
+                payload.newlyExpandedGroupId ||
+                payload.newlyCollapsedGroupId)
+          ),
+        });
       }
       if (graphTextChange && !dataChanged) {
         this.updateNodeClassAndText(true, 0.001);
@@ -933,11 +987,20 @@ export default {
         options && options.hasOwnProperty("modifyingExistingGraph")
           ? options.modifyingExistingGraph
           : false;
+      let isGroupToggle =
+        options && options.hasOwnProperty("isGroupToggle")
+          ? options.isGroupToggle
+          : false;
       var that = this;
+
+      if (isGroupToggle) {
+        this.isRampingForces = true;
+        this.iterationCount = 0;
+      }
 
       // stop the previous simulation
       if (restartForceSimulation && this.simulation) this.simulation.stop();
-      if (!this.d3Data) return;
+      if (!this.d3Data || !this.simulation || !this.selections.graph) return;
       this.simulation.nodes(this.d3Data.nodes);
       this.simulation.force("link").links(this.d3Data.links);
 
@@ -1305,7 +1368,8 @@ export default {
       if (restartForceSimulation) {
         this.simulation.on("end", this.savePositions);
         this.iterationCount = 0;
-        this.simulation.alpha(1).restart();
+        const alphaToUse = isGroupToggle ? 0.6 : 1;
+        this.simulation.alpha(alphaToUse).restart();
       }
     },
     updateNodeClassAndText(restartSimulation, alpha) {
@@ -1319,7 +1383,7 @@ export default {
         .data(this.d3Data.nodes)
         //.attr("r", nodeRadius)
         .attr("class", (d) =>
-          d.class.concat(
+          (d.class || "").concat(
             d.isSelfBlocking ? " selfBlocking" : "",
             d.isNew ? " new" : "",
             d.isInCircularDependency ? " inCircularDependency" : "",
@@ -1366,7 +1430,11 @@ export default {
       }
     },
     updateForces() {
-      const { simulation, forceProperties, iterationCount } = this;
+      const { simulation, forceProperties } = this;
+      this.isRampingForces = false;
+      if (simulation) {
+        simulation.velocityDecay(0.1);
+      }
       simulation
         .force("gravity")
         .strength(forceProperties.gravity.strength)
@@ -1898,13 +1966,19 @@ export default {
             idOfNodeGroupToSelect = newlyExpandedGroupId;
           if (newlyCollapsedGroupId)
             idOfNodeGroupToSelect = newlyCollapsedGroupId;
-          let nodeGroupToSelect = this.currentModel.nodeGroups.find(
+          let nodeGroupToSelect = (this.currentModel.nodeGroups || []).find(
             (ng) => ng.id == idOfNodeGroupToSelect
           );
-          this.$store.commit("ui/setSelectedNodeGroupId", nodeGroupToSelect.id);
+          if (nodeGroupToSelect) {
+            this.$store.commit("ui/setSelectedNodeGroupId", nodeGroupToSelect.id);
+          }
 
-          //notify prepD3DataAndUpdate with newly expanded node group
-          this.prepD3DataAndUpdate({ newlyExpandedGroupId });
+          //notify prepD3DataAndUpdate with newly expanded or collapsed node group
+          this.prepD3DataAndUpdate({
+            newlyExpandedGroupId,
+            newlyCollapsedGroupId,
+            isGroupToggle: true
+          });
         }
       },
     },

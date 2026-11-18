@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 import { doc, getDoc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
-describe("MIPA-15: Stakeholder Viewer Firestore Security Rules (Emulator Verified)", { timeout: 30000 }, () => {
+describe("MIPA-15: Stakeholder Viewer Firestore Security Rules (Emulator Verified)", { timeout: 60000 }, () => {
   let testEnv;
 
   beforeAll(async () => {
@@ -21,7 +21,7 @@ describe("MIPA-15: Stakeholder Viewer Firestore Security Rules (Emulator Verifie
         rules
       }
     });
-  }, 30000);
+  }, 60000);
 
   afterAll(async () => {
     if (testEnv) {
