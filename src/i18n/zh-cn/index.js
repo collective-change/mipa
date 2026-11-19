@@ -903,6 +903,8 @@ export default {
   formulaErrorIncomplete: "數學運算式未完成或運算子懸空。",
   formulaUnlinkedWarning: "公式中引用了尚未创建關聯的因素：",
   formulaUnknownSymbols: "公式中包含未定義的符號",
+  formulaDelayBestGuessNoFallback: "delay(..., best_guess) 所引用的要素「{factor}」没有当前数值或历史时间序列可供推估。",
+  formulaDelayUnresolvedFactor: "delay(..., best_guess) 中引用的要素「{symbol}」无法解析。",
   linkFactorButton: "创建關聯「{name}」",
   linkedInfluencer: "已關聯變數",
   unlinkedFactor: "模型其他變數",

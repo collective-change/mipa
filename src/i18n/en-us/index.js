@@ -922,6 +922,8 @@ export default {
   formulaErrorIncomplete: "Incomplete mathematical expression or dangling operator.",
   formulaUnlinkedWarning: "This formula uses factors that are not yet linked as inputs:",
   formulaUnknownSymbols: "Unrecognized symbols in formula",
+  formulaDelayBestGuessNoFallback: "Factor \"{factor}\" in delay(..., best_guess) has no current value or historical series to fall back on.",
+  formulaDelayUnresolvedFactor: "Referenced factor \"{symbol}\" in delay(..., best_guess) could not be resolved.",
   linkFactorButton: "Link {name}",
   linkedInfluencer: "Linked factor",
   unlinkedFactor: "Available in model",

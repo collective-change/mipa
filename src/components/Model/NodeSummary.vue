@@ -284,6 +284,29 @@
           {{ $t('formulaCustomVariablesUsed') }}: {{ formulaValidation.usedCustomVariables.join(', ') }}
         </div>
 
+        <!-- Delay best_guess Advisory Warnings (MIPA-32) -->
+        <div
+          v-if="formulaValidation.valid && formulaValidation.delayWarnings && formulaValidation.delayWarnings.length > 0"
+          class="text-caption text-orange-9 q-mt-xs q-mb-xs"
+        >
+          <div
+            v-for="(warn, idx) in formulaValidation.delayWarnings"
+            :key="idx"
+            class="row items-center q-mb-xs"
+          >
+            <q-icon name="warning" class="q-mr-xs" size="14px" />
+            <span v-if="warn.type === 'no_fallback'">
+              {{ $t('formulaDelayBestGuessNoFallback', { factor: warn.factorName || warn.symbol }) }}
+            </span>
+            <span v-else-if="warn.type === 'unresolved_factor'">
+              {{ $t('formulaDelayUnresolvedFactor', { symbol: warn.symbol }) }}
+            </span>
+            <span v-else>
+              {{ warn.message }}
+            </span>
+          </div>
+        </div>
+
         <!-- Unrecognized Symbols Notice -->
         <div
           v-if="formulaValidation.valid && formulaValidation.unknownSymbols.length > 0"
@@ -907,6 +930,7 @@ export default {
         availableSymbols,
         allNodes: this.nodes || [],
         currentNodeId: this.nodeToSubmit?.id,
+        currentNode: this.nodeToSubmit,
         customVariables: this.currentModel?.customVariables || []
       });
     },

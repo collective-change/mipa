@@ -16,7 +16,8 @@ export const BUILTIN_FORMULA_IDENTIFIERS = new Set([
   "pi",
   "e",
   "true",
-  "false"
+  "false",
+  "best_guess"
 ]);
 
 export const FORMULA_PRIMITIVES = [
@@ -106,7 +107,8 @@ export function validateFormulaSyntax(formula = "", options = {}) {
       usedSymbols: [],
       unlinkedSymbols: [],
       unknownSymbols: [],
-      usedCustomVariables: []
+      usedCustomVariables: [],
+      delayWarnings: []
     };
   }
 
@@ -132,7 +134,8 @@ export function validateFormulaSyntax(formula = "", options = {}) {
       usedSymbols: [],
       unlinkedSymbols: [],
       unknownSymbols: [],
-      usedCustomVariables: []
+      usedCustomVariables: [],
+      delayWarnings: []
     };
   }
 
@@ -164,7 +167,8 @@ export function validateFormulaSyntax(formula = "", options = {}) {
       usedSymbols: Array.from(usedSymbolsSet),
       unlinkedSymbols: [],
       unknownSymbols: [],
-      usedCustomVariables: []
+      usedCustomVariables: [],
+      delayWarnings: []
     };
   }
 
@@ -222,6 +226,106 @@ export function validateFormulaSyntax(formula = "", options = {}) {
     }
   }
 
+  // Validate delay() calls referencing best_guess (MIPA-32)
+  const delayWarnings = [];
+  const seenDelayWarnings = new Set();
+  try {
+    ast.traverse((node) => {
+      if (node.isFunctionNode && (node.name === "delay" || node.fn?.name === "delay")) {
+        const args = node.args || [];
+        if (args.length >= 3) {
+          const arg3 = args[2];
+          const isBestGuess =
+            (arg3 && arg3.isSymbolNode && arg3.name === "best_guess") ||
+            (arg3 && arg3.isConstantNode && arg3.value === "best_guess");
+
+          if (isBestGuess) {
+            const arg1 = args[0];
+            let resolvedNode = null;
+            let refIdentifier = null;
+
+            if (arg1 && arg1.isSymbolNode) {
+              refIdentifier = arg1.name;
+              if (refIdentifier.startsWith("$")) {
+                const targetRef = refIdentifier.slice(1);
+                if (options.currentNode && (options.currentNode.id === targetRef || options.currentNode.symbol === targetRef)) {
+                  resolvedNode = options.currentNode;
+                } else if (options.currentNodeId === targetRef) {
+                  resolvedNode = options.currentNode || allNodes.find((n) => n.id === targetRef);
+                } else {
+                  resolvedNode = allNodes.find((n) => n.id === targetRef || n.symbol === targetRef);
+                }
+              } else {
+                if (options.currentNode && (options.currentNode.symbol === refIdentifier || options.currentNode.id === refIdentifier)) {
+                  resolvedNode = options.currentNode;
+                } else if (options.currentNodeId === refIdentifier) {
+                  resolvedNode = options.currentNode || allNodes.find((n) => n.symbol === refIdentifier || n.id === refIdentifier);
+                } else {
+                  resolvedNode = allNodes.find((n) => n.symbol === refIdentifier || n.id === refIdentifier);
+                }
+              }
+            }
+
+            if (!resolvedNode) {
+              // Criterion 4: If the referenced factor cannot be resolved from the AST, say so rather than passing silently.
+              const rawRef = arg1 ? (arg1.name || (typeof arg1.toString === "function" ? arg1.toString() : String(arg1))) : "";
+              const warnKey = `unresolved:${rawRef}`;
+              if (!seenDelayWarnings.has(warnKey)) {
+                seenDelayWarnings.add(warnKey);
+                delayWarnings.push({
+                  type: "unresolved_factor",
+                  symbol: rawRef,
+                  message: `Referenced factor "${rawRef}" in delay(..., best_guess) could not be resolved.`
+                });
+              }
+            } else {
+              // Criterion 2: Check fallback value (latest value or non-empty series)
+              const checkNode =
+                options.currentNode &&
+                (options.currentNode.id === resolvedNode.id ||
+                  (options.currentNode.symbol && options.currentNode.symbol === resolvedNode.symbol))
+                  ? options.currentNode
+                  : resolvedNode;
+
+              const series = checkNode.timeSeries || checkNode.series;
+              const hasHistory =
+                Array.isArray(series) &&
+                series.length > 0 &&
+                series.some((pt) => {
+                  if (pt === null || pt === undefined) return false;
+                  const val = typeof pt === "object" && pt !== null && "value" in pt ? pt.value : pt;
+                  return val !== null && val !== "" && val !== undefined && !isNaN(Number(val));
+                });
+
+              const hasLatestValue =
+                checkNode.latestValue !== undefined &&
+                checkNode.latestValue !== null &&
+                checkNode.latestValue !== "" &&
+                !isNaN(Number(checkNode.latestValue));
+
+              if (!hasHistory && !hasLatestValue) {
+                const factorName = checkNode.name || checkNode.symbol || refIdentifier;
+                const warnKey = `nofallback:${checkNode.id || refIdentifier}`;
+                if (!seenDelayWarnings.has(warnKey)) {
+                  seenDelayWarnings.add(warnKey);
+                  delayWarnings.push({
+                    type: "no_fallback",
+                    symbol: refIdentifier,
+                    factorName,
+                    nodeId: checkNode.id,
+                    message: `Factor "${factorName}" referenced by delay(..., best_guess) has no current value or historical series to fall back on.`
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+  } catch (e) {
+    // Traverse safety
+  }
+
   return {
     valid: true,
     empty: false,
@@ -230,7 +334,8 @@ export function validateFormulaSyntax(formula = "", options = {}) {
     usedSymbols,
     unlinkedSymbols,
     unknownSymbols,
-    usedCustomVariables
+    usedCustomVariables,
+    delayWarnings
   };
 }
 

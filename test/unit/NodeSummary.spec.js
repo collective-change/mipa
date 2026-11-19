@@ -319,5 +319,27 @@ describe("NodeSummary.vue - Formula Autocomplete & Syntax Helpers", () => {
       expect(wrapper.vm.validateFormulaCharacters(wrapper.vm.nodeToSubmit.symbolFormula)).toBe(true);
       expect(wrapper.vm.formulaValidation.valid).toBe(true);
     });
+
+    it("displays advisory delay warning for delay(..., best_guess) without blocking save (MIPA-32)", async () => {
+      const { wrapper, actions } = mountNodeSummary("node_meals");
+      // node_volunteers currently has no latestValue and no series
+      wrapper.vm.nodeToSubmit.symbolFormula = "delay(volunteers, dt, best_guess)";
+      await wrapper.vm.$nextTick();
+
+      // No unrecognized symbols warning
+      expect(wrapper.vm.formulaValidation.unknownSymbols).toEqual([]);
+      // Advisory warning is present
+      expect(wrapper.vm.formulaValidation.delayWarnings.length).toBe(1);
+      expect(wrapper.vm.formulaValidation.delayWarnings[0].type).toBe("no_fallback");
+      expect(wrapper.vm.formulaValidation.delayWarnings[0].factorName).toBe("Active Volunteers");
+
+      // Valid remains true (advisory, not a blocking gate)
+      expect(wrapper.vm.formulaValidation.valid).toBe(true);
+      expect(wrapper.text()).toContain('Factor "Active Volunteers" in delay(..., best_guess) has no current value');
+
+      // Saving succeeds
+      wrapper.vm.submitNode();
+      expect(actions.updateNode).toHaveBeenCalled();
+    });
   });
 });

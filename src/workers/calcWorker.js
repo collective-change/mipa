@@ -2022,7 +2022,7 @@ function delay(args, math, scope) {
   }
 
   let initialValue = null;
-  let latestValue = scope[$nodeId];
+  let latestValue = typeof scope[$nodeId] !== "undefined" ? scope[$nodeId] : "";
 
   if (args.length <= 1) {
     console.error('"delay" function needs at least 2 arguments.');
@@ -2106,7 +2106,7 @@ function interpolate(
       );
     } else if (initialValue == "best_guess") {
       //if latestValue is available then return latest value
-      if (latestValue !== "") return latestValue;
+      if (latestValue !== "" && typeof latestValue !== "undefined") return latestValue;
       else {
         console.error(
           `No history, no initial value, and no latest value available for best guess for node "${replaceNodeIdsWithName(
