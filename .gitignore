@@ -22,6 +22,7 @@ ui-debug.log
 *.ntvs*
 *.njsproj
 *.sln
+*.bak*
 
 # Environment variables for each instance
 .env
@@ -38,16 +39,32 @@ ui-debug.log
 /my-firestore-emulator-data/src-pwa/node_modules
 /.quasar
 
-# Local developer backlog
+# Local developer backlog & strategic decision paper trail (M-1..M-9)
+# Kept local and strictly off the public repository by design (MIPA-42).
+# STANDING RECURRENCE RULE: Any new gitignored document or strategic record must be
+# added to the backup in the same act as its creation (scripts/backup-local-layer.js)
+# and synced to private backup storage. It must NEVER enter the public GitHub repository.
 docs/BACKLOG.md
 docs/BACKLOG*.md
+docs/BACKLOG*.bak*
+docs/BACKLOG*.corrupt*
+
+# Local-only layer backup staging directories & archives
+backups/
+local-layer-backups/
+*.local-backup.*
+*.backup.tar.gz
+*.backup.zip
 
 # Test output
 test-results/
 playwright-report/
 
-# Local service operations - not part of the product.
+# Local service operations & agent state - not part of the product.
+# Backed up via scripts/backup-local-layer.js to private destination.
 hermes/
+todo-board/
+night-shift-evidence/
 .agents/skills/
 .agents/rules/ops-private.md
 scripts/mipa-bridge.js
