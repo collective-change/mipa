@@ -129,6 +129,120 @@ describe("Formula Helper Utilities for Model Builders", () => {
       expect(trailingDollar.valid).toBe(false);
       expect(trailingDollar.errorType).toBe("syntax");
     });
+
+    describe("delay() and best_guess validation (MIPA-32)", () => {
+      const nodesWithData = [
+        {
+          id: "node_with_latest",
+          symbol: "hasLatest",
+          name: "Factor With Latest Value",
+          latestValue: 42
+        },
+        {
+          id: "node_with_series",
+          symbol: "hasSeries",
+          name: "Factor With Series",
+          timeSeries: [{ timeS: 1000, value: 10 }]
+        },
+        {
+          id: "node_empty",
+          symbol: "noFallback",
+          name: "Factor Without Fallback",
+          latestValue: ""
+        }
+      ];
+
+      it("raises no unrecognized-symbol warning for best_guess in delay()", () => {
+        const result = validateFormulaSyntax("delay(hasLatest, dt, best_guess)", {
+          availableSymbols: ["hasLatest"],
+          allNodes: nodesWithData,
+          currentNodeId: "node_other"
+        });
+
+        expect(result.valid).toBe(true);
+        expect(result.unknownSymbols).toEqual([]);
+        expect(result.delayWarnings).toEqual([]);
+      });
+
+      it("warns and names the factor when referenced factor has neither latest value nor series", () => {
+        const result = validateFormulaSyntax("delay(noFallback, dt, best_guess)", {
+          availableSymbols: ["noFallback"],
+          allNodes: nodesWithData,
+          currentNodeId: "node_other"
+        });
+
+        expect(result.valid).toBe(true); // Advisory warning: does not block validity
+        expect(result.unknownSymbols).toEqual([]);
+        expect(result.delayWarnings.length).toBe(1);
+        expect(result.delayWarnings[0].type).toBe("no_fallback");
+        expect(result.delayWarnings[0].factorName).toBe("Factor Without Fallback");
+        expect(result.delayWarnings[0].symbol).toBe("noFallback");
+      });
+
+      it("warns when referencing factor via $nodeId without fallback value", () => {
+        const result = validateFormulaSyntax("delay($node_empty, dt, best_guess)", {
+          availableSymbols: ["$node_empty"],
+          allNodes: nodesWithData,
+          currentNodeId: "node_other"
+        });
+
+        expect(result.valid).toBe(true);
+        expect(result.delayWarnings.length).toBe(1);
+        expect(result.delayWarnings[0].type).toBe("no_fallback");
+        expect(result.delayWarnings[0].factorName).toBe("Factor Without Fallback");
+      });
+
+      it("clears delay warning when currentNode has reactive latestValue", () => {
+        // Node in allNodes has no latest value, but currentNode has unsaved latestValue
+        const currentNode = {
+          id: "node_empty",
+          symbol: "noFallback",
+          name: "Factor Without Fallback",
+          latestValue: 99
+        };
+
+        const result = validateFormulaSyntax("delay(noFallback, dt, best_guess)", {
+          availableSymbols: ["noFallback"],
+          allNodes: nodesWithData,
+          currentNodeId: "node_empty",
+          currentNode
+        });
+
+        expect(result.valid).toBe(true);
+        expect(result.delayWarnings).toEqual([]);
+      });
+
+      it("warns when referenced factor cannot be resolved from AST", () => {
+        const complexRef = validateFormulaSyntax("delay(a + b, dt, best_guess)", {
+          availableSymbols: ["a", "b"],
+          allNodes: nodesWithData
+        });
+
+        expect(complexRef.valid).toBe(true);
+        expect(complexRef.delayWarnings.length).toBe(1);
+        expect(complexRef.delayWarnings[0].type).toBe("unresolved_factor");
+
+        const unknownFactorRef = validateFormulaSyntax("delay(completelyNonExistent, dt, best_guess)", {
+          availableSymbols: [],
+          allNodes: nodesWithData
+        });
+
+        expect(unknownFactorRef.valid).toBe(true);
+        expect(unknownFactorRef.delayWarnings.length).toBe(1);
+        expect(unknownFactorRef.delayWarnings[0].type).toBe("unresolved_factor");
+        expect(unknownFactorRef.delayWarnings[0].symbol).toBe("completelyNonExistent");
+      });
+
+      it("does not warn if third argument is numeric rather than best_guess", () => {
+        const result = validateFormulaSyntax("delay(noFallback, dt, 0)", {
+          availableSymbols: ["noFallback"],
+          allNodes: nodesWithData
+        });
+
+        expect(result.valid).toBe(true);
+        expect(result.delayWarnings).toEqual([]);
+      });
+    });
   });
 
   describe("getInvalidFormulaCharacters (MIPA-25)", () => {

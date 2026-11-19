@@ -120,6 +120,15 @@ describe("baseline: formulas", () => {
     expect(r.nodesValues.lagged).toEqual([0, 0, 2, 4, 8]);
   });
 
+  it("uses latestValue for delay(self, dt, best_guess) when no history exists (MIPA-32)", async () => {
+    const r = await baseline([
+      node("growing", "delay($growing, dt, best_guess)", {
+        latestValue: 5
+      })
+    ]);
+    expect(r.nodesValues.growing).toEqual([5, 5, 5, 5, 5]);
+  });
+
   it("uses mathjs 15 grouping for a negative fraction followed by a symbol", async () => {
     // Under the old mathjs 8 this meant -1 / (2 * a) = -0.05.
     const r = await baseline([
@@ -234,6 +243,15 @@ describe("baseline: errors", () => {
   it("rejects a constant written in the wrong kind of unit", async () => {
     const error = await expectError([node("a", "5 USD", { unit: "km" })], "Unit mismatch");
     expect(error.errorData).toEqual({ nodeId: "a" });
+  });
+
+  it("rejects delay(..., best_guess) when factor has no history and no latest value (MIPA-32)", async () => {
+    const error = await expectError(
+      [node("growing", "delay($growing, dt, best_guess)", { latestValue: "" })],
+      "Evaluation error"
+    );
+    expect(error.errorMessage).toContain("No history, no initial value, and no latest value available for best guess");
+    expect(error.errorData).toEqual({ nodeId: "growing" });
   });
 
   it("reports circular dependencies with the nodes involved", async () => {
