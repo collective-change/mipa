@@ -16,3 +16,7 @@ export {
   triggerStrategicDigestNow,
   unsubscribeWeeklyDigest
 } from "./notifications/weeklyDigest";
+export {
+  scheduledFirestoreBackup,
+  triggerManualBackup
+} from "./backups/scheduledBackup";
