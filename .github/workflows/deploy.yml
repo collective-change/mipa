@@ -141,10 +141,12 @@ jobs:
         if: steps.migrated.outputs.ready == 'true'
         env:
           PROJECT: ${{ steps.config.outputs.project }}
-        run: >
-          npx --yes firebase-tools@15.36.0 functions:artifacts:setpolicy
-          --project "$PROJECT" --location us-central1 --non-interactive --force
-          || echo "::warning::Couldn't set the cleanup policy for function images."
+        run: |
+          for loc in us-central1 asia-east1; do
+            npx --yes firebase-tools@15.36.0 functions:artifacts:setpolicy \
+              --project "$PROJECT" --location "$loc" --non-interactive --force \
+              || echo "::warning::Couldn't set the cleanup policy for function images in $loc."
+          done
 
       - name: Deploy to Firebase
         if: steps.migrated.outputs.ready == 'true'
@@ -152,4 +154,5 @@ jobs:
           npx --yes firebase-tools@15.36.0 deploy
           --project "${{ steps.config.outputs.project }}"
           --only firestore:rules,firestore:indexes,functions,hosting
+          --force
           --non-interactive
