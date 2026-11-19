@@ -73,10 +73,12 @@ function coordinateScenarioSimulations(data) {
 
   sim = prepSim(data);
   if (sim.errorOccurred) {
-    self.postMessage({
-      errorType: "Error preparing simulation"
-      //errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`
-    });
+    if (!sim.errorPosted) {
+      self.postMessage({
+        errorType: "Error preparing simulation"
+        //errorMessage: `For node "${sim.sortedNodes[nodeIndex].name}",  <br/> ${err}`
+      });
+    }
     return;
   }
 
@@ -115,10 +117,15 @@ async function calculateResultsOfActions(
     return values && typeof values[0] == "number" ? values[0] : NaN;
   };
   let averageEffortCostPerHourNode = modelNodes.find(
-    node => node.id == sim.roleNodes.averageEffortCostPerHour
+    node => node.id == sim.roleNodes?.averageEffortCostPerHour
   );
-  let average = hourlyCostOfNode(sim.roleNodes.averageEffortCostPerHour);
-  if (isNaN(average)) average = Number(averageEffortCostPerHourNode.symbolFormula);
+  let average = hourlyCostOfNode(sim.roleNodes?.averageEffortCostPerHour);
+  if (isNaN(average)) {
+    average = averageEffortCostPerHourNode
+      ? Number(averageEffortCostPerHourNode.symbolFormula)
+      : 0;
+  }
+  if (isNaN(average)) average = 0;
   let averageEffortCostPerHour = { average, ofNode: hourlyCostOfNode };
 
   //simulate each action
@@ -762,6 +769,32 @@ function calcActionResultsFromTimeSeries(
   const roleNodes = sim.roleNodes;
   const yearlyDiscountRate = sim.yearlyDiscountRate;
 
+  // Architectural invariant (Decisions M-5 & M-6):
+  // Money may not substitute for a boundary. No code path converts a limit or a label into a scalar that enters the net.
+  if (Array.isArray(sim.sortedNodes) && roleNodes) {
+    const forbiddenRoleIds = new Set(
+      [
+        roleNodes.orgBenefit,
+        roleNodes.orgCost,
+        roleNodes.worldBenefit,
+        roleNodes.worldCost
+      ].filter(Boolean)
+    );
+
+    for (const node of sim.sortedNodes) {
+      if (!node) continue;
+      const isLimit = node.dimensionKind === "limit" || Boolean(node.isGuardrail);
+      const isLabel = node.dimensionKind === "label";
+      if (isLimit || isLabel) {
+        if (forbiddenRoleIds.has(node.id)) {
+          const err = `Architectural violation (M-5 / M-6): node "${node.name || node.id}" is a ${isLimit ? "limit" : "label"} dimension and cannot be assigned as a monetary netBenefit role node.`;
+          console.error(err);
+          throw err;
+        }
+      }
+    }
+  }
+
   //prepare inputs for calculating NPVs
   const ifDoneOrgBenefitSeries =
     ifDoneTimeSeriesNodesValues[roleNodes.orgBenefit];
@@ -1209,6 +1242,42 @@ function prepSim(data) {
 
   sim.nodes = prepNodesForSort(sim);
   if (sim.errorOccurred) return sim;
+
+  // Architectural invariant (Decisions M-5 & M-6):
+  // Money may not substitute for a boundary. No code path converts a limit or a label into a scalar that enters the net.
+  if (data.roleNodes && Array.isArray(sim.nodes)) {
+    const forbiddenRoleIds = new Set(
+      [
+        data.roleNodes.orgBenefit,
+        data.roleNodes.orgCost,
+        data.roleNodes.worldBenefit,
+        data.roleNodes.worldCost
+      ].filter(Boolean)
+    );
+
+    for (const node of sim.nodes) {
+      if (!node) continue;
+      const isLimit =
+        node.dimensionKind === "limit" || Boolean(node.isGuardrail);
+      const isLabel = node.dimensionKind === "label";
+      if (isLimit || isLabel) {
+        if (forbiddenRoleIds.has(node.id)) {
+          const err = `Architectural violation (M-5 / M-6): node "${node.name ||
+            node.id}" is a ${
+            isLimit ? "limit" : "label"
+          } dimension and cannot be assigned as a monetary netBenefit role node.`;
+          console.error(err);
+          sim.errorOccurred = true;
+          sim.errorPosted = true;
+          self.postMessage({
+            errorType: "Architectural violation",
+            errorMessage: err
+          });
+          return sim;
+        }
+      }
+    }
+  }
 
   sim.nodeTimeSeries = prepNodeTimeSeries(data.modelNodes || data.nodes || sim.nodes);
 
@@ -1913,6 +1982,9 @@ function prepNodesForSort(sim) {
         typeof outerNode.latestValue !== "undefined"
           ? outerNode.latestValue
           : "",
+      dimensionKind:
+        outerNode.dimensionKind || (outerNode.isGuardrail ? "limit" : "value"),
+      isGuardrail: Boolean(outerNode.isGuardrail),
       timeSeries: outerNode.timeSeries || outerNode.series || null
     });
   });

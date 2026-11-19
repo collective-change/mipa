@@ -143,6 +143,32 @@
                 <span v-else class="text-grey-5">-</span>
               </q-td>
             </template>
+            <template v-slot:body-cell-sdgTargets="props">
+              <q-td :props="props">
+                <div v-if="props.value && props.value.length" class="row items-center q-gutter-xs">
+                  <q-chip
+                    v-for="target in props.value"
+                    :key="target"
+                    dense
+                    color="blue-1"
+                    text-color="primary"
+                    size="sm"
+                  >
+                    {{ target }}
+                  </q-chip>
+                </div>
+                <span v-else class="text-grey-5">-</span>
+              </q-td>
+            </template>
+            <template v-slot:body-cell-animalWelfare="props">
+              <q-td :props="props">
+                <span v-if="props.value && props.value !== '-'" class="text-weight-bold text-teal-9">
+                  {{ props.value }}
+                  <span class="text-caption text-grey-6 q-ml-xs">({{ $t('notIncludedInScore') || 'not included in score' }})</span>
+                </span>
+                <span v-else class="text-grey-5">-</span>
+              </q-td>
+            </template>
           </q-table>
         </div>
 
@@ -329,6 +355,100 @@
           </q-table>
         </div>
 
+        <!-- Section 6: World Dimensions & Coverage Statement (MIPA-33) -->
+        <div v-if="dossier.dimensions && dossier.dimensions.length > 0" class="q-mb-lg bg-white q-pa-md rounded-borders border-grey">
+          <div class="row items-center justify-between q-mb-sm">
+            <div class="text-subtitle1 text-weight-bold text-grey-9 row items-center">
+              <q-icon name="category" color="primary" class="q-mr-xs" size="20px" />
+              {{ $t("dimensionCoverageTitle") || "World Dimensions & Coverage Statement" }}
+            </div>
+            <q-chip dense color="blue-1" text-color="primary" size="sm">
+              Decision M-6 / M-7 / M-8
+            </q-chip>
+          </div>
+          <p class="text-caption text-grey-7 q-mb-md">
+            {{ $t("dimensionCoverageDesc") || "Disclosure is mandatory; weighting is optional (Decision M-6). Dimensions not weighted are rendered in physical units and explicitly excluded from the score." }}
+          </p>
+
+          <q-table
+            flat
+            dense
+            :rows="dossier.dimensions"
+            :columns="dimensionColumns"
+            row-key="id"
+            :pagination="{ rowsPerPage: 10 }"
+            class="dossier-table q-mb-md"
+          >
+            <template v-slot:body-cell-kind="props">
+              <q-td :props="props">
+                <q-chip
+                  dense
+                  :color="props.value === 'limit' ? 'red-1' : props.value === 'label' ? 'blue-1' : 'green-1'"
+                  :text-color="props.value === 'limit' ? 'negative' : props.value === 'label' ? 'primary' : 'positive'"
+                  class="text-weight-bold text-capitalize"
+                >
+                  {{ props.value }}
+                </q-chip>
+              </q-td>
+            </template>
+            <template v-slot:body-cell-state="props">
+              <q-td :props="props">
+                <span v-if="props.row.weight && props.row.weight.enabled" class="text-weight-bold text-primary">
+                  {{ $t("dimensionStateWeighted") || "Weighted" }} ({{ props.row.weight.value }})
+                </span>
+                <span v-else class="text-caption text-grey-8">
+                  <q-badge color="orange-1" text-color="orange-9" class="q-mr-xs">
+                    {{ $t("notIncludedInScore") || "not included in the score" }}
+                  </q-badge>
+                  <span v-if="props.row.physicalUnit">({{ props.row.physicalUnit }})</span>
+                </span>
+              </q-td>
+            </template>
+            <template v-slot:body-cell-weightSource="props">
+              <q-td :props="props">
+                <span v-if="props.row.weight && props.row.weight.enabled">
+                  {{ props.row.weightSourceFormatted || props.row.weight.source }}
+                </span>
+                <span v-else class="text-grey-5">-</span>
+              </q-td>
+            </template>
+          </q-table>
+        </div>
+
+        <!-- Section 7: UN Sustainable Development Goals (SDG) Indicator Crosswalk -->
+        <div v-if="dossier.sdgCrosswalk && dossier.sdgCrosswalk.length > 0" class="q-mb-lg bg-white q-pa-md rounded-borders border-grey">
+          <div class="row items-center justify-between q-mb-sm">
+            <div class="text-subtitle1 text-weight-bold text-grey-9 row items-center">
+              <q-icon name="hub" color="primary" class="q-mr-xs" size="20px" />
+              {{ $t("sdgCrosswalkTitle") || "UN SDG Indicator Crosswalk" }}
+            </div>
+            <q-chip dense color="teal-1" text-color="teal-9" icon="verified" size="sm">
+              UN 2030 Agenda
+            </q-chip>
+          </div>
+          <p class="text-caption text-grey-7 q-mb-md">
+            {{ $t("sdgTargetsHint") || "Published crosswalk mapping indicators to SDG targets. A label navigates; a number scores." }}
+          </p>
+
+          <q-table
+            flat
+            dense
+            :rows="dossier.sdgCrosswalk"
+            :columns="sdgCrosswalkColumns"
+            row-key="indicatorCode"
+            :pagination="{ rowsPerPage: 10 }"
+            class="dossier-table"
+          >
+            <template v-slot:body-cell-sdgTarget="props">
+              <q-td :props="props">
+                <q-chip dense color="blue-1" text-color="primary" class="text-weight-bold">
+                  {{ props.value }}
+                </q-chip>
+              </q-td>
+            </template>
+          </q-table>
+        </div>
+
         <!-- Attribution Footer -->
         <div class="dossier-footer text-center q-py-md text-caption text-grey-6">
           <div v-if="dossier.attributionFooter">
@@ -387,11 +507,17 @@ export default {
       return `${lev.toFixed(2)}x`;
     },
     actionColumns() {
-      return [
+      const cols = [
         { name: "title", label: this.$t("Title"), field: "title", align: "left", sortable: true },
         { name: "leverage", label: this.$t("Leverage") + " (效應比)", field: "actionLeverage", align: "center", sortable: true },
         { name: "benefit", label: this.$t("marginalTotalBenefitNpv"), field: "marginalTotalBenefitNpv", align: "right" },
         { name: "roi", label: this.$t("totalRoi"), field: "totalRoi", align: "right" },
+        {
+          name: "sdgTargets",
+          label: this.$t("sdgTargetsLabel") || "SDG Targets",
+          field: "sdgTargets",
+          align: "left"
+        },
         {
           name: "climatePressure",
           label: this.$t("climatePressure") || "Climate Pressure",
@@ -402,6 +528,37 @@ export default {
           align: "right",
           sortable: true
         }
+      ];
+
+      if (this.dossier.animalWelfare) {
+        cols.push({
+          name: "animalWelfare",
+          label: `${this.$t("dimAnimalWelfare") || "Animal Welfare"} (${this.dossier.animalWelfare.physicalUnit || "animal-years"})`,
+          field: (row) =>
+            row.animalYears !== undefined && row.animalYears !== null
+              ? `${row.animalYears} ${this.dossier.animalWelfare.physicalUnit || "animal-years"}`
+              : (row.animalWelfareImpact ? `${row.animalWelfareImpact} ${this.dossier.animalWelfare.physicalUnit || "animal-years"}` : "-"),
+          align: "right"
+        });
+      }
+
+      return cols;
+    },
+    dimensionColumns() {
+      return [
+        { name: "name", label: this.$t("Title") || "Dimension", field: "name", align: "left", sortable: true },
+        { name: "kind", label: this.$t("dimensionKind") || "Kind", field: "kind", align: "center" },
+        { name: "state", label: this.$t("Status") || "State", field: "state", align: "left" },
+        { name: "weightSource", label: this.$t("weightSourceLabel") || "Weight Source", field: "weightSource", align: "left" },
+        { name: "framework", label: this.$t("authority") || "Framework", field: "framework", align: "left" }
+      ];
+    },
+    sdgCrosswalkColumns() {
+      return [
+        { name: "indicatorCode", label: this.$t("shortName") || "Indicator Code", field: "indicatorCode", align: "left" },
+        { name: "indicatorName", label: this.$t("factorName") || "Indicator Name", field: "indicatorName", align: "left" },
+        { name: "sdgTarget", label: this.$t("sdgTargetsLabel") || "SDG Target", field: "sdgTarget", align: "center" },
+        { name: "sdgTitle", label: this.$t("Description") || "SDG Description", field: "sdgTitle", align: "left" }
       ];
     },
     worldFactorColumns() {

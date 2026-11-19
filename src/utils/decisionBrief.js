@@ -4,6 +4,12 @@ import { calculateSroiMetrics } from "./sroi";
 import { runMonteCarloSimulation } from "./monteCarlo";
 import { detectFeedbackLoops } from "./systemDynamics";
 import { isWorldFactor } from "./worldModel";
+import {
+  generateCoverageStatement,
+  DIMENSION_KINDS,
+  DIMENSION_STATES,
+  formatDimensionWeightSource
+} from "./dimensions";
 
 /**
  * Decision Brief and Ranking Explanation Engine (Feature 2)
@@ -240,6 +246,7 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
       totalRoi: action.totalRoi ?? 0,
       sroiRatio: action.sroiRatio ?? (calculateSroiMetrics(action).sroiRatio ?? null),
       effortCompletionPercentage: action.effortCompletionPercentage ?? 0,
+      sdgTargets: Array.isArray(action.sdgTargets) ? action.sdgTargets : [],
       drivers,
       hasUncertainInputs,
       uncertaintySummary: hasUncertainInputs
@@ -448,17 +455,22 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
   }
 
   // Section 5: What the brief does not cover (effects not in the model)
+  const dimensions = options.dimensions || options.model?.dimensions || [];
+  const coverageStatement = generateCoverageStatement(dimensions, { isZh });
+
   let section5Unmodeled;
   if (isZh) {
     section5Unmodeled = `本簡報專注於「${modelName}」中所定義之定量系統關聯與因果反饋。以下外部情境未納入本次數學推演範疇，決策時應由領導層綜合考量：\n\n` +
       `1. 宏觀政策與法規風險：法規環境變動或外部主管機關指導方針之突發調整。\n` +
       `2. 組織變革與團隊承受度：多項行動若同步啟動，可能產生之管理精力分散或團隊倦怠。\n` +
-      `3. 品牌聲譽與公眾信任之質化影響：超出既有量化指標之品牌認同度與利害關係人長期情感連結。`;
+      `3. 品牌聲譽與公眾信任之質化影響：超出既有量化指標之品牌認同度與利害關係人長期情感連結。` +
+      (coverageStatement.unweighted.length > 0 ? `\n\n${coverageStatement.statementText}` : "");
   } else {
     section5Unmodeled = `This brief is based strictly on the quantified system relationships modeled within "${modelName}". The following contextual aspects remain outside the scope of mathematical simulation and warrant qualitative leadership appraisal:\n\n` +
       `1. Regulatory & Macro Policy Fluctuations: Unanticipated statutory changes or government policy shifts.\n` +
       `2. Organizational Absorption Capacity: Potential cultural friction or staff bandwidth constraints if multiple actions launch simultaneously.\n` +
-      `3. Qualitative Brand & Stakeholder Equity: Intangible reputation impacts and trust dimensions not captured in numerical indicators.`;
+      `3. Qualitative Brand & Stakeholder Equity: Intangible reputation impacts and trust dimensions not captured in numerical indicators.` +
+      (coverageStatement.unweighted.length > 0 ? `\n\n${coverageStatement.statementText}` : "");
   }
 
   // Section 4 Guardrail Violations
@@ -531,6 +543,9 @@ export function generateDecisionBrief(actions = [], nodes = [], options = {}) {
       title: isZh ? "模型未涵蓋之外部考量" : "Unmodeled Considerations & Scope Limitations",
       narrative: section5Unmodeled
     },
+    coverageStatement,
+    unweightedDimensions: coverageStatement.unweighted,
+    weightedDimensions: coverageStatement.weighted,
     worldFactors: (nodes || [])
       .filter((n) => n.isWorldFactor || isWorldFactor(n) || n.licence || n.citationUrl)
       .map((n) => ({
@@ -639,6 +654,39 @@ export function formatBriefAsMarkdown(brief) {
       `| #${opt.rank} | **${opt.title}** | ${formatRatioValue(opt.actionLeverage)} | ${formatNumber(opt.marginalNetTotalBenefitNpv, 2)} | ${formatRatioValue(opt.totalRoi)} | ${formatNumber(opt.outstandingDirectCosts, 2)} | ${formatNumber(opt.estEffortHrs, 1)} |`
     );
   });
+
+  if (brief.unweightedDimensions && brief.unweightedDimensions.length > 0) {
+    lines.push(
+      "",
+      `### ${isZh ? "未計入評分之實體指標（not included in the score）" : "Physical Dimension Indicators (Not Included in the Score)"}`,
+      "",
+      isZh
+        ? "依據決策誠信規範（M-6），以下實體維度指標以物理量揭露，**未計入綜合評分**（not included in the score）："
+        : "Per decision disclosure rules (M-6), the following physical indicators are disclosed in physical units and **not included in the score**:",
+      "",
+      `| ${isZh ? "維度指標" : "Dimension"} | ${isZh ? "實體單位" : "Physical Units"} | ${isZh ? "揭露狀態" : "Status"} |`,
+      "|---|---|---|",
+      ...brief.unweightedDimensions.map(
+        (d) => `| **${d.name}** | \`${d.physicalUnit}\` | *not included in the score* |`
+      )
+    );
+  }
+
+  const actionsWithSdg = (brief.section2.options || []).filter(o => Array.isArray(o.sdgTargets) && o.sdgTargets.length > 0);
+  if (actionsWithSdg.length > 0) {
+    lines.push(
+      "",
+      `### ${isZh ? "聯合國永續發展目標標籤（SDG Target Tags）" : "UN Sustainable Development Goals (SDG Target Tags)"}`,
+      "",
+      isZh
+        ? "標籤僅供導航與目標對齊，不產生任何計分或數值金額（A label navigates; a number scores）："
+        : "Tags serve navigation and alignment purposes only and produce no numeric score or monetary figure:",
+      "",
+      `| ${isZh ? "方案名稱" : "Option"} | ${isZh ? "SDG 目標標籤" : "SDG Targets"} |`,
+      "|---|---|",
+      ...actionsWithSdg.map(o => `| **${o.title}** | ${o.sdgTargets.map(t => `\`${t}\``).join(" ")} |`)
+    );
+  }
 
   lines.push(
     "",
