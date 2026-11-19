@@ -133,4 +133,118 @@ describe("MIPA-15: Stakeholder Viewer Firestore Security Rules (Emulator Verifie
       formula: "50"
     }));
   });
+
+  it("proves that an org-level viewer (viewers.org) can read models, nodes, and snapshots, while non-members are denied and writes are refused (MIPA-51)", async () => {
+    const unique = Date.now() + 1;
+    const modelId = `model-org-viewer-${unique}`;
+    const orgId = `org-mipa-ops-${unique}`;
+    const otherOrgId = `org-other-${unique}`;
+
+    // Seed data: legacy model where viewers = { org: [orgId] } and no viewers.users / viewers.emails
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      // Target Org doc with two members: creator/editor and regular member
+      await setDoc(doc(adminDb, `orgs/${orgId}`), {
+        name: "Mipa Ops Org",
+        users: ["editor-uid", "org-member-uid"],
+        superAdmins: ["editor-uid"],
+        seatLimit: 5
+      });
+      // Other Org doc
+      await setDoc(doc(adminDb, `orgs/${otherOrgId}`), {
+        name: "Other Org",
+        users: ["other-org-user-uid"],
+        superAdmins: ["other-org-user-uid"]
+      });
+      // Model carrying the legacy viewers.org shape
+      await setDoc(doc(adminDb, `models/${modelId}`), {
+        name: "Main",
+        isPublic: false,
+        orgId,
+        owners: { users: ["editor-uid"] },
+        editors: { users: ["editor-uid"] },
+        viewers: {
+          org: [orgId]
+        }
+      });
+      // Node inside model
+      await setDoc(doc(adminDb, `models/${modelId}/nodes/node-alpha`), {
+        name: "Gross Margin",
+        symbol: "gm",
+        formula: "0.45"
+      });
+      // Snapshot inside model
+      await setDoc(doc(adminDb, `models/${modelId}/snapshots/snap-init`), {
+        title: "Initial Snapshot",
+        nodesCount: 1
+      });
+    });
+
+    // 1. Regular org member (in org.users, but NOT in editors.users or viewers.users)
+    const orgMemberContext = testEnv.authenticatedContext("org-member-uid", {
+      email: "member@mipa-ops.org",
+      email_verified: true
+    });
+    const orgMemberDb = orgMemberContext.firestore();
+
+    // Must SUCCEED reading model, nodes, and snapshots
+    await assertSucceeds(getDoc(doc(orgMemberDb, `models/${modelId}`)));
+    await assertSucceeds(getDoc(doc(orgMemberDb, `models/${modelId}/nodes/node-alpha`)));
+    await assertSucceeds(getDoc(doc(orgMemberDb, `models/${modelId}/snapshots/snap-init`)));
+
+    // Must FAIL on all write operations
+    await assertFails(updateDoc(doc(orgMemberDb, `models/${modelId}`), { name: "Hacked Main" }));
+    await assertFails(deleteDoc(doc(orgMemberDb, `models/${modelId}`)));
+    await assertFails(setDoc(doc(orgMemberDb, `models/${modelId}/nodes/node-rogue`), { name: "Rogue Node" }));
+    await assertFails(updateDoc(doc(orgMemberDb, `models/${modelId}/nodes/node-alpha`), { formula: "0.99" }));
+    await assertFails(deleteDoc(doc(orgMemberDb, `models/${modelId}/nodes/node-alpha`)));
+    await assertFails(setDoc(doc(orgMemberDb, `models/${modelId}/snapshots/snap-rogue`), { title: "Rogue Snap" }));
+
+    // 2. User from a DIFFERENT org (in otherOrg.users, NOT in target org)
+    const otherOrgUserContext = testEnv.authenticatedContext("other-org-user-uid", {
+      email: "stranger@other-org.com"
+    });
+    const otherOrgUserDb = otherOrgUserContext.firestore();
+
+    // Must FAIL reading model, nodes, and snapshots
+    await assertFails(getDoc(doc(otherOrgUserDb, `models/${modelId}`)));
+    await assertFails(getDoc(doc(otherOrgUserDb, `models/${modelId}/nodes/node-alpha`)));
+    await assertFails(getDoc(doc(otherOrgUserDb, `models/${modelId}/snapshots/snap-init`)));
+
+    // 3. User with no org at all
+    const noOrgUserContext = testEnv.authenticatedContext("lonely-user-uid", {
+      email: "lonely@nowhere.com"
+    });
+    const noOrgUserDb = noOrgUserContext.firestore();
+
+    await assertFails(getDoc(doc(noOrgUserDb, `models/${modelId}`)));
+    await assertFails(getDoc(doc(noOrgUserDb, `models/${modelId}/nodes/node-alpha`)));
+    await assertFails(getDoc(doc(noOrgUserDb, `models/${modelId}/snapshots/snap-init`)));
+
+    // 4. Also verify string form: viewers: { org: orgId }
+    const modelStringId = `model-org-string-${unique}`;
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const adminDb = context.firestore();
+      await setDoc(doc(adminDb, `models/${modelStringId}`), {
+        name: "Main String Form",
+        isPublic: false,
+        orgId,
+        owners: { users: ["editor-uid"] },
+        editors: { users: ["editor-uid"] },
+        viewers: {
+          org: orgId
+        }
+      });
+      await setDoc(doc(adminDb, `models/${modelStringId}/nodes/node-beta`), {
+        name: "Operating Costs",
+        symbol: "opex",
+        formula: "5000"
+      });
+    });
+
+    await assertSucceeds(getDoc(doc(orgMemberDb, `models/${modelStringId}`)));
+    await assertSucceeds(getDoc(doc(orgMemberDb, `models/${modelStringId}/nodes/node-beta`)));
+    await assertFails(getDoc(doc(otherOrgUserDb, `models/${modelStringId}`)));
+    await assertFails(getDoc(doc(otherOrgUserDb, `models/${modelStringId}/nodes/node-beta`)));
+  });
 });

@@ -1211,5 +1211,8 @@ export default {
   "importCountryModelConfirmPrompt": "バージョン管理されたレイヤー1国別モデル（世界銀行WDIの12指標）をこのモデルにインポートしますか？一致するIDを持つ既存要素は更新されます。",
   "auditedProvenance": "監査済み出所情報",
   "citationUrl": "引用URL",
-  "licence": "ライセンス"
+  "licence": "ライセンス",
+  "noModelAccessTitle": "このモデルへのアクセス権がありません",
+  "noModelAccessDesc": "このモデルを閲覧する権限がありません。モデルの所有者または組織の管理者にお問い合わせください。",
+  "backToOrgs": "組織一覧に戻る"
 };

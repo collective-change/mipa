@@ -142,6 +142,16 @@ service cloud.firestore {
         ('viewers' in modelData && modelData.viewers != null && (
           ('users' in modelData.viewers && modelData.viewers.users != null && request.auth.uid in modelData.viewers.users)
           || ('emails' in modelData.viewers && modelData.viewers.emails != null && request.auth.token.email != null && request.auth.token.email.lower() in modelData.viewers.emails)
+          || ('org' in modelData.viewers && modelData.viewers.org != null && (
+            (modelData.viewers.org is string && userInOrg(modelData.viewers.org))
+            || (modelData.viewers.org is list && (
+              (modelData.viewers.org.size() > 0 && userInOrg(modelData.viewers.org[0]))
+              || (modelData.viewers.org.size() > 1 && userInOrg(modelData.viewers.org[1]))
+              || (modelData.viewers.org.size() > 2 && userInOrg(modelData.viewers.org[2]))
+              || (modelData.viewers.org.size() > 3 && userInOrg(modelData.viewers.org[3]))
+              || (modelData.viewers.org.size() > 4 && userInOrg(modelData.viewers.org[4]))
+            ))
+          ))
         ))
       );
     }

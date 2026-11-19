@@ -1213,5 +1213,10 @@ export default {
   unitMismatchError: "活动单位与排放因子预期单位不符，严禁隐性单位强制转换。",
   attachClimatePressure: "附加气候压力",
   removeClimatePressure: "移除气候压力",
-  physicalOnlyNotice: "系统仅记录物理量（tCO2e）。依据决策规范 M-5，界限压力绝不转换为货币金额亦不计入净效益。"
+  physicalOnlyNotice: "系统仅记录物理量（tCO2e）。依据决策规范 M-5，界限压力绝不转换为货币金额亦不计入净效益。",
+
+  // Model Access (MIPA-51)
+  noModelAccessTitle: "无权限访问此模型",
+  noModelAccessDesc: "您没有查看此模型的权限。请联系模型所有者或组织管理员以获取访问权限。",
+  backToOrgs: "返回组织列表"
 };
