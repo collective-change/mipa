@@ -1,6 +1,7 @@
 import { uid, Notify } from "quasar";
 import { unref } from "vue";
-import { firebaseDb, firebaseAuth } from "@/boot/firebase";
+import { firebaseDb, firebaseAuth, firebaseFunctions } from "@/boot/firebase";
+import { httpsCallable } from "firebase/functions";
 import {
   collection,
   doc,
@@ -68,17 +69,22 @@ const actions = {
       });
   },
   async deleteOrg({ dispatch }, orgId) {
-    //let userId = firebaseAuth.currentUser.uid;
-    await deleteDoc(doc(firebaseDb, "orgs", orgId))
-      .then(function() {
+    try {
+      const deleteOrgFn = httpsCallable(firebaseFunctions, "deleteOrganization");
+      await deleteOrgFn({ orgId });
+      Notify.create(i18n.global.t("toastOrgDeleted"));
+    } catch (error) {
+      console.warn("deleteOrganization callable failed, falling back to direct delete:", error);
+      try {
+        await deleteDoc(doc(firebaseDb, "orgs", orgId));
         Notify.create(i18n.global.t("toastOrgDeleted"));
-      })
-      .catch(function(error) {
-        showErrorMessage("Error deleting organization", error.message);
-      });
+      } catch (directError) {
+        showErrorMessage("Error deleting organization", directError.message || error.message);
+        throw directError;
+      }
+    }
 
     dispatch("model/deleteModel", orgId, { root: true });
-    //TODO: delete all non-public models solely owned by org
   },
   addOrg({ dispatch }, org) {
     //add organization and its main model

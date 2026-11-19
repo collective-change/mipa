@@ -6,6 +6,7 @@ describe("public-paths.js", () => {
     expect(PUBLIC_PATHS).toContain("/");
     expect(PUBLIC_PATHS).toContain("/auth");
     expect(PUBLIC_PATHS).toContain("/privacy");
+    expect(PUBLIC_PATHS).toContain("/terms");
     expect(PUBLIC_PATHS).toContain("/about");
   });
 
@@ -13,6 +14,7 @@ describe("public-paths.js", () => {
     expect(isPublicPath("/")).toBe(true);
     expect(isPublicPath("/auth")).toBe(true);
     expect(isPublicPath("/privacy")).toBe(true);
+    expect(isPublicPath("/terms")).toBe(true);
     expect(isPublicPath("/m/relief-surge-model")).toBe(true);
     expect(isPublicPath("/m/test-model-123")).toBe(true);
 

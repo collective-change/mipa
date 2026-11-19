@@ -218,8 +218,27 @@ export default {
     "Give each action a responsible and an accountable person, and move it through its states as it is approved and completed. My to-do lists the actions you are responsible for. Every node and action has a chat, so the discussion stays next to the work.",
   helpMore: "Something unclear or not working?",
 
-  // for PagePrivacy.vue
+  // for PagePrivacy.vue & PageTerms.vue
+  privacyPolicyTitle: "Privacy Policy",
+  "Privacy Policy": "Privacy Policy",
+  termsOfServiceTitle: "Terms of Service",
+  "Terms of Service": "Terms of Service",
   privacyEnglishOnly: "This policy is currently available in English only.",
+  termsEnglishOnly: "This agreement is currently available in English only.",
+  and: "and",
+  checkoutTermsNoticePrefix: "By subscribing or upgrading via Lemon Squeezy (our Merchant of Record), you agree to our",
+
+  // for PageSettings.vue (account & data management)
+  accountDataManagement: "Account & Data Management",
+  exportMyData: "Export my data",
+  exportMyDataDesc: "Download a copy of your profile and organizational membership records as JSON.",
+  toastDataExported: "Your data has been exported.",
+  deleteAccountTitle: "Delete Account",
+  deleteAccountBtn: "Delete my account",
+  deleteAccountDesc: "Permanently delete your user credentials, profile, and private working drafts.",
+  deleteAccountConfirm: "Are you sure you want to delete your account? What is deleted: Your user credentials, profile, private drafts, and organization memberships. What is retained: Any public dossiers previously published to the Register remain citable and timestamped per our permanent record policy ('revocation ≠ erasure'). This cannot be undone.",
+  toastAccountDeleted: "Your account has been deleted.",
+  deleteOrgConfirmDetailed: "Delete {name} and everything in it? What is deleted: Organization settings, member rosters, AI configurations, private models, formulas, internal actions, and chats. What is retained: Any public dossiers previously published to the Register remain citable and timestamped per our permanence policy ('revocation ≠ erasure'). This cannot be undone.",
 
   // for organization members
   Members: "Members",

@@ -71,6 +71,15 @@
             </span>
           </div>
         </q-card-section>
+
+        <q-card-section v-if="isAdmin" class="q-pt-none q-pb-sm text-caption text-grey-7">
+          <div class="checkout-terms-notice">
+            {{ $t("checkoutTermsNoticePrefix") }}
+            <router-link to="/terms" class="text-primary text-weight-medium" target="_blank">{{ $t("Terms of Service") }}</router-link>
+            {{ $t("and") }}
+            <router-link to="/privacy" class="text-primary text-weight-medium" target="_blank">{{ $t("Privacy Policy") }}</router-link>.
+          </div>
+        </q-card-section>
       </q-card>
 
       <!-- Member Invitation Section (Admins only) -->

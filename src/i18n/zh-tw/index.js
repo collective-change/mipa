@@ -213,8 +213,27 @@ export default {
     "為每個行動指定負責人和當責人，並隨著核准與完成推進它的狀態。「待辦」會列出由你負責的行動。每個節點和行動都有聊天室，讓討論緊貼著工作本身。",
   helpMore: "有不清楚或無法運作的地方嗎？",
 
-  // for PagePrivacy.vue
+  // for PagePrivacy.vue & PageTerms.vue
+  privacyPolicyTitle: "隱私權政策",
+  "Privacy Policy": "隱私權政策",
+  termsOfServiceTitle: "服務條款",
+  "Terms of Service": "服務條款",
   privacyEnglishOnly: "本隱私權政策目前僅提供英文版本。",
+  termsEnglishOnly: "本服務條款目前僅提供英文版本。",
+  and: "與",
+  checkoutTermsNoticePrefix: "透過 Lemon Squeezy（我們的紀錄商家）訂閱或升級，即表示您同意我們的",
+
+  // for PageSettings.vue (account & data management)
+  accountDataManagement: "帳號與資料管理",
+  exportMyData: "匯出我的資料",
+  exportMyDataDesc: "下載包含您的個人檔案與組織成員記錄的 JSON 檔案。",
+  toastDataExported: "您的資料已成功匯出。",
+  deleteAccountTitle: "刪除帳號",
+  deleteAccountBtn: "刪除我的帳號",
+  deleteAccountDesc: "永久刪除您的登入認證、個人檔案與私有工作草稿。",
+  deleteAccountConfirm: "您確定要刪除帳號嗎？刪除範圍：您的登入認證、個人檔案、私有草稿以及組織成員資格。保留範圍：先前已公開發布至公共登記冊（Register）的決策卷宗將依「撤回不等於抹除」（revocation ≠ erasure）之永久保存原則予以保留並標註時間戳記。此動作無法復原。",
+  toastAccountDeleted: "您的帳號已成功刪除。",
+  deleteOrgConfirmDetailed: "確定要刪除「{name}」及其所有內容嗎？刪除範圍：組織設定、成員名單、AI 配置、私有模型、公式、內部行動與聊天記錄。保留範圍：先前已發布至公共登記冊（Register）的公開決策卷宗將依「撤回不等於抹除」（revocation ≠ erasure）之永久政策予以保留並標註時間戳記。此動作無法復原。",
 
   // for organization members
   Members: "成員",

@@ -289,6 +289,7 @@
           <div class="col-12 col-md-6 text-center text-md-right">
             <router-link to="/about" class="footer-link q-mx-sm">{{ $t("About") }}</router-link>
             <router-link to="/privacy" class="footer-link q-mx-sm">{{ $t("Privacy") }}</router-link>
+            <router-link to="/terms" class="footer-link q-mx-sm">{{ $t("Terms") }}</router-link>
             <a
               href="https://github.com/collective-change/mipa#readme"
               target="_blank"
