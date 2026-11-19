@@ -686,6 +686,9 @@
 
           <climate-pressure-card v-model="climatePressure" />
 
+          <!-- Counterfactual & Attribution Design (MIPA-40) -->
+          <counterfactual-card :action="uiAction" @save="onSaveCounterfactual" />
+
           <!-- UN Sustainable Development Goals (SDG) Target Tagging (MIPA-33) -->
           <q-card flat bordered class="q-my-md bg-white">
             <q-card-section class="q-pb-xs">
@@ -895,6 +898,7 @@ import DecisionBriefModal from "@/components/Actions/Modals/DecisionBriefModal.v
 import ExplainRankingModal from "@/components/Actions/Modals/ExplainRankingModal.vue";
 import SroiImpactMapModal from "@/components/Actions/Modals/SroiImpactMapModal.vue";
 import ClimatePressureCard from "@/components/Actions/ClimatePressureCard.vue";
+import CounterfactualCard from "@/components/Actions/CounterfactualCard.vue";
 import { calculateSroiMetrics, formatSroiRatio } from "@/utils/sroi";
 
 const { mapFields } = createHelpers({
@@ -919,6 +923,7 @@ export default {
     "explain-ranking-modal": ExplainRankingModal,
     "sroi-impact-map-modal": SroiImpactMapModal,
     "climate-pressure-card": ClimatePressureCard,
+    "counterfactual-card": CounterfactualCard,
   },
 
   props: ["action"],
@@ -986,6 +991,7 @@ export default {
       "uiAction.accountablePerson",
       "uiAction.departmentTag",
       "uiAction.climatePressure",
+      "uiAction.counterfactual",
       "uiAction.sdgTargets",
       "uiAction.chatId",
     ]),
@@ -1226,6 +1232,15 @@ export default {
       this.deadweight = deadweight;
       this.attribution = attribution;
       this.displacement = displacement;
+    },
+
+    onSaveCounterfactual(cfPayload) {
+      this.counterfactual = cfPayload;
+      const payload = {
+        id: this.action.id,
+        updates: { counterfactual: cfPayload }
+      };
+      this.$store.dispatch("actions/updateAction", payload);
     },
 
     async loadAction(newAction) {

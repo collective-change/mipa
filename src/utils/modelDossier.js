@@ -2,6 +2,7 @@ import { detectFeedbackLoops, detectSystemArchetypes } from "@/utils/systemDynam
 import { runMonteCarloSimulation } from "@/utils/monteCarlo";
 import { isWorldFactor } from "@/utils/worldModel";
 import { sumPortfolioPressures } from "@/utils/conversionFactors";
+import { buildActionCounterfactualSummary } from "@/utils/counterfactual";
 import {
   generateCoverageStatement,
   formatDimensionWeightSource,
@@ -80,12 +81,22 @@ export function buildDossierSummary({
     (f) => f.isWorldFactor || f.licence || f.citationUrl
   );
 
-  // Sort candidate actions by simulated leverage descending
-  const rankedActions = [...(actions || [])].sort((a, b) => {
-    const levA = Number(a.actionLeverage) || 0;
-    const levB = Number(b.actionLeverage) || 0;
-    return levB - levA;
-  });
+  // Sort candidate actions by simulated leverage descending and attach counterfactual provenance
+  const rankedActions = [...(actions || [])]
+    .map(action => {
+      const cfSummary = buildActionCounterfactualSummary(action);
+      return {
+        ...action,
+        counterfactualArm: cfSummary,
+        valueFlags: action.valueFlags || cfSummary.valueFlags,
+        measuredArm: action.measuredArm || cfSummary.measuredArm
+      };
+    })
+    .sort((a, b) => {
+      const levA = Number(a.actionLeverage) || 0;
+      const levB = Number(b.actionLeverage) || 0;
+      return levB - levA;
+    });
 
   // System dynamics structural analysis
   const loops = detectFeedbackLoops(nodes || []);

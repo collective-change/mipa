@@ -204,4 +204,58 @@ describe("PageModelDossier.vue", () => {
     expect(text).toContain("49.5 tCO2e");
     expect(text).toContain("Action Climate Pressures and Emission Factor Provenance");
   });
+
+  it("renders counterfactual arm status, value flags, and method statement in ranked actions table (MIPA-40)", async () => {
+    mockGetActions.mockResolvedValue({
+      data: {
+        actions: [
+            {
+              id: "act-cf-measured",
+              title: "Clinical Trial Outreach",
+              actionLeverage: 18.2,
+              marginalTotalBenefitNpv: 54000,
+              totalRoi: 3.2,
+              counterfactual: {
+                armType: "measured",
+                method: "difference_in_differences",
+                attributionDate: "2026-11-18",
+                assumptions: "Parallel trends in pre-treatment cohorts",
+                limits: "Cross-district referral spillover",
+                series: [{ date: "2026-11-18", value: 42, type: "measured" }]
+              }
+            },
+            {
+              id: "act-cf-declared",
+              title: "General Maintenance",
+              actionLeverage: 4.1,
+              marginalTotalBenefitNpv: 12000,
+              totalRoi: 1.1
+            }
+          ]
+        }
+    });
+
+    const wrapper = mountDossier("en-us");
+    await wrapper.vm.fetchDossierData();
+
+    const ranked = wrapper.vm.dossier.rankedActions;
+    expect(ranked).toHaveLength(2);
+    expect(ranked[0].id).toBe("act-cf-measured");
+    expect(ranked[0].counterfactualArm.isMeasured).toBe(true);
+    expect(ranked[0].valueFlags.actionLeverage).toBe("measured");
+    expect(ranked[0].counterfactualArm.statement).toBe(
+      "The counterfactual is observed, chosen by Difference-in-Differences (DiD), on 2026-11-18."
+    );
+    expect(ranked[0].counterfactualArm.assumptions).toBe("Parallel trends in pre-treatment cohorts");
+    expect(ranked[0].counterfactualArm.limits).toBe("Cross-district referral spillover");
+
+    expect(ranked[1].id).toBe("act-cf-declared");
+    expect(ranked[1].counterfactualArm.isMeasured).toBe(false);
+    expect(ranked[1].valueFlags.actionLeverage).toBe("declared");
+
+    const cfCol = wrapper.vm.actionColumns.find(c => c.name === "counterfactualArm");
+    expect(cfCol).toBeDefined();
+    expect(cfCol.field(ranked[0])).toBe("measured");
+    expect(cfCol.field(ranked[1])).toBe("declared");
+  });
 });

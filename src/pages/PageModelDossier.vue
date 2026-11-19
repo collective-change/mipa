@@ -165,9 +165,87 @@
           >
             <template v-slot:body-cell-leverage="props">
               <q-td :props="props">
-                <q-chip dense color="blue-1" text-color="primary" class="text-weight-bold">
-                  {{ Number(props.value || 0).toFixed(2) }}x
-                </q-chip>
+                <div class="row items-center justify-center q-gutter-xs">
+                  <q-chip dense color="blue-1" text-color="primary" class="text-weight-bold">
+                    {{ Number(props.value || 0).toFixed(2) }}x
+                  </q-chip>
+                  <q-badge
+                    v-if="props.row.valueFlags && props.row.valueFlags.actionLeverage"
+                    :color="valueFlagColor(props.row.valueFlags.actionLeverage)"
+                    :text-color="valueFlagTextColor(props.row.valueFlags.actionLeverage)"
+                    class="text-caption text-weight-bold"
+                  >
+                    {{ formatValueFlag(props.row.valueFlags.actionLeverage) }}
+                  </q-badge>
+                </div>
+              </q-td>
+            </template>
+            <template v-slot:body-cell-benefit="props">
+              <q-td :props="props">
+                <div class="row items-center justify-end q-gutter-xs">
+                  <span>{{ formatNumber(props.value, 0) }}</span>
+                  <q-badge
+                    v-if="props.row.valueFlags && props.row.valueFlags.marginalNetTotalBenefitNpv"
+                    :color="valueFlagColor(props.row.valueFlags.marginalNetTotalBenefitNpv)"
+                    :text-color="valueFlagTextColor(props.row.valueFlags.marginalNetTotalBenefitNpv)"
+                    class="text-caption"
+                  >
+                    {{ formatValueFlag(props.row.valueFlags.marginalNetTotalBenefitNpv) }}
+                  </q-badge>
+                </div>
+              </q-td>
+            </template>
+            <template v-slot:body-cell-roi="props">
+              <q-td :props="props">
+                <div class="row items-center justify-end q-gutter-xs">
+                  <span>{{ formatNumber(props.value, 2) }}</span>
+                  <q-badge
+                    v-if="props.row.valueFlags && props.row.valueFlags.totalRoi"
+                    :color="valueFlagColor(props.row.valueFlags.totalRoi)"
+                    :text-color="valueFlagTextColor(props.row.valueFlags.totalRoi)"
+                    class="text-caption"
+                  >
+                    {{ formatValueFlag(props.row.valueFlags.totalRoi) }}
+                  </q-badge>
+                </div>
+              </q-td>
+            </template>
+            <template v-slot:body-cell-counterfactualArm="props">
+              <q-td :props="props">
+                <div v-if="props.row.counterfactualArm && props.row.counterfactualArm.isMeasured" class="text-center">
+                  <q-chip
+                    dense
+                    color="green-1"
+                    text-color="positive"
+                    icon="verified"
+                    class="text-weight-bold cursor-pointer"
+                  >
+                    {{ $t("measuredCounterfactualBadge") || "Measured" }}: {{ props.row.counterfactualArm.methodLabel || props.row.counterfactualArm.method }}
+                    <q-tooltip class="bg-grey-9 text-body2 q-pa-sm" style="max-width: 340px;">
+                      <div class="text-weight-bold q-mb-xs">{{ props.row.counterfactualArm.statement }}</div>
+                      <div v-if="props.row.counterfactualArm.assumptions" class="q-mt-xs">
+                        <strong>{{ $t("methodAssumptions") || "Assumptions" }}:</strong> {{ props.row.counterfactualArm.assumptions }}
+                      </div>
+                      <div v-if="props.row.counterfactualArm.limits" class="q-mt-xs">
+                        <strong>{{ $t("methodLimits") || "Limitations" }}:</strong> {{ props.row.counterfactualArm.limits }}
+                      </div>
+                      <div v-if="props.row.counterfactualArm.seriesCount > 0" class="q-mt-xs text-caption text-grey-4">
+                        {{ props.row.counterfactualArm.seriesCount }} observed points
+                      </div>
+                    </q-tooltip>
+                  </q-chip>
+                  <div class="text-caption text-grey-6" style="font-size: 10px;">
+                    {{ props.row.counterfactualArm.attributionDate || "" }}
+                  </div>
+                </div>
+                <div v-else class="text-center">
+                  <q-chip dense color="grey-2" text-color="grey-8">
+                    {{ $t("declaredBaselineBadge") || "Declared Baseline" }}
+                    <q-tooltip class="bg-grey-9 text-caption q-pa-xs">
+                      {{ $t("declaredBaselineTooltip") || "Counterfactual derived directly from baseline projection (unobserved)." }}
+                    </q-tooltip>
+                  </q-chip>
+                </div>
               </q-td>
             </template>
             <template v-slot:body-cell-climatePressure="props">
@@ -568,6 +646,13 @@ export default {
         { name: "benefit", label: this.$t("marginalTotalBenefitNpv"), field: "marginalTotalBenefitNpv", align: "right" },
         { name: "roi", label: this.$t("totalRoi"), field: "totalRoi", align: "right" },
         {
+          name: "counterfactualArm",
+          label: this.$t("counterfactualArmLabel") || "Counterfactual Arm",
+          field: (row) => (row.counterfactualArm?.isMeasured ? "measured" : "declared"),
+          align: "center",
+          sortable: true
+        },
+        {
           name: "sdgTargets",
           label: this.$t("sdgTargetsLabel") || "SDG Targets",
           field: "sdgTargets",
@@ -741,6 +826,28 @@ export default {
     },
     exportPdf() {
       printDossierBrief(this.dossier.modelTitle);
+    },
+    formatNumber(val, decimals = 0) {
+      if (val === null || val === undefined || isNaN(val)) return "-";
+      return Number(val).toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    },
+    valueFlagColor(flag) {
+      if (flag === "measured") return "positive";
+      if (flag === "forecast") return "warning";
+      return "grey-4";
+    },
+    valueFlagTextColor(flag) {
+      if (flag === "measured" || flag === "forecast") return "white";
+      return "grey-9";
+    },
+    formatValueFlag(flag) {
+      if (!flag) return "";
+      const key = `valueFlag_${flag}`;
+      const translated = this.$t(key);
+      return translated !== key ? translated : flag;
     }
   }
 };
