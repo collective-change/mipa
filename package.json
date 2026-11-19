@@ -55,5 +55,6 @@
   },
   "overrides": {
     "@grpc/grpc-js": "^1.14.7"
-  }
+  },
+  "license": "AGPL-3.0-only"
 }
