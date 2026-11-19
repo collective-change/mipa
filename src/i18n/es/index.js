@@ -1211,5 +1211,8 @@ export default {
   "importCountryModelConfirmPrompt": "¿Importar el modelo de país Capa 1 versionado (12 indicadores del Banco Mundial WDI) en este modelo? Los factores existentes con identificadores coincidentes se actualizarán.",
   "auditedProvenance": "Procedencia Auditada",
   "citationUrl": "URL de Cita",
-  "licence": "Licencia"
+  "licence": "Licencia",
+  "noModelAccessTitle": "Sin acceso a este modelo",
+  "noModelAccessDesc": "No tienes permiso para ver este modelo. Comunícate con el propietario del modelo o con un administrador de la organización para solicitar acceso.",
+  "backToOrgs": "Volver a Organizaciones"
 };

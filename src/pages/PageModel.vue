@@ -1,21 +1,58 @@
 <template>
   <q-page>
-    <div v-if="currentOrg && currentOrg.goal" class="q-px-md q-pt-sm text-subtitle1 text-grey-8">
-      {{ currentOrg.goal }}
-    </div>
-    <q-banner
-      v-if="isReadOnly"
-      dense
-      rounded
-      class="bg-blue-1 text-primary q-mx-sm q-mb-sm print-hide"
+    <!-- Loading State -->
+    <div
+      v-if="modelLoading"
+      class="row justify-center items-center q-pa-xl text-center"
+      style="min-height: 400px;"
     >
-      <template v-slot:avatar>
-        <q-icon name="visibility" color="primary" />
-      </template>
-      <div class="text-body2 text-weight-medium">
-        {{ $t("stakeholderViewerNotice") }}
+      <q-spinner color="primary" size="3em" />
+    </div>
+
+    <!-- No Access State (MIPA-51) -->
+    <div
+      v-else-if="!hasAccess"
+      class="row justify-center items-center q-pa-xl text-center"
+      style="min-height: 400px;"
+      data-testid="no-model-access"
+    >
+      <div class="col-12 col-sm-8 col-md-6">
+        <q-icon name="lock" size="64px" color="grey-6" class="q-mb-md" />
+        <div class="text-h5 text-weight-bold q-mb-sm text-grey-9">
+          {{ $t("noModelAccessTitle") }}
+        </div>
+        <div class="text-body1 text-grey-7 q-mb-lg">
+          {{ $t("noModelAccessDesc") }}
+        </div>
+        <q-btn
+          unelevated
+          no-caps
+          color="primary"
+          icon="arrow_back"
+          :label="$t('backToOrgs')"
+          :to="{ name: 'orgs' }"
+        />
       </div>
-    </q-banner>
+    </div>
+
+    <!-- Accessible Model View -->
+    <template v-else>
+      <div v-if="currentOrg && currentOrg.goal" class="q-px-md q-pt-sm text-subtitle1 text-grey-8">
+        {{ currentOrg.goal }}
+      </div>
+      <q-banner
+        v-if="isReadOnly"
+        dense
+        rounded
+        class="bg-blue-1 text-primary q-mx-sm q-mb-sm print-hide"
+      >
+        <template v-slot:avatar>
+          <q-icon name="visibility" color="primary" />
+        </template>
+        <div class="text-body2 text-weight-medium">
+          {{ $t("stakeholderViewerNotice") }}
+        </div>
+      </q-banner>
 
     <getting-started
       v-if="!isReadOnly"
@@ -297,6 +334,7 @@
       v-model="showOnboardingTour"
       @open-templates="showTemplateLibrary = true"
     />
+    </template>
   </q-page>
 </template>
 
@@ -352,6 +390,7 @@ export default {
   data() {
     return {
       //dependencyGraphSavefile: null,
+      modelLoading: true,
       showConfigOrgModel: false,
       showAddNode: false,
       showDraftModel: false,
@@ -370,6 +409,14 @@ export default {
   },
   computed: {
     ...mapGetters("model", ["nodes", "nodesTotalCount"]),
+    hasAccess() {
+      if (!this.currentModel) return false;
+      return (
+        this.currentModel.isPublic === true ||
+        this.isEditor ||
+        this.isViewer
+      );
+    },
     hasMoreNodesToLoad() {
       return (
         typeof this.nodesTotalCount === "number" &&
@@ -401,17 +448,62 @@ export default {
       const user = firebaseAuth.currentUser;
       if (!user || !this.currentModel) return false;
       if (this.isEditor) return false;
+
+      // 1. Direct user UID or email viewer
       const viewerUsers = this.currentModel.viewers?.users || [];
       const viewerEmails = (this.currentModel.viewers?.emails || []).map((e) =>
         e.toLowerCase()
       );
-      return (
+      if (
         viewerUsers.includes(user.uid) ||
         (user.email && viewerEmails.includes(user.email.toLowerCase()))
-      );
+      ) {
+        return true;
+      }
+
+      // 2. Org-level viewer (viewers.org can be an array of org IDs or a single org ID)
+      const rawOrgs = this.currentModel.viewers?.org;
+      const viewerOrgs = Array.isArray(rawOrgs)
+        ? rawOrgs
+        : typeof rawOrgs === "string"
+        ? [rawOrgs]
+        : [];
+
+      if (viewerOrgs.length > 0) {
+        // Check currentOrg
+        if (
+          this.currentOrg &&
+          viewerOrgs.includes(this.currentOrg.id) &&
+          Array.isArray(this.currentOrg.users) &&
+          this.currentOrg.users.includes(user.uid)
+        ) {
+          return true;
+        }
+
+        // Check route params orgId
+        const routeOrgId = this.$route?.params?.orgId;
+        if (
+          routeOrgId &&
+          viewerOrgs.includes(routeOrgId) &&
+          this.currentOrg &&
+          this.currentOrg.id === routeOrgId &&
+          Array.isArray(this.currentOrg.users) &&
+          this.currentOrg.users.includes(user.uid)
+        ) {
+          return true;
+        }
+
+        // Check user's orgs list in store
+        const userOrgs = this.$store?.state?.orgs?.orgs || [];
+        if (Array.isArray(userOrgs) && userOrgs.some((o) => viewerOrgs.includes(o.id))) {
+          return true;
+        }
+      }
+
+      return false;
     },
     isReadOnly() {
-      return this.isViewer || !this.isEditor;
+      return this.hasAccess && !this.isEditor;
     },
     ...mapState("orgs", ["currentOrg"]),
     ...mapState("model", ["currentModel"]),
@@ -578,36 +670,42 @@ export default {
     },
 
     async loadData() {
-      //bind to list of models the org-user can view
-      //(user is in model's owners, editors, or viewers)
-      //this.$store.dispatch("orgs/bindReadableModels", this.$route.params.orgId);
-      let modelId = this.$route.params.modelId;
-      this.$store.dispatch("model/bindCurrentModel", modelId);
-      this.$store.dispatch("model/bindNodes", {
-        modelId,
-        limit: this.nodesLimit
-      });
-      this.$store.dispatch("adHocDocs/bindExchangeRates");
-      this.$store.dispatch("calcResults/loadBaseline", modelId);
-
-      let dependencyGraphSavefile = await idb.getDependencyGraphDisplay(
-        modelId
-      );
-      //console.log('dependencyGraphSaveFile', dependencyGraphSavefile);
-      //console.log('setting expandedNodeGroups:', dependencyGraphSavefile.expandedNodeGroups)
-      if (dependencyGraphSavefile) {
-        this.$store.commit(
-          "ui/setExpandedNodeGroups",
-          dependencyGraphSavefile.expandedNodeGroups
-        );
-        this.initialCirclePositions = dependencyGraphSavefile.circlePositions;
-      } else {
-        this.$store.commit("ui/setExpandedNodeGroups", []);
-        this.initialCirclePositions = [];
+      const modelId = this.$route.params.modelId;
+      const orgId = this.$route.params.orgId;
+      this.modelLoading = true;
+      try {
+        if (orgId && (!this.currentOrg || this.currentOrg.id !== orgId)) {
+          await this.$store.dispatch("orgs/bindCurrentOrg", orgId).catch(() => {});
+        }
+        await this.$store.dispatch("model/bindCurrentModel", modelId);
+      } catch (err) {
+        console.warn("bindCurrentModel failed:", err);
+      } finally {
+        this.modelLoading = false;
       }
-      //bind to currentModel's nodes
-      //this.$store.dispatch("orgs/bindCurrentOrg", this.$route.params.orgId);
-      //this.$store.dispatch("model/bindNodes", this.$route.params.orgId);
+
+      if (this.hasAccess) {
+        this.$store.dispatch("model/bindNodes", {
+          modelId,
+          limit: this.nodesLimit
+        });
+        this.$store.dispatch("adHocDocs/bindExchangeRates");
+        this.$store.dispatch("calcResults/loadBaseline", modelId);
+
+        let dependencyGraphSavefile = await idb.getDependencyGraphDisplay(
+          modelId
+        );
+        if (dependencyGraphSavefile) {
+          this.$store.commit(
+            "ui/setExpandedNodeGroups",
+            dependencyGraphSavefile.expandedNodeGroups
+          );
+          this.initialCirclePositions = dependencyGraphSavefile.circlePositions;
+        } else {
+          this.$store.commit("ui/setExpandedNodeGroups", []);
+          this.initialCirclePositions = [];
+        }
+      }
     },
   },
 

@@ -1242,5 +1242,10 @@ export default {
   unitMismatchError: "Activity unit does not match factor expected unit. Silent coercion is prohibited.",
   attachClimatePressure: "Attach Climate Pressure",
   removeClimatePressure: "Remove Climate Pressure",
-  physicalOnlyNotice: "Physical quantity (tCO2e) is stored. In accordance with Decision M-5, boundary pressure is never converted into money or added to net benefit."
+  physicalOnlyNotice: "Physical quantity (tCO2e) is stored. In accordance with Decision M-5, boundary pressure is never converted into money or added to net benefit.",
+
+  // Model Access (MIPA-51)
+  noModelAccessTitle: "No Access to This Model",
+  noModelAccessDesc: "You do not have permission to view this model. Please contact the model owner or an organization administrator to request access.",
+  backToOrgs: "Back to Organizations"
 };
