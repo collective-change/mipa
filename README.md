@@ -147,6 +147,14 @@ build pointing at the emulators.
 Deploys run in the `production` environment, so an owner can require an
 approval before each deploy (Settings > Environments > production).
 
+## Decision Register Backups & Permanence (MIPA-34)
+
+Mipa's decision register records are **permanent, citable, versioned, and not erasable** (Decisions M-1, M-6).
+- **Scheduled Exports**: Managed Firestore export runs daily at 03:00 UTC via `scheduledFirestoreBackup` Cloud Function.
+- **Retention Tiers**: 30-day operational rolling recovery (GCS Standard), 1-year monthly archives (GCS Coldline), and 7-year statutory audit retention (GCS Archive).
+- **Restore Verification**: Exercise and verify backup restore drills using `node scripts/restore-drill.js`.
+- Details, disaster recovery runbook, and margin guard unit economics are documented in [`docs/REGISTER-PERMANENCE.md`](file:///docs/REGISTER-PERMANENCE.md).
+
 Stack: Vue 3, Quasar 2 (Vite), Vuex 4, Firebase JS SDK (modular), mathjs, D3.
 
 This program is released under GNU Affero General Public License v3.0
