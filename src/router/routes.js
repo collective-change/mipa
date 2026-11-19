@@ -21,6 +21,16 @@ const routes = [
         component: () => import("@/pages/PageModelDossier.vue")
       },
       {
+        path: "/records/:recordId",
+        name: "register-record",
+        component: () => import("@/pages/PageRegisterRecord.vue")
+      },
+      {
+        path: "/coverage",
+        name: "mission-coverage",
+        component: () => import("@/pages/PageRegisterRecord.vue")
+      },
+      {
         path: "/placeholder",
         component: () => import("@/pages/PagePlaceholder.vue")
       },

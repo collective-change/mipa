@@ -8,6 +8,7 @@ describe("public-paths.js", () => {
     expect(PUBLIC_PATHS).toContain("/privacy");
     expect(PUBLIC_PATHS).toContain("/terms");
     expect(PUBLIC_PATHS).toContain("/about");
+    expect(PUBLIC_PATHS).toContain("/coverage");
   });
 
   it("identifies static and dynamic public routes via isPublicPath", () => {
@@ -15,8 +16,10 @@ describe("public-paths.js", () => {
     expect(isPublicPath("/auth")).toBe(true);
     expect(isPublicPath("/privacy")).toBe(true);
     expect(isPublicPath("/terms")).toBe(true);
+    expect(isPublicPath("/coverage")).toBe(true);
     expect(isPublicPath("/m/relief-surge-model")).toBe(true);
     expect(isPublicPath("/m/test-model-123")).toBe(true);
+    expect(isPublicPath("/records/mipa-mission-coverage-v1")).toBe(true);
 
     expect(isPublicPath("/orgs")).toBe(false);
     expect(isPublicPath("/org/clean-ocean/model/org1/mod2")).toBe(false);
