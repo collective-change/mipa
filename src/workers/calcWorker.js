@@ -2,6 +2,12 @@
 import { create, all } from "mathjs";
 import { evaluateGuardrailViolations } from "@/utils/guardrails";
 import { isCurrencyRoleNode } from "@/utils/util-model-draft";
+import {
+  getCounterfactualMethodLabel,
+  formatCounterfactualStatement,
+  ARM_TYPES,
+  VALUE_FLAGS
+} from "@/utils/counterfactual";
 import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import {
@@ -423,6 +429,12 @@ async function simulateActionWithDependencies(
     blockees.shift();
   }
 
+  actionResults.counterfactual = action.counterfactual || null;
+  actionResults.counterfactualArm = actionResults.actionResultsNumbers?.counterfactualArm || null;
+  actionResults.counterfactualStatus = actionResults.actionResultsNumbers?.counterfactualStatus || "declared";
+  actionResults.valueFlags = actionResults.actionResultsNumbers?.valueFlags || null;
+  actionResults.measuredArm = actionResults.actionResultsNumbers?.measuredArm || "none (declared)";
+
   /*delete actionResults.timeSPoints;
   delete actionResults.baselineNodesValues;
   delete actionResults.ifDoneNodesValues;
@@ -485,7 +497,9 @@ function composeCostsAndImpactsOfSelf(action, averageEffortCostPerHour) {
     dropOffRate: action.dropOffRate || 0,
 
     impacts: [...action.impacts],
-    includedActionIds: [action.id]
+    includedActionIds: [action.id],
+    counterfactual: action.counterfactual || null,
+    treatmentStatus: action.treatmentStatus || "declared"
   };
   //console.log("newCostsAndImpacts", newCostsAndImpacts);
   return newCostsAndImpacts;
@@ -515,7 +529,9 @@ function includeActionInCostsAndImpacts(action, costsAndImpacts) {
       displacement: costsAndImpacts.displacement || ae.displacement || 0,
       dropOffRate: costsAndImpacts.dropOffRate || ae.dropOffRate || 0,
       impacts: [...costsAndImpacts.impacts, ...ae.impacts],
-      includedActionIds: [...costsAndImpacts.includedActionIds, action.id]
+      includedActionIds: [...costsAndImpacts.includedActionIds, action.id],
+      counterfactual: costsAndImpacts.counterfactual || (ae && ae.counterfactual) || null,
+      treatmentStatus: costsAndImpacts.treatmentStatus || (ae && ae.treatmentStatus) || "declared"
     };
     return newCostsAndImpacts;
   } else {
@@ -651,6 +667,17 @@ function simulateCostsAndImpacts(
     ifNotDoneNodesValues = baselineNodesValues;
   }
 
+  // MIPA-40: Apply observed counterfactual series if present
+  ifNotDoneNodesValues = applyObservedCounterfactual(
+    sim,
+    defaultBaseline,
+    onlyNodeIds,
+    testCostsAndImpacts,
+    ifNotDoneNodesValues,
+    hasIfNotDoneImpacts,
+    impactsToSimulate
+  );
+
   timeSPoints = defaultBaseline.timeSPoints;
 
   let actionResultsNumbers = calcActionResultsFromTimeSeries(
@@ -672,6 +699,122 @@ function simulateCostsAndImpacts(
 
   return simulateCostsAndImpactsResults;
 }
+
+function applyObservedCounterfactual(
+  sim,
+  defaultBaseline,
+  onlyNodeIds,
+  testCostsAndImpacts,
+  ifNotDoneNodesValues,
+  hasIfNotDoneImpacts,
+  impactsToSimulate
+) {
+  const cf = testCostsAndImpacts.counterfactual;
+  if (
+    !cf ||
+    cf.armType !== ARM_TYPES.MEASURED ||
+    !Array.isArray(cf.series) ||
+    cf.series.length === 0
+  ) {
+    return ifNotDoneNodesValues;
+  }
+
+  // Clone ifNotDoneNodesValues so baselineNodesValues is never mutated
+  const result = {};
+  onlyNodeIds.forEach(nid => {
+    result[nid] = ifNotDoneNodesValues[nid] ? [...ifNotDoneNodesValues[nid]] : [];
+  });
+
+  const defaultTargetNodeId =
+    (testCostsAndImpacts.impacts &&
+      testCostsAndImpacts.impacts[0] &&
+      testCostsAndImpacts.impacts[0].nodeId) ||
+    onlyNodeIds[0];
+
+  const pointsByNode = {};
+  cf.series.forEach(item => {
+    if (!item) return;
+    const targetId = item.nodeId || defaultTargetNodeId;
+    if (!targetId) return;
+    if (!pointsByNode[targetId]) pointsByNode[targetId] = [];
+
+    let timeS = null;
+    if (item.timeS !== undefined && item.timeS !== null) {
+      timeS = Number(item.timeS);
+    } else if (item.date) {
+      const d = new Date(item.date);
+      if (!isNaN(d.getTime())) {
+        timeS = Math.floor(d.getTime() / 1000);
+      }
+    }
+    const val = Number(item.value);
+    if (timeS !== null && !isNaN(timeS) && !isNaN(val)) {
+      pointsByNode[targetId].push({
+        timeS,
+        value: val,
+        isPredicted: Boolean(item.isPredicted || item.type === VALUE_FLAGS.FORECAST)
+      });
+    }
+  });
+
+  const nodeIdsWithPoints = Object.keys(pointsByNode);
+  if (nodeIdsWithPoints.length === 0) return result;
+
+  // Check if any downstream formula depends on these nodes
+  const hasDownstreamFormulas = Array.isArray(sim.sortedNodes) &&
+    sim.sortedNodes.some(n =>
+      n && n.sysFormula && n.sysFormula !== "0" &&
+      nodeIdsWithPoints.some(id => n.sysFormula.includes("$" + id))
+    );
+
+  if (hasDownstreamFormulas) {
+    const savedNodeTimeSeries = sim.nodeTimeSeries ? { ...sim.nodeTimeSeries } : {};
+    nodeIdsWithPoints.forEach(nid => {
+      const pts = pointsByNode[nid].sort((a, b) => a.timeS - b.timeS);
+      sim.nodeTimeSeries = sim.nodeTimeSeries || {};
+      sim.nodeTimeSeries[nid] = {
+        timeSPoints: pts.map(p => p.timeS),
+        values: pts.map(p => p.value),
+        rawPoints: pts
+      };
+    });
+
+    const scenario = {
+      type: "action",
+      impactType: "if_not_done",
+      impactsToSimulate: hasIfNotDoneImpacts ? impactsToSimulate : []
+    };
+    resetScope(sim);
+    iterateThroughTime(sim, scenario);
+    sim.nodeTimeSeries = savedNodeTimeSeries;
+
+    if (!sim.errorOccurred) {
+      const extracted = extractTimeSeriesNodesValues(sim, onlyNodeIds);
+      onlyNodeIds.forEach(nid => {
+        if (extracted[nid]) result[nid] = extracted[nid];
+      });
+    }
+  }
+
+  // Directly interpolate points across defaultBaseline.timeSPoints for each specified node
+  const timeSPoints = defaultBaseline.timeSPoints;
+  nodeIdsWithPoints.forEach(nid => {
+    const pts = pointsByNode[nid].sort((a, b) => a.timeS - b.timeS);
+    const tArr = pts.map(p => p.timeS);
+    const vArr = pts.map(p => p.value);
+    const seriesValues = [];
+
+    timeSPoints.forEach((t, idx) => {
+      const interp = interpolateFromLookup(tArr, vArr, t);
+      seriesValues.push(interp !== undefined ? interp : (result[nid] ? result[nid][idx] : 0));
+    });
+
+    result[nid] = seriesValues;
+  });
+
+  return result;
+}
+
 function getEmptyCostsAndImpacts() {
   let costsAndImpacts = {
     estEffortHrs: 0,
@@ -908,6 +1051,44 @@ function calcActionResultsFromTimeSeries(
   let sroiRatio = outstandingDirectCosts > 0 ? (netSocialBenefitNpv / outstandingDirectCosts) : null;
   if (isNaN(sroiRatio)) sroiRatio = null;
 
+  // MIPA-40: Counterfactual arm status, attribution design, and value flags
+  const counterfactual = actionAdjustments.counterfactual || null;
+  const isCfMeasured = Boolean(
+    counterfactual &&
+    counterfactual.armType === ARM_TYPES.MEASURED &&
+    Array.isArray(counterfactual.series) &&
+    counterfactual.series.length > 0
+  );
+
+  let counterfactualStatus = VALUE_FLAGS.DECLARED;
+  if (isCfMeasured) {
+    const hasForecast = counterfactual.series.some(
+      pt => pt && (pt.type === VALUE_FLAGS.FORECAST || pt.isPredicted)
+    );
+    counterfactualStatus = hasForecast ? VALUE_FLAGS.FORECAST : VALUE_FLAGS.MEASURED;
+  }
+
+  const treatmentStatus = actionAdjustments.treatmentStatus || VALUE_FLAGS.DECLARED;
+
+  let rankingValueFlag = VALUE_FLAGS.DECLARED;
+  if (counterfactualStatus === VALUE_FLAGS.FORECAST || treatmentStatus === VALUE_FLAGS.FORECAST) {
+    rankingValueFlag = VALUE_FLAGS.FORECAST;
+  } else if (counterfactualStatus === VALUE_FLAGS.MEASURED || treatmentStatus === VALUE_FLAGS.MEASURED) {
+    rankingValueFlag = VALUE_FLAGS.MEASURED;
+  }
+
+  const methodLabel = counterfactual?.method
+    ? getCounterfactualMethodLabel(counterfactual.method)
+    : null;
+  const attributionDate = counterfactual?.attributionDate || null;
+  const counterfactualStatement = formatCounterfactualStatement(counterfactual);
+  const counterfactualAssumptions = counterfactual?.assumptions || "";
+  const counterfactualLimits = counterfactual?.limits || "";
+  const measuredArm =
+    counterfactualStatus === VALUE_FLAGS.MEASURED || counterfactualStatus === VALUE_FLAGS.FORECAST
+      ? (treatmentStatus === VALUE_FLAGS.MEASURED ? "both" : "counterfactual")
+      : (treatmentStatus === VALUE_FLAGS.MEASURED ? "treatment" : "none (declared)");
+
   const roiResults = {
     outstandingDirectCosts,
     rawMarginalOrgBenefitNpv,
@@ -927,7 +1108,34 @@ function calcActionResultsFromTimeSeries(
     adjustedSocialBenefitNpv,
     netSocialBenefitNpv,
     sroiRatio,
-    sroiAdjustmentFactor
+    sroiAdjustmentFactor,
+    counterfactualStatus,
+    counterfactualMethod: counterfactual?.method || null,
+    counterfactualMethodLabel: methodLabel,
+    counterfactualDate: attributionDate,
+    counterfactualStatement,
+    counterfactualAssumptions,
+    counterfactualLimits,
+    counterfactualArm: {
+      armType: isCfMeasured ? ARM_TYPES.MEASURED : ARM_TYPES.DECLARED,
+      status: counterfactualStatus,
+      method: counterfactual?.method || null,
+      methodLabel,
+      attributionDate,
+      statement: counterfactualStatement,
+      assumptions: counterfactualAssumptions,
+      limits: counterfactualLimits,
+      series: counterfactual?.series || []
+    },
+    valueFlags: {
+      actionLeverage: rankingValueFlag,
+      marginalNetTotalBenefitNpv: rankingValueFlag,
+      totalRoi: rankingValueFlag,
+      outstandingDirectCosts: VALUE_FLAGS.DECLARED,
+      counterfactual: counterfactualStatus,
+      treatment: treatmentStatus
+    },
+    measuredArm
   };
   //console.log({ roiResults });
   return roiResults;
