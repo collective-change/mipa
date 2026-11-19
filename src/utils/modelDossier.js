@@ -2,6 +2,13 @@ import { detectFeedbackLoops, detectSystemArchetypes } from "@/utils/systemDynam
 import { runMonteCarloSimulation } from "@/utils/monteCarlo";
 import { isWorldFactor } from "@/utils/worldModel";
 import { sumPortfolioPressures } from "@/utils/conversionFactors";
+import {
+  generateCoverageStatement,
+  formatDimensionWeightSource,
+  SDG_INDICATOR_CROSSWALK,
+  DIMENSION_KINDS,
+  DIMENSION_STATES
+} from "@/utils/dimensions";
 
 /**
  * Builds a structured, self-contained executive model dossier.
@@ -103,6 +110,13 @@ export function buildDossierSummary({
     });
   }
 
+  // Governance dimensions and coverage statement (MIPA-33)
+  const dimensions = Array.isArray(model.dimensions) ? model.dimensions : [];
+  const coverageStatement = generateCoverageStatement(dimensions);
+  const animalWelfareDimension = dimensions.find(
+    d => d.id === "dim_animal_welfare" || (d.name && d.name.toLowerCase().includes("animal"))
+  );
+
   const attributionFooter = isUnbranded
     ? null
     : "Simulated on collective-change.org · An Open Platform for Strategic Coordination";
@@ -117,6 +131,15 @@ export function buildDossierSummary({
     actionsCount: rankedActions.length,
     factors: factorSummaries,
     worldFactors,
+    dimensions,
+    coverageStatement,
+    sdgCrosswalk: SDG_INDICATOR_CROSSWALK,
+    animalWelfare: animalWelfareDimension
+      ? {
+          ...animalWelfareDimension,
+          weightSourceFormatted: formatDimensionWeightSource(animalWelfareDimension.weight)
+        }
+      : null,
     rankedActions,
     portfolioPressures,
     actionPressures,

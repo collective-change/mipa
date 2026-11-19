@@ -566,6 +566,48 @@
             />
           </div>
         </q-expansion-item>
+
+        <!-- Dimension Kind Declaration (MIPA-33: Value, Limit, Label) -->
+        <div class="q-my-sm q-pa-sm rounded-borders bg-grey-1 border-grey">
+          <div class="row items-center justify-between">
+            <div class="text-caption text-weight-bold text-grey-8 row items-center">
+              <q-icon name="category" class="q-mr-xs" size="16px" />
+              {{ $t('dimensionKind') || 'Dimension Kind' }}
+            </div>
+            <q-badge
+              v-if="effectiveDimensionKind"
+              :color="effectiveDimensionKind === 'limit' ? 'red-1' : effectiveDimensionKind === 'label' ? 'blue-1' : 'green-1'"
+              :text-color="effectiveDimensionKind === 'limit' ? 'negative' : effectiveDimensionKind === 'label' ? 'primary' : 'positive'"
+              class="text-weight-bold text-capitalize"
+            >
+              {{ effectiveDimensionKind }}
+            </q-badge>
+          </div>
+          <div class="text-caption text-grey-7 q-my-xs">
+            <span v-if="effectiveDimensionKind === 'limit'">
+              {{ $t('dimensionKindLimitDesc') || 'Limit: Non-tradeable guardrail. Money sums; limits block (M-5).' }}
+            </span>
+            <span v-else-if="effectiveDimensionKind === 'label'">
+              {{ $t('dimensionKindLabelDesc') || 'Label: Navigational tags. A label navigates; never scores (M-6).' }}
+            </span>
+            <span v-else>
+              {{ $t('dimensionKindValueDesc') || 'Value: Factor indicator. Unweighted values are not included in the score (M-6).' }}
+            </span>
+          </div>
+          <div class="row items-center q-gutter-sm q-mt-xs">
+            <q-btn-toggle
+              v-model="nodeToSubmit.dimensionKind"
+              dense
+              no-caps
+              toggle-color="primary"
+              :options="[
+                { label: $t('dimensionKindValue') || 'Value', value: 'value' },
+                { label: $t('dimensionKindLimit') || 'Limit', value: 'limit' },
+                { label: $t('dimensionKindLabel') || 'Label', value: 'label' }
+              ]"
+            />
+          </div>
+        </div>
         <div style="height: 15px"></div>
         <select-user
           :label="$t('Responsible person')"
@@ -916,6 +958,11 @@ export default {
         influencerNodesInfo.push(influencerNodeInfo);
       });
       return influencerNodesInfo;
+    },
+
+    effectiveDimensionKind() {
+      if (this.nodeToSubmit?.isGuardrail) return "limit";
+      return this.nodeToSubmit?.dimensionKind || "value";
     },
 
     formulaValidation() {

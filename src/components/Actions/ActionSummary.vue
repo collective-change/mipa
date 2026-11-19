@@ -686,6 +686,37 @@
 
           <climate-pressure-card v-model="climatePressure" />
 
+          <!-- UN Sustainable Development Goals (SDG) Target Tagging (MIPA-33) -->
+          <q-card flat bordered class="q-my-md bg-white">
+            <q-card-section class="q-pb-xs">
+              <div class="row items-center justify-between">
+                <div class="text-subtitle2 text-weight-bold text-primary row items-center">
+                  <q-icon name="label" class="q-mr-xs" size="18px" />
+                  {{ $t('sdgTargetsTitle') || 'UN SDG Target Tags' }}
+                </div>
+                <q-chip dense color="blue-1" text-color="primary" size="xs">
+                  {{ $t('sdgLabelOnlyNotice') || 'Labels navigate; never scores' }}
+                </q-chip>
+              </div>
+              <div class="text-caption text-grey-7 q-mt-xs">
+                {{ $t('sdgTargetsHint') || 'Tag initiatives with relevant UN 2030 Agenda targets. Targets do not enter scoring formulas.' }}
+              </div>
+            </q-card-section>
+            <q-card-section class="q-pt-xs">
+              <q-select
+                v-model="sdgTargets"
+                :options="availableSdgOptions"
+                multiple
+                use-chips
+                dense
+                outlined
+                emit-value
+                map-options
+                :label="$t('sdgTargetsLabel') || 'Select SDG Targets'"
+              />
+            </q-card-section>
+          </q-card>
+
           <q-card-actions align="right">
             <q-btn :label="$t('Save')" color="primary" type="submit" unelevated no-caps />
           </q-card-actions>
@@ -955,6 +986,7 @@ export default {
       "uiAction.accountablePerson",
       "uiAction.departmentTag",
       "uiAction.climatePressure",
+      "uiAction.sdgTargets",
       "uiAction.chatId",
     ]),
     ...mapMultiRowFields(["uiAction.impacts"]),
@@ -1056,6 +1088,26 @@ export default {
         { value: "fieldwork", label: this.$t("deptFieldwork") },
         { value: "engineering", label: this.$t("deptEngineering") },
         { value: "finance", label: this.$t("deptFinance") }
+      ];
+    },
+    availableSdgOptions() {
+      return [
+        { value: "SDG 1.1", label: "SDG 1.1 - Eradicate Extreme Poverty" },
+        { value: "SDG 2.1", label: "SDG 2.1 - Universal Access to Safe, Nutritious Food" },
+        { value: "SDG 2.4", label: "SDG 2.4 - Sustainable Food Production Systems" },
+        { value: "SDG 3.8", label: "SDG 3.8 - Universal Health Coverage" },
+        { value: "SDG 4.1", label: "SDG 4.1 - Free & Equitable Primary/Secondary Education" },
+        { value: "SDG 7.1", label: "SDG 7.1 - Universal Access to Modern Energy" },
+        { value: "SDG 7.2", label: "SDG 7.2 - Renewable Energy Share" },
+        { value: "SDG 8.5", label: "SDG 8.5 - Full & Productive Decent Work" },
+        { value: "SDG 11.a", label: "SDG 11.a - Strong National & Regional Planning" },
+        { value: "SDG 12.3", label: "SDG 12.3 - Halve Global Per Capita Food Waste" },
+        { value: "SDG 12.4", label: "SDG 12.4 - Responsible Chemical & Agricultural Management" },
+        { value: "SDG 13.2", label: "SDG 13.2 - Climate Change Measures in Policies" },
+        { value: "SDG 14.1", label: "SDG 14.1 - Prevent Marine Pollution" },
+        { value: "SDG 15.1", label: "SDG 15.1 - Terrestrial Ecosystem Conservation" },
+        { value: "SDG 16.6", label: "SDG 16.6 - Effective, Accountable, Transparent Institutions" },
+        { value: "SDG 17.17", label: "SDG 17.17 - Effective Public-Private & Civil Partnerships" }
       ];
     },
     // One menu for the three ways to cost an hour of work.

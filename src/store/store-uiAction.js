@@ -184,7 +184,8 @@ function initializeNewlyAddedProperties(uiAction) {
     simpleEstimateOtherCostsNotes: null,
     effortCostNodeId: null,
     departmentTag: null,
-    climatePressure: null
+    climatePressure: null,
+    sdgTargets: []
   };
   for (const newProperty in newProperties) {
     if (!uiAction.hasOwnProperty(newProperty))
