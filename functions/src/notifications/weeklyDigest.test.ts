@@ -272,4 +272,277 @@ test("processWeeklyDigests scans Firestore and records audit log", async () => {
   assert.equal(report.digests[0].email, "solar@energy.org");
   assert.equal(addedLogs.length, 1);
   assert.equal(addedLogs[0].processedUsers, 1);
+  assert.equal(addedLogs[0].actionsAggregated, 1);
+  assert.equal(addedLogs[0].emailsSent, 0);
+  assert.equal(addedLogs[0].truncated, false);
+});
+
+test("MIPA-37: Bounded by construction - only users and orgs referenced in candidate actions are fetched", async () => {
+  const queriedUserIds: string[] = [];
+  const queriedOrgIds: string[] = [];
+
+  const mockActions = [
+    {
+      id: "act-1",
+      data: () => ({
+        title: "Community Outreach",
+        responsiblePerson: "user-target-1",
+        orgId: "org-target-1",
+        actionLeverage: 12.0
+      })
+    },
+    {
+      id: "act-2",
+      data: () => ({
+        title: "Disaster Relief Supply",
+        responsiblePerson: "user-target-2",
+        orgId: "org-target-1",
+        actionLeverage: 8.5
+      })
+    }
+  ];
+
+  const mockDb = {
+    collection: (colName: string) => ({
+      where: () => ({
+        orderBy: () => ({
+          count: () => ({ get: async () => ({ data: () => ({ count: 2 }) }) }),
+          limit: () => ({ get: async () => ({ docs: mockActions }) })
+        })
+      }),
+      orderBy: () => ({
+        limit: () => ({ get: async () => ({ empty: true, docs: [] }) })
+      }),
+      doc: (id: string) => {
+        if (colName === "users") {
+          queriedUserIds.push(id);
+          return {
+            id,
+            parent: { id: "users" },
+            get: async () => ({
+              id,
+              exists: true,
+              data: () => ({ email: `${id}@example.org`, displayName: `User ${id}`, locale: "en-us" })
+            })
+          };
+        }
+        if (colName === "orgs") {
+          queriedOrgIds.push(id);
+          return {
+            id,
+            parent: { id: "orgs" },
+            get: async () => ({
+              id,
+              exists: true,
+              data: () => ({ name: `Org ${id}` })
+            })
+          };
+        }
+        return { id, parent: { id: colName }, get: async () => ({ exists: false }) };
+      },
+      add: async () => ({ id: "log-audit-id" })
+    }),
+    getAll: async (...refs: Array<{ id: string; parent: { id: string } }>) => {
+      return refs.map((ref) => {
+        const isUser = ref.parent?.id === "users";
+        if (isUser) queriedUserIds.push(ref.id);
+        else queriedOrgIds.push(ref.id);
+        return {
+          id: ref.id,
+          exists: true,
+          data: () =>
+            isUser
+              ? { email: `${ref.id}@example.org`, displayName: `User ${ref.id}`, locale: "en-us" }
+              : { name: `Org ${ref.id}` }
+        };
+      });
+    }
+  } as unknown as import("firebase-admin/firestore").Firestore;
+
+  const report = await processWeeklyDigests(mockDb, { sendEmails: false });
+
+  assert.equal(report.processedUsers, 2);
+  assert.equal(report.actionsAggregated, 2);
+  // Verify that ONLY user-target-1, user-target-2 and org-target-1 were queried
+  assert.deepEqual(Array.from(new Set(queriedUserIds)).sort(), ["user-target-1", "user-target-2"]);
+  assert.deepEqual(Array.from(new Set(queriedOrgIds)), ["org-target-1"]);
+});
+
+test("MIPA-37: Truncation visibility - flags truncated: true and capsHit when actions exceed cap", async () => {
+  const seededActions = Array.from({ length: 15 }, (_, i) => ({
+    id: `act-${i + 1}`,
+    data: () => ({
+      title: `Action ${i + 1}`,
+      responsiblePerson: "user-1",
+      orgId: "org-1",
+      actionLeverage: 10.0 - i * 0.2
+    })
+  }));
+
+  const addedLogs: Record<string, unknown>[] = [];
+
+  const mockDb = {
+    collection: (name: string) => {
+      if (name === "actions") {
+        return {
+          where: () => ({
+            orderBy: () => ({
+              count: () => ({ get: async () => ({ data: () => ({ count: 15 }) }) }),
+              limit: (limitNum: number) => ({
+                get: async () => ({ docs: seededActions.slice(0, limitNum) })
+              })
+            })
+          })
+        };
+      }
+      if (name === "users") {
+        return {
+          doc: (id: string) => ({
+            get: async () => ({
+              id,
+              exists: true,
+              data: () => ({ email: "u1@example.org", displayName: "User 1" })
+            })
+          })
+        };
+      }
+      if (name === "orgs") {
+        return {
+          doc: (id: string) => ({
+            get: async () => ({
+              id,
+              exists: true,
+              data: () => ({ name: "Org 1" })
+            })
+          })
+        };
+      }
+      if (name === "digestLogs") {
+        return {
+          orderBy: () => ({
+            limit: () => ({ get: async () => ({ empty: true, docs: [] }) })
+          }),
+          add: async (data: Record<string, unknown>) => {
+            addedLogs.push(data);
+            return { id: "log-trunc" };
+          }
+        };
+      }
+      return {};
+    }
+  } as unknown as import("firebase-admin/firestore").Firestore;
+
+  // Run with actionCap = 10 (seededActions has 15)
+  const report = await processWeeklyDigests(mockDb, {
+    actionCap: 10,
+    sendEmails: false
+  });
+
+  assert.equal(report.truncated, true);
+  assert.deepEqual(report.capsHit, ["actions"]);
+  assert.equal(report.actionsAggregated, 10);
+  assert.equal(report.queryStats?.actionsMatching, 15);
+  assert.equal(report.queryStats?.actionsFetched, 10);
+  assert.equal(report.queryStats?.actionCap, 10);
+
+  // Assert audit record persisted in digestLogs has identical visibility
+  assert.equal(addedLogs.length, 1);
+  assert.equal(addedLogs[0].truncated, true);
+  assert.deepEqual(addedLogs[0].capsHit, ["actions"]);
+});
+
+test("MIPA-37: Explicit failure on truncation - fails loudly when collection exceeds query capacity", async () => {
+  const seededActions = Array.from({ length: 25 }, (_, i) => ({
+    id: `act-${i + 1}`,
+    data: () => ({
+      title: `Action ${i + 1}`,
+      responsiblePerson: "user-1",
+      orgId: "org-1",
+      actionLeverage: 5.0
+    })
+  }));
+
+  const mockDb = {
+    collection: (name: string) => {
+      if (name === "actions") {
+        return {
+          where: () => ({
+            orderBy: () => ({
+              count: () => ({ get: async () => ({ data: () => ({ count: 25 }) }) }),
+              limit: (limitNum: number) => ({
+                get: async () => ({ docs: seededActions.slice(0, limitNum) })
+              })
+            })
+          })
+        };
+      }
+      if (name === "digestLogs") {
+        return {
+          orderBy: () => ({
+            limit: () => ({ get: async () => ({ empty: true, docs: [] }) })
+          })
+        };
+      }
+      return {};
+    }
+  } as unknown as import("firebase-admin/firestore").Firestore;
+
+  await assert.rejects(
+    async () => {
+      await processWeeklyDigests(mockDb, {
+        actionCap: 10,
+        failOnTruncation: true,
+        sendEmails: false
+      });
+    },
+    (err: Error) => {
+      assert.match(err.message, /COLLECTION_TRUNCATED/);
+      assert.match(err.message, /25/);
+      assert.match(err.message, /10/);
+      return true;
+    }
+  );
+});
+
+test("MIPA-37: Preserves instrumentation metrics in audit record", async () => {
+  const addedLogs: Record<string, unknown>[] = [];
+  const mockDb = {
+    collection: (name: string) => {
+      if (name === "actions") {
+        return {
+          where: () => ({
+            orderBy: () => ({
+              count: () => ({ get: async () => ({ data: () => ({ count: 0 }) }) }),
+              limit: () => ({ get: async () => ({ docs: [] }) })
+            })
+          })
+        };
+      }
+      if (name === "digestLogs") {
+        return {
+          orderBy: () => ({
+            limit: () => ({ get: async () => ({ empty: true, docs: [] }) })
+          }),
+          add: async (data: Record<string, unknown>) => {
+            addedLogs.push(data);
+            return { id: "log-inst" };
+          }
+        };
+      }
+      return {};
+    }
+  } as unknown as import("firebase-admin/firestore").Firestore;
+
+  const report = await processWeeklyDigests(mockDb, { sendEmails: false });
+
+  assert.equal(typeof report.processedUsers, "number");
+  assert.equal(typeof report.actionsAggregated, "number");
+  assert.equal(typeof report.emailsSent, "number");
+  assert.equal(typeof report.timestamp, "string");
+
+  assert.equal(addedLogs.length, 1);
+  assert.equal(addedLogs[0].processedUsers, 0);
+  assert.equal(addedLogs[0].actionsAggregated, 0);
+  assert.equal(addedLogs[0].emailsSent, 0);
+  assert.equal(addedLogs[0].truncated, false);
 });
