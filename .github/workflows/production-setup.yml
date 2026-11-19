@@ -269,10 +269,12 @@ jobs:
         if: inputs.mode == 'migrate' || inputs.mode == 'functions'
         env:
           PROJECT: ${{ steps.config.outputs.project }}
-        run: >
-          npx --yes firebase-tools@15.36.0 functions:artifacts:setpolicy
-          --project "$PROJECT" --location us-central1 --non-interactive --force
-          || echo "::warning::Couldn't set the cleanup policy for function images."
+        run: |
+          for loc in us-central1 asia-east1; do
+            npx --yes firebase-tools@15.36.0 functions:artifacts:setpolicy \
+              --project "$PROJECT" --location "$loc" --non-interactive --force \
+              || echo "::warning::Couldn't set the cleanup policy for function images in $loc."
+          done
 
       - name: Deploy to Firebase
         if: inputs.mode == 'migrate'
@@ -282,6 +284,7 @@ jobs:
           npx --yes firebase-tools@15.36.0 deploy
           --project "$PROJECT"
           --only firestore:rules,firestore:indexes,functions,hosting
+          --force
           --non-interactive
 
       - name: Copy members into each organization's member list
@@ -313,6 +316,6 @@ jobs:
           PROJECT: ${{ steps.config.outputs.project }}
         run: |
           npm ci --prefix functions
-          npx --yes firebase-tools@15.36.0 deploy --project "$PROJECT" --only functions --non-interactive --debug 2>&1 \
+          npx --yes firebase-tools@15.36.0 deploy --project "$PROJECT" --only functions --force --non-interactive --debug 2>&1 \
             | grep -v -i -E "authorization|access_token|bearer" | tail -n 400
           npx --yes firebase-tools@15.36.0 functions:list --project "$PROJECT"
