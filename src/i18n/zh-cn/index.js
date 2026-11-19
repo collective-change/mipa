@@ -865,6 +865,11 @@ export default {
   loadMoreFactorsButton: "加载更多（+{count}）",
   loadAllFactorsButton: "加载全部",
 
+  // MIPA-38: Bounded Dossier Nodes Query
+  partialViewBadge: "部分",
+  partialViewExplanation: "大型模型默认限制加载条数以确保浏览器性能与网络带宽。",
+  showAllFactors: "加载全部 {total} 项要素",
+
   // Feature 4: Idea to Complete Action
   tabSmartDraft: "點子智慧建案",
   tabManualEntry: "手動创建",
