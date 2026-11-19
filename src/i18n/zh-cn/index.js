@@ -213,8 +213,27 @@ export default {
     "為每個行动指定負責人和當責人，並隨著核准與完成推進它的状态。「待辦」會列出由你負責的行动。每個節點和行动都有聊天室，讓討論緊貼著工作本身。",
   helpMore: "有不清楚或無法運作的地方嗎？",
 
-  // for PagePrivacy.vue
-  privacyEnglishOnly: "本隱私權政策目前僅提供英文版本。",
+  // for PagePrivacy.vue & PageTerms.vue
+  privacyPolicyTitle: "隐私权政策",
+  "Privacy Policy": "隐私权政策",
+  termsOfServiceTitle: "服务条款",
+  "Terms of Service": "服务条款",
+  privacyEnglishOnly: "本隐私权政策目前仅提供英文版本。",
+  termsEnglishOnly: "本服务条款目前仅提供英文版本。",
+  and: "与",
+  checkoutTermsNoticePrefix: "通过 Lemon Squeezy（我们的记录商家）订阅或升级，即表示您同意我们的",
+
+  // for PageSettings.vue (account & data management)
+  accountDataManagement: "账号与数据管理",
+  exportMyData: "导出我的数据",
+  exportMyDataDesc: "下载包含您的个人资料与组织成员记录的 JSON 文件。",
+  toastDataExported: "您的数据已成功导出。",
+  deleteAccountTitle: "删除账号",
+  deleteAccountBtn: "删除我的账号",
+  deleteAccountDesc: "永久删除您的登录凭证、个人资料与私有工作草案。",
+  deleteAccountConfirm: "您确定要删除账号吗？删除范围：您的登录凭据、个人资料、私有草案以及组织成员资格。保留范围：此前已公开发布至公共登记册（Register）的决策卷宗将按「撤销不等于抹除」（revocation ≠ erasure）之永久保存原则予以保留并附带时间戳。此动作无法复原。",
+  toastAccountDeleted: "您的账号已成功删除。",
+  deleteOrgConfirmDetailed: "确定要删除「{name}」及其所有内容吗？删除范围：组织设置、成员名单、AI 配置、私有模型、公式、内部行动与聊天记录。保留范围：此前已发布至公共登记册（Register）的公开决策卷宗将按「撤销不等于抹除」（revocation ≠ erasure）之永久政策予以保留并附带时间戳。此动作无法复原。",
 
   // for organization members
   Members: "成員",

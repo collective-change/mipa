@@ -116,7 +116,7 @@ export default {
       this.$q
         .dialog({
           title: this.$t("Delete organization"),
-          message: this.$t("deleteOrgConfirm", { name: this.org.name }),
+          message: this.$t("deleteOrgConfirmDetailed", { name: this.org.name }),
           cancel: true,
           persistent: true,
         })

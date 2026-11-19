@@ -1,5 +1,6 @@
 import { LocalStorage, Loading, Notify } from "quasar";
-import { firebaseAuth, firebaseDb } from "@/boot/firebase";
+import { firebaseAuth, firebaseDb, firebaseFunctions } from "@/boot/firebase";
+import { httpsCallable } from "firebase/functions";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -251,6 +252,28 @@ const actions = {
     //this.detachUserTasksListener();
     //dispatch("tasks/detachUserTasksListenerAction", null, { root: true });
     signOut(firebaseAuth);
+  },
+  async deleteAccount({ dispatch }) {
+    Loading.show();
+    try {
+      const deleteUserAccountFn = httpsCallable(firebaseFunctions, "deleteUserAccount");
+      await deleteUserAccountFn();
+      Notify.create(i18n.global.t("toastAccountDeleted"));
+      await signOut(firebaseAuth);
+    } catch (error) {
+      console.warn("deleteUserAccount callable failed, falling back to direct delete:", error);
+      try {
+        if (firebaseAuth.currentUser) {
+          await firebaseAuth.currentUser.delete();
+        }
+        Notify.create(i18n.global.t("toastAccountDeleted"));
+      } catch (authError) {
+        showErrorMessage("Error deleting account", authError.message || error.message);
+        throw authError;
+      }
+    } finally {
+      Loading.hide();
+    }
   },
   sendPasswordResetEmail({}, payload) {
     sendPasswordResetEmail(firebaseAuth, payload.email)

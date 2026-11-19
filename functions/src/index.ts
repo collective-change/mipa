@@ -20,3 +20,7 @@ export {
   scheduledFirestoreBackup,
   triggerManualBackup
 } from "./backups/scheduledBackup";
+export {
+  deleteOrganization,
+  deleteUserAccount
+} from "./accountDeletion";
