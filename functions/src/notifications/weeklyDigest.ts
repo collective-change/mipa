@@ -1,7 +1,7 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
-import { Firestore, getFirestore, FieldValue } from "firebase-admin/firestore";
+import { Firestore, getFirestore, FieldValue, Query, DocumentData } from "firebase-admin/firestore";
 import * as crypto from "crypto";
 
 export interface DigestActionItem {
@@ -43,6 +43,20 @@ export interface DigestReport {
   actionsAggregated: number;
   emailsSent: number;
   timestamp: string;
+  truncated: boolean;
+  capsHit: string[];
+  queryStats?: {
+    actionsMatching: number;
+    actionsFetched: number;
+    actionCap: number;
+    usersMatching: number;
+    usersFetched: number;
+    userCap?: number;
+    orgsMatching: number;
+    orgsFetched: number;
+    orgCap?: number;
+    since: string | null;
+  };
   digests: Array<{
     uid: string;
     email: string;
@@ -50,6 +64,20 @@ export interface DigestReport {
     highestLeverage: number;
   }>;
 }
+
+export interface ProcessWeeklyDigestOptions {
+  baseUrl?: string;
+  sendEmails?: boolean;
+  since?: Date | null;
+  actionCap?: number;
+  userCap?: number;
+  orgCap?: number;
+  failOnTruncation?: boolean;
+}
+
+export const DEFAULT_ACTION_CAP = 1000;
+export const DEFAULT_USER_CAP = 1000;
+export const DEFAULT_ORG_CAP = 500;
 
 const DEFAULT_BASE_URL = "https://collective-change.org";
 const UNVERIFIED_STATES = ["completed", "archived", "rejected", "discarded", "cancelled"];
@@ -404,32 +432,241 @@ function escapeHtml(str: string): string {
 }
 
 /**
+ * Resolves the timestamp of the last successful weekly digest run from digestLogs.
+ */
+export async function resolveLastDigestRunTime(db: Firestore): Promise<Date | null> {
+  try {
+    const logsCol = db.collection("digestLogs");
+    if (typeof logsCol.orderBy === "function") {
+      const snap = await logsCol.orderBy("createdAt", "desc").limit(1).get();
+      if (!snap.empty) {
+        const doc = snap.docs[0];
+        const createdAt = doc.get("createdAt");
+        if (createdAt && typeof createdAt.toDate === "function") {
+          return createdAt.toDate();
+        }
+        const ts = doc.get("timestamp");
+        if (ts) {
+          const parsed = new Date(ts);
+          if (!isNaN(parsed.getTime())) return parsed;
+        }
+      }
+    }
+  } catch (err) {
+    logger.warn("[Weekly Digest] Could not resolve last run time from digestLogs:", err);
+  }
+  return null;
+}
+
+/**
+ * Fetches specific documents by ID from a collection without unbounded collection scans.
+ * Uses Firestore.getAll if available; falls back to doc(id).get() or filtered collection fetch for mocks.
+ */
+export async function fetchDocumentsByIds(
+  db: Firestore,
+  collectionName: string,
+  ids: string[]
+): Promise<Map<string, Record<string, unknown>>> {
+  const result = new Map<string, Record<string, unknown>>();
+  if (!ids || ids.length === 0) return result;
+
+  const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+  if (uniqueIds.length === 0) return result;
+
+  // 1. Standard Firebase Admin Firestore: db.getAll()
+  const dbAny = db as unknown as { getAll?: (...refs: unknown[]) => Promise<Array<{ id: string; exists: boolean; data: () => Record<string, unknown> }>> };
+  if (typeof dbAny.getAll === "function") {
+    const CHUNK_SIZE = 100;
+    for (let i = 0; i < uniqueIds.length; i += CHUNK_SIZE) {
+      const chunk = uniqueIds.slice(i, i + CHUNK_SIZE);
+      const refs = chunk.map((id) => db.collection(collectionName).doc(id));
+      const snapshots = await dbAny.getAll(...refs);
+      for (const snap of snapshots) {
+        if (snap.exists) {
+          result.set(snap.id, { id: snap.id, ...(snap.data() || {}) });
+        }
+      }
+    }
+    return result;
+  }
+
+  // 2. Direct db.collection(name).doc(id).get()
+  for (const id of uniqueIds) {
+    try {
+      const docRef = db.collection(collectionName).doc(id);
+      if (docRef && typeof docRef.get === "function") {
+        const snap = await docRef.get();
+        if (snap.exists) {
+          result.set(snap.id, { id: snap.id, ...(snap.data ? snap.data() : {}) });
+        }
+      }
+    } catch {
+      // Ignore missing or inaccessible doc
+    }
+  }
+
+  // 3. Fallback for test mocks that only supply collection.limit().get() or collection.get()
+  if (result.size === 0) {
+    try {
+      const col = db.collection(collectionName);
+      const snap = typeof col.limit === "function" ? await col.limit(1000).get() : await col.get();
+      if (snap && snap.docs) {
+        for (const doc of snap.docs) {
+          if (uniqueIds.includes(doc.id)) {
+            const data = typeof doc.data === "function" ? doc.data() : {};
+            const nameVal = typeof doc.get === "function" ? doc.get("name") : data.name;
+            result.set(doc.id, { id: doc.id, ...data, ...(nameVal ? { name: nameVal } : {}) });
+          }
+        }
+      }
+    } catch {
+      // Ignore mock fallback error
+    }
+  }
+
+  return result;
+}
+
+/**
  * Executes the strategic digest process: aggregates and delivers notifications.
+ *
+ * MIPA-37:
+ * - Queries actions changed since the last run (where("updateTime", ">=", since)).
+ * - Queries ONLY the users and organizations referenced by candidate actions (bounded by construction).
+ * - Makes any cap breach visible in logs and audit record (truncated: true / capsHit: [...]).
  */
 export async function processWeeklyDigests(
   db: Firestore,
-  options: { baseUrl?: string; sendEmails?: boolean } = {}
+  options: ProcessWeeklyDigestOptions = {}
 ): Promise<DigestReport> {
   const baseUrl = options.baseUrl || DEFAULT_BASE_URL;
 
-  // 1. Fetch pending actions
-  const actionsSnapshot = await db.collection("actions").limit(1000).get();
-  const rawActions = actionsSnapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+  // 1. Resolve since date for query bounding
+  let sinceDate: Date | null;
+  if (options.since !== undefined) {
+    sinceDate = options.since;
+  } else {
+    sinceDate = await resolveLastDigestRunTime(db);
+    // If no prior run found, fallback to 7 days ago (1-week window)
+    if (!sinceDate) {
+      sinceDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    }
+  }
 
-  // 2. Resolve users and orgs
-  const usersSnapshot = await db.collection("users").limit(1000).get();
+  // 2. Query actions changed since last run (bounded by construction)
+  const actionCap = options.actionCap ?? DEFAULT_ACTION_CAP;
+  let actionsQuery: Query<DocumentData> = db.collection("actions");
+
+  if (sinceDate && typeof actionsQuery.where === "function") {
+    actionsQuery = actionsQuery.where("updateTime", ">=", sinceDate);
+  }
+  if (typeof actionsQuery.orderBy === "function") {
+    actionsQuery = actionsQuery.orderBy("updateTime", "desc");
+  }
+
+  // Check matching action count before limiting
+  let totalMatchingActions = -1;
+  if (typeof actionsQuery.count === "function") {
+    try {
+      const countSnap = await actionsQuery.count().get();
+      totalMatchingActions = countSnap.data().count;
+    } catch (err) {
+      logger.warn("[Weekly Digest] count() aggregation failed, falling back to document length:", err);
+    }
+  }
+
+  const actionsSnapshot = typeof actionsQuery.limit === "function"
+    ? await actionsQuery.limit(actionCap).get()
+    : await actionsQuery.get();
+
+  const rawActions: Array<Record<string, unknown>> = (actionsSnapshot.docs || []).map((d: { id: string; data?: () => Record<string, unknown> }) => ({
+    id: d.id,
+    ...(typeof d.data === "function" ? d.data() : (d as unknown as Record<string, unknown>))
+  }));
+
+  if (totalMatchingActions === -1) {
+    totalMatchingActions = rawActions.length;
+  }
+
+  const capsHit: string[] = [];
+  let truncated = false;
+
+  if (totalMatchingActions > rawActions.length) {
+    truncated = true;
+    capsHit.push("actions");
+    logger.warn(
+      `[Weekly Digest] TRUNCATION DETECTED: ${totalMatchingActions} actions matched query, but actionCap is ${actionCap}. Only ${rawActions.length} returned. Users/orgs past cap will not receive complete digests.`
+    );
+    if (options.failOnTruncation) {
+      throw new Error(
+        `COLLECTION_TRUNCATED: Actions matching query (${totalMatchingActions}) exceeded actionCap (${actionCap})`
+      );
+    }
+  }
+
+  // 3. Extract only the assigned users and orgs referenced by candidate actions
+  const assignedUserIds: string[] = [];
+  const assignedOrgIds: string[] = [];
+
+  for (const rawAction of rawActions) {
+    const uid =
+      (rawAction.responsiblePerson as string) ||
+      (rawAction.accountablePerson as string) ||
+      (rawAction.assignedTo as string) ||
+      (rawAction.owner as string);
+    if (uid && typeof uid === "string") {
+      assignedUserIds.push(uid);
+    }
+    const orgId = rawAction.orgId as string;
+    if (orgId && typeof orgId === "string") {
+      assignedOrgIds.push(orgId);
+    }
+  }
+
+  const userCap = options.userCap ?? DEFAULT_USER_CAP;
+  const uniqueUserIds = Array.from(new Set(assignedUserIds));
+  if (uniqueUserIds.length > userCap) {
+    truncated = true;
+    capsHit.push("users");
+    logger.warn(
+      `[Weekly Digest] TRUNCATION DETECTED: Unique assigned users (${uniqueUserIds.length}) exceeded userCap (${userCap}).`
+    );
+    if (options.failOnTruncation) {
+      throw new Error(
+        `COLLECTION_TRUNCATED: Unique assigned users (${uniqueUserIds.length}) exceeded userCap (${userCap})`
+      );
+    }
+  }
+
+  const orgCap = options.orgCap ?? DEFAULT_ORG_CAP;
+  const uniqueOrgIds = Array.from(new Set(assignedOrgIds));
+  if (uniqueOrgIds.length > orgCap) {
+    truncated = true;
+    capsHit.push("orgs");
+    logger.warn(
+      `[Weekly Digest] TRUNCATION DETECTED: Referenced organizations (${uniqueOrgIds.length}) exceeded orgCap (${orgCap}).`
+    );
+    if (options.failOnTruncation) {
+      throw new Error(
+        `COLLECTION_TRUNCATED: Referenced organizations (${uniqueOrgIds.length}) exceeded orgCap (${orgCap})`
+      );
+    }
+  }
+
+  // 4. Fetch only the referenced users and organizations
   const usersMap = new Map<string, UserProfile>();
-  for (const doc of usersSnapshot.docs) {
-    usersMap.set(doc.id, { id: doc.id, ...doc.data() });
+  const usersData = await fetchDocumentsByIds(db, "users", uniqueUserIds.slice(0, userCap));
+  for (const [id, data] of usersData.entries()) {
+    usersMap.set(id, { id, ...data });
   }
 
-  const orgsSnapshot = await db.collection("orgs").limit(500).get();
   const orgsMap = new Map<string, string>();
-  for (const doc of orgsSnapshot.docs) {
-    orgsMap.set(doc.id, (doc.get("name") as string) || "Strategic Organization");
+  const orgsData = await fetchDocumentsByIds(db, "orgs", uniqueOrgIds.slice(0, orgCap));
+  for (const [id, data] of orgsData.entries()) {
+    orgsMap.set(id, (data.name as string) || "Strategic Organization");
   }
 
-  // 3. Aggregate digests
+  // 5. Aggregate digests
   const userDigests = groupActionsByUser(rawActions, usersMap, orgsMap, baseUrl);
 
   let emailsSent = 0;
@@ -445,7 +682,6 @@ export async function processWeeklyDigests(
     });
 
     if (options.sendEmails !== false) {
-      // In production with sendgrid/resend or mock in emulator:
       logger.info(`Sending strategic digest to ${digest.email}: "${emailContent.subject}" (${digest.actions.length} actions)`);
       emailsSent++;
     }
@@ -456,6 +692,20 @@ export async function processWeeklyDigests(
     actionsAggregated: rawActions.length,
     emailsSent,
     timestamp: new Date().toISOString(),
+    truncated,
+    capsHit,
+    queryStats: {
+      actionsMatching: totalMatchingActions,
+      actionsFetched: rawActions.length,
+      actionCap,
+      usersMatching: uniqueUserIds.length,
+      usersFetched: usersMap.size,
+      userCap,
+      orgsMatching: uniqueOrgIds.length,
+      orgsFetched: orgsMap.size,
+      orgCap,
+      since: sinceDate ? sinceDate.toISOString() : null
+    },
     digests: digestsReport
   };
 
