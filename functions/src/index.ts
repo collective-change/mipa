@@ -24,3 +24,10 @@ export {
   deleteOrganization,
   deleteUserAccount
 } from "./accountDeletion";
+export {
+  scheduledSyntheticFunnelCheck,
+  triggerSyntheticCheck
+} from "./monitoring/syntheticCheck";
+export {
+  submitSupportTicket
+} from "./support/supportIntake";

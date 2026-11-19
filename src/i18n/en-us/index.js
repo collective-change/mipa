@@ -240,6 +240,18 @@ export default {
   toastAccountDeleted: "Your account has been deleted.",
   deleteOrgConfirmDetailed: "Delete {name} and everything in it? What is deleted: Organization settings, member rosters, AI configurations, private models, formulas, internal actions, and chats. What is retained: Any public dossiers previously published to the Register remain citable and timestamped per our permanence policy ('revocation ≠ erasure'). This cannot be undone.",
 
+  // for PageHelp.vue support intake (MIPA-36)
+  supportIntakeTitle: "Contact Us & Priority Support",
+  supportResponseNotice: "Paying customers receive priority engineering pipeline placement. All support requests are filed directly to our active development backlog.",
+  supportResponseExpectations: "Stated Response Expectations",
+  ticketSubject: "Subject",
+  ticketCategory: "Category",
+  ticketMessage: "Message",
+  ticketMessageHint: "Describe what you experienced, what was expected, and how to reproduce it (at least 10 characters).",
+  sendTicket: "Submit Support Ticket",
+  ticketSubmittedToast: "Support ticket {ticketId} submitted. Stated response: {expectation}.",
+  signInToSubmitTicket: "Please sign in to file an in-app priority ticket, or use our public GitHub issues.",
+
   // for organization members
   Members: "Members",
   Member: "Member",
