@@ -66,8 +66,13 @@
           <div class="row q-col-gutter-sm q-mt-md">
             <div class="col-6 col-sm-3">
               <q-card flat class="metric-card bg-blue-1 text-primary q-pa-sm text-center">
-                <div class="text-h6 text-weight-bolder">{{ dossier.factorsCount }}</div>
-                <div class="text-caption">{{ $t("dossierFactorsMetric") }}</div>
+                <div class="text-h6 text-weight-bolder">
+                  {{ isPartialView ? `${dossier.factorsCount} / ${nodesTotalCount}` : dossier.factorsCount }}
+                </div>
+                <div class="text-caption">
+                  {{ $t("dossierFactorsMetric") }}
+                  <span v-if="isPartialView" class="text-weight-bold q-ml-xs">({{ $t("partialViewBadge") }})</span>
+                </div>
               </q-card>
             </div>
             <div class="col-6 col-sm-3">
@@ -103,6 +108,41 @@
             </div>
           </div>
         </div>
+
+        <!-- Partial View Notice Banner -->
+        <q-banner
+          v-if="isPartialView"
+          rounded
+          class="bg-amber-1 text-grey-9 q-mb-lg border-amber"
+        >
+          <template v-slot:avatar>
+            <q-icon name="info" color="warning" />
+          </template>
+          <div class="row items-center justify-between full-width">
+            <div class="col-12 col-md-8">
+              <div class="text-weight-bold">
+                {{ $t("showingBoundedFactors", { loaded: rawNodes.length, total: nodesTotalCount }) }}
+                <span class="text-weight-regular text-grey-8">({{ $t("partialViewBadge") }})</span>
+              </div>
+              <div class="text-caption text-grey-7">
+                {{ $t("partialViewExplanation") }}
+              </div>
+            </div>
+            <div class="col-12 col-md-4 text-right q-mt-xs-sm q-mt-md-none">
+              <q-btn
+                unelevated
+                dense
+                no-caps
+                color="primary"
+                icon="unfold_more"
+                :label="$t('showAllFactors', { total: nodesTotalCount })"
+                :loading="loadingMoreNodes"
+                @click="loadAllNodes"
+                class="no-print"
+              />
+            </div>
+          </div>
+        </q-banner>
 
         <!-- Section 1: Top Leverage Strategic Actions -->
         <div class="q-mb-lg bg-white q-pa-md rounded-borders border-grey">
@@ -178,6 +218,9 @@
             <div class="text-subtitle1 text-weight-bold text-grey-9 row items-center">
               <q-icon name="tune" color="primary" class="q-mr-xs" size="20px" />
               {{ $t("dossierSandboxTitle") }}
+              <q-badge v-if="isPartialView" color="warning" text-color="dark" class="q-ml-sm">
+                {{ $t("showingBoundedFactors", { loaded: rawNodes.length, total: nodesTotalCount }) }}
+              </q-badge>
             </div>
             <q-btn
               flat
@@ -464,10 +507,11 @@
 </template>
 
 <script>
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, limit, getCountFromServer } from "firebase/firestore";
 import { firebaseDb, firebaseFunctions } from "@/boot/firebase";
 import { httpsCallable } from "firebase/functions";
 import { buildDossierSummary, printDossierBrief } from "@/utils/modelDossier";
+import { DEFAULT_NODES_LIMIT } from "@/store/store-model";
 
 export default {
   name: "PageModelDossier",
@@ -476,12 +520,23 @@ export default {
       loading: true,
       rawModel: null,
       rawNodes: [],
+      nodesTotalCount: null,
+      nodesLimit: DEFAULT_NODES_LIMIT,
+      showingAllNodes: false,
+      loadingMoreNodes: false,
       rawActions: [],
       rawOrg: null,
       perturbations: {}
     };
   },
   computed: {
+    isPartialView() {
+      return (
+        !this.showingAllNodes &&
+        typeof this.nodesTotalCount === "number" &&
+        this.nodesTotalCount > this.rawNodes.length
+      );
+    },
     modelId() {
       return this.$route.params.modelId;
     },
@@ -589,6 +644,48 @@ export default {
     await this.fetchDossierData();
   },
   methods: {
+    async fetchNodes(showAll = false) {
+      const nodesCol = collection(firebaseDb, "models", this.modelId, "nodes");
+      try {
+        const countSnap = await getCountFromServer(nodesCol);
+        this.nodesTotalCount =
+          countSnap && typeof countSnap.data === "function" ? countSnap.data().count : null;
+      } catch {
+        this.nodesTotalCount = null;
+      }
+
+      try {
+        const nodesQuery = showAll ? nodesCol : query(nodesCol, limit(this.nodesLimit));
+        const nodesSnap = await getDocs(nodesQuery);
+        this.rawNodes = nodesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        this.showingAllNodes = Boolean(showAll);
+      } catch {
+        this.rawNodes = [
+          { id: "n1", symbol: "VC", name: "Volunteer Capacity", initialValue: 120, units: "volunteers" },
+          { id: "n2", symbol: "RS", name: "Relief Supplies", initialValue: 85, units: "tons" },
+          { id: "n3", symbol: "PT", name: "Public Trust", initialValue: 90, units: "points" }
+        ];
+        this.showingAllNodes = true;
+      }
+
+      const initialPerturbations = { ...this.perturbations };
+      for (const n of this.rawNodes) {
+        if (initialPerturbations[n.id] === undefined) {
+          initialPerturbations[n.id] = 0;
+        }
+      }
+      this.perturbations = initialPerturbations;
+    },
+    async loadAllNodes() {
+      this.loadingMoreNodes = true;
+      try {
+        await this.fetchNodes(true);
+      } catch (err) {
+        console.warn("Could not load all model factors:", err);
+      } finally {
+        this.loadingMoreNodes = false;
+      }
+    },
     async fetchDossierData() {
       this.loading = true;
       try {
@@ -606,18 +703,8 @@ export default {
           };
         }
 
-        // Fetch nodes
-        try {
-          const nodesCol = collection(firebaseDb, "models", this.modelId, "nodes");
-          const nodesSnap = await getDocs(nodesCol);
-          this.rawNodes = nodesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        } catch {
-          this.rawNodes = [
-            { id: "n1", symbol: "VC", name: "Volunteer Capacity", initialValue: 120, units: "volunteers" },
-            { id: "n2", symbol: "RS", name: "Relief Supplies", initialValue: 85, units: "tons" },
-            { id: "n3", symbol: "PT", name: "Public Trust", initialValue: 90, units: "points" }
-          ];
-        }
+        // Fetch nodes (bounded with count query, show-all support)
+        await this.fetchNodes(false);
 
         // Fetch actions. Actions are not publicly readable by Firestore rules
         // (MIPA-4); this callable returns only title + computed leverage for
@@ -630,13 +717,6 @@ export default {
           console.warn("Could not load public dossier actions:", err);
           this.rawActions = [];
         }
-
-        // Initialize perturbation sliders map
-        const initialPerturbations = {};
-        for (const n of this.rawNodes) {
-          initialPerturbations[n.id] = 0;
-        }
-        this.perturbations = initialPerturbations;
       } catch (err) {
         console.warn("Could not load public model dossier:", err);
       } finally {
@@ -677,6 +757,9 @@ export default {
 }
 .border-grey {
   border: 1px solid #e2e8f0;
+}
+.border-amber {
+  border: 1px solid #fcd34d;
 }
 .letter-spacing {
   letter-spacing: 0.05em;

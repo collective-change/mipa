@@ -865,6 +865,11 @@ export default {
   loadMoreFactorsButton: "載入更多（+{count}）",
   loadAllFactorsButton: "載入全部",
 
+  // MIPA-38: Bounded Dossier Nodes Query
+  partialViewBadge: "部分",
+  partialViewExplanation: "大型模型預設限制載入筆數以確保瀏覽器效能與網路頻寬。",
+  showAllFactors: "載入全部 {total} 項要素",
+
   // Feature 4: Idea to Complete Action
   tabSmartDraft: "點子智慧建案",
   tabManualEntry: "手動建立",

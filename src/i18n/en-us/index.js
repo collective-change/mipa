@@ -884,6 +884,11 @@ export default {
   loadMoreFactorsButton: "Load more (+{count})",
   loadAllFactorsButton: "Load all",
 
+  // MIPA-38: Bounded Dossier Nodes Query
+  partialViewBadge: "partial",
+  partialViewExplanation: "Large models are bounded to protect browser performance and network usage.",
+  showAllFactors: "Load all {total} factors",
+
   // Feature 4: Idea to Complete Action
   tabSmartDraft: "Smart draft from idea",
   tabManualEntry: "Manual entry",

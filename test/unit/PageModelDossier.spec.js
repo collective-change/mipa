@@ -33,6 +33,9 @@ vi.mock("firebase/firestore", () => ({
     })
   })),
   collection: vi.fn(),
+  query: vi.fn((col) => col),
+  limit: vi.fn(),
+  getCountFromServer: vi.fn(async () => ({ data: () => ({ count: 2 }) })),
   getDocs: vi.fn(async () => ({
     docs: [
       { id: "n1", data: () => ({ symbol: "MC", name: "Mobile Clinics", initialValue: 10, units: "clinics" }) },
