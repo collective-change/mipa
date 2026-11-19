@@ -235,6 +235,18 @@ export default {
   toastAccountDeleted: "您的帳號已成功刪除。",
   deleteOrgConfirmDetailed: "確定要刪除「{name}」及其所有內容嗎？刪除範圍：組織設定、成員名單、AI 配置、私有模型、公式、內部行動與聊天記錄。保留範圍：先前已發布至公共登記冊（Register）的公開決策卷宗將依「撤回不等於抹除」（revocation ≠ erasure）之永久政策予以保留並標註時間戳記。此動作無法復原。",
 
+  // for PageHelp.vue support intake (MIPA-36)
+  supportIntakeTitle: "聯絡我們與優先支援工單",
+  supportResponseNotice: "付費用戶享有優先排入工程開發管線之權利。所有支援請求均會自動建立工單並排入專案開發看板。",
+  supportResponseExpectations: "服務回應時效承諾",
+  ticketSubject: "主旨",
+  ticketCategory: "問題類別",
+  ticketMessage: "詳細說明",
+  ticketMessageHint: "請描述您遇到的問題、預期結果與重現步驟（至少 10 個字元）。",
+  sendTicket: "送出支援工單",
+  ticketSubmittedToast: "支援工單 {ticketId} 已送出。回應時效承諾：{expectation}。",
+  signInToSubmitTicket: "請先登入以提交優先支援工單，或使用公開的 GitHub Issues。",
+
   // for organization members
   Members: "成員",
   Member: "成員",

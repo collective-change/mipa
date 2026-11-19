@@ -285,14 +285,16 @@ export default {
       links2: [
         { icon: "settings", text: "Settings", to: "/settings" },
         { icon: "help", text: "Help", to: "/settings/help" },
+        { icon: "contact_support", text: "Contact us", to: "/settings/help#contact" },
         { icon: "feedback", text: "SendFeedback", href: FEEDBACK_URL },
       ],
       links3: [{ icon: "exit_to_app", text: "Logout", onclick: "logoutUser" }],
       buttons1: [
         { text: "About", to: "/about" },
         { text: "Documentation", href: "https://github.com/collective-change/mipa#readme" },
-        { text: "Source code", href: "https://github.com/collective-change/mipa" },
+        { text: "Terms", to: "/terms" },
         { text: "Privacy", to: "/privacy" },
+        { text: "Source code", href: "https://github.com/collective-change/mipa" },
       ],
     };
   },
