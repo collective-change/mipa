@@ -12,11 +12,79 @@ import enUs from "@/i18n/en-us/index.js";
 import zhTw from "@/i18n/zh-tw/index.js";
 
 const fb = mockFirebaseModules(() => []);
+let nextAutoId = 1;
+const batchWrites = [];
+const addedDocs = [];
+const setDocs = [];
+
+const makeRef = (colPath, id) => {
+  const docId = id || `auto_${nextAutoId++}`;
+  return { id: docId, path: `${colPath}/${docId}` };
+};
+
 vi.mock("firebase/app", () => fb.app);
 vi.mock("firebase/auth", () => fb.auth);
-vi.mock("firebase/firestore", () => fb.firestore);
+vi.mock("firebase/functions", () => ({
+  getFunctions: () => ({}),
+  httpsCallable: () => vi.fn()
+}));
+vi.mock("firebase/firestore", () => ({
+  ...fb.firestore,
+  collection: (_db, ...segments) => ({ path: segments.join("/") }),
+  doc: (colOrDb, ...segments) =>
+    typeof colOrDb?.path === "string"
+      ? makeRef(colOrDb.path, segments[0])
+      : makeRef(segments.slice(0, -1).join("/"), segments[segments.length - 1]),
+  addDoc: vi.fn(async (colRef, data) => {
+    const ref = makeRef(colRef.path);
+    addedDocs.push({ ref, data: structuredClone(data) });
+    return ref;
+  }),
+  setDoc: vi.fn(async (ref, data, options) => {
+    setDocs.push({ ref, data: structuredClone(data), options });
+  }),
+  deleteDoc: vi.fn(async () => {}),
+  orderBy: vi.fn((field, dir) => ({ field, dir })),
+  serverTimestamp: vi.fn(() => "__SERVER_TIMESTAMP__"),
+  writeBatch: vi.fn(() => ({
+    set: (ref, data, options) => {
+      batchWrites.push({ ref, data: structuredClone(data), options });
+    },
+    commit: vi.fn(async () => {})
+  }))
+}));
+vi.mock("@/boot/firebase", () => ({
+  firebaseConfig: { projectId: "demo-mipa", apiKey: "test" },
+  useEmulators: false,
+  firebaseDb: {},
+  firebaseFunctions: {},
+  firebaseAuth: {
+    currentUser: {
+      uid: "u_cfo_1",
+      email: "cfo@example.org",
+      displayName: "CFO"
+    }
+  }
+}));
+vi.mock("@/store/firestore-bind", () => ({
+  firestoreAction: fn => fn
+}));
+vi.mock("@/utils/util-show-error-message", () => ({
+  showErrorMessage: vi.fn()
+}));
+vi.mock("quasar", () => {
+  let uidCounter = 1;
+  return {
+    uid: () => `q_uid_${uidCounter++}`,
+    Notify: { create: vi.fn() }
+  };
+});
 
 beforeEach(() => {
+  nextAutoId = 1;
+  batchWrites.length = 0;
+  addedDocs.length = 0;
+  setDocs.length = 0;
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(FIXED_NOW);
   for (const level of ["log", "table", "error", "warn"]) {
@@ -108,5 +176,72 @@ describe("sample organization", () => {
     const { nodes, roleNodes } = compileSample(zhTw, "TWD");
     const run = await runCalc(message(nodes, { roleNodes, simulationParams }));
     expect(run.error).toBeUndefined();
+  });
+
+  it("pre-calculates all three sample actions on creation with non-null leverage without Recalculate", async () => {
+    const originalWorker = globalThis.Worker;
+    globalThis.Worker = class NodeCalcWorkerAdapter {
+      constructor() {
+        this.onmessage = null;
+        this.onerror = null;
+      }
+      postMessage(msg) {
+        runCalc(msg)
+          .then(run => {
+            if (run.error) {
+              if (this.onmessage) this.onmessage({ data: run.error });
+              return;
+            }
+            for (const result of run.results) {
+              if (this.onmessage) this.onmessage({ data: result });
+            }
+          })
+          .catch(err => {
+            if (this.onerror) this.onerror({ message: err.message });
+          });
+      }
+      terminate() {}
+    };
+
+    try {
+      const orgsModule = (await import("@/store/store-orgs")).default;
+      const dispatched = [];
+      const dispatch = vi.fn(async (type, payload) => {
+        dispatched.push({ type, payload });
+      });
+
+      const created = await orgsModule.actions.createSampleOrg({
+        dispatch,
+        rootState: { adHocDocs: { exchangeRates: { base: "USD", rates: { USD: 1, TWD: 30, EUR: 0.8 } } } }
+      });
+
+      expect(created.orgId).toBeTruthy();
+      expect(created.nameSlug).toBeTruthy();
+
+      const writtenActions = batchWrites
+        .filter(w => w.ref.path.startsWith("actions/"))
+        .map(w => w.data);
+      expect(writtenActions).toHaveLength(3);
+
+      for (const action of writtenActions) {
+        expect(typeof action.actionLeverage).toBe("number");
+        expect(Number.isFinite(action.actionLeverage)).toBe(true);
+        expect(action.actionLeverage).not.toBeNull();
+        expect(action.effectiveResultsNumbers?.actionLeverage).toBe(action.actionLeverage);
+        expect(action.branchAndBlockeesResultsNumbers?.actionLeverage).toBe(action.actionLeverage);
+        expect(action.effectiveChainedCostsAndImpacts).toBeDefined();
+      }
+
+      const byTitle = Object.fromEntries(writtenActions.map(a => [a.title, a]));
+      expect(byTitle[enUs.sample.actions.recruit.title].actionLeverage).toBeGreaterThan(0);
+      expect(byTitle[enUs.sample.actions.supermarkets.title].actionLeverage).toBeLessThan(0);
+      expect(byTitle[enUs.sample.actions.report.title].actionLeverage).toBeLessThan(0);
+
+      const baselineSave = dispatched.find(d => d.type === "calcResults/saveBaseline");
+      expect(baselineSave).toBeDefined();
+      expect(baselineSave.payload.resultsType).toBe("baseline");
+    } finally {
+      globalThis.Worker = originalWorker;
+    }
   });
 });

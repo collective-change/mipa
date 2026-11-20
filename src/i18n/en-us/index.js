@@ -1184,6 +1184,7 @@ export default {
   templateClonedSuccess: "Template cloned successfully into your model.",
   templateExportedSuccess: "Model exported as open shareable template JSON.",
   gsStarterTemplatesPrompt: "Prefer to start from a proven template?",
+  gsSeeFinishedExample: "See a finished example",
   guidedTourLabel: "Mipa Interactive Tour",
   tourStep1Title: "Map Your Factors & Causal Links",
   tourStep1Desc: "Organizations succeed through interlinked systems. In Mipa, you define factors (stocks of volunteers, supply flows, or outcome indicators) and connect them with plain-language formulas without technical jargon.",

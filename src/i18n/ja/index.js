@@ -1170,6 +1170,7 @@ export default {
   "templateClonedSuccess": "テンプレートが現在のモデルに正常に複製されました。",
   "templateExportedSuccess": "モデルがオープン共有用テンプレート JSON としてエクスポートされました。",
   "gsStarterTemplatesPrompt": "実証済みのテンプレートから始めますか？",
+  "gsSeeFinishedExample": "完成した例を見る",
   "guidedTourLabel": "Mipa ガイドツアー",
   "tourStep1Title": "システム要因と因果関係のマッピング",
   "tourStep1Desc": "組織の成果は相互に連動するシステムから生まれます。Mipa では要因（ボランティアの蓄積、物資の流量、成果指標）を定義し、平易な数式で因果関係を結びます。",

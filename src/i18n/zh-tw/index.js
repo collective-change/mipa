@@ -1165,6 +1165,7 @@ export default {
   templateClonedSuccess: "範本要素已成功複製至目前模型。",
   templateExportedSuccess: "模型已成功匯出為開放分享之範本 JSON。",
   gsStarterTemplatesPrompt: "想從經過實證之範本開始建置？",
+  gsSeeFinishedExample: "查看完成的範例",
   guidedTourLabel: "Mipa 系統導覽",
   tourStep1Title: "建置組織系統要素與因果關聯",
   tourStep1Desc: "組織運作乃由相互關聯之系統所構成。在 Mipa 中，您可定義要素（如志工留存積蓄量、物資流動率或成果指標），並透過直觀公式建立因果關聯，無需複雜之數學行話。",
