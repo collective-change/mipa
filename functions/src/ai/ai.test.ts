@@ -4,7 +4,13 @@ import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { seal, open } from "./keyBox";
 import { isAllowedEndpoint, parseReply, parseActionReply, ProviderReplyError } from "./providers";
-import { contextText, SYSTEM_PROMPT, ACTION_DRAFT_SYSTEM_PROMPT, actionDraftUserPrompt } from "./prompt";
+import {
+  contextText,
+  detectFeedbackLoops,
+  SYSTEM_PROMPT,
+  ACTION_DRAFT_SYSTEM_PROMPT,
+  actionDraftUserPrompt
+} from "./prompt";
 
 const secret = randomBytes(32).toString("base64");
 
@@ -122,4 +128,111 @@ test("action draft prompt includes model factors and idea", () => {
   assert.match(prompt, /Install solar panels/);
   assert.match(prompt, /electricityCost/);
   assert.doesNotMatch(ACTION_DRAFT_SYSTEM_PROMPT, /\d{4}-\d{2}-\d{2}/);
+});
+
+test("SYSTEM_PROMPT asks for named, explained limits, focuses question rounds on limits, and states why connectivity matters (MIPA-54)", () => {
+  assert.match(SYSTEM_PROMPT, /what stops each growing quantity from growing/i);
+  assert.match(SYSTEM_PROMPT, /staff hours.*capacity.*funding.*donor attention.*market size.*regulation.*trust/i);
+  assert.match(SYSTEM_PROMPT, /Name and explain every limit in plain language/i);
+  assert.match(SYSTEM_PROMPT, /a limit nobody can name is a number someone invented/i);
+  assert.match(SYSTEM_PROMPT, /Spend (?:your )?question rounds on limits before anything else/i);
+  assert.match(SYSTEM_PROMPT, /invisible to the calculation/i);
+  assert.match(SYSTEM_PROMPT, /in the language the user writes in/i);
+});
+
+test("contextText includes reinforcing/balancing loop census computed via detectFeedbackLoops and lists unlinked factors (MIPA-54)", () => {
+  const factors = [
+    {
+      id: "f_scale",
+      name: "Program Scale",
+      symbol: "scale",
+      formula: "donations * limitFactor",
+      unit: "",
+      group: "Growth",
+      influencers: ["f_donations", "f_limit"],
+      class: "state"
+    },
+    {
+      id: "f_aware",
+      name: "Community Awareness",
+      symbol: "awareness",
+      formula: "scale * 1.5",
+      unit: "",
+      group: "Growth",
+      influencers: ["f_scale"],
+      class: "state"
+    },
+    {
+      id: "f_donations",
+      name: "Monthly Donations",
+      symbol: "donations",
+      formula: "awareness * 100",
+      unit: "TWD",
+      group: "Growth",
+      influencers: ["f_aware"],
+      class: "state"
+    },
+    {
+      id: "f_limit",
+      name: "Capacity Constraint",
+      symbol: "limitFactor",
+      formula: "100 / (1 + scale)",
+      unit: "",
+      group: "Limits",
+      influencers: ["f_scale"],
+      class: "state"
+    },
+    {
+      id: "f_spare",
+      name: "Spare Capacity",
+      symbol: "spareCapacity",
+      formula: "50",
+      unit: "",
+      group: "Operations",
+      influencers: [],
+      class: "unlinked"
+    },
+    {
+      id: "f_budget",
+      name: "Maintenance Budget",
+      symbol: "maintenanceBudget",
+      formula: "2000",
+      unit: "TWD",
+      group: "Operations",
+      influencers: [],
+      class: "unlinked"
+    }
+  ];
+
+  const loops = detectFeedbackLoops(factors);
+  assert.equal(loops.some((l) => l.type === "reinforcing"), true);
+  assert.equal(loops.some((l) => l.type === "balancing"), true);
+
+  const text = contextText({
+    org: { name: "Community Kitchen", goal: "Daily meals", orgType: "ngo", currency: "TWD" },
+    timeStep: "1 months",
+    horizon: "60 months",
+    factors
+  });
+
+  assert.match(text, /# The model's loops/);
+  assert.match(text, /Reinforcing: R1 \(awareness → donations → scale → awareness\)/);
+  assert.match(text, /Balancing: B1 \(limitFactor → scale → limitFactor\)/);
+  assert.match(text, /# Factors that are not connected\nspareCapacity, maintenanceBudget/);
+});
+
+test("contextText reports none when no loops or unlinked factors exist", () => {
+  const text = contextText({
+    org: { name: "Simple Org", goal: "Help", orgType: "ngo", currency: "USD" },
+    timeStep: "1 months",
+    horizon: "12 months",
+    factors: [
+      { id: "n1", name: "Input", symbol: "inputVal", formula: "10", unit: "", group: "", influencers: [], class: "input" },
+      { id: "n2", name: "Output", symbol: "outputVal", formula: "inputVal * 2", unit: "", group: "", influencers: ["n1"], class: "output" }
+    ]
+  });
+
+  assert.match(text, /Reinforcing: none/);
+  assert.match(text, /Balancing: none/);
+  assert.match(text, /# Factors that are not connected\nnone/);
 });
