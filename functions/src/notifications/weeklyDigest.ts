@@ -3,6 +3,8 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import { Firestore, getFirestore, FieldValue, Query, DocumentData } from "firebase-admin/firestore";
 import * as crypto from "crypto";
+import { aiKeyEncryptionKey } from "../ai/keyBox";
+import { sendTransactionalEmail } from "./transactionalEmail";
 
 export interface DigestActionItem {
   id: string;
@@ -682,8 +684,22 @@ export async function processWeeklyDigests(
     });
 
     if (options.sendEmails !== false) {
-      logger.info(`Sending strategic digest to ${digest.email}: "${emailContent.subject}" (${digest.actions.length} actions)`);
-      emailsSent++;
+      const sendResult = await sendTransactionalEmail(
+        db,
+        {
+          to: digest.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+          text: emailContent.text,
+          category: "weekly_digest",
+          metadata: { uid: digest.uid, actionCount: digest.actions.length }
+        },
+        { skipRateLimit: true, skipFirestoreLog: true }
+      );
+      if (sendResult.sent) {
+        logger.info(`Sending strategic digest to ${digest.email} via ${sendResult.provider}: "${emailContent.subject}" (${digest.actions.length} actions)`);
+        emailsSent++;
+      }
     }
   }
 
@@ -724,7 +740,8 @@ export async function processWeeklyDigests(
 export const sendWeeklyStrategicDigest = onSchedule(
   {
     schedule: "every monday 08:00",
-    timeZone: "Asia/Taipei"
+    timeZone: "Asia/Taipei",
+    secrets: [aiKeyEncryptionKey]
   },
   async () => {
     logger.info("Executing scheduled Monday Morning Strategic Digest");
