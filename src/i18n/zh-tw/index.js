@@ -1366,5 +1366,14 @@ export default {
   counterfactualMethod_synthetic_control: "合成對照法",
   counterfactualMethod_natural_experiment: "自然實驗",
   counterfactualMethod_interrupted_time_series: "中斷時間序列",
-  counterfactualMethod_other: "其他實證對照"
+  counterfactualMethod_other: "其他實證對照",
+
+  // 自動檢核標記（MIPA-43），僅由已儲存的來源紀錄產生。
+  reviewMarkText: "依 mipa 方法論 v{methodology}，由模型 {model}（{provider}）於 {date} 檢核。",
+  reviewMarkUnpinned: "供應商未將此模型識別碼固定於特定版本，因此本次檢核可能無法重現。",
+  reviewMarkDrift: "本次檢核後，{fields}已變更；本紀錄保留當時使用的版本。",
+  reviewMarkField_provider: "供應商",
+  reviewMarkField_model: "模型",
+  reviewMarkField_methodologyVersion: "方法論",
+  reviewMarkFieldSeparator: "、"
 };
