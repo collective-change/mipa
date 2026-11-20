@@ -1170,6 +1170,7 @@ export default {
   "templateClonedSuccess": "Plantilla clonada con éxito en su modelo.",
   "templateExportedSuccess": "Modelo exportado como archivo JSON de plantilla abierta.",
   "gsStarterTemplatesPrompt": "¿Prefiere comenzar desde una plantilla probada?",
+  "gsSeeFinishedExample": "Ver un ejemplo terminado",
   "guidedTourLabel": "Guía Interactiva de Mipa",
   "tourStep1Title": "Mapee sus Factores y Vínculos Causales",
   "tourStep1Desc": "Las organizaciones operan como sistemas interconectados. En Mipa, define factores (acumulaciones de voluntarios, flujos de suministros o indicadores de resultados) y los vincula mediante fórmulas sencillas sin jerga técnica.",

@@ -94,7 +94,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
   {
     id: "USER-ORGS-MEMBERSHIP",
     file: "src/store/store-orgs.js",
-    line: 203,
+    line: 267,
     date: "2026-11-20",
     reason: "Scoped to organizations where the signed-in user is an active member (users array-contains uid)."
   },

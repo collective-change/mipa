@@ -85,8 +85,18 @@
       </q-list>
 
       <div class="row items-center justify-between q-px-md q-pt-xs q-pb-sm bg-grey-1 border-top">
-        <div class="text-caption text-grey-7">
-          {{ $t("gsStarterTemplatesPrompt") }}
+        <div class="row items-center q-gutter-sm">
+          <div class="text-caption text-grey-7">
+            {{ $t("gsStarterTemplatesPrompt") }}
+          </div>
+          <a
+            :href="finishedExampleHref"
+            class="text-primary text-caption text-weight-medium finished-example-link q-mr-sm"
+            data-testid="finished-example-link"
+            @click.prevent="openFinishedExample"
+          >
+            {{ $t("gsSeeFinishedExample") }}
+          </a>
         </div>
         <div class="row q-gutter-xs">
           <q-btn
@@ -258,10 +268,61 @@ export default {
     },
     storageKey() {
       return `mipa.gettingStarted.hidden.${this.modelId}`;
+    },
+    sampleOrg() {
+      const orgs = this.$store?.state?.orgs?.orgs;
+      if (Array.isArray(orgs)) {
+        const match = orgs.find((o) => o && o.isSample);
+        if (match) return match;
+      }
+      const currentOrg = this.$store?.state?.orgs?.currentOrg;
+      return currentOrg && currentOrg.isSample ? currentOrg : null;
+    },
+    finishedExampleRoute() {
+      if (this.sampleOrg) {
+        return {
+          name: "actions",
+          params: {
+            orgNameSlug: this.sampleOrg.nameSlug || this.$route?.params?.orgNameSlug || "sample",
+            orgId: this.sampleOrg.id || this.sampleOrg.orgId || this.orgId
+          }
+        };
+      }
+      return {
+        name: "actions",
+        params: {
+          orgNameSlug: this.$route?.params?.orgNameSlug || "sample",
+          orgId: this.orgId || "sample"
+        }
+      };
+    },
+    finishedExampleHref() {
+      const { orgNameSlug, orgId } = this.finishedExampleRoute.params;
+      return `/org/${orgNameSlug}/ideate/actions/${orgId}`;
     }
   },
   methods: {
     ...mapActions("ui", ["setSelectedNodeId"]),
+    async openFinishedExample() {
+      if (this.sampleOrg) {
+        this.$router.push(this.finishedExampleRoute);
+        return;
+      }
+      if (this.$store && this.$store._actions && this.$store._actions["orgs/createSampleOrg"]) {
+        const created = await this.$store.dispatch("orgs/createSampleOrg");
+        if (created && created.orgId) {
+          this.$router.push({
+            name: "actions",
+            params: {
+              orgNameSlug: created.nameSlug || "sample",
+              orgId: created.orgId
+            }
+          });
+          return;
+        }
+      }
+      this.$router.push(this.finishedExampleRoute);
+    },
     selectNode(nodeId) {
       if (nodeId) this.setSelectedNodeId(nodeId);
     },

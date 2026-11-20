@@ -43,39 +43,49 @@ describe("MIPA-56: GettingStarted.vue - Step 3 Close the Model & Named Limits", 
       worldBenefit: "role_world_benefit",
       worldCost: "role_world_cost"
     },
-    baseline = null
+    baseline = null,
+    orgs = null
   } = {}) {
-    return createStore({
-      modules: {
-        model: {
-          namespaced: true,
-          state: {
-            currentModel: {
-              id: "test_m1",
-              name: "Test Strategy Model",
-              isOrgMainModel: true,
-              roleNodes,
-              simulationParams: { finalTimeNumber: 120, finalTimeUnit: "months" }
-            }
-          },
-          getters: {
-            nodes: () => nodes
+    const modules = {
+      model: {
+        namespaced: true,
+        state: {
+          currentModel: {
+            id: "test_m1",
+            name: "Test Strategy Model",
+            isOrgMainModel: true,
+            roleNodes,
+            simulationParams: { finalTimeNumber: 120, finalTimeUnit: "months" }
           }
         },
-        calcResults: {
-          namespaced: true,
-          state: {
-            baseline
-          }
-        },
-        ui: {
-          namespaced: true,
-          actions: {
-            setSelectedNodeId: mockSetSelectedNodeId
-          }
+        getters: {
+          nodes: () => nodes
+        }
+      },
+      calcResults: {
+        namespaced: true,
+        state: {
+          baseline
+        }
+      },
+      ui: {
+        namespaced: true,
+        actions: {
+          setSelectedNodeId: mockSetSelectedNodeId
         }
       }
-    });
+    };
+    if (orgs) {
+      modules.orgs = {
+        namespaced: true,
+        state: {
+          orgs: orgs.orgs || [],
+          currentOrg: orgs.currentOrg || null
+        },
+        actions: orgs.actions || {}
+      };
+    }
+    return createStore({ modules });
   }
 
   function mountComponent(storeInstance, locale = "en-us") {
@@ -318,6 +328,94 @@ describe("MIPA-56: GettingStarted.vue - Step 3 Close the Model & Named Limits", 
 
       expect(text).toContain("3. モデルを閉合する");
       expect(text).toContain("このモデルが示す制約要素：Kitchen Capacity");
+    });
+  });
+
+  describe("5. Finished Example Link (MIPA-57)", () => {
+    const exampleNodes = [
+      { id: "role_hourly", symbol: "hourly", name: "Hourly Cost", isNew: false, class: "input" },
+      { id: "role_org_benefit", symbol: "orgBenefit", name: "Org Benefit", class: "output", influencers: [], influencees: [] },
+      { id: "role_org_cost", symbol: "orgCost", name: "Org Cost", class: "output", influencers: [], influencees: [] },
+      { id: "role_world_benefit", symbol: "worldBenefit", name: "World Benefit", class: "output", influencers: [], influencees: [] },
+      { id: "role_world_cost", symbol: "worldCost", name: "World Cost", class: "output", influencers: [], influencees: [] }
+    ];
+
+    it("renders exactly one <a> link on the GettingStarted card pointing to an Actions view", () => {
+      store = createTestStore({
+        nodes: exampleNodes,
+        orgs: {
+          orgs: [{ id: "sample_org_1", nameSlug: "sample-food-pantry", isSample: true }]
+        }
+      });
+      const wrapper = mountComponent(store, "en-us");
+
+      const links = wrapper.findAll("a");
+      expect(links).toHaveLength(1);
+      expect(links[0].attributes("data-testid")).toBe("finished-example-link");
+      expect(links[0].text()).toBe("See a finished example");
+      expect(links[0].attributes("href")).toBe("/org/sample-food-pantry/ideate/actions/sample_org_1");
+    });
+
+    it("navigates directly to existing sample org Actions view when clicked", async () => {
+      const createSampleOrg = vi.fn();
+      store = createTestStore({
+        nodes: exampleNodes,
+        orgs: {
+          orgs: [{ id: "sample_org_1", nameSlug: "sample-food-pantry", isSample: true }],
+          actions: { createSampleOrg }
+        }
+      });
+      const wrapper = mountComponent(store, "en-us");
+
+      await wrapper.get("[data-testid='finished-example-link']").trigger("click");
+
+      expect(createSampleOrg).not.toHaveBeenCalled();
+      expect(mockPush).toHaveBeenCalledWith({
+        name: "actions",
+        params: { orgNameSlug: "sample-food-pantry", orgId: "sample_org_1" }
+      });
+    });
+
+    it("creates a sample org and routes to its Actions view when user has no sample org yet", async () => {
+      const createSampleOrg = vi.fn().mockResolvedValue({
+        orgId: "created_sample_1",
+        nameSlug: "created-sample-slug"
+      });
+      store = createTestStore({
+        nodes: exampleNodes,
+        orgs: {
+          orgs: [{ id: "test_org", nameSlug: "test-org", isSample: false }],
+          actions: { createSampleOrg }
+        }
+      });
+      const wrapper = mountComponent(store, "en-us");
+
+      await wrapper.get("[data-testid='finished-example-link']").trigger("click");
+
+      expect(createSampleOrg).toHaveBeenCalledTimes(1);
+      expect(mockPush).toHaveBeenCalledWith({
+        name: "actions",
+        params: { orgNameSlug: "created-sample-slug", orgId: "created_sample_1" }
+      });
+    });
+
+    it("renders gsSeeFinishedExample cleanly in all five locales without English leaking", () => {
+      const expectedByLocale = {
+        "en-us": "See a finished example",
+        "zh-tw": "查看完成的範例",
+        "zh-cn": "查看完成的范例",
+        es: "Ver un ejemplo terminado",
+        ja: "完成した例を見る"
+      };
+      for (const [locale, expectedText] of Object.entries(expectedByLocale)) {
+        store = createTestStore({ nodes: exampleNodes });
+        const wrapper = mountComponent(store, locale);
+        const link = wrapper.get("[data-testid='finished-example-link']");
+        expect(link.text()).toBe(expectedText);
+        if (locale !== "en-us") {
+          expect(link.text()).not.toContain("See a finished example");
+        }
+      }
     });
   });
 });

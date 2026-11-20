@@ -20,6 +20,19 @@ import { slugify } from "@/utils/util-slugify";
 import { i18n } from "@/boot/i18n";
 import { buildSampleOrg, sampleCurrencyFor } from "@/utils/sample-org";
 import { compileDraftNodes, roleNodesOf, isCurrencyRoleNode } from "@/utils/util-model-draft";
+import { calculateActionsInWorker } from "@/utils/util-trialCalc";
+
+const SAMPLE_SIMULATION_PARAMS = {
+  finalTimeNumber: 120,
+  finalTimeUnit: "months",
+  numTimeSteps: 120,
+  orgWeightingFactor: 1,
+  timeStepGrowthRate: 0,
+  timeStepNumber: 1,
+  timeStepUnit: "months",
+  worldToOrgWeightingRatio: 0.5,
+  worldWeightingFactor: 1
+};
 
 const state = {
   currentOrg: null,
@@ -114,7 +127,7 @@ const actions = {
   },
   // Creates the person's own copy of the sample organization, with its model
   // and actions. Returns the new org's id and name slug.
-  async createSampleOrg({ dispatch }) {
+  async createSampleOrg({ dispatch, rootState }) {
     const user = firebaseAuth.currentUser;
     const t = key => i18n.global.t(key);
     // In the app bundle the global locale is a ref, not a plain string.
@@ -144,6 +157,7 @@ const actions = {
 
     const nodes = compileDraftNodes(sample, () => doc(nodesRef(orgId)).id);
     const idOf = Object.fromEntries(nodes.map(n => [n.symbol, n.id]));
+    const roleNodes = roleNodesOf(nodes);
     const batch = writeBatch(firebaseDb);
     nodes.forEach(({ id, ...node }) =>
       batch.set(doc(nodesRef(orgId), id), {
@@ -154,45 +168,95 @@ const actions = {
     );
     batch.set(
       doc(firebaseDb, "models", orgId),
-      { roleNodes: roleNodesOf(nodes), updateTime: serverTimestamp(), updatedBy: user.uid },
+      { roleNodes, updateTime: serverTimestamp(), updatedBy: user.uid },
       { merge: true }
     );
-    sample.actions.forEach(action => {
-      batch.set(doc(collection(firebaseDb, "actions")), {
-        orgId,
-        title: action.title,
-        notes: action.notes,
-        isProject: false,
-        actionMchState: { value: "initiating" },
-        useSimpleEstimateMethod: false,
-        impacts: action.impacts.map(({ symbol, ...impact }) => ({
-          ...impact,
-          id: uid(),
-          nodeId: idOf[symbol]
-        })),
-        estEffortHrs: action.estEffortHrs,
-        effortCompletionPercentage: 0,
-        effortCostPerHrType: action.effortCostSymbol ? "use_factor" : "use_average",
-        effortCostNodeId: action.effortCostSymbol ? idOf[action.effortCostSymbol] : null,
-        customEffortCostPerHr: null,
-        estSpending: action.estSpending,
-        spentAmount: 0,
-        outstandingSpending: action.estSpending,
-        totalDirectCost: 0,
-        marginalTotalBenefitNpv: 0,
-        marginalNetTotalBenefitNpv: 0,
-        marginalTotalCostNpv: 0,
-        actionLeverage: null,
-        initiator: user.uid,
-        responsiblePerson: user.uid,
-        accountablePerson: user.uid,
+
+    const preparedActions = sample.actions.map(action => {
+      const ref = doc(collection(firebaseDb, "actions"));
+      return {
+        ref,
+        data: {
+          orgId,
+          title: action.title,
+          notes: action.notes,
+          isProject: false,
+          actionMchState: { value: "initiating" },
+          useSimpleEstimateMethod: false,
+          impacts: action.impacts.map(({ symbol, ...impact }) => ({
+            ...impact,
+            id: uid(),
+            nodeId: idOf[symbol]
+          })),
+          estEffortHrs: action.estEffortHrs,
+          effortCompletionPercentage: 0,
+          effortCostPerHrType: action.effortCostSymbol ? "use_factor" : "use_average",
+          effortCostNodeId: action.effortCostSymbol ? idOf[action.effortCostSymbol] : null,
+          customEffortCostPerHr: null,
+          estSpending: action.estSpending,
+          spentAmount: 0,
+          outstandingSpending: action.estSpending,
+          totalDirectCost: 0,
+          marginalTotalBenefitNpv: 0,
+          marginalNetTotalBenefitNpv: 0,
+          marginalTotalCostNpv: 0,
+          actionLeverage: null,
+          initiator: user.uid,
+          responsiblePerson: user.uid,
+          accountablePerson: user.uid
+        }
+      };
+    });
+
+    const exchangeRates = rootState?.adHocDocs?.exchangeRates || {
+      base: sample.org.currency,
+      rates: { USD: 1, TWD: 30, [sample.org.currency]: 1 }
+    };
+    const calc = await calculateActionsInWorker({
+      nodes,
+      actions: preparedActions.map(a => ({ id: a.ref.id, ...a.data })),
+      simulationParams: SAMPLE_SIMULATION_PARAMS,
+      roleNodes,
+      exchangeRates,
+      orgId,
+      modelId: orgId,
+      orgCurrency: sample.org.currency,
+      currentUserId: user.uid
+    });
+    if (!calc.ok) {
+      throw new Error(calc.errorMessage || "Failed to calculate sample actions");
+    }
+
+    const resultsById = Object.fromEntries((calc.actionsResults || []).map(r => [r.id, r]));
+    preparedActions.forEach(({ ref, data }) => {
+      const matchedResult = resultsById[ref.id];
+      const calculatedFields = matchedResult
+        ? {
+            ...matchedResult.effectiveResultsNumbers,
+            effectiveResultsNumbers: matchedResult.effectiveResultsNumbers,
+            branchAndBlockeesResultsNumbers: matchedResult.branchAndBlockeesResultsNumbers,
+            effectiveChainedCostsAndImpacts: matchedResult.effectiveChainedCostsAndImpacts,
+            effectiveChainedCostsAndImpactsExcludingSelf:
+              matchedResult.effectiveChainedCostsAndImpactsExcludingSelf,
+            ...(matchedResult.inheritedResultsNumbers
+              ? { inheritedResultsNumbers: matchedResult.inheritedResultsNumbers }
+              : {})
+          }
+        : {};
+      batch.set(ref, {
+        ...data,
+        ...calculatedFields,
         createTime: serverTimestamp(),
         createdBy: user.uid,
         updateTime: serverTimestamp(),
         updatedBy: user.uid
       });
     });
+
     await batch.commit();
+    if (calc.baseline) {
+      await Promise.resolve(dispatch("calcResults/saveBaseline", calc.baseline, { root: true })).catch(() => {});
+    }
     Notify.create(t("toastSampleCreated"));
     return { orgId, nameSlug: org.nameSlug };
   },
