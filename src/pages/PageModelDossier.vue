@@ -359,8 +359,8 @@
                 <template v-slot:avatar>
                   <q-icon name="psychology" color="purple" />
                 </template>
-                <div class="text-weight-bold">{{ arc.name }}</div>
-                <div>{{ arc.description }}</div>
+                <div class="text-weight-bold">{{ dossierArchetypeTitle(arc) }}</div>
+                <div>{{ dossierArchetypeDetail(arc) }}</div>
               </q-banner>
             </div>
           </div>
@@ -848,6 +848,28 @@ export default {
       const key = `valueFlag_${flag}`;
       const translated = this.$t(key);
       return translated !== key ? translated : flag;
+    },
+    dossierArchetypeTitle(arc) {
+      const name =
+        arc?.i18nKey && this.$te(`archetypes.${arc.i18nKey}.name`)
+          ? this.$t(`archetypes.${arc.i18nKey}.name`)
+          : arc?.name || "";
+      const status = arc?.isPartial ? this.$t("archetypeStatusPartial") : this.$t("archetypeStatusComplete");
+      const loops = arc?.presentLoops?.length ? ` [${arc.presentLoops.join(", ")}]` : "";
+      return `${name} (${status})${loops}`;
+    },
+    dossierArchetypeDetail(arc) {
+      const useEnglish = this.$i18n?.locale === "en-us";
+      const looksLike =
+        arc?.i18nKey && this.$te(`archetypes.${arc.i18nKey}.looksLike`) && !useEnglish
+          ? this.$t(`archetypes.${arc.i18nKey}.looksLike`)
+          : arc?.looksLike || arc?.description || "";
+      if (!arc?.isPartial) return looksLike;
+      const missingText =
+        arc?.missingLoopKey && this.$te(`archetypes.missingLoop.${arc.missingLoopKey}`)
+          ? this.$t(`archetypes.missingLoop.${arc.missingLoopKey}`)
+          : arc?.missingLoop || "";
+      return missingText ? `${looksLike} ${this.$t("archetypeMissingLoopLabel")}: ${missingText}` : looksLike;
     }
   }
 };
