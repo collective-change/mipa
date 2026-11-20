@@ -182,6 +182,93 @@ export default {
   leveragePowerMedium: "Medium Leverage",
   leveragePowerHigh: "High Leverage",
   leveragePowerTransformative: "Transformative",
+  noArchetypesDetectedTitle: "No systemic archetypes detected.",
+  noArchetypesDetectedSubtitle: "The factor network does not exhibit coupled or partial archetype feedback structures.",
+  archetypeStatusComplete: "Complete pattern",
+  archetypeStatusPartial: "Present in part",
+  archetypeLoopsInvolvedLabel: "Loops involved",
+  archetypeFactorsInvolvedLabel: "Factors involved",
+  archetypeLooksLikeLabel: "What it looks like",
+  archetypeImpliesLabel: "What it implies",
+  archetypeMissingLoopLabel: "Which loop is missing",
+  archetypes: {
+    shiftingTheBurden: {
+      name: "Shifting the Burden",
+      looksLike: "A quick symptomatic fix and a slower fundamental solution both target the same problem symptom, while the quick fix quietly erodes capacity for the fundamental solution.",
+      implies: "The quick fix looks most attractive in short-term comparisons because relief is immediate, yet root capability degrades over time and dependency grows.",
+      recommendation: "Commit resources to rebuilding the fundamental capability while tapering reliance on the symptomatic relief loop."
+    },
+    fixesThatFail: {
+      name: "Fixes that Fail",
+      looksLike: "A fast corrective fix relieves a problem symptom in the short run, but the same fix triggers a delayed unintended consequence that brings the problem back worse than before.",
+      implies: "Actions judged only on immediate relief appear effective while actually compounding long-term systemic cost behind the delay.",
+      recommendation: "Acknowledge the delayed side effect, avoid repeating the symptomatic fix blindly, and redesign the intervention around root causes."
+    },
+    erodingGoals: {
+      name: "Eroding Goals",
+      looksLike: "A performance gap can be closed in two opposing ways: delayed effort to lift actual performance, or lowering the target goal itself so the shortfall looks smaller.",
+      implies: "Because lowering standards relieves tension faster than real improvement, long-term ambition steadily drifts downward.",
+      recommendation: "Anchor the performance target externally so shortfalls drive sustained capability improvement rather than softer goals."
+    },
+    successToSuccessful: {
+      name: "Success to the Successful",
+      looksLike: "Two reinforcing growth loops compete through a zero-sum resource split where early advantage to one starves the other of funding or attention.",
+      implies: "Outcomes reflect initial allocation rules rather than merit: one contender dominates while a potentially viable alternative withers.",
+      recommendation: "Decouple the shared allocation rule, guarantee baseline resources for alternatives, or evaluate both tracks independently."
+    },
+    tragedyOfTheCommons: {
+      name: "Tragedy of the Commons",
+      looksLike: "Independent actors pursue their own reinforcing gains while drawing on a shared resource pool, eroding returns for everyone as total load climbs.",
+      implies: "Each participant sees local benefit from doing more while shared capacity collapses under collective overuse.",
+      recommendation: "Establish shared stewardship rules, transparent commons metrics, or collective caps that reconnect total usage back to each actor."
+    },
+    escalation: {
+      name: "Escalation",
+      looksLike: "Two separate parties each react to protect their relative standing, creating a figure-eight reinforcing arms race that pushes both sides upward.",
+      implies: "Neither side gains lasting advantage as effort and cost escalate endlessly in response to the other.",
+      recommendation: "Shift from relative comparisons to absolute goals, create unilateral de-escalation steps, or negotiate mutual balancing agreements."
+    },
+    growthAndUnderinvestment: {
+      name: "Growth and Underinvestment",
+      looksLike: "Demand growth slows against a capacity limit while delayed investment in capacity responds sluggishly or gets deferred as standards soften.",
+      implies: "Temporary slowdowns get misread as weak demand, justifying underinvestment that locks in a permanent ceiling.",
+      recommendation: "Invest ahead of capacity bottlenecks and hold service standards steady instead of cutting capacity forecasts when quality dips."
+    },
+    attractivenessPrinciple: {
+      name: "Attractiveness Principle",
+      looksLike: "A single reinforcing growth engine pushes directly against multiple distinct balancing constraints at once.",
+      implies: "Relieving only one limit immediately shifts binding pressure onto the others; spreading effort thinly across every front stalls progress.",
+      recommendation: "Identify which constraints bind first and decide explicitly which tradeoffs to accept rather than chasing every goal equally."
+    },
+    limitsToGrowth: {
+      name: "Limits to Growth",
+      looksLike: "A reinforcing growth engine encounters a balancing constraint loop that slows, caps, or reverses further expansion.",
+      implies: "Pushing harder on the growth driver yields diminishing returns once the limiting constraint begins to bind.",
+      recommendation: "Do not push harder on the growth engine; proactively remove or expand the balancing capacity limit before saturation."
+    },
+    policyResistance: {
+      name: "Policy Resistance & Delayed Oscillation",
+      looksLike: "A balancing control loop contains a delay between action and observed result, causing adjustments to overshoot the target and oscillate.",
+      implies: "Aggressive short-term corrections amplify swings and undermine trust in the policy.",
+      recommendation: "Shorten reporting delays, slow down rapid policy adjustments, and base decisions on system stock trends rather than transient noise."
+    },
+    missingLoop: {
+      shiftingSideEffectR: "Missing reinforcing side-effect loop (R) showing whether the symptomatic quick fix weakens capacity for the fundamental solution.",
+      shiftingFundamentalB: "Missing fundamental solution balancing loop (B) showing how direct capability investment resolves the root cause without the quick fix.",
+      fixesReboundR: "Missing delayed reinforcing rebound loop (R) closing from the unintended side-effect factor back to worsen the original problem.",
+      fixesReboundDelay: "Missing time delay on the reinforcing rebound loop (R) explaining why the side effect appears after short-term relief.",
+      erodingCorrectiveB: "Missing corrective action balancing loop (B) raising actual performance toward the goal instead of lowering the target.",
+      successCompetingR: "Missing competing reinforcing loop (R) capturing how resource diversion weakens the second contender over time.",
+      tragedyCommonsB: "Missing balancing commons-depletion loop (B) feeding shared congestion or scarcity back to every user.",
+      tragedySecondActorR: "Missing second actor's reinforcing growth loop (R) driving independent pressure on the shared commons.",
+      escalationCompetitorB: "Missing opponent's balancing anchor loop (B) balancing its own effort against its internal standard.",
+      growthCapacityInvestB: "Missing delayed capacity investment balancing loop (B) expanding bottleneck capacity before growth stalls.",
+      growthDemandEngineR: "Missing reinforcing demand growth loop (R) that capacity expansion would otherwise sustain.",
+      attractivenessSecondLimitB: "Missing second balancing constraint loop (B) closing the unlooped limit factor back onto the growth engine.",
+      limitsBoundingB: "Missing balancing constraint loop (B) naming what real-world ceiling or limit slows and stops this growth.",
+      policyResistanceDelay: "Missing reporting or physical response delay on opposing balancing loops explaining why corrective pushes overshoot."
+    }
+  },
 
   // for PageModel.vue
   Calculate: "Calculate",

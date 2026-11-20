@@ -64,6 +64,21 @@ Nothing in the world grows without limit. There is always something that stops i
 
 If the model already has the limits it needs, do not invent more.
 
+# System archetype diagnostics to recognise
+
+When a user's description fits a classic system dynamics archetype, name it silently in your structure by ensuring all of its feedback loops are drafted rather than only the obvious symptoms:
+- Shifting the Burden (most common third-sector failure, where a quick fix looks artificially attractive): model all three loops — the fast symptomatic relief balancing loop (B), the slower fundamental capability balancing loop (B, typically with delay()), and the reinforcing side-effect loop (R) showing how relying on the quick fix erodes fundamental capacity.
+- Fixes that Fail: pair the fast balancing fix (B) with its delayed reinforcing unintended consequence loop (R, using delay()) so delayed rebound is visible.
+- Eroding Goals: pair the delayed corrective-action balancing loop (B) with any goal-lowering balancing loop (B) pulling opposite sides of a performance gap.
+- Success to the Successful: pair both competing reinforcing loops (R1, R2) coupled through the shared zero-sum allocation rule.
+- Tragedy of the Commons: connect independent reinforcing actor loops (R1, R2) to the shared resource stock and couple both back through balancing depletion limits (B1, B2).
+- Escalation: represent each party's internal balancing loop (B1, B2) plus the figure-eight reinforcing cross-reaction loop (R).
+- Growth and Underinvestment: alongside reinforcing growth (R) and a capacity bottleneck limit (B), add the delayed capacity-investment balancing loop (B, using delay()) rather than leaving capacity fixed.
+- Attractiveness Principle: when multiple balancing limits (B1, B2) slow one reinforcing engine (R), keep all distinct limiting factors explicit.
+- Limits to Growth & Policy Resistance: keep every reinforcing flywheel paired with a named balancing constraint loop (B), and use delay() where reporting or adjustment lags cause overshoot.
+
+When the current model context reports a partial archetype and names a missing loop, add or wire that missing loop directly.
+
 # What to produce
 
 Reply with exactly one JSON object in the required format.
@@ -131,6 +146,20 @@ export interface FeedbackLoop {
   factors: FeedbackLoopFactor[];
   hasDelay: boolean;
   name: string;
+}
+
+export interface SystemArchetypeDiagnosis {
+  id: string;
+  archetype: string;
+  name: string;
+  status: "complete" | "partial";
+  isPartial: boolean;
+  presentLoops: string[];
+  missingLoop: string | null;
+  looksLike: string;
+  implication: string;
+  recommendation: string;
+  meadowsLevel: number;
 }
 
 export interface ModelContext {
@@ -761,6 +790,592 @@ export function detectFeedbackLoops(
   });
 }
 
+interface LoopEdge {
+  from: string;
+  to: string;
+  polarity: number;
+}
+
+interface LoopMeta {
+  loop: FeedbackLoop;
+  nodeIds: string[];
+  nodeSet: Set<string>;
+  edges: LoopEdge[];
+  edgeKeys: Set<string>;
+  incomingByTarget: Map<string, number[]>;
+  outgoingBySource: Map<string, number[]>;
+}
+
+function buildLoopMeta(loop: FeedbackLoop): LoopMeta {
+  const nodeIds = Array.isArray(loop.nodeIds) ? loop.nodeIds : [];
+  const factors = Array.isArray(loop.factors) ? loop.factors : [];
+  const nodeSet = new Set(nodeIds);
+  const edges: LoopEdge[] = [];
+  const edgeKeys = new Set<string>();
+  const incomingByTarget = new Map<string, number[]>();
+  const outgoingBySource = new Map<string, number[]>();
+
+  for (let i = 0; i < nodeIds.length; i++) {
+    const from = nodeIds[i];
+    const to = nodeIds[(i + 1) % nodeIds.length];
+    const polarity = factors[i]?.edgeToNextPolarity === -1 ? -1 : 1;
+    edges.push({ from, to, polarity });
+    edgeKeys.add(`${from}->${to}`);
+    if (!outgoingBySource.has(from)) outgoingBySource.set(from, []);
+    outgoingBySource.get(from)!.push(polarity);
+    if (!incomingByTarget.has(to)) incomingByTarget.set(to, []);
+    incomingByTarget.get(to)!.push(polarity);
+  }
+  return { loop, nodeIds, nodeSet, edges, edgeKeys, incomingByTarget, outgoingBySource };
+}
+
+function intersectIds(a: Set<string>, b: Set<string>): string[] {
+  return Array.from(a).filter((id) => b.has(id));
+}
+
+function diffIds(a: Set<string>, b: Set<string>): string[] {
+  return Array.from(a).filter((id) => !b.has(id));
+}
+
+function directedPolarityInLoop(meta: LoopMeta, startId: string, endId: string): number | null {
+  const startIdx = meta.nodeIds.indexOf(startId);
+  if (startIdx < 0 || !meta.nodeSet.has(endId) || startId === endId) return null;
+  let prod = 1;
+  for (let step = 0; step < meta.nodeIds.length; step++) {
+    const edge = meta.edges[(startIdx + step) % meta.nodeIds.length];
+    prod *= edge.polarity;
+    if (edge.to === endId) return prod;
+  }
+  return null;
+}
+
+function sameSignAtNode(metaA: LoopMeta, metaB: LoopMeta, sharedId: string): boolean {
+  const inA = metaA.incomingByTarget.get(sharedId) || [];
+  const inB = metaB.incomingByTarget.get(sharedId) || [];
+  return inA.length > 0 && inB.length > 0 && inA[0] === inB[0];
+}
+
+function oppositeSignAtNode(metaA: LoopMeta, metaB: LoopMeta, sharedId: string): boolean {
+  const inA = metaA.incomingByTarget.get(sharedId) || [];
+  const inB = metaB.incomingByTarget.get(sharedId) || [];
+  const outA = metaA.outgoingBySource.get(sharedId) || [];
+  const outB = metaB.outgoingBySource.get(sharedId) || [];
+  return (inA.length > 0 && inB.length > 0 && inA[0] !== inB[0]) ||
+    (outA.length > 0 && outB.length > 0 && outA[0] !== outB[0]);
+}
+
+function factorLabels(ids: string[], factorById: Map<string, ModelContextFactor>): string {
+  return ids
+    .slice(0, 4)
+    .map((id) => factorById.get(id)?.symbol || factorById.get(id)?.name || id)
+    .join(", ");
+}
+
+/**
+ * Diagnoses complete and partial system archetypes directly from `detectFeedbackLoops` output
+ * so the drafting AI receives concrete loop-completion guidance without a second DFS walk.
+ */
+export function detectSystemArchetypes(
+  factors: ModelContextFactor[] = [],
+  loops: FeedbackLoop[] = []
+): SystemArchetypeDiagnosis[] {
+  const factorById = new Map<string, ModelContextFactor>();
+  for (const f of factors) factorById.set(f.id || f.symbol, f);
+
+  const reinforcing = loops.filter((l) => l.type === "reinforcing").map(buildLoopMeta);
+  const balancing = loops.filter((l) => l.type === "balancing").map(buildLoopMeta);
+  const allLoopNodeIds = new Set(loops.flatMap((l) => l.nodeIds || []));
+  const out: SystemArchetypeDiagnosis[] = [];
+  const seen = new Set<string>();
+  const add = (item: SystemArchetypeDiagnosis) => {
+    if (!seen.has(item.id)) {
+      seen.add(item.id);
+      out.push(item);
+    }
+  };
+
+  const shiftingClaimedRIds = new Set<string>();
+  const shiftingBPairs = new Set<string>();
+  const pairKey = (a: string, b: string) => (a < b ? `${a}::${b}` : `${b}::${a}`);
+
+  // 1. Shifting the Burden (first - third sector's core trap)
+  for (let i = 0; i < balancing.length; i++) {
+    for (let j = i + 1; j < balancing.length; j++) {
+      const mA = balancing[i];
+      const mB = balancing[j];
+      const shared = intersectIds(mA.nodeSet, mB.nodeSet);
+      if (!shared.length || !diffIds(mA.nodeSet, mB.nodeSet).length || !diffIds(mB.nodeSet, mA.nodeSet).length) continue;
+      if (!shared.some((sid) => sameSignAtNode(mA, mB, sid))) continue;
+
+      let bSymp = mA;
+      let bFund = mB;
+      if (mA.loop.hasDelay && !mB.loop.hasDelay) {
+        bSymp = mB;
+        bFund = mA;
+      } else if (!mA.loop.hasDelay && !mB.loop.hasDelay && mA.loop.length > mB.loop.length) {
+        bSymp = mB;
+        bFund = mA;
+      }
+
+      const sympOnly = diffIds(bSymp.nodeSet, bFund.nodeSet);
+      const fundOnly = diffIds(bFund.nodeSet, bSymp.nodeSet);
+      const sideR = reinforcing.find((rMeta) => {
+        const sMatch = sympOnly.find((id) => rMeta.nodeSet.has(id));
+        const fMatch = fundOnly.find((id) => rMeta.nodeSet.has(id));
+        return Boolean(sMatch && fMatch && directedPolarityInLoop(rMeta, sMatch, fMatch) === -1);
+      });
+
+      if (sideR) {
+        shiftingClaimedRIds.add(sideR.loop.id);
+        shiftingBPairs.add(pairKey(bSymp.loop.id, bFund.loop.id));
+        add({
+          id: `arch_shifting_${bSymp.loop.code}_${bFund.loop.code}_${sideR.loop.code}`,
+          archetype: "shifting_the_burden",
+          name: "Shifting the Burden",
+          status: "complete",
+          isPartial: false,
+          presentLoops: [bSymp.loop.code, bFund.loop.code, sideR.loop.code],
+          missingLoop: null,
+          looksLike: `Quick fix (${bSymp.loop.code}) and fundamental fix (${bFund.loop.code}) both address ${factorLabels(shared, factorById)}, while ${sideR.loop.code} erodes root capacity.`,
+          implication: "Short-term quick fix looks most attractive while fundamental capacity steadily erodes.",
+          recommendation: "Invest in rebuilding the fundamental loop while tapering the symptomatic relief.",
+          meadowsLevel: 5
+        });
+      } else if ((!bSymp.loop.hasDelay && bFund.loop.hasDelay) || bSymp.loop.length < bFund.loop.length) {
+        shiftingBPairs.add(pairKey(bSymp.loop.id, bFund.loop.id));
+        add({
+          id: `arch_shifting_partial_r_${bSymp.loop.code}_${bFund.loop.code}`,
+          archetype: "shifting_the_burden",
+          name: "Shifting the Burden",
+          status: "partial",
+          isPartial: true,
+          presentLoops: [bSymp.loop.code, bFund.loop.code],
+          missingLoop: "Missing reinforcing side-effect loop (R) showing whether the symptomatic quick fix weakens capacity for the fundamental solution.",
+          looksLike: `Quick fix (${bSymp.loop.code}) and slower solution (${bFund.loop.code}) share ${factorLabels(shared, factorById)} with no side-effect link.`,
+          implication: "Without the side-effect loop, relying on the quick fix hides whether fundamental capacity decays.",
+          recommendation: "Check whether the quick fix erodes the fundamental capacity factor.",
+          meadowsLevel: 5
+        });
+      }
+    }
+  }
+
+  for (const bMeta of balancing) {
+    if (bMeta.loop.hasDelay) continue;
+    for (const rMeta of reinforcing) {
+      if (shiftingClaimedRIds.has(rMeta.loop.id) || rMeta.loop.length <= bMeta.loop.length) continue;
+      const shared = intersectIds(bMeta.nodeSet, rMeta.nodeSet);
+      const outside = diffIds(rMeta.nodeSet, bMeta.nodeSet);
+      if (shared.length < 2 || !outside.length) continue;
+      const erodes = bMeta.edges.some(
+        (e) =>
+          rMeta.edgeKeys.has(`${e.from}->${e.to}`) &&
+          outside.some(
+            (capId) =>
+              directedPolarityInLoop(rMeta, e.to, capId) === -1 &&
+              directedPolarityInLoop(rMeta, capId, e.from) === -1
+          )
+      );
+      if (!erodes) continue;
+      const hasFundB = balancing.some(
+        (otherB) =>
+          otherB.loop.id !== bMeta.loop.id &&
+          intersectIds(otherB.nodeSet, new Set(outside)).length > 0 &&
+          intersectIds(otherB.nodeSet, bMeta.nodeSet).length > 0
+      );
+      if (hasFundB) continue;
+
+      shiftingClaimedRIds.add(rMeta.loop.id);
+      add({
+        id: `arch_shifting_partial_b_${bMeta.loop.code}_${rMeta.loop.code}`,
+        archetype: "shifting_the_burden",
+        name: "Shifting the Burden",
+        status: "partial",
+        isPartial: true,
+        presentLoops: [bMeta.loop.code, rMeta.loop.code],
+        missingLoop: "Missing fundamental solution balancing loop (B) resolving root capacity directly without the quick fix.",
+        looksLike: `Quick fix (${bMeta.loop.code}) relieves the symptom while ${rMeta.loop.code} erodes ${factorLabels(outside, factorById)}.`,
+        implication: "The quick fix undermines capability while no fundamental balancing loop restores it directly.",
+        recommendation: "Add a direct fundamental balancing loop that builds capability independently of the quick fix.",
+        meadowsLevel: 5
+      });
+    }
+  }
+
+  // 2. Fixes that Fail
+  for (const bMeta of balancing) {
+    if (bMeta.loop.hasDelay) continue;
+    let matchedRebound = false;
+    for (const rMeta of reinforcing) {
+      if (shiftingClaimedRIds.has(rMeta.loop.id) || rMeta.loop.length <= bMeta.loop.length) continue;
+      const sharedEdge = bMeta.edges.find((e) => rMeta.edgeKeys.has(`${e.from}->${e.to}`));
+      if (!sharedEdge) continue;
+      matchedRebound = true;
+      add({
+        id: `arch_fixes_${bMeta.loop.code}_${rMeta.loop.code}`,
+        archetype: "fixes_that_fail",
+        name: "Fixes that Fail",
+        status: rMeta.loop.hasDelay ? "complete" : "partial",
+        isPartial: !rMeta.loop.hasDelay,
+        presentLoops: [bMeta.loop.code, rMeta.loop.code],
+        missingLoop: rMeta.loop.hasDelay
+          ? null
+          : "Missing time delay on the reinforcing rebound loop (R) explaining why the side effect appears after short-term relief.",
+        looksLike: `Fast fix (${bMeta.loop.code}) and unintended consequence loop (${rMeta.loop.code}) diverge from the same intervention.`,
+        implication: "Short-term symptom relief triggers a rebound that brings the problem back worse over time.",
+        recommendation: "Expose delayed unintended consequences and redesign around root causes.",
+        meadowsLevel: 9
+      });
+    }
+    if (!matchedRebound) {
+      const openDelayed = factors.filter((f) => {
+        const fid = f.id || f.symbol;
+        return !allLoopNodeIds.has(fid) && /delay\s*\(/.test(f.formula || "") &&
+          (f.influencers || []).some((inf) => bMeta.nodeSet.has(inf));
+      });
+      if (openDelayed.length) {
+        add({
+          id: `arch_fixes_partial_r_${bMeta.loop.code}`,
+          archetype: "fixes_that_fail",
+          name: "Fixes that Fail",
+          status: "partial",
+          isPartial: true,
+          presentLoops: [bMeta.loop.code],
+          missingLoop: "Missing delayed reinforcing rebound loop (R) closing from the unintended side-effect factor back to worsen the problem.",
+          looksLike: `Fast fix (${bMeta.loop.code}) drives delayed stock (${openDelayed.map((f) => f.symbol).join(", ")}) without closing back.`,
+          implication: "Side effects accumulate silently without feeding back into future symptom severity.",
+          recommendation: "Close the delayed side-effect stock back to the problem symptom if unintended harm rebounds.",
+          meadowsLevel: 9
+        });
+      }
+    }
+  }
+
+  // 3. Eroding Goals
+  const erodingShared = new Set<string>();
+  const erodingPairs = new Set<string>();
+  for (let i = 0; i < balancing.length; i++) {
+    for (let j = i + 1; j < balancing.length; j++) {
+      const mA = balancing[i];
+      const mB = balancing[j];
+      const shared = intersectIds(mA.nodeSet, mB.nodeSet);
+      const gapId = shared.find((sid) => {
+        const inA = mA.incomingByTarget.get(sid) || [];
+        const inB = mB.incomingByTarget.get(sid) || [];
+        return inA.length > 0 && inB.length > 0 && inA[0] !== inB[0];
+      });
+      if (!gapId) continue;
+      if (!diffIds(mA.nodeSet, mB.nodeSet).length || !diffIds(mB.nodeSet, mA.nodeSet).length) continue;
+      if (!mA.loop.hasDelay && !mB.loop.hasDelay && mA.loop.length === mB.loop.length) continue;
+      erodingShared.add(gapId);
+      erodingPairs.add(pairKey(mA.loop.id, mB.loop.id));
+      add({
+        id: `arch_eroding_${mA.loop.code}_${mB.loop.code}`,
+        archetype: "eroding_goals",
+        name: "Eroding Goals",
+        status: "complete",
+        isPartial: false,
+        presentLoops: [mA.loop.code, mB.loop.code],
+        missingLoop: null,
+        looksLike: `Corrective action and goal revision (${mA.loop.code}, ${mB.loop.code}) pull gap factor ${factorLabels([gapId], factorById)} from opposite directions.`,
+        implication: "Lowering targets resolves perceived gaps faster than operational improvement, eroding standards.",
+        recommendation: "Anchor goals externally rather than drifting standards down to match performance.",
+        meadowsLevel: 3
+      });
+    }
+  }
+
+  // 4. Success to the Successful
+  for (let i = 0; i < reinforcing.length; i++) {
+    for (let j = i + 1; j < reinforcing.length; j++) {
+      const rA = reinforcing[i];
+      const rB = reinforcing[j];
+      const shared = intersectIds(rA.nodeSet, rB.nodeSet);
+      if (shared.length > 0 && shared.some((sid) => oppositeSignAtNode(rA, rB, sid))) {
+        add({
+          id: `arch_success_${rA.loop.code}_${rB.loop.code}`,
+          archetype: "success_to_successful",
+          name: "Success to the Successful",
+          status: "complete",
+          isPartial: false,
+          presentLoops: [rA.loop.code, rB.loop.code],
+          missingLoop: null,
+          looksLike: `Reinforcing loops (${rA.loop.code}, ${rB.loop.code}) split a shared resource asymmetrically through ${factorLabels(shared, factorById)}.`,
+          implication: "Early winner takes all resources and starves potentially viable alternatives.",
+          recommendation: "Decouple zero-sum allocation or protect baseline resources for both tracks.",
+          meadowsLevel: 5
+        });
+      } else if (!shared.length) {
+        const bridge = reinforcing.find(
+          (rC) =>
+            rC.loop.id !== rA.loop.id &&
+            rC.loop.id !== rB.loop.id &&
+            intersectIds(rC.nodeSet, rA.nodeSet).length > 0 &&
+            intersectIds(rC.nodeSet, rB.nodeSet).length > 0 &&
+            rC.edges.filter((e) => e.polarity === -1).length >= 2
+        );
+        if (bridge) {
+          add({
+            id: `arch_success_${rA.loop.code}_${rB.loop.code}_${bridge.loop.code}`,
+            archetype: "success_to_successful",
+            name: "Success to the Successful",
+            status: "complete",
+            isPartial: false,
+            presentLoops: [rA.loop.code, rB.loop.code, bridge.loop.code],
+            missingLoop: null,
+            looksLike: `Growth engines (${rA.loop.code}, ${rB.loop.code}) mutually suppress each other across ${bridge.loop.code}.`,
+            implication: "Winner dominance reflects competitive suppression rather than underlying merit.",
+            recommendation: "Decouple shared allocation criteria.",
+            meadowsLevel: 5
+          });
+        }
+      }
+    }
+  }
+
+  // 5. Tragedy of the Commons
+  for (let i = 0; i < reinforcing.length; i++) {
+    for (let j = i + 1; j < reinforcing.length; j++) {
+      const rA = reinforcing[i];
+      const rB = reinforcing[j];
+      if (intersectIds(rA.nodeSet, rB.nodeSet).length > 0) continue;
+      const bAList = balancing.filter((b) => intersectIds(b.nodeSet, rA.nodeSet).length > 0 && intersectIds(b.nodeSet, rB.nodeSet).length === 0);
+      const bBList = balancing.filter((b) => intersectIds(b.nodeSet, rB.nodeSet).length > 0 && intersectIds(b.nodeSet, rA.nodeSet).length === 0);
+      let foundComplete = false;
+      for (const bA of bAList) {
+        for (const bB of bBList) {
+          const commons = intersectIds(bA.nodeSet, bB.nodeSet).filter((id) => !rA.nodeSet.has(id) && !rB.nodeSet.has(id));
+          if (!commons.length) continue;
+          foundComplete = true;
+          add({
+            id: `arch_tragedy_${rA.loop.code}_${rB.loop.code}_${bA.loop.code}_${bB.loop.code}`,
+            archetype: "tragedy_of_the_commons",
+            name: "Tragedy of the Commons",
+            status: "complete",
+            isPartial: false,
+            presentLoops: [rA.loop.code, rB.loop.code, bA.loop.code, bB.loop.code],
+            missingLoop: null,
+            looksLike: `Actors (${rA.loop.code}, ${rB.loop.code}) exploit shared commons ${factorLabels(commons, factorById)} under coupled limits (${bA.loop.code}, ${bB.loop.code}).`,
+            implication: "Individual gains encourage overuse until shared capacity degrades for everyone.",
+            recommendation: "Connect total usage signals and shared limits back to every participant.",
+            meadowsLevel: 5
+          });
+        }
+      }
+      if (!foundComplete && bAList.length > 0 && bBList.length === 0) {
+        for (const bA of bAList) {
+          const commons = diffIds(bA.nodeSet, rA.nodeSet).find((cid) =>
+            (factorById.get(cid)?.influencers || []).some((inf) => rB.nodeSet.has(inf))
+          );
+          if (commons) {
+            add({
+              id: `arch_tragedy_partial_b_${rA.loop.code}_${rB.loop.code}_${bA.loop.code}`,
+              archetype: "tragedy_of_the_commons",
+              name: "Tragedy of the Commons",
+              status: "partial",
+              isPartial: true,
+              presentLoops: [rA.loop.code, rB.loop.code, bA.loop.code],
+              missingLoop: "Missing balancing commons-depletion loop (B) feeding shared congestion or scarcity back to every user.",
+              looksLike: `Actors (${rA.loop.code}, ${rB.loop.code}) both feed ${factorLabels([commons], factorById)} with scarcity closing back only to ${rA.loop.code}.`,
+              implication: "One actor ignores shared resource degradation while continuing unchecked expansion.",
+              recommendation: "Close the shared commons limit back into all actors.",
+              meadowsLevel: 5
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // 6. Escalation
+  const escalationRIds = new Set<string>();
+  for (let i = 0; i < balancing.length; i++) {
+    for (let j = i + 1; j < balancing.length; j++) {
+      const bA = balancing[i];
+      const bB = balancing[j];
+      if (intersectIds(bA.nodeSet, bB.nodeSet).length > 0) continue;
+      const fig8R = reinforcing.find(
+        (r) =>
+          intersectIds(r.nodeSet, bA.nodeSet).length > 0 &&
+          intersectIds(r.nodeSet, bB.nodeSet).length > 0 &&
+          r.edges.filter((e) => e.polarity === -1).length === 0
+      );
+      if (!fig8R) continue;
+      escalationRIds.add(fig8R.loop.id);
+      add({
+        id: `arch_escalation_${bA.loop.code}_${bB.loop.code}_${fig8R.loop.code}`,
+        archetype: "escalation",
+        name: "Escalation",
+        status: "complete",
+        isPartial: false,
+        presentLoops: [bA.loop.code, bB.loop.code, fig8R.loop.code],
+        missingLoop: null,
+        looksLike: `Separate actor responses (${bA.loop.code}, ${bB.loop.code}) amplify each other via figure-eight loop ${fig8R.loop.code}.`,
+        implication: "Mutual retaliation escalates total effort without yielding lasting advantage.",
+        recommendation: "Shift to absolute internal goals or negotiate mutual de-escalation.",
+        meadowsLevel: 8
+      });
+    }
+  }
+
+  for (const bMeta of balancing) {
+    for (const rMeta of reinforcing) {
+      if (escalationRIds.has(rMeta.loop.id) || shiftingClaimedRIds.has(rMeta.loop.id)) continue;
+      const shared = intersectIds(bMeta.nodeSet, rMeta.nodeSet);
+      const external = diffIds(rMeta.nodeSet, bMeta.nodeSet);
+      if (shared.length < 2 || external.length < 2 || rMeta.edges.some((e) => e.polarity === -1)) continue;
+      if (balancing.some((otherB) => otherB.loop.id !== bMeta.loop.id && intersectIds(otherB.nodeSet, new Set(external)).length > 0)) continue;
+      add({
+        id: `arch_escalation_partial_${bMeta.loop.code}_${rMeta.loop.code}`,
+        archetype: "escalation",
+        name: "Escalation",
+        status: "partial",
+        isPartial: true,
+        presentLoops: [bMeta.loop.code, rMeta.loop.code],
+        missingLoop: "Missing opponent's balancing anchor loop (B) balancing its own effort against its internal standard.",
+        looksLike: `Actor loop (${bMeta.loop.code}) couples into cross-escalation (${rMeta.loop.code}) with unanchored counterparty response.`,
+        implication: "Escalation loop appears without the opponent's self-limiting goal.",
+        recommendation: "Add the counterparty's balancing anchor loop.",
+        meadowsLevel: 8
+      });
+    }
+  }
+
+  // 7. Growth and Underinvestment
+  for (const rMeta of reinforcing) {
+    for (const bLimit of balancing.filter((b) => intersectIds(b.nodeSet, rMeta.nodeSet).length > 0)) {
+      const limitOnly = new Set(diffIds(bLimit.nodeSet, rMeta.nodeSet));
+      if (!limitOnly.size) continue;
+      const investB = balancing.find(
+        (bInv) =>
+          bInv.loop.id !== bLimit.loop.id &&
+          bInv.loop.hasDelay &&
+          intersectIds(bInv.nodeSet, limitOnly).length > 0 &&
+          intersectIds(bInv.nodeSet, rMeta.nodeSet).length === 0
+      );
+      if (investB) {
+        add({
+          id: `arch_growth_underinvest_${rMeta.loop.code}_${bLimit.loop.code}_${investB.loop.code}`,
+          archetype: "growth_and_underinvestment",
+          name: "Growth and Underinvestment",
+          status: "complete",
+          isPartial: false,
+          presentLoops: [rMeta.loop.code, bLimit.loop.code, investB.loop.code],
+          missingLoop: null,
+          looksLike: `Growth (${rMeta.loop.code}) hits limit (${bLimit.loop.code}), governed by delayed capacity investment (${investB.loop.code}).`,
+          implication: "Sluggish investment risks locking the organization into a lower capacity equilibrium.",
+          recommendation: "Invest ahead of capacity bottlenecks and hold service standards steady.",
+          meadowsLevel: 6
+        });
+      }
+    }
+  }
+
+  // 8. Attractiveness Principle & 9. Limits to Growth
+  for (const rMeta of reinforcing) {
+    const boundingBs = balancing.filter((b) => intersectIds(b.nodeSet, rMeta.nodeSet).length > 0);
+    if (boundingBs.length >= 2) {
+      const distinctPair = boundingBs.some((b1, idx) =>
+        boundingBs.slice(idx + 1).some((b2) => {
+          const unionR1 = new Set([...rMeta.nodeSet, ...b2.nodeSet]);
+          const unionR2 = new Set([...rMeta.nodeSet, ...b1.nodeSet]);
+          return diffIds(b1.nodeSet, unionR1).length > 0 && diffIds(b2.nodeSet, unionR2).length > 0;
+        })
+      );
+      if (distinctPair) {
+        add({
+          id: `arch_attractiveness_${rMeta.loop.code}_${boundingBs.map((b) => b.loop.code).join("_")}`,
+          archetype: "attractiveness_principle",
+          name: "Attractiveness Principle",
+          status: "complete",
+          isPartial: false,
+          presentLoops: [rMeta.loop.code, ...boundingBs.map((b) => b.loop.code)],
+          missingLoop: null,
+          looksLike: `Growth loop (${rMeta.loop.code}) meets multiple independent limits (${boundingBs.map((b) => b.loop.code).join(", ")}) at once.`,
+          implication: "Easing one limit immediately activates another; explicit tradeoff selection is needed.",
+          recommendation: "Decide explicitly which constraints bind first rather than spreading effort everywhere.",
+          meadowsLevel: 6
+        });
+      }
+    }
+
+    if (boundingBs.length > 0) {
+      add({
+        id: `arch_limits_${rMeta.loop.code}_${boundingBs[0].loop.code}`,
+        archetype: "limits_to_growth",
+        name: "Limits to Growth",
+        status: "complete",
+        isPartial: false,
+        presentLoops: [rMeta.loop.code, ...boundingBs.map((b) => b.loop.code)],
+        missingLoop: null,
+        looksLike: `Reinforcing growth (${rMeta.loop.code}) is slowed by balancing limit (${boundingBs.map((b) => b.loop.code).join(", ")}).`,
+        implication: "Pushing harder on growth brings diminishing returns as the limit binds.",
+        recommendation: "Expand or relieve the balancing constraint before saturation.",
+        meadowsLevel: 6
+      });
+    } else if (!shiftingClaimedRIds.has(rMeta.loop.id) && !escalationRIds.has(rMeta.loop.id)) {
+      add({
+        id: `arch_limits_partial_${rMeta.loop.code}`,
+        archetype: "limits_to_growth",
+        name: "Limits to Growth",
+        status: "partial",
+        isPartial: true,
+        presentLoops: [rMeta.loop.code],
+        missingLoop: "Missing balancing constraint loop (B) naming what real-world ceiling or limit slows and stops this growth.",
+        looksLike: `Reinforcing growth loop (${rMeta.loop.code}) grows unchecked with no bounding balancing limit.`,
+        implication: "Without a balancing constraint, quantities may grow unrealistically over the horizon.",
+        recommendation: "Add the real-world balancing limit that stops this growth.",
+        meadowsLevel: 6
+      });
+    }
+  }
+
+  // 10. Policy Resistance & Delayed Oscillation
+  const delayedB = balancing.filter((b) => b.loop.hasDelay);
+  if (delayedB.length > 0) {
+    add({
+      id: `arch_policy_resistance_${delayedB[0].loop.code}`,
+      archetype: "policy_resistance",
+      name: "Policy Resistance & Delayed Oscillation",
+      status: "complete",
+      isPartial: false,
+      presentLoops: delayedB.map((b) => b.loop.code),
+      missingLoop: null,
+      looksLike: `Balancing control (${delayedB.map((b) => b.loop.code).join(", ")}) includes response delays causing overshoot.`,
+      implication: "Aggressive short-term corrections amplify oscillations.",
+      recommendation: "Shorten reporting delays and pace policy adjustments using stock trends.",
+      meadowsLevel: 8
+    });
+  } else {
+    for (let i = 0; i < balancing.length; i++) {
+      for (let j = i + 1; j < balancing.length; j++) {
+        const bA = balancing[i];
+        const bB = balancing[j];
+        const key = pairKey(bA.loop.id, bB.loop.id);
+        if (shiftingBPairs.has(key) || erodingPairs.has(key)) continue;
+        const shared = intersectIds(bA.nodeSet, bB.nodeSet);
+        if (shared.some((sid) => oppositeSignAtNode(bA, bB, sid))) {
+          add({
+            id: `arch_policy_resistance_partial_${bA.loop.code}_${bB.loop.code}`,
+            archetype: "policy_resistance",
+            name: "Policy Resistance & Delayed Oscillation",
+            status: "partial",
+            isPartial: true,
+            presentLoops: [bA.loop.code, bB.loop.code],
+            missingLoop: "Missing reporting or physical response delay on opposing balancing loops explaining why corrective pushes overshoot.",
+            looksLike: `Opposing balancing loops (${bA.loop.code}, ${bB.loop.code}) pull ${factorLabels(shared, factorById)} oppositely without a delay.`,
+            implication: "Competing adjustments resist change and risk oscillation once delayed.",
+            recommendation: "Model response delays explicitly or align the opposing target loops.",
+            meadowsLevel: 8
+          });
+        }
+      }
+    }
+  }
+
+  return out;
+}
+
 function formatLoopCensus(loops: FeedbackLoop[], loopType: "reinforcing" | "balancing"): string {
   const matching = loops.filter((l) => l.type === loopType);
   if (!matching.length) return "none";
@@ -785,10 +1400,20 @@ export function contextText(context: ModelContext): string {
       ` (name: ${f.name}; unit: ${f.unit || "none"}${f.group ? `; group: ${f.group}` : ""})`
   );
   const loops = context.loops ?? detectFeedbackLoops(context.factors);
+  const archetypes = detectSystemArchetypes(context.factors, loops);
   const unlinkedSymbols = context.factors
     .filter((f) => f.class === "unlinked")
     .map((f) => f.symbol || f.name)
     .filter(Boolean);
+
+  const archetypeLines = archetypes.length
+    ? archetypes.map(
+        (a) =>
+          `- [${a.status}] ${a.name} (${a.presentLoops.join(", ")}): ${a.looksLike} Implies: ${a.implication}${
+            a.missingLoop ? ` Missing loop: ${a.missingLoop}` : ""
+          }`
+      )
+    : ["none"];
 
   return [
     "# The organization",
@@ -806,7 +1431,10 @@ export function contextText(context: ModelContext): string {
     `Balancing: ${formatLoopCensus(loops, "balancing")}`,
     "",
     "# Factors that are not connected",
-    unlinkedSymbols.length ? unlinkedSymbols.join(", ") : "none"
+    unlinkedSymbols.length ? unlinkedSymbols.join(", ") : "none",
+    "",
+    "# System archetypes",
+    ...archetypeLines
   ].join("\n");
 }
 

@@ -7,6 +7,7 @@ import { isAllowedEndpoint, parseReply, parseActionReply, ProviderReplyError } f
 import {
   contextText,
   detectFeedbackLoops,
+  detectSystemArchetypes,
   SYSTEM_PROMPT,
   ACTION_DRAFT_SYSTEM_PROMPT,
   actionDraftUserPrompt
@@ -235,4 +236,85 @@ test("contextText reports none when no loops or unlinked factors exist", () => {
   assert.match(text, /Reinforcing: none/);
   assert.match(text, /Balancing: none/);
   assert.match(text, /# Factors that are not connected\nnone/);
+  assert.match(text, /# System archetypes\nnone/);
+});
+
+test("SYSTEM_PROMPT teaches Shifting the Burden and the full archetype diagnostic vocabulary (MIPA-58)", () => {
+  assert.match(SYSTEM_PROMPT, /Shifting the Burden/);
+  assert.match(SYSTEM_PROMPT, /Fixes that Fail/);
+  assert.match(SYSTEM_PROMPT, /Eroding Goals/);
+  assert.match(SYSTEM_PROMPT, /Success to the Successful/);
+  assert.match(SYSTEM_PROMPT, /Tragedy of the Commons/);
+  assert.match(SYSTEM_PROMPT, /Escalation/);
+  assert.match(SYSTEM_PROMPT, /Growth and Underinvestment/);
+  assert.match(SYSTEM_PROMPT, /Attractiveness Principle/);
+});
+
+test("detectSystemArchetypes and contextText diagnose complete and partial Shifting the Burden with missing loop guidance", () => {
+  const partialFactors = [
+    {
+      id: "symp",
+      name: "Service Backlog",
+      symbol: "backlog",
+      formula: "max(0, 50 - tempDispatch - trainingCapacity)",
+      unit: "",
+      group: "Service",
+      influencers: ["tempDispatch", "trainingCapacity"]
+    },
+    {
+      id: "tempDispatch",
+      name: "Emergency Temp Dispatch",
+      symbol: "tempDispatch",
+      formula: "backlog * 0.6",
+      unit: "",
+      group: "Quick Fix",
+      influencers: ["symp"]
+    },
+    {
+      id: "trainingCapacity",
+      name: "Volunteer Captain Capacity",
+      symbol: "trainingCapacity",
+      formula: "delay(trainingCapacity, dt, 10) + backlog * 0.4",
+      unit: "",
+      group: "Capability",
+      influencers: ["symp"]
+    }
+  ];
+
+  const partialLoops = detectFeedbackLoops(partialFactors);
+  const partialArchetypes = detectSystemArchetypes(partialFactors, partialLoops);
+  const partialShifting = partialArchetypes.find((a) => a.archetype === "shifting_the_burden");
+  assert.ok(partialShifting);
+  assert.equal(partialShifting.status, "partial");
+  assert.match(partialShifting.missingLoop || "", /reinforcing side-effect loop/i);
+
+  const partialCtx = contextText({
+    org: { name: "Food Pantry", goal: "Sustained meals", orgType: "ngo", currency: "USD" },
+    timeStep: "1 months",
+    horizon: "60 months",
+    factors: partialFactors,
+    loops: partialLoops
+  });
+  assert.match(partialCtx, /# System archetypes/);
+  assert.match(partialCtx, /\[partial\] Shifting the Burden/);
+  assert.match(partialCtx, /Missing loop:/);
+
+  const completeFactors = [
+    ...partialFactors.slice(0, 2),
+    {
+      id: "trainingCapacity",
+      name: "Volunteer Captain Capacity",
+      symbol: "trainingCapacity",
+      formula: "delay(trainingCapacity, dt, 10) + backlog * 0.4 - tempDispatch * 0.5",
+      unit: "",
+      group: "Capability",
+      influencers: ["symp", "tempDispatch"]
+    }
+  ];
+  const completeLoops = detectFeedbackLoops(completeFactors);
+  const completeArchetypes = detectSystemArchetypes(completeFactors, completeLoops);
+  const completeShifting = completeArchetypes.find((a) => a.archetype === "shifting_the_burden");
+  assert.ok(completeShifting);
+  assert.equal(completeShifting.status, "complete");
+  assert.equal(completeShifting.missingLoop, null);
 });

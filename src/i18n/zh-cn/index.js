@@ -178,6 +178,93 @@ export default {
   leveragePowerMedium: "中阶杠杆（结构反馈）",
   leveragePowerHigh: "高阶杠杆（规则信息）",
   leveragePowerTransformative: "典范跃迁（核心目标）",
+  noArchetypesDetectedTitle: "尚未检测到系统基模结构。",
+  noArchetypesDetectedSubtitle: "当前要素网络尚未形成耦合或部分的典型反馈基模。",
+  archetypeStatusComplete: "完整基模",
+  archetypeStatusPartial: "部分呈现（缺回路）",
+  archetypeLoopsInvolvedLabel: "涉及回路",
+  archetypeFactorsInvolvedLabel: "涉及要素",
+  archetypeLooksLikeLabel: "外观特征",
+  archetypeImpliesLabel: "系统含义",
+  archetypeMissingLoopLabel: "缺少的关键回路",
+  archetypes: {
+    shiftingTheBurden: {
+      name: "舍本逐末",
+      looksLike: "治标方案与治本方案同时试图缓解同一个问题征兆，但治标方案正悄悄削弱推动治本方案的基础能力。",
+      implies: "短期模拟中治标方案因见效快而看似最具杠杆效益，但长期根本能力逐渐流失，使组织对治标做法产生依赖。",
+      recommendation: "将资源优先投入重建治本能力，并同步逐步减少对短期治标回路的依赖。"
+    },
+    fixesThatFail: {
+      name: "饮鸩止渴",
+      looksLike: "快速修正措施在短期内压低了问题征兆，却在延迟之后引发意料之外的副作用，使问题反弹得更严重。",
+      implies: "若仅依眼前见效快来评估行动，误以为有效的补救措施实则在时间延迟背后积累更大的长期代价。",
+      recommendation: "明确审视延迟后的反弹副作用，避免反复依赖短线修补，并改从结构根源重新设计对策。"
+    },
+    erodingGoals: {
+      name: "目标侵蚀",
+      looksLike: "表现落差可由两股相反力量消弭：需要时间才能拉升实际表现，或直接下调标准让落差看起来变小。",
+      implies: "由于下调目标比真正改善更快消除张力，组织的长期标准与抱负会在不知不觉中持续滑落。",
+      recommendation: "将绩效目标锚定于外部基准，使落差推动实质能力改善，而非借由放宽标准自我安慰。"
+    },
+    successToSuccessful: {
+      name: "富者越富",
+      looksLike: "两条增强型成长回路争夺零和资源分配，一方取得初期优势后，便持续吸干另一方的经费与关注。",
+      implies: "结果更多取决于初期分配规则而非本质表现，原本有潜力的替代方案在资源匮乏下逐步萎缩。",
+      recommendation: "将共享的资源分配规则解耦，为具潜力的替代方案保留基础投入，或改采独立评估。"
+    },
+    tragedyOfTheCommons: {
+      name: "公地悲剧",
+      looksLike: "各自独立的行动者各自追逐自身增强利益并共同取用同一有限资源池，随着总负荷上升而拉低所有人的收益。",
+      implies: "每个参与者从自身角度看都觉得再多做一点有益，却在集体过度消耗下共同摧毁共享承载力。",
+      recommendation: "建立共管规则、公开透明的公共资源指标或总量上限，让总消耗状态反馈给每位参与者。"
+    },
+    escalation: {
+      name: "恶性竞争升级",
+      looksLike: "双方各自为维持相对优势而加码反应，形成八字形增强军备竞赛回路，将双方的投入与代价推向无止境攀升。",
+      implies: "双方都没有取得持久优势，但精力与成本却在彼此对峙中不断被放大消耗。",
+      recommendation: "将焦点由相对比较转回绝对目标，采取单边降温步骤或协商共同的平衡机制。"
+    },
+    growthAndUnderinvestment: {
+      name: "成长与投资不足",
+      looksLike: "需求成长撞上产能上限而趋缓，但扩充产能的延迟投资反应过慢，或因品质标准下修而被延后削减。",
+      implies: "暂时性的成长放缓被误判为需求疲弱，导致缩减产能投资，最终锁死长期成长天花板。",
+      recommendation: "赶在瓶颈恶化前超前部署产能投资，并在品质下滑时坚守服务标准，勿轻易调降扩充计划。"
+    },
+    attractivenessPrinciple: {
+      name: "吸引力原则",
+      looksLike: "单一增强型成长引擎同时撞上多条彼此独立的平衡限制回路（例如经费、人力与品质瓶颈）。",
+      implies: "只解开其中一项限制，压力就会立刻转移到另一项限制上；若四处分散资源，反而无法突破僵局。",
+      recommendation: "辨识最先吃紧的核心瓶颈并明确做出取舍选择，而非同时试图满足所有次要目标。"
+    },
+    limitsToGrowth: {
+      name: "成长极限",
+      looksLike: "正向增强的成长飞轮遇到平衡型限制回路，使成长速度趋缓、停滞甚至反转下滑。",
+      implies: "一旦限制因素开始发威，单纯加码推动成长引擎只会换来报酬递减甚至反弹。",
+      recommendation: "切勿盲目加码推升成长引擎，应提前疏通或扩充造成饱和的平衡限制要素。"
+    },
+    policyResistance: {
+      name: "政策抗拒与延迟震荡",
+      looksLike: "平衡控制回路在行动与回馈之间存在时间延迟，使决策者在尚未见到成效时过度修正，进而引发来回震荡。",
+      implies: "过于激烈的短期调整不仅放大系统波动，还会削弱各方对治理策略的信任。",
+      recommendation: "缩短信息回报延迟、放缓急剧的政策修正步伐，并依系统存量长期趋势而非短期噪声做决策。"
+    },
+    missingLoop: {
+      shiftingSideEffectR: "缺少增强型副作用回路（R），尚未呈现短期治标对策是否正削弱治本能力的长期根基。",
+      shiftingFundamentalB: "缺少直接治本平衡回路（B），尚未建立不经过短期应急措施而能直接补强根本能力的路径。",
+      fixesReboundR: "缺少延迟增强反弹回路（R），意料外的副作用存量尚未闭环回传以反映问题如何恶化。",
+      fixesReboundDelay: "增强型副作用回路（R）缺少时间延迟设定，未能区分短期缓解与长期反弹的时间差。",
+      erodingCorrectiveB: "缺少实际改善表现的平衡修正回路（B），造成落差看似只靠调降目标来消弭。",
+      successCompetingR: "缺少第二参与者的竞争增强回路（R），尚未闭环呈现资源被抽走后的持续衰退路径。",
+      tragedyCommonsB: "缺少公共资源耗竭平衡回路（B），尚未将共享承载力下降的反馈链接回所有参与者。",
+      tragedySecondActorR: "缺少第二行动者的增强成长回路（R），尚未呈现双边同时推升公共资源负荷的独立动力。",
+      escalationCompetitorB: "缺少对手内部的平衡目标回路（B），尚未完整呈现对方如何依自身基准调整投入。",
+      growthCapacityInvestB: "缺少具时间延迟的产能投资平衡回路（B），尚无法在瓶颈出现时扩充对应产能。",
+      growthDemandEngineR: "缺少正向增强的需求成长回路（R），目前仅见到产能限制与扩充而缺乏成长动力来源。",
+      attractivenessSecondLimitB: "缺少第二条平衡限制回路（B），尚有一项外露的限制要素未闭环回到成长引擎。",
+      limitsBoundingB: "缺少平衡限制回路（B），尚未指出真实世界中哪项资源天花板或约束会减缓并停止此成长。",
+      policyResistanceDelay: "互为抗衡的两条快速平衡回路缺少时间延迟描述，尚未说明为何修正行动容易矫枉过正。"
+    }
+  },
 
   // for PageModel.vue
   Calculate: "计算",

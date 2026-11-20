@@ -17,6 +17,93 @@ export default {
   "leveragePowerMedium": "Apalancamiento Medio",
   "leveragePowerHigh": "Alto Apalancamiento",
   "leveragePowerTransformative": "Transformativo",
+  "noArchetypesDetectedTitle": "No se detectaron arquetipos sistémicos.",
+  "noArchetypesDetectedSubtitle": "La red de factores aún no presenta estructuras de retroalimentación acopladas o parciales.",
+  "archetypeStatusComplete": "Patrón completo",
+  "archetypeStatusPartial": "Presente en parte",
+  "archetypeLoopsInvolvedLabel": "Bucles involucrados",
+  "archetypeFactorsInvolvedLabel": "Factores involucrados",
+  "archetypeLooksLikeLabel": "Cómo se manifiesta",
+  "archetypeImpliesLabel": "Qué implica",
+  "archetypeMissingLoopLabel": "Qué bucle falta",
+  "archetypes": {
+    "shiftingTheBurden": {
+      "name": "Desplazamiento de la Carga",
+      "looksLike": "Una solución rápida y una solución fundamental actúan sobre el mismo síntoma, mientras la solución rápida desgasta silenciosamente la capacidad de fondo.",
+      "implies": "La solución rápida parece la opción más atractiva a corto plazo porque alivia de inmediato, pero la capacidad real se deteriora y crece la dependencia.",
+      "recommendation": "Asigne recursos para reconstruir la capacidad fundamental mientras reduce gradualmente el uso de la respuesta paliativa."
+    },
+    "fixesThatFail": {
+      "name": "Soluciones Rápidas que Fallan",
+      "looksLike": "Una medida rápida alivia el síntoma a corto plazo, pero esa misma acción activa una consecuencia no deseada con demora que empeora el problema después.",
+      "implies": "Las medidas evaluadas solo por el alivio inmediato parecen efectivas mientras acumulan costos sistémicos detrás del retraso temporal.",
+      "recommendation": "Reconozca el efecto secundario diferido, evite repetir ciegamente el parche y rediseñe la intervención sobre las causas raíz."
+    },
+    "erodingGoals": {
+      "name": "Metas Erosionadas",
+      "looksLike": "Una brecha de desempeño puede cerrarse por dos vías opuestas: mejorando el desempeño real con demora o reduciendo la meta misma para achicar la brecha.",
+      "implies": "Como bajar el estándar alivia la tensión más rápido que mejorar la operación, la ambición a largo plazo desciende gradualmente.",
+      "recommendation": "Ancle el objetivo con una referencia externa para que las brechas impulsen mejoras reales en vez de rebajar las metas."
+    },
+    "successToSuccessful": {
+      "name": "Éxito para los Exitosos",
+      "looksLike": "Dos bucles de refuerzo compiten por una regla de reparto de suma cero donde la ventaja inicial de uno priva de recursos al otro.",
+      "implies": "Los resultados terminan reflejando la regla de asignación inicial más que el mérito real, dejando marchitar alternativas viables.",
+      "recommendation": "Separe la regla de reparto compartida, garantice recursos base a las alternativas o evalúe ambas vías por separado."
+    },
+    "tragedyOfTheCommons": {
+      "name": "Tragedia de los Comunes",
+      "looksLike": "Actores independientes persiguen sus propias ganancias acumulativas usando un recurso común, reduciendo el rendimiento para todos al subir la carga total.",
+      "implies": "Cada actor percibe un beneficio local por hacer más mientras la capacidad compartida colapsa por sobreuso colectivo.",
+      "recommendation": "Establezca reglas de corresponsabilidad, métricas transparentes del bien común o límites colectivos conectados al uso de cada actor."
+    },
+    "escalation": {
+      "name": "Escalada",
+      "looksLike": "Dos partes reaccionan por separado para proteger su posición relativa, generando una carrera armamentista en ocho que impulsa ambos esfuerzos al alza.",
+      "implies": "Ninguna parte logra ventaja duradera mientras el esfuerzo y el costo escalan sin límite en respuesta al rival.",
+      "recommendation": "Pase de comparaciones relativas a metas absolutas, acuerde límites mutuos de equilibrio o dé pasos unilaterales de distensión."
+    },
+    "growthAndUnderinvestment": {
+      "name": "Crecimiento y Subinversión",
+      "looksLike": "El crecimiento de la demanda se frena ante un límite de capacidad mientras la inversión diferida responde con lentitud o se recorta al caer el estándar.",
+      "implies": "Una desaceleración temporal se malinterpreta como falta de demanda, justificando recortes que consolidan un techo permanente.",
+      "recommendation": "Invierta en capacidad antes de que el cuello de botella domine y mantenga firmes los estándares de calidad."
+    },
+    "attractivenessPrinciple": {
+      "name": "Principio de Atractivo",
+      "looksLike": "Un único motor de crecimiento de refuerzo choca simultáneamente contra múltiples límites de equilibrio independientes.",
+      "implies": "Aliviar una sola restricción traslada de inmediato la presión hacia otra; repartir esfuerzos sin prioridad frena todo avance.",
+      "recommendation": "Identifique qué restricción limita primero y decida de forma explícita qué compensaciones aceptar."
+    },
+    "limitsToGrowth": {
+      "name": "Límites del Crecimiento",
+      "looksLike": "Un motor de crecimiento de refuerzo encuentra un bucle de equilibrio que desacelera, topa o revierte la expansión.",
+      "implies": "Presionar más sobre el impulsor de crecimiento rinde cada vez menos cuando el límite restrictivo entra en acción.",
+      "recommendation": "No fuerce más el motor de crecimiento; elimine o amplíe de forma proactiva la restricción antes de la saturación."
+    },
+    "policyResistance": {
+      "name": "Resistencia al Cambio y Oscilación Diferida",
+      "looksLike": "Un bucle de equilibrio contiene una demora entre acción y resultado observable, provocando correcciones excesivas y oscilaciones.",
+      "implies": "Las correcciones bruscas a corto plazo amplifican los vaivenes y debilitan la confianza en la política aplicada.",
+      "recommendation": "Acorte las demoras de información, modere la velocidad de ajuste y decida según la tendencia de los acervos."
+    },
+    "missingLoop": {
+      "shiftingSideEffectR": "Falta el bucle de refuerzo del efecto secundario (R) que muestra si el parche debilita la capacidad fundamental.",
+      "shiftingFundamentalB": "Falta el bucle de equilibrio de la solución fundamental (B) que fortalece la causa raíz sin depender del paliativo.",
+      "fixesReboundR": "Falta el bucle de refuerzo del rebote diferido (R) que cierra el efecto secundario de vuelta sobre el problema.",
+      "fixesReboundDelay": "Falta la demora temporal en el bucle de refuerzo (R) para separar el alivio inicial del rebote posterior.",
+      "erodingCorrectiveB": "Falta el bucle de equilibrio de acción correctiva (B) para elevar el desempeño real en lugar de bajar la meta.",
+      "successCompetingR": "Falta el segundo bucle de refuerzo competidor (R) que muestra cómo decae la alternativa al perder recursos.",
+      "tragedyCommonsB": "Falta el bucle de equilibrio de agotamiento común (B) que devuelve la escasez compartida a todos los usuarios.",
+      "tragedySecondActorR": "Falta el bucle de refuerzo del segundo actor (R) que aporta demanda independiente sobre el recurso común.",
+      "escalationCompetitorB": "Falta el bucle de equilibrio interno del otro actor (B) frente a su propio criterio.",
+      "growthCapacityInvestB": "Falta el bucle de equilibrio con demora para invertir en capacidad (B) antes de que el cuello de botella estanque la demanda.",
+      "growthDemandEngineR": "Falta el bucle de refuerzo del crecimiento de la demanda (R) que justifica ampliar capacidad.",
+      "attractivenessSecondLimitB": "Falta el segundo bucle de restricción de equilibrio (B) para cerrar el factor limitante abierto.",
+      "limitsBoundingB": "Falta un bucle de restricción de equilibrio (B) que nombre el límite real que frena y detiene este crecimiento.",
+      "policyResistanceDelay": "Falta modelar la demora de respuesta entre bucles de equilibrio opuestos que explica el sobreajuste oscilatorio."
+    }
+  },
   "multilingualTitles": "Títulos multilingües del factor",
   "multilingualTitlesHint": "Defina nombres de factores en otros idiomas para la alineación del equipo global.",
   "translateWithAi": "Traducir con IA",

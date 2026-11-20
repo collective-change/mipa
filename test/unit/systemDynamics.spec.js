@@ -5,6 +5,8 @@ import {
   computeModelEdgePolarities,
   detectFeedbackLoops,
   detectSystemArchetypes,
+  SYSTEM_ARCHETYPE_CATALOG,
+  MISSING_LOOP_DESCRIPTIONS,
   MEADOWS_LEVERAGE_HIERARCHY
 } from "@/utils/systemDynamics";
 
@@ -286,6 +288,265 @@ describe("System Dynamics Methodology & Systems Thinking Engine", () => {
       expect(resistance.meadowsLevel).toBe(8);
       expect(resistance.recommendation).toContain("Shorten reporting delays");
     });
+
+    it("diagnoses Shifting the Burden FIRST (complete + partial forms naming missing loop)", () => {
+      // Complete Shifting the Burden: quickFix fast B, fundCap delayed B, plus R where quickFix erodes fundCap
+      const completeNodes = [
+        { id: "symp", symbol: "backlog", name: "Service Backlog", formula: "max(0, 50 - quickFix - fundCap)", influencers: ["quickFix", "fundCap"] },
+        { id: "quickFix", symbol: "quickFix", name: "Emergency Temp Dispatch", formula: "backlog * 0.6", influencers: ["symp"] },
+        { id: "fundCap", symbol: "fundCap", name: "Volunteer Captain Capacity", formula: "delay(fundCap, dt, 10) + backlog * 0.4 - quickFix * 0.5", influencers: ["symp", "quickFix"] }
+      ];
+      const completeLoops = detectFeedbackLoops(completeNodes);
+      const completeArchs = detectSystemArchetypes(completeNodes, completeLoops);
+      expect(completeArchs[0].archetype).toBe("shifting_the_burden");
+      expect(completeArchs[0].status).toBe("complete");
+      expect(completeArchs[0].isPartial).toBe(false);
+      expect(completeArchs[0].missingLoop).toBeNull();
+      expect(completeArchs[0].looksLike.length).toBeGreaterThan(15);
+      expect(completeArchs[0].implication.length).toBeGreaterThan(15);
+
+      // Partial Shifting the Burden P1: fast B + delayed B without R side-effect erosion loop
+      const partialNoRNodes = [
+        completeNodes[0],
+        completeNodes[1],
+        { id: "fundCap", symbol: "fundCap", name: "Volunteer Captain Capacity", formula: "delay(fundCap, dt, 10) + backlog * 0.4", influencers: ["symp"] }
+      ];
+      const partialNoRLoops = detectFeedbackLoops(partialNoRNodes);
+      const partialNoRArch = detectSystemArchetypes(partialNoRNodes, partialNoRLoops).find(
+        (a) => a.archetype === "shifting_the_burden"
+      );
+      expect(partialNoRArch).toBeDefined();
+      expect(partialNoRArch.isPartial).toBe(true);
+      expect(partialNoRArch.missingLoopKey).toBe("shiftingSideEffectR");
+      expect(partialNoRArch.missingLoop).toMatch(/reinforcing side-effect loop/i);
+
+      // Partial Shifting the Burden P2: fast B + R (-1 -> -1 erosion) without direct fundamental B
+      const partialNoBNodes = [
+        completeNodes[0],
+        completeNodes[1],
+        { id: "fundCap", symbol: "fundCap", name: "Volunteer Captain Capacity", formula: "delay(fundCap, dt, 10) + 12 - quickFix * 0.5", influencers: ["quickFix"] }
+      ];
+      const partialNoBLoops = detectFeedbackLoops(partialNoBNodes);
+      const partialNoBArch = detectSystemArchetypes(partialNoBNodes, partialNoBLoops).find(
+        (a) => a.archetype === "shifting_the_burden"
+      );
+      expect(partialNoBArch).toBeDefined();
+      expect(partialNoBArch.isPartial).toBe(true);
+      expect(partialNoBArch.missingLoopKey).toBe("shiftingFundamentalB");
+      expect(partialNoBArch.missingLoop).toMatch(/fundamental solution balancing loop/i);
+    });
+
+    it("diagnoses Fixes that Fail (complete delayed rebound + partial missing R)", () => {
+      const completeNodes = [
+        { id: "prob", symbol: "backlog", name: "Backlog", formula: "30 + debt - fix", influencers: ["debt", "fix"] },
+        { id: "fix", symbol: "fix", name: "Overtime Patch", formula: "prob * 0.7", influencers: ["prob"] },
+        { id: "debt", symbol: "debt", name: "Technical Debt", formula: "delay(debt, dt, 0) + fix * 0.4", influencers: ["fix"] }
+      ];
+      const completeLoops = detectFeedbackLoops(completeNodes);
+      const fixes = detectSystemArchetypes(completeNodes, completeLoops).find(
+        (a) => a.archetype === "fixes_that_fail"
+      );
+      expect(fixes).toBeDefined();
+      expect(fixes.isPartial).toBe(false);
+      expect(fixes.missingLoop).toBeNull();
+      expect(fixes.presentLoops.length).toBeGreaterThanOrEqual(2);
+
+      // Partial: fast B drives unclosed delayed side-effect stock
+      const partialNodes = [
+        { id: "prob", symbol: "backlog", name: "Backlog", formula: "30 - fix", influencers: ["fix"] },
+        { id: "fix", symbol: "fix", name: "Overtime Patch", formula: "prob * 0.7", influencers: ["prob"] },
+        { id: "debt", symbol: "debt", name: "Technical Debt", formula: "delay(debt, dt, 0) + fix * 0.4", influencers: ["fix"] }
+      ];
+      const partialLoops = detectFeedbackLoops(partialNodes);
+      const partialFixes = detectSystemArchetypes(partialNodes, partialLoops).find(
+        (a) => a.archetype === "fixes_that_fail"
+      );
+      expect(partialFixes).toBeDefined();
+      expect(partialFixes.isPartial).toBe(true);
+      expect(partialFixes.missingLoop).toMatch(/rebound loop/i);
+    });
+
+    it("diagnoses Eroding Goals (complete opposite-side gap adjustment + partial without corrective B)", () => {
+      const completeNodes = [
+        { id: "gap", symbol: "gap", name: "Quality Gap", formula: "goal - perf", influencers: ["goal", "perf"] },
+        { id: "goal", symbol: "goal", name: "Service Target", formula: "delay(goal, dt, 100) - gap * 0.2", influencers: ["gap"] },
+        { id: "act", symbol: "act", name: "Corrective Effort", formula: "gap * 0.5", influencers: ["gap"] },
+        { id: "perf", symbol: "perf", name: "Actual Performance", formula: "delay(perf, dt, 60) + act", influencers: ["act"] }
+      ];
+      const completeLoops = detectFeedbackLoops(completeNodes);
+      const eroding = detectSystemArchetypes(completeNodes, completeLoops).find(
+        (a) => a.archetype === "eroding_goals"
+      );
+      expect(eroding).toBeDefined();
+      expect(eroding.isPartial).toBe(false);
+      expect(eroding.missingLoop).toBeNull();
+
+      // Partial: goal slides downward while performance corrective loop is missing
+      const partialNodes = [
+        { id: "gap", symbol: "gap", name: "Quality Gap", formula: "goal - perf", influencers: ["goal", "perf"] },
+        { id: "goal", symbol: "goal", name: "Service Target", formula: "delay(goal, dt, 100) - gap * 0.2", influencers: ["gap"] },
+        { id: "perf", symbol: "perf", name: "Actual Performance", formula: "60", influencers: [] }
+      ];
+      const partialLoops = detectFeedbackLoops(partialNodes);
+      const partialEroding = detectSystemArchetypes(partialNodes, partialLoops).find(
+        (a) => a.archetype === "eroding_goals"
+      );
+      expect(partialEroding).toBeDefined();
+      expect(partialEroding.isPartial).toBe(true);
+      expect(partialEroding.missingLoop).toMatch(/corrective action balancing loop/i);
+    });
+
+    it("diagnoses Success to the Successful without false-firing on additive hubs", () => {
+      const completeNodes = [
+        { id: "perfA", symbol: "perfA", formula: "resA * 2", influencers: ["resA"] },
+        { id: "perfB", symbol: "perfB", formula: "resB * 2", influencers: ["resB"] },
+        { id: "shareA", symbol: "shareA", formula: "perfA / (perfA + perfB)", influencers: ["perfA", "perfB"] },
+        { id: "resA", symbol: "resA", formula: "100 * shareA", influencers: ["shareA"] },
+        { id: "resB", symbol: "resB", formula: "100 * (1 - shareA)", influencers: ["shareA"] }
+      ];
+      const completeLoops = detectFeedbackLoops(completeNodes);
+      const successArch = detectSystemArchetypes(completeNodes, completeLoops).find(
+        (a) => a.archetype === "success_to_successful"
+      );
+      expect(successArch).toBeDefined();
+      expect(successArch.isPartial).toBe(false);
+      expect(successArch.presentLoops).toHaveLength(2);
+
+      // Additive fan-in hub (like systemDynamics hub test) must NOT fire Success to the Successful
+      const additiveHub = [
+        { id: "h", symbol: "hub", formula: "r1 + r2", influencers: ["r1", "r2"] },
+        { id: "r1", symbol: "branchOne", formula: "h * 0.5", influencers: ["h"] },
+        { id: "r2", symbol: "branchTwo", formula: "h * 0.3", influencers: ["h"] }
+      ];
+      const additiveArchs = detectSystemArchetypes(additiveHub, detectFeedbackLoops(additiveHub));
+      expect(additiveArchs.some((a) => a.archetype === "success_to_successful")).toBe(false);
+    });
+
+    it("diagnoses Tragedy of the Commons (complete 2R + 2B shared pool + partial missing second commons loop)", () => {
+      const completeNodes = [
+        { id: "actA", symbol: "actA", formula: "delay(actA, dt, 10) + gainA * 0.2", influencers: ["gainA"] },
+        { id: "gainA", symbol: "gainA", formula: "actA * yield", influencers: ["actA", "yield"] },
+        { id: "actB", symbol: "actB", formula: "delay(actB, dt, 10) + gainB * 0.2", influencers: ["gainB"] },
+        { id: "gainB", symbol: "gainB", formula: "actB * yield", influencers: ["actB", "yield"] },
+        { id: "totalAct", symbol: "totalAct", formula: "actA + actB", influencers: ["actA", "actB"] },
+        { id: "yield", symbol: "yield", formula: "200 / (1 + totalAct)", influencers: ["totalAct"] }
+      ];
+      const completeLoops = detectFeedbackLoops(completeNodes);
+      const tragedy = detectSystemArchetypes(completeNodes, completeLoops).find(
+        (a) => a.archetype === "tragedy_of_the_commons"
+      );
+      expect(tragedy).toBeDefined();
+      expect(tragedy.isPartial).toBe(false);
+      expect(tragedy.presentLoops).toHaveLength(4);
+
+      // Partial: B feeds into totalAct, yield only feeds back to gainA (missing B2 to actor B)
+      const partialNodes = [
+        ...completeNodes.slice(0, 3),
+        { id: "gainB", symbol: "gainB", formula: "actB * 5", influencers: ["actB"] },
+        completeNodes[4],
+        completeNodes[5]
+      ];
+      const partialTragedy = detectSystemArchetypes(partialNodes, detectFeedbackLoops(partialNodes)).find(
+        (a) => a.archetype === "tragedy_of_the_commons"
+      );
+      expect(partialTragedy).toBeDefined();
+      expect(partialTragedy.isPartial).toBe(true);
+      expect(partialTragedy.missingLoop).toMatch(/commons-depletion loop/i);
+    });
+
+    it("diagnoses Escalation (complete 2B + figure-8 R + partial missing opponent anchor B)", () => {
+      const completeNodes = [
+        { id: "threatA", symbol: "threatA", formula: "delay(effortB, dt, 10) - effortA", influencers: ["effortB", "effortA"] },
+        { id: "effortA", symbol: "effortA", formula: "10 + 0.6 * threatA", influencers: ["threatA"] },
+        { id: "threatB", symbol: "threatB", formula: "delay(effortA, dt, 10) - effortB", influencers: ["effortA", "effortB"] },
+        { id: "effortB", symbol: "effortB", formula: "10 + 0.6 * threatB", influencers: ["threatB"] }
+      ];
+      const completeLoops = detectFeedbackLoops(completeNodes);
+      const escalation = detectSystemArchetypes(completeNodes, completeLoops).find(
+        (a) => a.archetype === "escalation"
+      );
+      expect(escalation).toBeDefined();
+      expect(escalation.isPartial).toBe(false);
+      expect(escalation.presentLoops).toHaveLength(3);
+
+      // Partial: B2 lacks self-anchoring comparison edge (threatB does not subtract effortB)
+      const partialNodes = [
+        completeNodes[0],
+        completeNodes[1],
+        { id: "threatB", symbol: "threatB", formula: "delay(effortA, dt, 10)", influencers: ["effortA"] },
+        completeNodes[3]
+      ];
+      const partialEscalation = detectSystemArchetypes(partialNodes, detectFeedbackLoops(partialNodes)).find(
+        (a) => a.archetype === "escalation"
+      );
+      expect(partialEscalation).toBeDefined();
+      expect(partialEscalation.isPartial).toBe(true);
+      expect(partialEscalation.missingLoop).toMatch(/balancing anchor loop/i);
+    });
+
+    it("diagnoses Growth and Underinvestment (complete delayed capacity B + partial unclosed constant capacity)", () => {
+      const completeNodes = [
+        { id: "orders", symbol: "orders", formula: "marketing * quality", influencers: ["marketing", "quality"] },
+        { id: "rev", symbol: "revenue", formula: "orders * 10", influencers: ["orders"] },
+        { id: "marketing", symbol: "marketing", formula: "rev * 0.2", influencers: ["rev"] },
+        { id: "backlog", symbol: "backlog", formula: "orders / max(1, cap)", influencers: ["orders", "cap"] },
+        { id: "quality", symbol: "quality", formula: "100 / (1 + backlog)", influencers: ["backlog"] },
+        { id: "perfGap", symbol: "perfGap", formula: "80 - quality", influencers: ["quality"] },
+        { id: "cap", symbol: "capacity", formula: "delay(cap, dt, 50) + perfGap * 0.5", influencers: ["perfGap"] }
+      ];
+      const completeLoops = detectFeedbackLoops(completeNodes);
+      const growthInvest = detectSystemArchetypes(completeNodes, completeLoops).find(
+        (a) => a.archetype === "growth_and_underinvestment"
+      );
+      expect(growthInvest).toBeDefined();
+      expect(growthInvest.isPartial).toBe(false);
+
+      // Partial: delayed bottleneck stock backed by unclosed constant capacity factor
+      const partialNodes = [
+        completeNodes[0],
+        completeNodes[1],
+        completeNodes[2],
+        { id: "backlog", symbol: "backlog", formula: "delay(backlog, dt, 5) + orders / max(1, cap)", influencers: ["orders", "cap"] },
+        completeNodes[4],
+        { id: "cap", symbol: "capacity", formula: "50", influencers: [] }
+      ];
+      const partialGrowthInvest = detectSystemArchetypes(partialNodes, detectFeedbackLoops(partialNodes)).find(
+        (a) => a.archetype === "growth_and_underinvestment"
+      );
+      expect(partialGrowthInvest).toBeDefined();
+      expect(partialGrowthInvest.isPartial).toBe(true);
+      expect(partialGrowthInvest.missingLoop).toMatch(/capacity investment balancing loop/i);
+    });
+
+    it("diagnoses Attractiveness Principle and partial Limits to Growth cleanly", () => {
+      const attractNodes = [
+        { id: "growth", symbol: "growth", formula: "demand * capLimit * qualityLimit", influencers: ["demand", "capLimit", "qualityLimit"] },
+        { id: "demand", symbol: "demand", formula: "growth * 1.5", influencers: ["growth"] },
+        { id: "capLimit", symbol: "capLimit", formula: "100 / (1 + overload)", influencers: ["overload"] },
+        { id: "overload", symbol: "overload", formula: "growth * 0.5", influencers: ["growth"] },
+        { id: "qualityLimit", symbol: "qualityLimit", formula: "100 / (1 + fatigue)", influencers: ["fatigue"] },
+        { id: "fatigue", symbol: "fatigue", formula: "growth * 0.3", influencers: ["growth"] }
+      ];
+      const attractLoops = detectFeedbackLoops(attractNodes);
+      const attractiveness = detectSystemArchetypes(attractNodes, attractLoops).find(
+        (a) => a.archetype === "attractiveness_principle"
+      );
+      expect(attractiveness).toBeDefined();
+      expect(attractiveness.isPartial).toBe(false);
+      expect(attractiveness.boundingBalancingLoops).toHaveLength(2);
+
+      // Partial Limits to Growth when only an unbounded reinforcing loop is modeled
+      const unboundedNodes = [
+        { id: "v", symbol: "volunteers", formula: "wom * 1.2", influencers: ["wom"] },
+        { id: "wom", symbol: "wordOfMouth", formula: "v * 2", influencers: ["v"] }
+      ];
+      const partialLimit = detectSystemArchetypes(unboundedNodes, detectFeedbackLoops(unboundedNodes)).find(
+        (a) => a.archetype === "limits_to_growth"
+      );
+      expect(partialLimit).toBeDefined();
+      expect(partialLimit.isPartial).toBe(true);
+      expect(partialLimit.missingLoop).toMatch(/balancing constraint loop/i);
+    });
   });
 
   describe("Donella Meadows 12 Leverage Points Hierarchy", () => {
@@ -313,6 +574,15 @@ describe("System Dynamics Methodology & Systems Thinking Engine", () => {
       MEADOWS_LEVERAGE_HIERARCHY.forEach((item) => {
         expect(chineseCharRegex.test(item.name)).toBe(false);
         expect(chineseCharRegex.test(item.example)).toBe(false);
+      });
+      Object.values(SYSTEM_ARCHETYPE_CATALOG).forEach((entry) => {
+        expect(chineseCharRegex.test(entry.name)).toBe(false);
+        expect(chineseCharRegex.test(entry.looksLike)).toBe(false);
+        expect(chineseCharRegex.test(entry.implication)).toBe(false);
+        expect(chineseCharRegex.test(entry.recommendation)).toBe(false);
+      });
+      Object.values(MISSING_LOOP_DESCRIPTIONS).forEach((text) => {
+        expect(chineseCharRegex.test(text)).toBe(false);
       });
     });
   });

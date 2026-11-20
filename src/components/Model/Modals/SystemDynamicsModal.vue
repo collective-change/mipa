@@ -156,8 +156,8 @@
         <div v-else-if="activeTab === 'archetypes'">
           <div v-if="!archetypes.length" class="text-center q-pa-xl text-grey-6">
             <q-icon name="psychology" size="3.5rem" color="grey-4" />
-            <div class="text-h6 text-grey-8 q-mt-md">No systemic pathologies detected.</div>
-            <div class="text-body2 text-grey-6">The factor network does not exhibit coupled archetype tensions.</div>
+            <div class="text-h6 text-grey-8 q-mt-md">{{ $t("noArchetypesDetectedTitle") }}</div>
+            <div class="text-body2 text-grey-6">{{ $t("noArchetypesDetectedSubtitle") }}</div>
           </div>
 
           <div v-else class="q-gutter-y-md">
@@ -167,19 +167,63 @@
               flat
               bordered
               class="bg-white shadow-1 rounded-borders"
+              :data-testid="`archetype-card-${arch.archetype}`"
             >
               <q-card-section>
                 <div class="row items-center justify-between q-mb-xs">
-                  <div class="text-h6 text-weight-bold text-grey-9">
-                    {{ arch.name }}
+                  <div class="row items-center q-gutter-xs">
+                    <div class="text-h6 text-weight-bold text-grey-9">
+                      {{ archetypeTitle(arch) }}
+                    </div>
+                    <q-chip
+                      dense
+                      size="sm"
+                      :color="arch.isPartial ? 'amber-2' : 'teal-1'"
+                      :text-color="arch.isPartial ? 'amber-10' : 'teal-9'"
+                      class="text-weight-bold"
+                    >
+                      {{ arch.isPartial ? $t("archetypeStatusPartial") : $t("archetypeStatusComplete") }}
+                    </q-chip>
                   </div>
                   <q-badge color="purple-1" text-color="purple-9" class="text-weight-bold">
                     {{ $t("meadowsLevelBadge") }} {{ arch.meadowsLevel }}
                   </q-badge>
                 </div>
 
+                <div
+                  v-if="arch.presentLoops && arch.presentLoops.length"
+                  class="text-caption text-grey-7 q-mb-xs"
+                >
+                  <span class="text-weight-medium">{{ $t("archetypeLoopsInvolvedLabel") }}:</span>
+                  {{ arch.presentLoops.join(", ") }}
+                  <template v-if="arch.involvedFactorNames && arch.involvedFactorNames.length">
+                    · <span class="text-weight-medium">{{ $t("archetypeFactorsInvolvedLabel") }}:</span>
+                    {{ arch.involvedFactorNames.join(", ") }}
+                  </template>
+                </div>
+
+                <div class="text-body2 text-grey-8 q-mb-xs">
+                  <span class="text-weight-medium">{{ $t("archetypeLooksLikeLabel") }}:</span>
+                  {{ archetypeLooksLike(arch) }}
+                </div>
+
                 <div class="text-body2 text-grey-8 q-mb-md">
-                  {{ arch.description }}
+                  <span class="text-weight-medium">{{ $t("archetypeImpliesLabel") }}:</span>
+                  {{ archetypeImplies(arch) }}
+                </div>
+
+                <div
+                  v-if="archetypeMissingLoop(arch)"
+                  data-testid="archetype-missing-loop"
+                  class="bg-amber-1 text-amber-10 q-pa-sm q-mb-md rounded-borders border-amber"
+                >
+                  <div class="text-subtitle2 text-weight-bold row items-center q-mb-xs">
+                    <q-icon name="warning_amber" class="q-mr-xs" color="amber-9" />
+                    {{ $t("archetypeMissingLoopLabel") }}
+                  </div>
+                  <div class="text-body2">
+                    {{ archetypeMissingLoop(arch) }}
+                  </div>
                 </div>
 
                 <div class="bg-blue-1 text-blue-10 q-pa-md rounded-borders border-primary">
@@ -188,7 +232,7 @@
                     {{ $t("strategicRecommendationTitle") }}
                   </div>
                   <div class="text-body2">
-                    {{ arch.recommendation }}
+                    {{ archetypeRecommendation(arch) }}
                   </div>
                 </div>
               </q-card-section>
@@ -317,6 +361,29 @@ export default {
       if (power === "very_high" || power === "high") return "positive";
       if (power === "medium") return "primary";
       return "grey-8";
+    },
+    archetypeTitle(arch) {
+      const key = arch?.i18nKey ? `archetypes.${arch.i18nKey}.name` : "";
+      return key && this.$te(key) ? this.$t(key) : arch?.name || "";
+    },
+    archetypeLooksLike(arch) {
+      const key = arch?.i18nKey ? `archetypes.${arch.i18nKey}.looksLike` : "";
+      const locale = this.$i18n?.locale;
+      if (locale === "en-us" && arch?.looksLike) return arch.looksLike;
+      return key && this.$te(key) ? this.$t(key) : arch?.looksLike || arch?.description || "";
+    },
+    archetypeImplies(arch) {
+      const key = arch?.i18nKey ? `archetypes.${arch.i18nKey}.implies` : "";
+      return key && this.$te(key) ? this.$t(key) : arch?.implication || "";
+    },
+    archetypeMissingLoop(arch) {
+      if (!arch?.isPartial && !arch?.missingLoop && !arch?.missingLoopKey) return "";
+      const key = arch?.missingLoopKey ? `archetypes.missingLoop.${arch.missingLoopKey}` : "";
+      return key && this.$te(key) ? this.$t(key) : arch?.missingLoop || "";
+    },
+    archetypeRecommendation(arch) {
+      const key = arch?.i18nKey ? `archetypes.${arch.i18nKey}.recommendation` : "";
+      return key && this.$te(key) ? this.$t(key) : arch?.recommendation || "";
     }
   }
 };

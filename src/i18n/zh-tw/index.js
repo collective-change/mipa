@@ -178,6 +178,93 @@ export default {
   leveragePowerMedium: "中階槓桿（結構反饋）",
   leveragePowerHigh: "高階槓桿（規則資訊）",
   leveragePowerTransformative: "典範躍遷（核心目標）",
+  noArchetypesDetectedTitle: "尚未偵測到系統基模結構。",
+  noArchetypesDetectedSubtitle: "目前要素網絡尚未形成耦合或部分的典型反饋基模。",
+  archetypeStatusComplete: "完整基模",
+  archetypeStatusPartial: "部分呈現（缺迴路）",
+  archetypeLoopsInvolvedLabel: "涉及迴路",
+  archetypeFactorsInvolvedLabel: "涉及要素",
+  archetypeLooksLikeLabel: "外觀特徵",
+  archetypeImpliesLabel: "系統含意",
+  archetypeMissingLoopLabel: "缺少的關鍵迴路",
+  archetypes: {
+    shiftingTheBurden: {
+      name: "捨本逐末",
+      looksLike: "治標方案與治本方案同時試圖緩解同一個問題徵兆，但治標方案正悄悄削弱推動治本方案的基礎能力。",
+      implies: "短期模擬中治標方案因為見效快而看似最具槓桿效益，但長期根本能力逐漸流失，使組織對治標做法產生依賴。",
+      recommendation: "將資源優先投入重建治本能力，並同步逐步減少對短期治標迴路的依賴。"
+    },
+    fixesThatFail: {
+      name: "飲鴆止渴",
+      looksLike: "快速修正措施在短期內壓低了問題徵兆，卻在延遲之後引發意料之外的副作用，使問題反彈得更嚴重。",
+      implies: "若僅依眼前見效快來評估行動，誤以為有效的補救措施實則在時間延遲背後累積更大的長期代價。",
+      recommendation: "明確檢視延遲後的反彈副作用，避免反覆依賴短線修補，並改從結構根源重新設計對策。"
+    },
+    erodingGoals: {
+      name: "目標侵蝕",
+      looksLike: "表現落差可由兩股相反力量消弭：需要時間才能拉升實際表現，或直接下調標準讓落差看起來變小。",
+      implies: "由於下調目標比真正改善更快消除張力，組織的長期標準與抱負會在不知不覺中持續滑落。",
+      recommendation: "將績效目標錨定於外部基準，使落差推動實質能力改善，而非藉由放寬標準自我安慰。"
+    },
+    successToSuccessful: {
+      name: "富者越富",
+      looksLike: "兩條增強型成長迴路爭奪零和資源分配，一方取得初期優勢後，便持續吸乾另一方的經費與關注。",
+      implies: "結果更多取決於初期分配規則而非本質表現，原本有潛力的替代方案在資源匱乏下逐步萎縮。",
+      recommendation: "將共享的資源分配規則拆鉤，為具潛力的替代方案保留基礎投入，或改採獨立評估。"
+    },
+    tragedyOfTheCommons: {
+      name: "公地悲劇",
+      looksLike: "各自獨立的行動者各自追逐自身增強利益並共同取用同一有限資源池，隨著總負荷上升而拉低所有人的收益。",
+      implies: "每個參與者從自身角度看都覺得再多做一點有益，卻在集體過度消耗下共同摧毀共享承載力。",
+      recommendation: "建立共管規則、公開透明的公共資源指標或總量上限，讓總消耗狀態回饋給每位參與者。"
+    },
+    escalation: {
+      name: "惡性競爭升級",
+      looksLike: "雙方各自為維持相對優勢而加碼反應，形成八字形增強軍備競賽迴路，將雙方的投入與代價推向無止境攀升。",
+      implies: "雙方都沒有取得持久優勢，但精力與成本卻在彼此對峙中不斷被放大消耗。",
+      recommendation: "將焦點由相對比較轉回絕對目標，採取單邊降溫步驟或協商共同的平衡機制。"
+    },
+    growthAndUnderinvestment: {
+      name: "成長與投資不足",
+      looksLike: "需求成長撞上產能上限而趨緩，但擴充產能的延遲投資反應過慢，或因品質標準下修而被延後削減。",
+      implies: "暫時性的成長放緩被誤判為需求疲弱，導致縮減產能投資，最終鎖死長期成長天花板。",
+      recommendation: "趕在瓶頸惡化前超前部署產能投資，並在品質下滑時堅守服務標準，勿輕易調降擴充計畫。"
+    },
+    attractivenessPrinciple: {
+      name: "吸引力原則",
+      looksLike: "單一增強型成長引擎同時撞上多條彼此獨立的平衡限制迴路（例如經費、人力與品質瓶頸）。",
+      implies: "只解開其中一項限制，壓力就會立刻轉移到另一項限制上；若四處分散資源，反而無法突破僵局。",
+      recommendation: "辨識最先吃緊的核心瓶頸並明確做出取捨選擇，而非同時試圖滿足所有次要目標。"
+    },
+    limitsToGrowth: {
+      name: "成長極限",
+      looksLike: "正向增強的成長飛輪遇到平衡型限制迴路，使成長速度趨緩、停滯甚至反轉下滑。",
+      implies: "一旦限制因素開始發威，單純加碼推動成長引擎只會換來報酬遞減甚至反彈。",
+      recommendation: "切勿盲目加碼推升成長引擎，應提前疏通或擴充造成飽和的平衡限制要素。"
+    },
+    policyResistance: {
+      name: "政策抗拒與延遲震盪",
+      looksLike: "平衡控制迴路在行動與回饋之間存在時間延遲，使決策者在尚未見到成效時過度修正，進而引發來回震盪。",
+      implies: "過於激烈的短期調整不僅放大系統波動，還會削弱各方對治理策略的信任。",
+      recommendation: "縮短資訊回報延遲、放緩急劇的政策修正步伐，並依系統存量長期趨勢而非短期雜訊做決策。"
+    },
+    missingLoop: {
+      shiftingSideEffectR: "缺少增強型副作用迴路（R），尚未呈現短期治標對策是否正削弱治本能力的長期根基。",
+      shiftingFundamentalB: "缺少直接治本平衡迴路（B），尚未建立不經過短期應急措施而能直接補強根本能力的路徑。",
+      fixesReboundR: "缺少延遲增強反彈迴路（R），意料外的副作用存量尚未閉環回傳以反映問題如何惡化。",
+      fixesReboundDelay: "補強型副作用迴路（R）缺少時間延遲設定，未能區分短期緩解與長期反彈的時間差。",
+      erodingCorrectiveB: "缺少實際改善表現的平衡修正迴路（B），造成落差看似只靠調降目標來消弭。",
+      successCompetingR: "缺少第二參與者的競爭增強迴路（R），尚未閉環呈現資源被抽走後的持續衰退路徑。",
+      tragedyCommonsB: "缺少公共資源耗竭平衡迴路（B），尚未將共享承載力下降的回饋連結回所有參與者。",
+      tragedySecondActorR: "缺少第二行動者的增強成長迴路（R），尚未呈現雙邊同時推升公共資源負荷的獨立動力。",
+      escalationCompetitorB: "缺少對手內部的平衡目標迴路（B），尚未完整呈現對方如何依自身基準調整投入。",
+      growthCapacityInvestB: "缺少具時間延遲的產能投資平衡迴路（B），尚無法在瓶頸出現時擴充對應產能。",
+      growthDemandEngineR: "缺少正向增強的需求成長迴路（R），目前僅見到產能限制與擴充而缺乏成長動力來源。",
+      attractivenessSecondLimitB: "缺少第二條平衡限制迴路（B），尚有一項外露的限制要素未閉環回到成長引擎。",
+      limitsBoundingB: "缺少平衡限制迴路（B），尚未指出真實世界中哪項資源天花板或約束會減緩並停止此成長。",
+      policyResistanceDelay: "互為抗衡的兩條快速平衡迴路缺少時間延遲描述，尚未說明為何修正行動容易矯枉過正。"
+    }
+  },
 
   // for PageModel.vue
   Calculate: "計算",

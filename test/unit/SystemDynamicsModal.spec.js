@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import SystemDynamicsModal from "../../src/components/Model/Modals/SystemDynamicsModal.vue";
 import { createI18n } from "vue-i18n";
+import messages from "../../src/i18n";
 import enUs from "../../src/i18n/en-us";
 
 describe("SystemDynamicsModal.vue", () => {
@@ -91,5 +92,74 @@ describe("SystemDynamicsModal.vue", () => {
     await wrapper.setData({ activeTab: "meadows" });
     expect(wrapper.vm.meadowsLevels).toHaveLength(12);
     expect(wrapper.text()).toContain("Donella Meadows");
+  });
+
+  it("displays Shifting the Burden details and explicit missing-loop guidance when incomplete", async () => {
+    const partialShiftingNodes = [
+      { id: "symp", symbol: "backlog", name: "Service Backlog", formula: "max(0, 50 - quickFix - fundCap)", influencers: ["quickFix", "fundCap"] },
+      { id: "quickFix", symbol: "quickFix", name: "Emergency Temp Dispatch", formula: "backlog * 0.6", influencers: ["symp"] },
+      { id: "fundCap", symbol: "fundCap", name: "Volunteer Captain Capacity", formula: "delay(fundCap, dt, 10) + backlog * 0.4", influencers: ["symp"] }
+    ];
+
+    const wrapper = mount(SystemDynamicsModal, {
+      props: {
+        modelValue: true,
+        model: { id: "m1", name: "Community Food Pantry" },
+        nodes: partialShiftingNodes
+      },
+      global: {
+        plugins: [i18n],
+        stubs: stubComponents
+      }
+    });
+
+    await wrapper.setData({ activeTab: "archetypes" });
+    const text = wrapper.text();
+    expect(text).toContain("Shifting the Burden");
+    expect(text).toContain(enUs.archetypeStatusPartial);
+    expect(text).toContain(enUs.archetypeLooksLikeLabel);
+    expect(text).toContain(enUs.archetypeImpliesLabel);
+    expect(text).toContain(enUs.archetypeMissingLoopLabel);
+    expect(wrapper.get("[data-testid='archetype-missing-loop']").text()).toContain("reinforcing side-effect loop");
+  });
+
+  it("renders archetype diagnostics cleanly across all five locales with zero English leaking", async () => {
+    const completeShiftingNodes = [
+      { id: "symp", symbol: "backlog", name: "Backlog", formula: "max(0, 50 - quickFix - fundCap)", influencers: ["quickFix", "fundCap"] },
+      { id: "quickFix", symbol: "quickFix", name: "Quick Fix", formula: "backlog * 0.6", influencers: ["symp"] },
+      { id: "fundCap", symbol: "fundCap", name: "Fundamental Cap", formula: "delay(fundCap, dt, 10) + backlog * 0.4 - quickFix * 0.5", influencers: ["symp", "quickFix"] }
+    ];
+
+    const expectations = {
+      "en-us": { name: "Shifting the Burden", status: "Complete pattern" },
+      "zh-tw": { name: "捨本逐末", status: "完整基模" },
+      "zh-cn": { name: "舍本逐末", status: "完整基模" },
+      es: { name: "Desplazamiento de la Carga", status: "Patrón completo" },
+      ja: { name: "問題のすり替え", status: "完全な構造" }
+    };
+
+    for (const [locale, expected] of Object.entries(expectations)) {
+      const locI18n = createI18n({ legacy: true, locale, messages });
+      const wrapper = mount(SystemDynamicsModal, {
+        props: {
+          modelValue: true,
+          model: { id: "m1", name: "Model" },
+          nodes: completeShiftingNodes
+        },
+        global: {
+          plugins: [locI18n],
+          stubs: stubComponents
+        }
+      });
+
+      await wrapper.setData({ activeTab: "archetypes" });
+      const text = wrapper.text();
+      expect(text).toContain(expected.name);
+      expect(text).toContain(expected.status);
+      if (locale !== "en-us") {
+        expect(text).not.toContain("Shifting the Burden");
+        expect(text).not.toContain("What it looks like");
+      }
+    }
   });
 });
