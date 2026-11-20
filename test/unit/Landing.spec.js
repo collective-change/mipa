@@ -67,4 +67,45 @@ describe("PageLanding.vue", () => {
     expect(zhLink.attributes("href")).toBe("/m/sample");
     expect(zhLink.text()).toContain("瀏覽互動範例決策檔案");
   });
+
+  it("MIPA-61: landing copy names supported sectors and states the single-seat free-tier boundary", () => {
+    const enWrapper = mountLanding("en-us");
+    const enText = enWrapper.text();
+    for (const sector of ["business", "non-profit", "government", "community", "mission-driven"]) {
+      expect(enText.toLowerCase()).toContain(sector);
+    }
+    expect(enText).toContain("1 active model builder");
+    expect(enText).not.toContain("Free for NGOs, researchers, and mission-driven teams");
+
+    const zhWrapper = mountLanding("zh-tw");
+    const zhText = zhWrapper.text();
+    for (const term of ["企業", "非營利組織", "政府機關", "社區", "使命導向"]) {
+      expect(zhText).toContain(term);
+    }
+    expect(zhText).toContain("1 個建模席位");
+  });
+
+  it("MIPA-61: updates all five locales cleanly with no English leaks or simplified characters in zh-tw", () => {
+    const keys = ["landingWhyP2", "landingTrustP3Desc", "landingCtaSubtitle"];
+    const simplifiedRegex = /[将动态拟带业营组织机关区团体专计复杂运转据应决协适亲个负领队单费读检视连结则]/;
+
+    for (const locale of ["en-us", "zh-tw", "zh-cn", "es", "ja"]) {
+      for (const key of keys) {
+        const val = messages[locale][key];
+        expect(typeof val).toBe("string");
+        expect(val.trim().length).toBeGreaterThan(20);
+        if (locale === "zh-tw" || locale === "zh-cn" || locale === "ja") {
+          expect(val).not.toMatch(/[A-Za-z]{2,}/);
+        }
+        if (locale === "zh-tw") {
+          expect(val).not.toMatch(simplifiedRegex);
+        }
+        if (locale === "es") {
+          expect(val).toMatch(/empresas|organizaciones sin fines de lucro/i);
+          expect(val).not.toContain("Free for NGOs");
+          expect(val).not.toContain("social change");
+        }
+      }
+    }
+  });
 });
