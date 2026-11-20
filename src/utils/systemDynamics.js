@@ -749,24 +749,25 @@ export function detectSystemArchetypes(nodes = [], loops = []) {
   // 1. Limits to Growth: Reinforcing engine paired with a Balancing constraint
   if (reinforcingLoops.length > 0 && balancingLoops.length > 0) {
     for (const rLoop of reinforcingLoops) {
-      for (const bLoop of balancingLoops) {
-        const shared = rLoop.nodeIds.filter((id) => bLoop.nodeIds.includes(id));
-        if (shared.length > 0) {
-          archetypes.push({
-            id: `arch_limits_${rLoop.code}_${bLoop.code}`,
-            name: "Limits to Growth",
-            archetype: "limits_to_growth",
-            reinforcingLoop: rLoop.code,
-            balancingLoop: bLoop.code,
-            sharedFactorIds: shared,
-            meadowsLevel: 6,
-            description: "A virtuous reinforcing growth engine eventually encounters a balancing constraint, causing growth to stall or reverse.",
-            recommendation: "Do not push harder on the growth engine; proactively remove or expand the balancing capacity limit before saturation."
-          });
-          break;
-        }
+      const matchingBLoops = balancingLoops.filter((bLoop) =>
+        rLoop.nodeIds.some((id) => bLoop.nodeIds.includes(id))
+      );
+      if (matchingBLoops.length > 0) {
+        const primaryBLoop = matchingBLoops[0];
+        const shared = rLoop.nodeIds.filter((id) => primaryBLoop.nodeIds.includes(id));
+        archetypes.push({
+          id: `arch_limits_${rLoop.code}_${primaryBLoop.code}`,
+          name: "Limits to Growth",
+          archetype: "limits_to_growth",
+          reinforcingLoop: rLoop.code,
+          balancingLoop: primaryBLoop.code,
+          boundingBalancingLoops: matchingBLoops.map((b) => b.code),
+          sharedFactorIds: shared,
+          meadowsLevel: 6,
+          description: "A virtuous reinforcing growth engine eventually encounters a balancing constraint, causing growth to stall or reverse.",
+          recommendation: "Do not push harder on the growth engine; proactively remove or expand the balancing capacity limit before saturation."
+        });
       }
-      if (archetypes.length >= 3) break;
     }
   }
 

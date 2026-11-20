@@ -82,6 +82,80 @@
           </span>
         </q-banner>
 
+        <!-- Limits, loop pairing, numerical horizon growth & connectivity check -->
+        <q-banner
+          v-if="trial.status == 'ok' && limitAssessment"
+          dense
+          rounded
+          class="q-mt-sm"
+          :class="limitAssessment.passed ? 'bg-blue-1' : 'bg-amber-1'"
+          data-testid="draft-limit-check"
+        >
+          <template v-slot:avatar>
+            <q-icon
+              :name="limitAssessment.passed ? 'verified' : 'warning_amber'"
+              :color="limitAssessment.passed ? 'primary' : 'orange-9'"
+            />
+          </template>
+          <div class="text-subtitle2 text-weight-medium">{{ $t("aiLimitsCheckTitle") }}</div>
+
+          <div class="text-caption q-mt-xs">
+            <span class="text-weight-medium">{{ $t("aiLimitsNamedLabel") }}:</span>
+            <span v-if="limitAssessment.namedLimits.length">
+              {{ limitAssessment.namedLimits.map((l) => l.summary).join("; ") }}
+            </span>
+            <span v-else class="text-orange-10">{{ $t("aiLimitsNoneNamed") }}</span>
+          </div>
+
+          <div v-if="limitAssessment.loopPairings.length" class="text-caption q-mt-xs">
+            <div class="text-weight-medium">{{ $t("aiLoopPairingLabel") }}:</div>
+            <div v-for="pair in limitAssessment.loopPairings" :key="pair.id">
+              {{ pair.label }} —
+              <span v-if="pair.bounded" class="text-positive">
+                {{ $t("aiLoopBoundedBy") }}: {{ pair.boundingLimitNames.join(", ") }}
+              </span>
+              <span v-else class="text-negative">{{ $t("aiLoopUnbounded") }}</span>
+            </div>
+          </div>
+
+          <div class="text-caption q-mt-xs">
+            <div>
+              <span class="text-weight-medium">{{ $t("aiHorizonGrowthLabel") }}:</span>
+              <span v-if="!limitAssessment.growingFactors.length" class="text-positive q-ml-xs">
+                {{ $t("aiHorizonGrowthOk") }}
+              </span>
+              <span v-else class="text-negative q-ml-xs">
+                {{ $t("aiHorizonGrowthGrowing") }}
+              </span>
+            </div>
+            <div class="text-grey-7">{{ $t("aiHorizonGrowthRule") }}</div>
+            <div v-for="g in limitAssessment.growingFactors" :key="g.id" class="text-negative">
+              {{ g.message }}
+            </div>
+          </div>
+
+          <div class="text-caption q-mt-xs">
+            <span class="text-weight-medium">{{ $t("aiUnlinkedFactorsLabel") }}:</span>
+            <span v-if="!limitAssessment.unlinkedFactors.length" class="text-positive q-ml-xs">
+              {{ $t("aiAllFactorsConnected") }}
+            </span>
+            <span v-else class="text-negative q-ml-xs">
+              {{ limitAssessment.unlinkedFactors.map((u) => `${u.name} (${u.symbol})`).join(", ") }}
+            </span>
+          </div>
+        </q-banner>
+
+        <div v-if="trial.status == 'ok' && limitAssessment && !limitAssessment.passed" class="q-mt-md">
+          <q-input
+            v-model="acceptAnywayReason"
+            outlined
+            dense
+            :label="$t('aiAcceptAnywayReasonLabel')"
+            :placeholder="$t('aiAcceptAnywayReasonPlaceholder')"
+            data-testid="accept-anyway-reason"
+          />
+        </div>
+
         <div v-for="group in groupedFactors" :key="group.name" class="q-mt-md">
           <div class="text-subtitle2 text-primary">{{ group.name || $t("Other") }}</div>
           <q-list dense separator>
@@ -177,6 +251,19 @@
       <template v-else-if="step == 'preview'">
         <q-btn flat no-caps :label="$t('Cancel')" v-close-popup />
         <q-btn
+          v-if="trial.status == 'ok' && limitAssessment && !limitAssessment.passed"
+          outline
+          no-caps
+          color="orange-9"
+          icon="check"
+          :label="$t('aiAcceptAnyway')"
+          :disable="accepting"
+          :loading="accepting"
+          data-testid="accept-anyway-btn"
+          @click="accept(true)"
+        />
+        <q-btn
+          v-else
           unelevated
           no-caps
           color="primary"
@@ -184,7 +271,8 @@
           :label="$t('aiAddToModel', { count: chosen.size })"
           :disable="trial.status != 'ok' || accepting"
           :loading="accepting"
-          @click="accept"
+          data-testid="accept-draft-btn"
+          @click="accept(false)"
         />
       </template>
       <template v-else-if="step == 'error'">
@@ -204,8 +292,10 @@ import { firebaseDb } from "@/boot/firebase";
 import { compileModelDraft, roleNodesOf } from "@/utils/util-model-draft";
 import { requestDraft, draftForCompile, writeDraft } from "@/utils/util-aiDraft";
 import { trialCalculate } from "@/utils/util-trialCalc";
+import { assessDraftLimits } from "@/utils/draftLimitCheck";
 
 const MAX_REPAIRS = 2;
+const MAX_LIMIT_REPAIRS = 1;
 
 function symbolsIn(formula) {
   const used = new Set();
@@ -233,6 +323,9 @@ export default {
       followUp: "",
       trial: { status: "idle" },
       repairs: 0,
+      limitRepairs: 0,
+      limitAssessment: null,
+      acceptAnywayReason: "",
       workingLabel: "",
       errorMessage: "",
       accepting: false,
@@ -309,14 +402,22 @@ export default {
     },
     async send(params) {
       this.step = "working";
-      this.workingLabel = params.errors ? this.$t("aiFixing") : this.$t("aiDrafting");
+      this.workingLabel = params.limitRepair
+        ? this.$t("aiFixingLimits")
+        : params.errors
+          ? this.$t("aiFixing")
+          : this.$t("aiDrafting");
       try {
-        const result = await requestDraft({
+        const requestPayload = {
           orgId: this.orgId,
           modelId: this.modelId,
-          draftId: this.draftId || undefined,
-          ...params
-        });
+          draftId: this.draftId || undefined
+        };
+        if (params.text !== undefined) requestPayload.text = params.text;
+        if (params.errors !== undefined) requestPayload.errors = params.errors;
+        if (params.draftNow !== undefined) requestPayload.draftNow = params.draftNow;
+
+        const result = await requestDraft(requestPayload);
         this.draftId = result.draftId;
         this.reply = result.reply;
         if (this.reply.kind == "questions") {
@@ -324,7 +425,12 @@ export default {
           this.step = "questions";
           return;
         }
-        if (!params.errors) this.repairs = 0;
+        if (!params.errors) {
+          this.repairs = 0;
+          this.limitRepairs = 0;
+          this.limitAssessment = null;
+          this.acceptAnywayReason = "";
+        }
         this.chosen = new Set(this.reply.factors.map((f) => f.symbol));
         this.followUp = "";
         this.step = "preview";
@@ -364,6 +470,7 @@ export default {
     },
     async runTrial({ repair }) {
       const run = ++this.trialRun;
+      this.limitAssessment = null;
       const compiled = this.compile();
       this.compiled = compiled;
       if (compiled.problems.length) {
@@ -379,15 +486,30 @@ export default {
       ];
       const result = await trialCalculate({
         nodes,
-        simulationParams: this.currentModel.simulationParams,
-        roleNodes: { ...roleNodesOf(nodes), ...(this.currentModel.roleNodes || {}) },
+        simulationParams: (this.currentModel && this.currentModel.simulationParams) || {},
+        roleNodes: { ...roleNodesOf(nodes), ...((this.currentModel && this.currentModel.roleNodes) || {}) },
         exchangeRates: this.exchangeRates,
         orgId: this.orgId,
         modelId: this.modelId
       });
       if (run != this.trialRun) return; // a newer trial started
-      if (result.ok) this.trial = { status: "ok" };
-      else this.trialFailed(result, repair, [`${result.errorType}: ${this.withSymbols(result.errorMessage)}`]);
+      if (!result.ok) {
+        this.trialFailed(result, repair, [`${result.errorType}: ${this.withSymbols(result.errorMessage)}`]);
+        return;
+      }
+
+      const assessment = assessDraftLimits({
+        nodes,
+        baseline: result.baseline || null,
+        simulationParams: (this.currentModel && this.currentModel.simulationParams) || {}
+      });
+      this.trial = { status: "ok" };
+      this.limitAssessment = assessment;
+
+      if (!assessment.passed && repair && this.limitRepairs < MAX_LIMIT_REPAIRS) {
+        this.limitRepairs++;
+        await this.send({ errors: assessment.repairErrors, limitRepair: true });
+      }
     },
     trialFailed(result, repair, errors) {
       this.trial = { status: "failed", errorType: result.errorType, errorMessage: result.errorMessage };
@@ -404,14 +526,24 @@ export default {
       });
       return text;
     },
-    async accept() {
+    async accept(acceptedAnyway = false) {
       this.accepting = true;
       try {
+        const limitOverride =
+          acceptedAnyway === true && this.limitAssessment && !this.limitAssessment.passed
+            ? {
+                reason:
+                  (this.acceptAnywayReason || "").trim() ||
+                  this.$t("aiAcceptAnywayDefaultReason"),
+                findings: this.limitAssessment.repairErrors
+              }
+            : null;
         await writeDraft({
           modelId: this.modelId,
           draftId: this.draftId,
           compiled: this.compiled,
-          reply: this.reply
+          reply: this.reply,
+          ...(limitOverride ? { limitOverride } : {})
         });
         this.$q.notify({ type: "positive", message: this.$t("aiDraftAdded", { count: this.compiled.creates.length }) });
         this.$emit("accepted");

@@ -42,7 +42,7 @@ export function draftForCompile(reply, chosenSymbols, notesFor) {
 
 // Writes an accepted draft: new factors, changed existing ones (remembering
 // how they were, for undo) and one group per group name, in one batch.
-export async function writeDraft({ modelId, draftId, compiled, reply }) {
+export async function writeDraft({ modelId, draftId, compiled, reply, limitOverride = null }) {
   const user = firebaseAuth.currentUser;
   const nodesRef = collection(firebaseDb, "models", modelId, "nodes");
   const batch = writeBatch(firebaseDb);
@@ -77,14 +77,29 @@ export async function writeDraft({ modelId, draftId, compiled, reply }) {
     groups.get(name).push(node.id);
   });
   const nodeGroups = [...groups].map(([name, nodeIds]) => ({ id: uid(), name, nodeIds, draftId }));
+  const overrideRecord =
+    limitOverride && typeof limitOverride === "object"
+      ? {
+          draftId,
+          reason: String(limitOverride.reason || "").trim(),
+          findings: Array.isArray(limitOverride.findings) ? limitOverride.findings : [],
+          recordedAt: Date.now(),
+          recordedBy: user.uid
+        }
+      : null;
+
   batch.update(doc(firebaseDb, "models", modelId), {
     ...(nodeGroups.length ? { nodeGroups: arrayUnion(...nodeGroups) } : {}),
     appliedAiDrafts: arrayUnion({
       draftId,
       appliedAt: Date.now(),
       appliedBy: user.uid,
-      factorCount: compiled.creates.length
+      factorCount: compiled.creates.length,
+      ...(overrideRecord
+        ? { acceptedAnyway: true, acceptAnywayReason: overrideRecord.reason }
+        : {})
     }),
+    ...(overrideRecord ? { lastLimitOverride: overrideRecord } : {}),
     updateTime: serverTimestamp(),
     updatedBy: user.uid
   });
