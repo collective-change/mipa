@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   classifyFactorType,
   determineEdgePolarity,
+  computeModelEdgePolarities,
   detectFeedbackLoops,
   detectSystemArchetypes,
   MEADOWS_LEVERAGE_HIERARCHY
@@ -67,6 +68,33 @@ describe("System Dynamics Methodology & Systems Thinking Engine", () => {
       const tgt2 = { id: "d", symbol: "throughput", formula: "grossOutput / bottleneck" };
       expect(determineEdgePolarity(src2, tgt2)).toBe(-1);
     });
+
+    it("detects negative polarity numerically for non-subtraction negative forms (MIPA-53)", () => {
+      const load = { id: "a", symbol: "load" };
+
+      expect(
+        determineEdgePolarity(load, { id: "b1", symbol: "eff1", formula: "capacity / (1 + load)" })
+      ).toBe(-1);
+      expect(
+        determineEdgePolarity(load, { id: "b2", symbol: "eff2", formula: "-1 * load" })
+      ).toBe(-1);
+      expect(
+        determineEdgePolarity(load, { id: "b3", symbol: "eff3", formula: "1 / (1 + exp(load))" })
+      ).toBe(-1);
+      expect(
+        determineEdgePolarity(load, { id: "b4", symbol: "eff4", formula: "capacity / (load + 1)" })
+      ).toBe(-1);
+      expect(
+        determineEdgePolarity(load, { id: "b5", symbol: "eff5", formula: "max(0, capacity - load)" })
+      ).toBe(-1);
+    });
+
+    it("detects positive polarity for double negation and net-positive links numerically", () => {
+      const donors = { id: "a", symbol: "donors" };
+      expect(
+        determineEdgePolarity(donors, { id: "b", symbol: "funds", formula: "-(0 - donors) * 10" })
+      ).toBe(1);
+    });
   });
 
   describe("Feedback Loop Detection (Cycles & Polarities)", () => {
@@ -113,6 +141,109 @@ describe("System Dynamics Methodology & Systems Thinking Engine", () => {
       ];
       const loops = detectFeedbackLoops(dag);
       expect(loops).toEqual([]);
+    });
+
+    it("reports two-node balancing loops when negative links use capacity / (1 + A), -1 * A, 1 / (1 + exp(A)), or capacity / (A + 1) (MIPA-53)", () => {
+      const negativeFormulas = [
+        "capacity / (1 + A)",
+        "-1 * A",
+        "1 / (1 + exp(A))",
+        "capacity / (A + 1)"
+      ];
+
+      for (const negFormula of negativeFormulas) {
+        const nodes = [
+          { id: "a", symbol: "A", formula: "B * 1.5", influencers: ["b"] },
+          { id: "b", symbol: "B", formula: negFormula, influencers: ["a"] }
+        ];
+
+        const loops = detectFeedbackLoops(nodes);
+        expect(loops).toHaveLength(1);
+        const loop = loops[0];
+        expect(loop.type).toBe("balancing");
+        expect(loop.code).toBe("B1");
+        expect(loop.polarityProduct).toBe(-1);
+        expect(loop.length).toBe(2);
+        expect(loop.nodeIds).toEqual(["a", "b"]);
+        expect(loop.id).toBe("loop_B1_a_b");
+      }
+    });
+
+    it("evaluates persisted symbolFormula and sysFormula ($id) schemas numerically", () => {
+      const nodes = [
+        { id: "node-a", symbol: "demand", symbolFormula: "supply * 1.1", influencers: ["node-b"] },
+        { id: "node-b", symbol: "supply", sysFormula: "$cap-node / (1 + $node-a)", influencers: ["node-a"] },
+        { id: "cap-node", symbol: "capacity", sysFormula: "100", influencers: [] }
+      ];
+
+      const loops = detectFeedbackLoops(nodes);
+      expect(loops).toHaveLength(1);
+      expect(loops[0].type).toBe("balancing");
+      expect(loops[0].code).toBe("B1");
+      expect(loops[0].polarityProduct).toBe(-1);
+    });
+
+    it("diagnoses Limits to Growth when the limiting loop uses a non-linear negative link", () => {
+      const nodes = [
+        { id: "a", symbol: "activity", formula: "momentum + capacityGuard", influencers: ["m", "g"] },
+        { id: "m", symbol: "momentum", formula: "activity * 1.4", influencers: ["a"] },
+        { id: "g", symbol: "capacityGuard", formula: "maxCap / (1 + exp(pressure))", influencers: ["p"] },
+        { id: "p", symbol: "pressure", formula: "activity * 0.8", influencers: ["a"] },
+        { id: "cap", symbol: "maxCap", formula: "50", influencers: [] }
+      ];
+
+      const loops = detectFeedbackLoops(nodes);
+      expect(loops.some((l) => l.type === "reinforcing")).toBe(true);
+      expect(loops.some((l) => l.type === "balancing")).toBe(true);
+
+      const archetypes = detectSystemArchetypes(nodes, loops);
+      const limits = archetypes.find((arch) => arch.archetype === "limits_to_growth");
+      expect(limits).toBeDefined();
+      expect(limits.balancingLoop).toBe("B1");
+    });
+
+    it("perturbs each source factor once per model rather than once per edge", () => {
+      // Hub factor `h` drives three outgoing cycle edges across three loops
+      const nodes = [
+        { id: "h", symbol: "hub", formula: "r1 + r2 - b1", influencers: ["r1", "r2", "b1"] },
+        { id: "r1", symbol: "branchOne", formula: "hub * 0.5", influencers: ["h"] },
+        { id: "r2", symbol: "branchTwo", formula: "hub * 0.3", influencers: ["h"] },
+        { id: "b1", symbol: "branchLimit", formula: "hub * 0.2", influencers: ["h"] }
+      ];
+
+      const perturbedCalls = [];
+      const loops = detectFeedbackLoops(nodes, {
+        onPerturbFactor: (id) => perturbedCalls.push(id)
+      });
+
+      expect(loops).toHaveLength(3);
+      expect(loops.filter((l) => l.type === "reinforcing")).toHaveLength(2);
+      expect(loops.filter((l) => l.type === "balancing")).toHaveLength(1);
+
+      // `hub` has 3 outgoing edges yet must only be perturbed once
+      expect(perturbedCalls.filter((id) => id === "h")).toHaveLength(1);
+      expect(new Set(perturbedCalls).size).toBe(perturbedCalls.length);
+
+      const modelPass = computeModelEdgePolarities(nodes);
+      expect(modelPass.perturbedFactorIds.filter((id) => id === "h")).toHaveLength(1);
+    });
+
+    it("reflects operating-point sign switches when baselineValues are provided for non-monotonic dynamics", () => {
+      // Logistic saturation rate: r * x * (1 - x / K), positive slope below K/2 and negative above K/2
+      const nodes = [
+        { id: "x", symbol: "stock", formula: "delay(stock, 1) + growth", influencers: ["g"] },
+        { id: "g", symbol: "growth", formula: "r * stock * (1 - stock / K)", influencers: ["x"] }
+      ];
+
+      const lowDensityLoops = detectFeedbackLoops(nodes, {
+        baselineValues: { x: 20, K: 100, r: 0.5, g: 8 }
+      });
+      expect(lowDensityLoops[0].type).toBe("reinforcing");
+
+      const nearCarryingCapacityLoops = detectFeedbackLoops(nodes, {
+        baselineValues: { x: 80, K: 100, r: 0.5, g: 8 }
+      });
+      expect(nearCarryingCapacityLoops[0].type).toBe("balancing");
     });
   });
 
