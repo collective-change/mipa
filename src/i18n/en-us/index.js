@@ -509,6 +509,14 @@ export default {
     hourlyCost: { title: "Set the hourly cost of work", text: "Open the factor marked (new) and enter what an hour of work costs your organization, then save.", button: "Open it" },
     addFactors: { title: "Add what matters to you", text: "Add factors such as sales, people served or emissions, with a formula for each.", button: "Add factor" },
     linkFactors: { title: "Connect them to the benefits and costs", text: "Link your factors to the benefit and cost factors, so mipa knows what each one is worth to your organization and to the world.", button: "Open benefit to the world" },
+    closeModel: {
+      title: "Close the model",
+      text: "Add balancing limits that keep growth from expanding forever, and connect all default factors.",
+      button: "Open benefit to the world",
+      limitsNotice: "This model says your limits are: {limits}",
+      noLimits: "No balancing limits detected yet. What real-world constraint stops this model from growing forever?",
+      unconnectedDefaults: "Default factors still unconnected: {factors}"
+    },
     calculate: { title: "Calculate", text: "mipa calculates your model into the future. Fix anything it reports, then calculate again." },
     addAction: { title: "Add a first action", text: "Describe something your organization could do, with the work, money and impacts it needs.", button: "Go to actions" },
     compare: { title: "Compare actions", text: "On the Actions page, choose Recalculate to see each action's benefits, costs and leverage.", button: "Go to actions" }
