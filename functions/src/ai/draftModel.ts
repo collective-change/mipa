@@ -5,10 +5,15 @@
 // draft, test-calculates it and writes it only when the person accepts.
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { getFirestore, FieldValue, Timestamp } from "firebase-admin/firestore";
+import { getFirestore, FieldValue, Timestamp, Firestore } from "firebase-admin/firestore";
 import { aiKeyEncryptionKey, systemAiProviderKey } from "./keyBox";
 import { loadProvider } from "./aiSettings";
-import { getSystemAiProvider, verifyAndConsumeAiCredit, AllowanceResult } from "./starterAllowance";
+import {
+  getSystemAiProvider,
+  withAiCreditProtection,
+  AllowanceResult,
+  ConsumeAiCreditOptions
+} from "./starterAllowance";
 import { adapterFor, ProviderReplyError, Turn, Usage } from "./providers";
 import { SYSTEM_PROMPT, contextText, repairText, ModelContext } from "./prompt";
 import { DraftReply } from "./schema";
@@ -56,6 +61,61 @@ async function modelContext(orgId: string, modelId: string): Promise<ModelContex
   };
 }
 
+export async function draftModelWithCreditProtection(params: {
+  db: Firestore;
+  uid: string;
+  orgId: string;
+  auth: { token?: { email_verified?: boolean } };
+  useSystemFallback: boolean;
+  creditOptions?: ConsumeAiCreditOptions;
+  turns: Turn[];
+  mustDraft: boolean;
+  adapter: {
+    draft: (req: {
+      system: string;
+      turns: Turn[];
+      kindHint: "draft" | "questions-or-draft";
+    }) => Promise<{ reply: DraftReply; usage: Usage }>;
+  };
+}): Promise<{ reply: DraftReply; usage: Usage; requests: number; allowance: AllowanceResult | null }> {
+  const { result, allowance } = await withAiCreditProtection(
+    params.db,
+    params.uid,
+    params.orgId,
+    params.auth,
+    params.useSystemFallback,
+    async () => {
+      const usage: Usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 };
+      let reply: DraftReply | undefined;
+      let requests = 0;
+      // One retry when the reply doesn't match the format.
+      for (let attempt = 0; attempt < 2 && !reply; attempt++) {
+        requests++;
+        try {
+          const draftResult = await params.adapter.draft({
+            system: SYSTEM_PROMPT,
+            turns: params.turns,
+            kindHint: params.mustDraft ? "draft" : "questions-or-draft"
+          });
+          for (const k of Object.keys(usage) as (keyof Usage)[]) usage[k] += draftResult.usage[k];
+          reply = draftResult.reply;
+        } catch (error) {
+          if (error instanceof ProviderReplyError) {
+            if (error.reason == "invalid-reply" && attempt == 0) continue;
+            throw new HttpsError("failed-precondition", error.message, { reason: error.reason });
+          }
+          throw error;
+        }
+      }
+      if (!reply) throw new HttpsError("internal", "No reply.");
+      return { reply, usage, requests };
+    },
+    params.creditOptions ? { creditOptions: params.creditOptions } : undefined
+  );
+
+  return { ...result, allowance };
+}
+
 export const draftModel = onCall(
   { secrets: [aiKeyEncryptionKey, systemAiProviderKey], timeoutSeconds: 300, memory: "512MiB" },
   async (request) => {
@@ -88,21 +148,8 @@ export const draftModel = onCall(
       throw new HttpsError("permission-denied", "Only the model's editors can draft it.");
     }
 
-    let provider = await loadProvider(orgId);
-    let allowance: AllowanceResult | null = null;
-    if (!provider) {
-      provider = getSystemAiProvider();
-      if (!provider) {
-        throw new HttpsError(
-          "failed-precondition",
-          "This organization hasn't connected an AI provider and no system AI fallback is configured.",
-          { reason: "no-provider", degraded: true }
-        );
-      }
-      allowance = await verifyAndConsumeAiCredit(db, uid, orgId, request.auth);
-    }
-
-    // Load or start the conversation.
+    // Load or start the conversation before resolving/consuming any credit so
+    // expired drafts or request-cap errors fail fast with zero credit burn.
     const sessionRef = draftId
       ? db.doc(`models/${modelId}/aiDrafts/${String(draftId)}`)
       : db.collection(`models/${modelId}/aiDrafts`).doc();
@@ -121,6 +168,19 @@ export const draftModel = onCall(
         "resource-exhausted",
         "This draft has reached its limit of AI requests. Please start a new draft."
       );
+    }
+
+    let provider = await loadProvider(orgId);
+    const useSystemFallback = !provider;
+    if (!provider) {
+      provider = getSystemAiProvider();
+      if (!provider) {
+        throw new HttpsError(
+          "failed-precondition",
+          "This organization hasn't connected an AI provider and no system AI fallback is configured.",
+          { reason: "no-provider", degraded: true }
+        );
+      }
     }
 
     // The new user turn. The organization and model go into the first one,
@@ -142,29 +202,16 @@ export const draftModel = onCall(
     const mustDraft = errors.length > 0 || draftNow || session.questionRounds >= 2;
 
     const adapter = adapterFor(provider.settings, provider.apiKey);
-    const usage: Usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 };
-    let reply: DraftReply | undefined;
-    let requests = 0;
-    // One retry when the reply doesn't match the format.
-    for (let attempt = 0; attempt < 2 && !reply; attempt++) {
-      requests++;
-      try {
-        const result = await adapter.draft({
-          system: SYSTEM_PROMPT,
-          turns,
-          kindHint: mustDraft ? "draft" : "questions-or-draft"
-        });
-        for (const k of Object.keys(usage) as (keyof Usage)[]) usage[k] += result.usage[k];
-        reply = result.reply;
-      } catch (error) {
-        if (error instanceof ProviderReplyError) {
-          if (error.reason == "invalid-reply" && attempt == 0) continue;
-          throw new HttpsError("failed-precondition", error.message, { reason: error.reason });
-        }
-        throw error;
-      }
-    }
-    if (!reply) throw new HttpsError("internal", "No reply.");
+    const { reply, usage, requests, allowance } = await draftModelWithCreditProtection({
+      db,
+      uid,
+      orgId,
+      auth: request.auth,
+      useSystemFallback,
+      turns,
+      mustDraft,
+      adapter
+    });
 
     await sessionRef.set(
       {
