@@ -52,11 +52,14 @@ async function modelContext(orgId: string, modelId: string): Promise<ModelContex
     timeStep: `${params.timeStepNumber || 1} ${params.timeStepUnit || "months"}`,
     horizon: `${params.finalTimeNumber || params.numTimeSteps || 120} ${params.finalTimeUnit || params.timeStepUnit || "months"}`,
     factors: nodes.docs.map((d) => ({
+      id: d.id,
       name: d.get("name") || "",
       symbol: d.get("symbol") || "",
       formula: d.get("symbolFormula") || "0",
       unit: d.get("unit") || "",
-      group: groupOf.get(d.id) || ""
+      group: groupOf.get(d.id) || "",
+      influencers: Array.isArray(d.get("influencers")) ? (d.get("influencers") as string[]) : [],
+      class: (d.get("class") as string) || ""
     }))
   };
 }
