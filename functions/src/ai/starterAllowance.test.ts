@@ -4,6 +4,8 @@ import {
   evaluateAiAllowance,
   getSystemAiProvider,
   verifyAndConsumeAiCredit,
+  refundAiCredit,
+  withAiCreditProtection,
   createAuditRecord,
   backfillAuditRecord,
   AuditOutcome,
@@ -23,8 +25,12 @@ import {
   DEFAULT_SYSTEM_OPENAI_MODEL,
   RECOMMENDED_CLAUDE_MODELS,
   RECOMMENDED_OPENAI_MODELS,
+  ProviderReplyError,
   adapterFor
 } from "./providers";
+import { draftModelWithCreditProtection } from "./draftModel";
+import { draftActionWithCreditProtection } from "./draftAction";
+import { DraftReply, DraftActionReply } from "./schema";
 
 test("evaluateAiAllowance: BYO API keys bypass all starter allowances and quotas", () => {
   const result = evaluateAiAllowance({
@@ -262,25 +268,108 @@ interface MockDatabaseOptions {
   throwOnOrgsQuery?: boolean;
 }
 
+function incrementDelta(value: unknown): number | null {
+  if (typeof value === "object" && value !== null && "operand" in value) {
+    const operand = (value as { operand?: unknown }).operand;
+    if (typeof operand === "number") return operand;
+  }
+  return null;
+}
+
+function applyMockMerge(target: Record<string, unknown>, data: Record<string, unknown>) {
+  for (const [key, val] of Object.entries(data)) {
+    const delta = incrementDelta(val);
+    if (key.includes(".")) {
+      const [parentKey, childKey] = key.split(".", 2);
+      const rawParent = target[parentKey];
+      const existingParent =
+        typeof rawParent === "object" && rawParent !== null
+          ? { ...(rawParent as Record<string, unknown>) }
+          : {};
+      if (delta !== null) {
+        const currentChild = typeof existingParent[childKey] === "number" ? existingParent[childKey] : 0;
+        existingParent[childKey] = currentChild + delta;
+      } else {
+        existingParent[childKey] = val;
+      }
+      target[parentKey] = existingParent;
+      continue;
+    }
+
+    if (delta !== null) {
+      const current = typeof target[key] === "number" ? target[key] : 0;
+      target[key] = current + delta;
+    } else {
+      target[key] = val;
+    }
+  }
+}
+
+function getMockField(store: Record<string, unknown>, field: string): unknown {
+  if (field in store) return store[field];
+  if (field.includes(".")) {
+    const [parentKey, childKey] = field.split(".", 2);
+    const parent = store[parentKey];
+    if (typeof parent === "object" && parent !== null) {
+      return (parent as Record<string, unknown>)[childKey];
+    }
+  }
+  return undefined;
+}
+
 function createTransactionalMockDb(options: MockDatabaseOptions = {}) {
   const userStore = options.userStore || {};
   const orgStore = options.orgStore || {};
   const globalStore = options.globalStore || {};
   const auditLogs = options.auditLogs || [];
+  let nextAuditSeq = 1;
+  let storeVersion = 0;
+
+  const upsertAudit = (docId: string, data: Record<string, unknown>, merge?: boolean) => {
+    const existingIndex = auditLogs.findIndex((l) => l.auditKey === docId);
+    if (existingIndex >= 0) {
+      if (merge) {
+        applyMockMerge(auditLogs[existingIndex], data);
+      } else {
+        auditLogs[existingIndex] = { ...data, auditKey: docId };
+      }
+    } else {
+      auditLogs.push({ ...data, auditKey: docId });
+    }
+  };
+
+  const readDocByPath = (path: string) => {
+    if (path.startsWith("users/")) return { get: (f: string) => getMockField(userStore, f) };
+    if (path.startsWith("orgs/")) return { get: (f: string) => getMockField(orgStore, f) };
+    if (path.startsWith("systemUsage/")) return { get: (f: string) => getMockField(globalStore, f) };
+    if (path.startsWith("systemAuditLogs/")) {
+      const docId = path.slice("systemAuditLogs/".length);
+      const found = auditLogs.find((l) => l.auditKey === docId);
+      return {
+        exists: !!found,
+        data: () => (found ? { ...found } : undefined),
+        get: (f: string) => (found ? getMockField(found, f) : undefined)
+      };
+    }
+    return { get: () => undefined };
+  };
+
+  const writeDocByPath = (path: string, data: Record<string, unknown>, opts?: { merge?: boolean }) => {
+    if (path.startsWith("users/")) applyMockMerge(userStore, data);
+    if (path.startsWith("orgs/")) applyMockMerge(orgStore, data);
+    if (path.startsWith("systemUsage/")) applyMockMerge(globalStore, data);
+    if (path.startsWith("systemAuditLogs/")) {
+      const docId = path.slice("systemAuditLogs/".length);
+      upsertAudit(docId, data, opts?.merge);
+    }
+  };
 
   return {
     doc: (path: string) => ({
       path,
-      get: async () => {
-        if (path.startsWith("users/")) return { get: (f: string) => userStore[f] };
-        if (path.startsWith("orgs/")) return { get: (f: string) => orgStore[f] };
-        if (path.startsWith("systemUsage/")) return { get: (f: string) => globalStore[f] };
-        return { get: () => undefined };
-      },
-      set: async (data: Record<string, unknown>) => {
-        if (path.startsWith("users/")) Object.assign(userStore, data);
-        if (path.startsWith("orgs/")) Object.assign(orgStore, data);
-        if (path.startsWith("systemUsage/")) Object.assign(globalStore, data);
+      get: async () => readDocByPath(path),
+      set: async (data: Record<string, unknown>, opts?: { merge?: boolean }) => {
+        writeDocByPath(path, data, opts);
       }
     }),
     collection: (name: string) => ({
@@ -306,67 +395,53 @@ function createTransactionalMockDb(options: MockDatabaseOptions = {}) {
         }
       }),
       doc: (id?: string) => {
-        const docId = id || `audit-${auditLogs.length + 1}`;
+        const docId = id || `audit-${nextAuditSeq++}`;
         const docPath = `${name}/${docId}`;
         return {
           id: docId,
           path: docPath,
-          get: async () => {
-            const found = auditLogs.find((l) => l.auditKey === docId);
-            return {
-              exists: !!found,
-              data: () => found,
-              get: (f: string) => found?.[f]
-            };
-          },
+          get: async () => readDocByPath(docPath),
           set: async (data: Record<string, unknown>, opts?: { merge?: boolean }) => {
             if (name === "systemAuditLogs") {
-              const existingIndex = auditLogs.findIndex((l) => l.auditKey === docId);
-              if (existingIndex >= 0) {
-                if (opts?.merge) {
-                  Object.assign(auditLogs[existingIndex], data);
-                } else {
-                  auditLogs[existingIndex] = { ...data, auditKey: docId };
-                }
-              } else {
-                auditLogs.push({ ...data, auditKey: docId });
-              }
+              upsertAudit(docId, data, opts?.merge);
             }
           }
         };
       }
     }),
-    runTransaction: async (cb: (tx: unknown) => Promise<unknown>) => {
-      // Buffer transactional writes so if cb throws, rollback clears all staged mutations
-      const stagedWrites: Array<() => void> = [];
-      const txMock = {
-        get: async (ref: { path: string }) => {
-          if (ref.path.startsWith("users/")) return { get: (f: string) => userStore[f] };
-          if (ref.path.startsWith("orgs/")) return { get: (f: string) => orgStore[f] };
-          if (ref.path.startsWith("systemUsage/")) return { get: (f: string) => globalStore[f] };
-          return { get: () => undefined };
-        },
-        set: (ref: { path: string }, data: Record<string, unknown>) => {
-          stagedWrites.push(() => {
-            if (ref.path.startsWith("users/")) Object.assign(userStore, data);
-            if (ref.path.startsWith("orgs/")) Object.assign(orgStore, data);
-            if (ref.path.startsWith("systemUsage/")) Object.assign(globalStore, data);
-          });
-        }
-      };
+    runTransaction: async <R>(cb: (tx: unknown) => Promise<R>): Promise<R> => {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const readVersion = storeVersion;
+        // Buffer transactional writes so if cb throws, rollback clears all staged mutations
+        const stagedWrites: Array<() => void> = [];
+        const txMock = {
+          get: async (ref: { path: string }) => readDocByPath(ref.path),
+          set: (ref: { path: string }, data: Record<string, unknown>, opts?: { merge?: boolean }) => {
+            stagedWrites.push(() => {
+              writeDocByPath(ref.path, data, opts);
+            });
+          }
+        };
 
-      try {
-        const result = await cb(txMock);
-        // Transaction committed: apply all staged writes
-        for (const commit of stagedWrites) {
-          commit();
+        try {
+          const result = await cb(txMock);
+          if (stagedWrites.length > 0 && readVersion !== storeVersion) {
+            continue;
+          }
+          if (stagedWrites.length > 0) {
+            for (const commit of stagedWrites) {
+              commit();
+            }
+            storeVersion++;
+          }
+          return result;
+        } catch (err) {
+          // Transaction threw: roll back all staged writes (do NOT apply them)
+          if (options.onTransactionThrow) options.onTransactionThrow();
+          throw err;
         }
-        return result;
-      } catch (err) {
-        // Transaction threw: roll back all staged writes (do NOT apply them)
-        if (options.onTransactionThrow) options.onTransactionThrow();
-        throw err;
       }
+      throw new Error("Mock transaction contention retry limit exceeded");
     }
   } as unknown as import("firebase-admin/firestore").Firestore;
 }
@@ -798,4 +873,436 @@ test("MIPA-27 Fixture Cases: revenue 0 (floor), normal revenue (10%), and revenu
   );
   assert.equal(consumeResult.allowed, true);
   assert.equal(consumeResult.source, "starter_verified");
+});
+
+const SAMPLE_DRAFT_REPLY: DraftReply = {
+  kind: "questions",
+  message: "Need details",
+  questions: [{ question: "What is your monthly volume?", why: "Scale baseline" }],
+  summary: "",
+  groups: [],
+  factors: [],
+  changesToExisting: []
+};
+
+const SAMPLE_ACTION_REPLY: DraftActionReply = {
+  title: "Volunteer outreach",
+  summary: "Expand volunteer base",
+  estEffortHrs: 4,
+  effortReasoning: "Half day setup",
+  estSpending: 0,
+  spendingReasoning: "No direct spend",
+  currency: "USD",
+  impacts: [],
+  notes: ""
+};
+
+const SAMPLE_USAGE = {
+  inputTokens: 120,
+  outputTokens: 60,
+  cacheReadTokens: 0,
+  cacheWriteTokens: 0
+};
+
+test("MIPA-47 (draftModel): provider throw leaves aiCreditsUsed unchanged via compensating refund", async () => {
+  const mockUserStore: Record<string, unknown> = { aiCreditsUsed: 3 };
+  const mockOrgStore: Record<string, unknown> = {
+    aiCreditsUsed: 5,
+    subscriptionTier: "community",
+    monthlyAiUsage: { "2026-11": 10 }
+  };
+  const mockGlobalStore: Record<string, unknown> = { creditsUsed: 150 };
+  const auditLogs: Record<string, unknown>[] = [];
+
+  const mockDb = createTransactionalMockDb({
+    userStore: mockUserStore,
+    orgStore: mockOrgStore,
+    globalStore: mockGlobalStore,
+    auditLogs
+  });
+
+  await assert.rejects(
+    () =>
+      draftModelWithCreditProtection({
+        db: mockDb,
+        uid: "uid-draft-err",
+        orgId: "org-draft-err",
+        auth: { token: { email_verified: true } },
+        useSystemFallback: true,
+        creditOptions: { yearMonth: "2026-11", globalMonthlyCeiling: 5000, orgMonthlyCeiling: 50 },
+        turns: [{ role: "user", text: "Help draft my model" }],
+        mustDraft: false,
+        adapter: {
+          draft: async () => {
+            throw new Error("503 Service Unavailable from upstream AI");
+          }
+        }
+      }),
+    /503 Service Unavailable/
+  );
+
+  assert.equal(mockUserStore.aiCreditsUsed, 3, "user aiCreditsUsed must be restored after provider throw");
+  assert.equal(mockOrgStore.aiCreditsUsed, 5, "org aiCreditsUsed must be restored after provider throw");
+  assert.equal(
+    (mockOrgStore.monthlyAiUsage as Record<string, number>)["2026-11"],
+    10,
+    "org monthly usage must be restored after provider throw"
+  );
+  assert.equal(mockGlobalStore.creditsUsed, 150, "global monthly usage must be restored after provider throw");
+  assert.equal(auditLogs.length, 1);
+  assert.equal(auditLogs[0].outcome, "refunded");
+  assert.equal(auditLogs[0].refunded, true);
+});
+
+test("MIPA-47 (draftModel): too-long, refusal, and exhausted invalid-reply refund credit; transient retry charges once", async () => {
+  const mockUserStore: Record<string, unknown> = { aiCreditsUsed: 2 };
+  const mockOrgStore: Record<string, unknown> = {
+    aiCreditsUsed: 2,
+    subscriptionTier: "community",
+    monthlyAiUsage: { "2026-11": 2 }
+  };
+  const mockGlobalStore: Record<string, unknown> = { creditsUsed: 20 };
+  const auditLogs: Record<string, unknown>[] = [];
+  const mockDb = createTransactionalMockDb({
+    userStore: mockUserStore,
+    orgStore: mockOrgStore,
+    globalStore: mockGlobalStore,
+    auditLogs
+  });
+
+  // 1. too-long failure refunds credit
+  await assert.rejects(
+    () =>
+      draftModelWithCreditProtection({
+        db: mockDb,
+        uid: "uid-model-reply",
+        orgId: "org-model-reply",
+        auth: { token: { email_verified: true } },
+        useSystemFallback: true,
+        creditOptions: { yearMonth: "2026-11", globalMonthlyCeiling: 5000, orgMonthlyCeiling: 50 },
+        turns: [{ role: "user", text: "Draft" }],
+        mustDraft: true,
+        adapter: {
+          draft: async () => {
+            throw new ProviderReplyError("Output truncated", "too-long");
+          }
+        }
+      }),
+    /Output truncated/
+  );
+  assert.equal(mockUserStore.aiCreditsUsed, 2);
+
+  // 2. refusal failure refunds credit
+  await assert.rejects(
+    () =>
+      draftModelWithCreditProtection({
+        db: mockDb,
+        uid: "uid-model-reply",
+        orgId: "org-model-reply",
+        auth: { token: { email_verified: true } },
+        useSystemFallback: true,
+        creditOptions: { yearMonth: "2026-11", globalMonthlyCeiling: 5000, orgMonthlyCeiling: 50 },
+        turns: [{ role: "user", text: "Draft" }],
+        mustDraft: true,
+        adapter: {
+          draft: async () => {
+            throw new ProviderReplyError("Refused request", "refusal");
+          }
+        }
+      }),
+    /Refused request/
+  );
+  assert.equal(mockUserStore.aiCreditsUsed, 2);
+
+  // 3. invalid-reply surviving the single retry refunds credit
+  let failBothAttempts = 0;
+  await assert.rejects(
+    () =>
+      draftModelWithCreditProtection({
+        db: mockDb,
+        uid: "uid-model-reply",
+        orgId: "org-model-reply",
+        auth: { token: { email_verified: true } },
+        useSystemFallback: true,
+        creditOptions: { yearMonth: "2026-11", globalMonthlyCeiling: 5000, orgMonthlyCeiling: 50 },
+        turns: [{ role: "user", text: "Draft" }],
+        mustDraft: true,
+        adapter: {
+          draft: async () => {
+            failBothAttempts++;
+            throw new ProviderReplyError("Malformed JSON", "invalid-reply");
+          }
+        }
+      }),
+    /Malformed JSON/
+  );
+  assert.equal(failBothAttempts, 2, "must attempt once plus single retry before throwing");
+  assert.equal(mockUserStore.aiCreditsUsed, 2, "exhausted retry must refund credit");
+  assert.equal(auditLogs.length, 3);
+  assert.ok(auditLogs.every((l) => l.outcome === "refunded" && l.refunded === true));
+
+  // 4. invalid-reply on first attempt that succeeds on retry charges exactly 1 credit
+  let retryAttempts = 0;
+  const succeeded = await draftModelWithCreditProtection({
+    db: mockDb,
+    uid: "uid-model-reply",
+    orgId: "org-model-reply",
+    auth: { token: { email_verified: true } },
+    useSystemFallback: true,
+    creditOptions: { yearMonth: "2026-11", globalMonthlyCeiling: 5000, orgMonthlyCeiling: 50 },
+    turns: [{ role: "user", text: "Draft" }],
+    mustDraft: false,
+    adapter: {
+      draft: async () => {
+        retryAttempts++;
+        if (retryAttempts === 1) {
+          throw new ProviderReplyError("Transient bad schema", "invalid-reply");
+        }
+        return { reply: SAMPLE_DRAFT_REPLY, usage: SAMPLE_USAGE };
+      }
+    }
+  });
+  assert.equal(retryAttempts, 2);
+  assert.equal(succeeded.requests, 2);
+  assert.equal(succeeded.reply.kind, "questions");
+  assert.equal(mockUserStore.aiCreditsUsed, 3, "successful retry must consume 1 credit");
+  assert.equal(auditLogs[3].outcome, "success");
+});
+
+test("MIPA-47 (draftAction): provider failure refunds credit; BYO skips starter allowance", async () => {
+  const mockUserStore: Record<string, unknown> = { aiCreditsUsed: 4 };
+  const mockOrgStore: Record<string, unknown> = {
+    aiCreditsUsed: 6,
+    subscriptionTier: "community",
+    monthlyAiUsage: { "2026-11": 8 }
+  };
+  const mockGlobalStore: Record<string, unknown> = { creditsUsed: 90 };
+  const auditLogs: Record<string, unknown>[] = [];
+  const mockDb = createTransactionalMockDb({
+    userStore: mockUserStore,
+    orgStore: mockOrgStore,
+    globalStore: mockGlobalStore,
+    auditLogs
+  });
+
+  await assert.rejects(
+    () =>
+      draftActionWithCreditProtection({
+        db: mockDb,
+        uid: "uid-action",
+        orgId: "org-action",
+        auth: { token: { email_verified: true } },
+        useSystemFallback: true,
+        creditOptions: { yearMonth: "2026-11", globalMonthlyCeiling: 5000, orgMonthlyCeiling: 50 },
+        userPrompt: "Launch neighborhood pantry",
+        adapter: {
+          draftAction: async () => {
+            throw new ProviderReplyError("Rate limited", "unavailable");
+          }
+        }
+      }),
+    /Rate limited/
+  );
+
+  assert.equal(mockUserStore.aiCreditsUsed, 4);
+  assert.equal(mockOrgStore.aiCreditsUsed, 6);
+  assert.equal((mockOrgStore.monthlyAiUsage as Record<string, number>)["2026-11"], 8);
+  assert.equal(mockGlobalStore.creditsUsed, 90);
+  assert.equal(auditLogs.length, 1);
+  assert.equal(auditLogs[0].outcome, "refunded");
+
+  // BYO key path leaves starter allowance untouched even when failing or succeeding
+  const byoSuccess = await draftActionWithCreditProtection({
+    db: mockDb,
+    uid: "uid-action",
+    orgId: "org-action",
+    auth: { token: { email_verified: true } },
+    useSystemFallback: false,
+    userPrompt: "Launch neighborhood pantry",
+    adapter: {
+      draftAction: async () => ({ reply: SAMPLE_ACTION_REPLY, usage: SAMPLE_USAGE })
+    }
+  });
+  assert.equal(byoSuccess.allowance, null);
+  assert.equal(mockUserStore.aiCreditsUsed, 4);
+  assert.equal(auditLogs.length, 1);
+});
+
+test("MIPA-47 safety: double-refund idempotency, underflow clamping, and non-success audit guards", async () => {
+  const mockUserStore: Record<string, unknown> = { aiCreditsUsed: 0 };
+  const mockOrgStore: Record<string, unknown> = {
+    aiCreditsUsed: 1,
+    subscriptionTier: "community",
+    monthlyAiUsage: { "2026-11": 1 }
+  };
+  const mockGlobalStore: Record<string, unknown> = { creditsUsed: 5 };
+  const auditLogs: Record<string, unknown>[] = [];
+  const mockDb = createTransactionalMockDb({
+    userStore: mockUserStore,
+    orgStore: mockOrgStore,
+    globalStore: mockGlobalStore,
+    auditLogs
+  });
+
+  const reserved = await verifyAndConsumeAiCredit(
+    mockDb,
+    "uid-idem",
+    "org-idem",
+    { token: { email_verified: true } },
+    { yearMonth: "2026-11", globalMonthlyCeiling: 5000, orgMonthlyCeiling: 50 }
+  );
+  assert.equal(mockUserStore.aiCreditsUsed, 1);
+  assert.equal(mockOrgStore.aiCreditsUsed, 2);
+
+  // Concurrent double-refund race must decrement exactly once
+  const [r1, r2] = await Promise.all([
+    refundAiCredit(mockDb, "uid-idem", "org-idem", reserved, "network-timeout"),
+    refundAiCredit(mockDb, "uid-idem", "org-idem", reserved, "network-timeout")
+  ]);
+  const refundedCount = [r1, r2].filter((r) => r.refunded).length;
+  assert.equal(refundedCount, 1, "only one concurrent refund call may succeed");
+  assert.equal(mockUserStore.aiCreditsUsed, 0);
+  assert.equal(mockOrgStore.aiCreditsUsed, 1);
+  assert.equal(mockGlobalStore.creditsUsed, 5);
+
+  // Subsequent refund is also a no-op
+  const r3 = await refundAiCredit(mockDb, "uid-idem", "org-idem", reserved, "duplicate");
+  assert.equal(r3.refunded, false);
+  assert.equal(r3.reason, "already-refunded");
+
+  // Clamping at 0 even if audit shows success while counters are already 0
+  await mockDb.doc("systemAuditLogs/audit-clamp").set({
+    auditKey: "audit-clamp",
+    outcome: "success",
+    uid: "uid-idem",
+    orgId: "org-idem",
+    yearMonth: "2026-11"
+  });
+  const clampRes = await refundAiCredit(
+    mockDb,
+    "uid-idem",
+    "org-idem",
+    { auditKey: "audit-clamp", yearMonth: "2026-11" },
+    "clamp-check"
+  );
+  assert.equal(clampRes.refunded, true);
+  assert.equal(mockUserStore.aiCreditsUsed, 0, "user credits must never underflow below 0");
+
+  // Failed transaction audit cannot be refunded
+  await mockDb.doc("systemAuditLogs/audit-failed").set({
+    auditKey: "audit-failed",
+    outcome: "failure",
+    uid: "uid-idem",
+    orgId: "org-idem",
+    yearMonth: "2026-11"
+  });
+  const failedAuditRefund = await refundAiCredit(
+    mockDb,
+    "uid-idem",
+    "org-idem",
+    { auditKey: "audit-failed", yearMonth: "2026-11" },
+    "should-not-refund"
+  );
+  assert.equal(failedAuditRefund.refunded, false);
+  assert.equal(failedAuditRefund.reason, "outcome-failure");
+});
+
+test("MIPA-47 safety: atomic reserve prevents double-spend at ration boundary and frees slot on failure", async () => {
+  const mockUserStore: Record<string, unknown> = { aiCreditsUsed: STARTER_VERIFIED_ALLOWANCE - 1 };
+  const mockOrgStore: Record<string, unknown> = {
+    aiCreditsUsed: 9,
+    subscriptionTier: "community",
+    monthlyAiUsage: { "2026-11": 9 }
+  };
+  const mockGlobalStore: Record<string, unknown> = { creditsUsed: 50 };
+  const auditLogs: Record<string, unknown>[] = [];
+  const mockDb = createTransactionalMockDb({
+    userStore: mockUserStore,
+    orgStore: mockOrgStore,
+    globalStore: mockGlobalStore,
+    auditLogs
+  });
+
+  // Two parallel requests when user has 9/10 credits: only one can pass the reserve transaction
+  let callIndex = 0;
+  let blockedWorkerRan = false;
+  const settled = await Promise.allSettled([
+    withAiCreditProtection(
+      mockDb,
+      "uid-race",
+      "org-race",
+      { token: { email_verified: true } },
+      true,
+      async () => {
+        callIndex++;
+        throw new Error(`Provider failed #${callIndex}`);
+      },
+      { creditOptions: { yearMonth: "2026-11", globalMonthlyCeiling: 5000, orgMonthlyCeiling: 50 } }
+    ),
+    withAiCreditProtection(
+      mockDb,
+      "uid-race",
+      "org-race",
+      { token: { email_verified: true } },
+      true,
+      async () => {
+        blockedWorkerRan = true;
+        return "unexpected-second-success";
+      },
+      { creditOptions: { yearMonth: "2026-11", globalMonthlyCeiling: 5000, orgMonthlyCeiling: 50 } }
+    )
+  ]);
+
+  assert.equal(settled[0].status, "rejected");
+  assert.equal(settled[1].status, "rejected");
+  assert.equal(blockedWorkerRan, false, "concurrent second request must be blocked before calling AI provider");
+  assert.equal(
+    mockUserStore.aiCreditsUsed,
+    STARTER_VERIFIED_ALLOWANCE - 1,
+    "failed winner refunded slot back to 9 while concurrent second request was blocked at 10"
+  );
+
+  // Now test two concurrent SUCCEEDING requests at 9/10 credits: strictly one can pass
+  let winnersInvoked = 0;
+  const concurrentSuccess = await Promise.allSettled([
+    draftModelWithCreditProtection({
+      db: mockDb,
+      uid: "uid-race",
+      orgId: "org-race",
+      auth: { token: { email_verified: true } },
+      useSystemFallback: true,
+      creditOptions: { yearMonth: "2026-11", globalMonthlyCeiling: 5000, orgMonthlyCeiling: 50 },
+      turns: [{ role: "user", text: "Retry after outage A" }],
+      mustDraft: true,
+      adapter: {
+        draft: async () => {
+          winnersInvoked++;
+          return { reply: SAMPLE_DRAFT_REPLY, usage: SAMPLE_USAGE };
+        }
+      }
+    }),
+    draftModelWithCreditProtection({
+      db: mockDb,
+      uid: "uid-race",
+      orgId: "org-race",
+      auth: { token: { email_verified: true } },
+      useSystemFallback: true,
+      creditOptions: { yearMonth: "2026-11", globalMonthlyCeiling: 5000, orgMonthlyCeiling: 50 },
+      turns: [{ role: "user", text: "Retry after outage B" }],
+      mustDraft: true,
+      adapter: {
+        draft: async () => {
+          winnersInvoked++;
+          return { reply: SAMPLE_DRAFT_REPLY, usage: SAMPLE_USAGE };
+        }
+      }
+    })
+  ]);
+  const fulfilled = concurrentSuccess.filter((r) => r.status === "fulfilled");
+  const rejected = concurrentSuccess.filter((r) => r.status === "rejected");
+  assert.equal(fulfilled.length, 1, "exactly one concurrent request at 9/10 credits succeeds");
+  assert.equal(rejected.length, 1, "second concurrent request is rejected by quota");
+  assert.equal(winnersInvoked, 1, "blocked request must never invoke the AI provider");
+  assert.equal(fulfilled[0].value.allowance?.creditsRemaining, 1);
+  assert.equal(mockUserStore.aiCreditsUsed, STARTER_VERIFIED_ALLOWANCE);
 });

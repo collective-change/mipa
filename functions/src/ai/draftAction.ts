@@ -3,11 +3,16 @@
 // Relayed through Cloud Function so the organization's encrypted AI key is kept safe.
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, Firestore } from "firebase-admin/firestore";
 import { aiKeyEncryptionKey, systemAiProviderKey } from "./keyBox";
 import { loadProvider } from "./aiSettings";
-import { getSystemAiProvider, verifyAndConsumeAiCredit, AllowanceResult } from "./starterAllowance";
-import { adapterFor, ProviderReplyError } from "./providers";
+import {
+  getSystemAiProvider,
+  withAiCreditProtection,
+  AllowanceResult,
+  ConsumeAiCreditOptions
+} from "./starterAllowance";
+import { adapterFor, ProviderReplyError, Turn, Usage } from "./providers";
 import { ACTION_DRAFT_SYSTEM_PROMPT, actionDraftUserPrompt, ModelContext } from "./prompt";
 import { DraftActionReply } from "./schema";
 
@@ -41,6 +46,57 @@ async function getModelContext(orgId: string, modelId: string): Promise<ModelCon
       unit: d.get("unit") || "",
       group: groupOf.get(d.id) || ""
     }))
+  };
+}
+
+export async function draftActionWithCreditProtection(params: {
+  db: Firestore;
+  uid: string;
+  orgId: string;
+  auth: { token?: { email_verified?: boolean } };
+  useSystemFallback: boolean;
+  creditOptions?: ConsumeAiCreditOptions;
+  userPrompt: string;
+  adapter: {
+    draftAction: (req: { system: string; turns: Turn[] }) => Promise<{
+      reply: DraftActionReply;
+      usage: Usage;
+    }>;
+  };
+}): Promise<{
+  proposal: DraftActionReply;
+  usage: { inputTokens: number; outputTokens: number };
+  allowance: AllowanceResult | null;
+}> {
+  const { result, allowance } = await withAiCreditProtection(
+    params.db,
+    params.uid,
+    params.orgId,
+    params.auth,
+    params.useSystemFallback,
+    async () => {
+      try {
+        return await params.adapter.draftAction({
+          system: ACTION_DRAFT_SYSTEM_PROMPT,
+          turns: [{ role: "user", text: params.userPrompt }]
+        });
+      } catch (error) {
+        if (error instanceof ProviderReplyError) {
+          throw new HttpsError("unavailable", error.message, { reason: error.reason });
+        }
+        throw error;
+      }
+    },
+    params.creditOptions ? { creditOptions: params.creditOptions } : undefined
+  );
+
+  return {
+    proposal: result.reply,
+    usage: {
+      inputTokens: result.usage.inputTokens,
+      outputTokens: result.usage.outputTokens
+    },
+    allowance
   };
 }
 
@@ -82,7 +138,7 @@ export const draftAction = onCall(
     }
 
     let provider = await loadProvider(orgId);
-    let allowance: AllowanceResult | null = null;
+    const useSystemFallback = !provider;
     if (!provider) {
       provider = getSystemAiProvider();
       if (!provider) {
@@ -92,33 +148,20 @@ export const draftAction = onCall(
           { reason: "no-provider", degraded: true }
         );
       }
-      allowance = await verifyAndConsumeAiCredit(db, uid, orgId, request.auth);
     }
 
     const context = await getModelContext(orgId, modelId);
     const userPrompt = actionDraftUserPrompt(context, text);
-
     const adapter = adapterFor(provider.settings, provider.apiKey);
 
-    try {
-      const result = await adapter.draftAction({
-        system: ACTION_DRAFT_SYSTEM_PROMPT,
-        turns: [{ role: "user", text: userPrompt }]
-      });
-
-      return {
-        proposal: result.reply,
-        usage: {
-          inputTokens: result.usage.inputTokens,
-          outputTokens: result.usage.outputTokens
-        },
-        allowance
-      };
-    } catch (error) {
-      if (error instanceof ProviderReplyError) {
-        throw new HttpsError("unavailable", error.message, { reason: error.reason });
-      }
-      throw error;
-    }
+    return draftActionWithCreditProtection({
+      db,
+      uid,
+      orgId,
+      auth: request.auth,
+      useSystemFallback,
+      userPrompt,
+      adapter
+    });
   }
 );

@@ -27,6 +27,8 @@ export interface AllowanceResult {
   creditsRemaining: number;
   source: "byo" | "tier_pooled" | "starter_verified" | "starter_teaser";
   reason?: string;
+  auditKey?: string;
+  yearMonth?: string;
 }
 
 export interface SystemProviderInfo {
@@ -385,7 +387,7 @@ export function getSystemAiProvider(): SystemProviderInfo | null {
   };
 }
 
-export type AuditOutcome = "success" | "failure" | "unknown";
+export type AuditOutcome = "success" | "failure" | "unknown" | "refunded";
 
 export interface SystemAuditLogData {
   auditKey: string;
@@ -398,6 +400,9 @@ export interface SystemAuditLogData {
   creditsUsed?: number;
   ceiling?: number;
   reason?: string;
+  refunded?: boolean;
+  refundReason?: string;
+  refundedAt?: unknown;
   createdAt?: unknown;
   updatedAt?: unknown;
 }
@@ -471,6 +476,14 @@ export async function backfillAuditRecord(
   );
 }
 
+export interface ConsumeAiCreditOptions {
+  yearMonth?: string;
+  globalMonthlyCeiling?: number;
+  orgMonthlyCeiling?: number;
+  auditKey?: string;
+  revenueBasis?: number;
+}
+
 /**
  * Verifies and atomically consumes 1 AI credit in Firestore for user, org, and global ceiling.
  * Audit logging is handled outside the transaction boundary to ensure audit records survive transaction rollback.
@@ -480,20 +493,14 @@ export async function verifyAndConsumeAiCredit(
   uid: string,
   orgId: string,
   auth: { token?: { email_verified?: boolean } },
-  options: {
-    yearMonth?: string;
-    globalMonthlyCeiling?: number;
-    orgMonthlyCeiling?: number;
-    auditKey?: string;
-    revenueBasis?: number;
-  } = {}
+  options: ConsumeAiCreditOptions = {}
 ): Promise<AllowanceResult> {
   const yearMonth = options.yearMonth || getCurrentYearMonth();
   const globalCeiling = options.globalMonthlyCeiling ?? (await resolveGlobalMonthlyCeiling(db, { revenueBasis: options.revenueBasis }));
   const orgStarterCeiling = options.orgMonthlyCeiling ?? getOrgStarterMonthlyCeiling();
 
   // 1. Create audit record OUTSIDE transaction blast radius with outcome: 'unknown'
-  const { ref: auditRef } = await createAuditRecord(db, {
+  const { ref: auditRef, auditKey } = await createAuditRecord(db, {
     auditKey: options.auditKey,
     event: "ai_credit_evaluation",
     outcome: "unknown",
@@ -605,7 +612,11 @@ export async function verifyAndConsumeAiCredit(
       creditsUsed: evaluation.creditsUsed
     });
 
-    return evaluation;
+    return {
+      ...evaluation,
+      auditKey,
+      yearMonth
+    };
   } catch (error) {
     // 3. Transaction failed or threw: backfill outcome = 'failure'
     const details = (error instanceof HttpsError ? error.details : {}) as Record<string, unknown> | undefined;
@@ -624,6 +635,169 @@ export async function verifyAndConsumeAiCredit(
       reason: (details?.reason as string) || (error instanceof Error ? error.message : "transaction_failed")
     });
 
+    throw error;
+  }
+}
+
+export interface RefundAiCreditResult {
+  refunded: boolean;
+  auditKey?: string;
+  reason?: string;
+}
+
+/**
+ * Atomically refunds 1 previously reserved AI credit on provider failure.
+ *
+ * Uses `systemAuditLogs/{auditKey}` inside the Firestore transaction as an
+ * idempotency lock: only an audit record with `outcome === "success"` and
+ * `refunded !== true` can transition to `outcome: "refunded"`, preventing
+ * double-refunds even under concurrent retries, and counter decrements are
+ * guarded above zero to prevent underflow.
+ */
+export async function refundAiCredit(
+  db: Firestore,
+  uid: string,
+  orgId: string,
+  allowance: Pick<AllowanceResult, "auditKey" | "yearMonth"> | null | undefined,
+  reason = "provider-failure"
+): Promise<RefundAiCreditResult> {
+  const auditKey = allowance?.auditKey;
+  if (!auditKey) {
+    return { refunded: false, reason: "no-audit-key" };
+  }
+
+  const auditRef = db.doc(`systemAuditLogs/${auditKey}`);
+  const userRef = db.doc(`users/${uid}`);
+  const orgRef = db.doc(`orgs/${orgId}`);
+
+  return db.runTransaction(async (tx) => {
+    const auditDoc = await tx.get(auditRef);
+    const outcome = auditDoc.get("outcome") as string | undefined;
+    const alreadyRefunded = Boolean(auditDoc.get("refunded"));
+    if (alreadyRefunded || outcome === "refunded") {
+      return { refunded: false, auditKey, reason: "already-refunded" };
+    }
+    if (outcome !== "success") {
+      return {
+        refunded: false,
+        auditKey,
+        reason: outcome ? `outcome-${outcome}` : "audit-not-found"
+      };
+    }
+
+    const auditUid = auditDoc.get("uid") as string | undefined;
+    const auditOrgId = auditDoc.get("orgId") as string | undefined;
+    if ((auditUid && auditUid !== uid) || (auditOrgId && auditOrgId !== orgId)) {
+      return { refunded: false, auditKey, reason: "audit-mismatch" };
+    }
+
+    const resolvedYearMonth =
+      (auditDoc.get("yearMonth") as string | undefined) ||
+      allowance.yearMonth ||
+      getCurrentYearMonth();
+    const globalUsageRef = db.doc(`systemUsage/${resolvedYearMonth}`);
+
+    const [userDoc, orgDoc, globalDoc] = await Promise.all([
+      tx.get(userRef),
+      tx.get(orgRef),
+      tx.get(globalUsageRef)
+    ]);
+
+    const userCreditsUsed = (userDoc.get("aiCreditsUsed") as number) || 0;
+    const orgCreditsUsed = (orgDoc.get("aiCreditsUsed") as number) || 0;
+    const globalMonthlyUsed = (globalDoc.get("creditsUsed") as number) || 0;
+    const monthlyUsageMap = (orgDoc.get("monthlyAiUsage") as Record<string, number> | undefined) || {};
+    const orgMonthlyDirect = orgDoc.get(`monthlyAiUsage.${resolvedYearMonth}`) as number | undefined;
+    const orgMonthlyUsed = monthlyUsageMap[resolvedYearMonth] ?? orgMonthlyDirect ?? 0;
+
+    if (userCreditsUsed > 0) {
+      tx.set(
+        userRef,
+        { aiCreditsUsed: FieldValue.increment(-1) },
+        { merge: true }
+      );
+    }
+
+    if (orgCreditsUsed > 0 || orgMonthlyUsed > 0) {
+      const orgUpdate: Record<string, unknown> = {};
+      if (orgCreditsUsed > 0) {
+        orgUpdate.aiCreditsUsed = FieldValue.increment(-1);
+      }
+      if (orgMonthlyUsed > 0) {
+        orgUpdate[`monthlyAiUsage.${resolvedYearMonth}`] = FieldValue.increment(-1);
+      }
+      tx.set(orgRef, orgUpdate, { merge: true });
+    }
+
+    if (globalMonthlyUsed > 0) {
+      tx.set(
+        globalUsageRef,
+        {
+          yearMonth: resolvedYearMonth,
+          creditsUsed: FieldValue.increment(-1)
+        },
+        { merge: true }
+      );
+    }
+
+    tx.set(
+      auditRef,
+      cleanUndefined({
+        outcome: "refunded" as AuditOutcome,
+        refunded: true,
+        refundReason: reason.slice(0, 500),
+        refundedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp()
+      }),
+      { merge: true }
+    );
+
+    return { refunded: true, auditKey };
+  });
+}
+
+export interface CreditProtectionResult<T> {
+  result: T;
+  allowance: AllowanceResult | null;
+}
+
+/**
+ * Guards an AI provider operation with atomic credit reservation + compensating refund.
+ *
+ * Chosen over consume-after-reply because consuming atomically before calling the provider
+ * prevents concurrent requests near the ration boundary (e.g. 9/10 starter credits) from
+ * double-spending past the limit, while the transactional `refundAiCredit` rollback on
+ * any thrown error ensures failed calls never cost a credit.
+ */
+export async function withAiCreditProtection<T>(
+  db: Firestore,
+  uid: string,
+  orgId: string,
+  auth: { token?: { email_verified?: boolean } },
+  useSystemFallback: boolean,
+  work: (allowance: AllowanceResult | null) => Promise<T>,
+  options: {
+    creditOptions?: ConsumeAiCreditOptions;
+    onRefundError?: (error: unknown) => void;
+  } = {}
+): Promise<CreditProtectionResult<T>> {
+  const allowance = useSystemFallback
+    ? await verifyAndConsumeAiCredit(db, uid, orgId, auth, options.creditOptions)
+    : null;
+
+  try {
+    const result = await work(allowance);
+    return { result, allowance };
+  } catch (error) {
+    if (allowance) {
+      try {
+        const reason = error instanceof Error ? error.message : String(error);
+        await refundAiCredit(db, uid, orgId, allowance, reason);
+      } catch (refundError) {
+        console.error("[AI Credit Refund] Failed to refund credit after provider error:", refundError);
+        options.onRefundError?.(refundError);
+      }
+    }
     throw error;
   }
 }
