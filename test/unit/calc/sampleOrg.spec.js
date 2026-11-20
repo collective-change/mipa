@@ -8,6 +8,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { message, runCalc, mockFirebaseModules, FIXED_NOW } from "./harness.js";
 import { compileDraftNodes, roleNodesOf } from "@/utils/util-model-draft";
 import { buildSampleOrg } from "@/utils/sample-org";
+import { buildSampleDossierData } from "@/utils/modelDossier";
 import enUs from "@/i18n/en-us/index.js";
 import zhTw from "@/i18n/zh-tw/index.js";
 
@@ -242,6 +243,34 @@ describe("sample organization", () => {
       expect(baselineSave.payload.resultsType).toBe("baseline");
     } finally {
       globalThis.Worker = originalWorker;
+    }
+  });
+
+  it("MIPA-60: buildSampleDossierData matches calcWorker runCalc action metrics", async () => {
+    const { nodes, roleNodes, actions } = compileSample(enUs, "USD");
+    const run = await runCalc(
+      message(nodes, { calculationType: "actions", roleNodes, actions, simulationParams })
+    );
+    expect(run.error).toBeUndefined();
+    const [, actionResults] = run.results;
+    const byWorkerId = Object.fromEntries(
+      actionResults.actionsResults.map(r => [r.id, r.effectiveResultsNumbers])
+    );
+
+    const dossierData = buildSampleDossierData({
+      modelId: "sample",
+      t: translator(enUs),
+      locale: "en-us"
+    });
+    expect(dossierData.nodes).toHaveLength(20);
+    expect(dossierData.actions).toHaveLength(3);
+
+    for (const action of dossierData.actions) {
+      const workerNums = byWorkerId[action.key];
+      expect(action.outstandingDirectCosts).toBeCloseTo(workerNums.outstandingDirectCosts, 4);
+      expect(action.marginalTotalBenefitNpv).toBeCloseTo(workerNums.marginalTotalBenefitNpv, 2);
+      expect(action.totalRoi).toBeCloseTo(workerNums.totalRoi, 4);
+      expect(action.actionLeverage).toBeCloseTo(workerNums.actionLeverage, 4);
     }
   });
 });

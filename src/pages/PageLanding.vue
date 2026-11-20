@@ -53,9 +53,17 @@
           />
         </div>
 
-        <div class="row items-center justify-center q-mb-xl text-caption text-grey-7">
+        <div class="row items-center justify-center q-gutter-x-sm q-mb-xl text-caption text-grey-7">
+          <router-link
+            to="/m/sample"
+            data-testid="landing-demo-link"
+            class="text-primary text-weight-medium"
+          >
+            {{ $t("landingViewDemo") }}
+          </router-link>
+          <span>·</span>
           <span>{{ $t("earlyAccessAlreadyInvited") }}</span>
-          <router-link to="/auth?tab=register" class="text-primary text-weight-medium q-ml-xs">
+          <router-link to="/auth?tab=register" class="text-primary text-weight-medium">
             {{ $t("Create account") }}
           </router-link>
         </div>

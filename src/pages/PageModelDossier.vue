@@ -588,7 +588,7 @@
 import { doc, getDoc, collection, getDocs, query, limit, getCountFromServer } from "firebase/firestore";
 import { firebaseDb, firebaseFunctions } from "@/boot/firebase";
 import { httpsCallable } from "firebase/functions";
-import { buildDossierSummary, printDossierBrief } from "@/utils/modelDossier";
+import { buildDossierSummary, buildSampleDossierData, printDossierBrief } from "@/utils/modelDossier";
 import { DEFAULT_NODES_LIMIT } from "@/store/store-model";
 
 export default {
@@ -745,12 +745,8 @@ export default {
         this.rawNodes = nodesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
         this.showingAllNodes = Boolean(showAll);
       } catch {
-        this.rawNodes = [
-          { id: "n1", symbol: "VC", name: "Volunteer Capacity", initialValue: 120, units: "volunteers" },
-          { id: "n2", symbol: "RS", name: "Relief Supplies", initialValue: 85, units: "tons" },
-          { id: "n3", symbol: "PT", name: "Public Trust", initialValue: 90, units: "points" }
-        ];
-        this.showingAllNodes = true;
+        this.applySampleFallback();
+        return;
       }
 
       const initialPerturbations = { ...this.perturbations };
@@ -778,18 +774,23 @@ export default {
         const modelSnap = await getDoc(modelRef);
 
         if (modelSnap.exists()) {
-          this.rawModel = { id: modelSnap.id, ...modelSnap.data() };
+          const modelData = typeof modelSnap.data === "function" ? modelSnap.data() : {};
+          if (modelData && modelData.isPublic === false) {
+            this.applySampleFallback();
+            return;
+          }
+          this.rawOrg = null;
+          this.rawModel = { id: modelSnap.id, ...modelData };
         } else {
-          // Demo fallback model for previewing
-          this.rawModel = {
-            id: this.modelId,
-            name: "Community Emergency Surge & Relief Model",
-            description: "Systemic dynamic simulation of disaster relief volunteer capacity and philanthropic resource distribution."
-          };
+          this.applySampleFallback();
+          return;
         }
 
         // Fetch nodes (bounded with count query, show-all support)
         await this.fetchNodes(false);
+        if (this.rawOrg && this.rawOrg.isSample) {
+          return;
+        }
 
         // Fetch actions. Actions are not publicly readable by Firestore rules
         // (MIPA-4); this callable returns only title + computed leverage for
@@ -804,6 +805,7 @@ export default {
         }
       } catch (err) {
         console.warn("Could not load public model dossier:", err);
+        this.applySampleFallback();
       } finally {
         this.loading = false;
       }
@@ -870,6 +872,36 @@ export default {
           ? this.$t(`archetypes.missingLoop.${arc.missingLoopKey}`)
           : arc?.missingLoop || "";
       return missingText ? `${looksLike} ${this.$t("archetypeMissingLoopLabel")}: ${missingText}` : looksLike;
+    },
+    applySampleFallback() {
+      const locale = this.$i18n ? this.$i18n.locale : "en-us";
+      const t = key => (this.$t ? this.$t(key) : key);
+      const { org, model, nodes, actions } = buildSampleDossierData({
+        modelId: this.modelId || "sample",
+        t,
+        locale
+      });
+      this.rawOrg = org;
+      this.rawModel = model;
+      this.rawNodes = nodes;
+      this.rawActions = actions;
+      this.nodesTotalCount = nodes.length;
+      this.showingAllNodes = true;
+
+      const initialPerturbations = { ...this.perturbations };
+      for (const n of nodes) {
+        if (initialPerturbations[n.id] === undefined) {
+          initialPerturbations[n.id] = 0;
+        }
+      }
+      this.perturbations = initialPerturbations;
+    }
+  },
+  watch: {
+    "$i18n.locale"() {
+      if (this.rawOrg && this.rawOrg.isSample) {
+        this.applySampleFallback();
+      }
     }
   }
 };

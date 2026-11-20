@@ -10,6 +10,172 @@ import {
   DIMENSION_KINDS,
   DIMENSION_STATES
 } from "@/utils/dimensions";
+import { buildSampleOrg, sampleCurrencyFor } from "@/utils/sample-org";
+import { compileDraftNodes, ROLE_SYMBOLS } from "@/utils/util-model-draft";
+
+const SAMPLE_STEPS = 120;
+const MONTH_SECONDS = 2629800;
+const SECONDS_PER_YEAR = 31556952;
+const YEARLY_DISCOUNT_RATE = 0.05;
+const SAMPLE_MONEY_SCALE = { USD: 1, TWD: 30 };
+
+function simulateSampleTrajectory(scale, overrides = {}) {
+  const recruitDelta = overrides.recruitDelta || 0;
+  const foodDonatedDeltaKg = overrides.foodDonatedDeltaKg || 0;
+  const oneTimeEffortHrs = overrides.oneTimeEffortHrs || 0;
+  const oneTimeSpendingInit = overrides.oneTimeSpending || 0;
+
+  const avgHourlyCost = 15 * scale;
+  const coordinatorHourlyCost = 25 * scale;
+  const newVolunteers = 4 + recruitDelta;
+  const leavingRate = 0.08;
+  const hoursPerVolunteer = 6;
+  const mealsPackedPerHour = 10;
+  const foodDonatedKg = 2000 + foodDonatedDeltaKg;
+  const mealsPerKg = 2;
+  const foodAvailableInMeals = foodDonatedKg * mealsPerKg;
+  const valueOfAMeal = 3 * scale;
+  const monthlyRunningCosts = 1200 * scale;
+
+  const seriesBySymbol = {
+    [ROLE_SYMBOLS.averageEffortCostPerHour]: [],
+    [ROLE_SYMBOLS.effort]: [],
+    [ROLE_SYMBOLS.spending]: [],
+    [ROLE_SYMBOLS.orgCost]: [],
+    [ROLE_SYMBOLS.worldCost]: [],
+    [ROLE_SYMBOLS.orgBenefit]: [],
+    [ROLE_SYMBOLS.worldBenefit]: [],
+    volunteers: [],
+    newVolunteersPerMonth: [],
+    volunteersLeavingPerMonth: [],
+    hoursPerVolunteer: [],
+    mealsPackedPerHour: [],
+    packingCapacity: [],
+    foodDonatedKg: [],
+    mealsPerKg: [],
+    foodAvailableInMeals: [],
+    mealsServed: [],
+    valueOfAMeal: [],
+    monthlyRunningCosts: [],
+    coordinatorPerHour: []
+  };
+
+  for (let step = 0; step <= SAMPLE_STEPS; step++) {
+    const oneTimeEffort = step === 0 ? oneTimeEffortHrs : 0;
+    const oneTimeSpending = step === 0 ? oneTimeSpendingInit : 0;
+    const prevVolunteers = step === 0 ? 40 : seriesBySymbol.volunteers[step - 1];
+    const volunteers = prevVolunteers + newVolunteers - prevVolunteers * leavingRate;
+    const packingCapacity = volunteers * hoursPerVolunteer * mealsPackedPerHour;
+    const mealsServed = Math.min(packingCapacity, foodAvailableInMeals);
+
+    seriesBySymbol[ROLE_SYMBOLS.averageEffortCostPerHour].push(avgHourlyCost);
+    seriesBySymbol[ROLE_SYMBOLS.effort].push(oneTimeEffort);
+    seriesBySymbol[ROLE_SYMBOLS.spending].push(oneTimeSpending);
+    seriesBySymbol[ROLE_SYMBOLS.orgCost].push(
+      monthlyRunningCosts + oneTimeSpending + oneTimeEffort * avgHourlyCost
+    );
+    seriesBySymbol[ROLE_SYMBOLS.worldCost].push(0);
+    seriesBySymbol[ROLE_SYMBOLS.orgBenefit].push(0);
+    seriesBySymbol[ROLE_SYMBOLS.worldBenefit].push(mealsServed * valueOfAMeal);
+    seriesBySymbol.volunteers.push(volunteers);
+    seriesBySymbol.newVolunteersPerMonth.push(newVolunteers);
+    seriesBySymbol.volunteersLeavingPerMonth.push(leavingRate);
+    seriesBySymbol.hoursPerVolunteer.push(hoursPerVolunteer);
+    seriesBySymbol.mealsPackedPerHour.push(mealsPackedPerHour);
+    seriesBySymbol.packingCapacity.push(packingCapacity);
+    seriesBySymbol.foodDonatedKg.push(foodDonatedKg);
+    seriesBySymbol.mealsPerKg.push(mealsPerKg);
+    seriesBySymbol.foodAvailableInMeals.push(foodAvailableInMeals);
+    seriesBySymbol.mealsServed.push(mealsServed);
+    seriesBySymbol.valueOfAMeal.push(valueOfAMeal);
+    seriesBySymbol.monthlyRunningCosts.push(monthlyRunningCosts);
+    seriesBySymbol.coordinatorPerHour.push(coordinatorHourlyCost);
+  }
+
+  return seriesBySymbol;
+}
+
+function getSampleMarginalNpv(ifDoneSeries, baselineSeries) {
+  let npv = 0;
+  for (let step = 0; step <= SAMPLE_STEPS; step++) {
+    const tYears = (step * MONTH_SECONDS) / SECONDS_PER_YEAR;
+    npv += (ifDoneSeries[step] - baselineSeries[step]) / Math.pow(1 + YEARLY_DISCOUNT_RATE, tYears);
+  }
+  return npv;
+}
+
+function simulateSampleAction(action, baselineSeries, scale) {
+  let recruitDelta = 0;
+  let foodDonatedDeltaKg = 0;
+  for (const imp of action.impacts || []) {
+    if (imp.symbol === "newVolunteersPerMonth" && imp.operation === "+") {
+      recruitDelta += Number(imp.operand) || 0;
+    } else if (imp.symbol === "foodDonatedKg" && imp.operation === "+") {
+      foodDonatedDeltaKg += Number(imp.operand) || 0;
+    }
+  }
+
+  const estEffortHrs = Number(action.estEffortHrs) || 0;
+  const estSpending = Math.max(0, Number(action.estSpending) || 0);
+  const hourlyCost = (action.effortCostSymbol === "coordinatorPerHour" ? 25 : 15) * scale;
+  const outstandingDirectCosts = estEffortHrs * hourlyCost + estSpending;
+
+  const ifDone = simulateSampleTrajectory(scale, {
+    recruitDelta,
+    foodDonatedDeltaKg,
+    oneTimeEffortHrs: estEffortHrs,
+    oneTimeSpending: estSpending
+  });
+
+  const rawOrgBenefit = getSampleMarginalNpv(ifDone[ROLE_SYMBOLS.orgBenefit], baselineSeries[ROLE_SYMBOLS.orgBenefit]);
+  const rawOrgCost = getSampleMarginalNpv(ifDone[ROLE_SYMBOLS.orgCost], baselineSeries[ROLE_SYMBOLS.orgCost]);
+  const rawWorldBenefit = getSampleMarginalNpv(ifDone[ROLE_SYMBOLS.worldBenefit], baselineSeries[ROLE_SYMBOLS.worldBenefit]);
+  const rawWorldCost = getSampleMarginalNpv(ifDone[ROLE_SYMBOLS.worldCost], baselineSeries[ROLE_SYMBOLS.worldCost]);
+
+  const marginalOrgBenefitNpv = (rawOrgBenefit > 0 ? rawOrgBenefit : 0) + (rawOrgCost < 0 ? -rawOrgCost : 0);
+  const marginalOrgCostNpv = (rawOrgCost > 0 ? rawOrgCost : 0) + (rawOrgBenefit < 0 ? -rawOrgBenefit : 0);
+  const marginalWorldBenefitNpv = (rawWorldBenefit > 0 ? rawWorldBenefit : 0) + (rawWorldCost < 0 ? -rawWorldCost : 0);
+  const marginalWorldCostNpv = (rawWorldCost > 0 ? rawWorldCost : 0) + (rawWorldBenefit < 0 ? -rawWorldBenefit : 0);
+
+  const marginalTotalBenefitNpv = marginalOrgBenefitNpv + marginalWorldBenefitNpv;
+  const marginalTotalCostNpv = marginalOrgCostNpv + marginalWorldCostNpv;
+  const marginalNetTotalBenefitNpv = marginalTotalBenefitNpv - marginalTotalCostNpv;
+  const totalCostDenominator = outstandingDirectCosts + Math.max(0, marginalTotalCostNpv - outstandingDirectCosts);
+
+  const totalRoi = totalCostDenominator > 0 ? marginalNetTotalBenefitNpv / totalCostDenominator : null;
+  const actionLeverage =
+    outstandingDirectCosts > 0 && totalRoi !== null
+      ? ((marginalNetTotalBenefitNpv * totalRoi) / outstandingDirectCosts) * Math.sign(marginalNetTotalBenefitNpv)
+      : null;
+
+  return {
+    id: `sample_${action.key}`,
+    key: action.key,
+    title: action.title,
+    description: action.notes || "",
+    notes: action.notes || "",
+    estEffortHrs,
+    estSpending,
+    outstandingDirectCosts,
+    marginalOrgBenefitNpv,
+    marginalOrgCostNpv,
+    marginalWorldBenefitNpv,
+    marginalWorldCostNpv,
+    marginalTotalBenefitNpv,
+    marginalTotalCostNpv,
+    marginalNetTotalBenefitNpv,
+    totalRoi,
+    actionLeverage,
+    effectiveResultsNumbers: {
+      outstandingDirectCosts,
+      marginalTotalBenefitNpv,
+      marginalTotalCostNpv,
+      marginalNetTotalBenefitNpv,
+      totalRoi,
+      actionLeverage
+    }
+  };
+}
 
 /**
  * Builds a structured, self-contained executive model dossier.
@@ -162,6 +328,51 @@ export function buildDossierSummary({
     monteCarloSummary,
     attributionFooter,
     generatedAt: new Date().toISOString()
+  };
+}
+
+/**
+ * Builds the localized sample food-bank model, factors, and pre-simulated
+ * actions for public `/m/:modelId` visitors when no public Firestore model is loaded.
+ *
+ * @param {Object} [params]
+ * @param {string} [params.modelId="sample"]
+ * @param {Function} [params.t] i18n translator function
+ * @param {string} [params.locale="en-us"]
+ * @returns {{ org: Object, model: Object, nodes: Array, actions: Array }}
+ */
+export function buildSampleDossierData({ modelId = "sample", t, locale = "en-us" } = {}) {
+  const translate = typeof t === "function" ? t : key => key;
+  const currency = sampleCurrencyFor(locale);
+  const scale = SAMPLE_MONEY_SCALE[currency] || 1;
+  const sample = buildSampleOrg(translate, currency);
+  const compiled = compileDraftNodes(sample, symbol => `sample_${symbol}`);
+  const baselineSeries = simulateSampleTrajectory(scale);
+
+  const nodes = compiled.map(node => ({
+    ...node,
+    initialValue: Number((baselineSeries[node.symbol]?.[0] ?? 0).toFixed(2)),
+    formula: node.symbolFormula,
+    units: node.unit || "",
+    description: node.notes || ""
+  }));
+
+  const actions = sample.actions.map(action =>
+    simulateSampleAction(action, baselineSeries, scale)
+  );
+
+  return {
+    org: sample.org,
+    model: {
+      id: modelId || "sample",
+      name: sample.org.name,
+      description: sample.org.goal,
+      orgName: sample.org.name,
+      currency,
+      isSample: true
+    },
+    nodes,
+    actions
   };
 }
 
