@@ -27,7 +27,8 @@ function mountLanding(locale = "en-us") {
           template: "<div class='q-page'><slot /></div>"
         },
         "router-link": {
-          template: "<a><slot /></a>"
+          props: ["to"],
+          template: "<a :href='to'><slot /></a>"
         }
       }
     }
@@ -51,5 +52,19 @@ describe("PageLanding.vue", () => {
     expect(wrapper.text()).toContain("建立系統模型");
     expect(wrapper.text()).toContain("模擬行動方案");
     expect(wrapper.text()).toContain("依效應比排序");
+  });
+
+  it("MIPA-60: links visitors directly to the public /m/sample dossier in both languages", () => {
+    const enWrapper = mountLanding("en-us");
+    const enLink = enWrapper.find('[data-testid="landing-demo-link"]');
+    expect(enLink.exists()).toBe(true);
+    expect(enLink.attributes("href")).toBe("/m/sample");
+    expect(enLink.text()).toContain("Explore live sample dossier");
+
+    const zhWrapper = mountLanding("zh-tw");
+    const zhLink = zhWrapper.find('[data-testid="landing-demo-link"]');
+    expect(zhLink.exists()).toBe(true);
+    expect(zhLink.attributes("href")).toBe("/m/sample");
+    expect(zhLink.text()).toContain("瀏覽互動範例決策檔案");
   });
 });

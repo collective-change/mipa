@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { mount } from "@vue/test-utils";
+import { mount, flushPromises } from "@vue/test-utils";
 import * as All from "quasar";
 import { createI18n } from "vue-i18n";
+import { getDoc, getDocs } from "firebase/firestore";
 import messages from "@/i18n";
 import PageModelDossier from "@/pages/PageModelDossier.vue";
 
@@ -257,5 +258,102 @@ describe("PageModelDossier.vue", () => {
     expect(cfCol).toBeDefined();
     expect(cfCol.field(ranked[0])).toBe("measured");
     expect(cfCol.field(ranked[1])).toBe("declared");
+  });
+
+  it("MIPA-60: falls back to localized English sample model when model document is absent", async () => {
+    const missingKeys = [];
+    const i18n = createI18n({
+      legacy: true,
+      locale: "en-us",
+      messages,
+      missing: (_loc, key) => missingKeys.push(key)
+    });
+    getDoc.mockResolvedValueOnce({ exists: () => false, id: "missing-model", data: () => undefined });
+
+    const wrapper = mount(PageModelDossier, {
+      global: {
+        plugins: [[Quasar, { components }], i18n],
+        mocks: { $route: { params: { modelId: "sample" } } },
+        stubs: {
+          "q-page": { template: "<div class='q-page'><slot /></div>" },
+          "q-slider": { props: ["modelValue"], template: "<input type='range' class='q-slider' />" },
+          "q-table": {
+            props: ["rows", "columns"],
+            template: "<div class='q-table'><div v-for='r in rows' :key='r.id'>{{ r.title }}</div></div>"
+          }
+        }
+      }
+    });
+    await flushPromises();
+
+    expect(wrapper.text()).not.toContain("Community Emergency Surge & Relief Model");
+    expect(wrapper.text()).toContain("Riverside Food Bank (sample)");
+    expect(wrapper.text()).toContain("Run a volunteer recruitment drive");
+    expect(wrapper.vm.dossier.factorsCount).toBe(20);
+    expect(wrapper.vm.dossier.actionsCount).toBe(3);
+    expect(wrapper.vm.dossier.rankedActions[0].key).toBe("recruit");
+    expect(wrapper.vm.dossier.rankedActions[0].actionLeverage).toBeGreaterThan(0);
+    expect(wrapper.vm.dossier.rankedActions[1].actionLeverage).toBeLessThan(0);
+    expect(wrapper.vm.dossier.rankedActions[2].actionLeverage).toBeLessThan(0);
+    expect(wrapper.vm.dossier.factors.find(f => f.symbol === "mealsServed")?.baseValue).toBeGreaterThan(0);
+    expect(missingKeys).toEqual([]);
+  });
+
+  it("MIPA-60: renders Traditional Chinese sample model when model is non-public or permission-denied and updates on locale switch", async () => {
+    const missingKeys = [];
+    const i18n = createI18n({
+      legacy: true,
+      locale: "zh-tw",
+      messages,
+      missing: (_loc, key) => missingKeys.push(key)
+    });
+    getDoc.mockResolvedValueOnce({
+      exists: () => true,
+      id: "private-model",
+      data: () => ({ name: "Private", isPublic: false })
+    });
+
+    const wrapper = mount(PageModelDossier, {
+      global: {
+        plugins: [[Quasar, { components }], i18n],
+        mocks: { $route: { params: { modelId: "private-model" } } },
+        stubs: {
+          "q-page": { template: "<div class='q-page'><slot /></div>" },
+          "q-slider": { props: ["modelValue"], template: "<input type='range' class='q-slider' />" },
+          "q-table": {
+            props: ["rows", "columns"],
+            template: "<div class='q-table'><div v-for='r in rows' :key='r.id'>{{ r.title }}</div></div>"
+          }
+        }
+      }
+    });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("河濱食物銀行（範例）");
+    expect(wrapper.text()).toContain("舉辦志工招募活動");
+    expect(wrapper.text()).not.toContain("Community Emergency Surge & Relief Model");
+    expect(wrapper.vm.rawModel.currency).toBe("TWD");
+    expect(missingKeys).toEqual([]);
+
+    // Switching locale live updates the sample model text without re-fetching Firestore
+    wrapper.vm.$i18n.locale = "en-us";
+    await wrapper.vm.$nextTick();
+    expect(wrapper.text()).toContain("Riverside Food Bank (sample)");
+    expect(wrapper.vm.rawModel.currency).toBe("USD");
+  });
+
+  it("MIPA-60: falls back cleanly when getDoc or fetchNodes rejects with permission-denied", async () => {
+    getDoc.mockRejectedValueOnce(new Error("permission-denied"));
+    const firstWrapper = mountDossier("en-us");
+    await flushPromises();
+    expect(firstWrapper.vm.rawOrg?.isSample).toBe(true);
+    expect(firstWrapper.vm.dossier.actionsCount).toBe(3);
+
+    getDocs.mockRejectedValueOnce(new Error("permission-denied"));
+    const secondWrapper = mountDossier("zh-tw");
+    await flushPromises();
+    expect(secondWrapper.vm.rawOrg?.isSample).toBe(true);
+    expect(secondWrapper.vm.rawModel.name).toBe("河濱食物銀行（範例）");
+    expect(secondWrapper.vm.dossier.actionsCount).toBe(3);
   });
 });
