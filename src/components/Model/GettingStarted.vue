@@ -42,6 +42,23 @@
               {{ index + 1 }}. {{ $t(`gs.${step.key}.title`) }}
             </q-item-label>
             <q-item-label caption>{{ $t(`gs.${step.key}.text`) }}</q-item-label>
+            <div v-if="step.key === 'closeModel'" class="q-mt-xs">
+              <div
+                v-if="namedLimitNames.length > 0"
+                class="text-caption text-primary text-weight-medium limits-notice"
+              >
+                {{ $t("gs.closeModel.limitsNotice", { limits: namedLimitNames.join(", ") }) }}
+              </div>
+              <div v-else class="text-caption text-grey-6 limits-notice">
+                {{ $t("gs.closeModel.noLimits") }}
+              </div>
+              <div
+                v-if="unconnectedDefaultNames.length > 0"
+                class="text-caption text-negative q-mt-xs unconnected-defaults"
+              >
+                {{ $t("gs.closeModel.unconnectedDefaults", { factors: unconnectedDefaultNames.join(", ") }) }}
+              </div>
+            </div>
           </q-item-section>
           <q-item-section side top>
             <calculator-ui
@@ -103,6 +120,7 @@ import { mapState, mapGetters, mapActions } from "vuex";
 import { collection, getDocs, limit, query, where } from "firebase/firestore";
 import { firebaseDb } from "@/boot/firebase";
 import CalculatorUi from "@/components/Calc/CalculatorUi.vue";
+import { assessDraftLimits } from "@/utils/draftLimitCheck";
 
 // Starter factors created with every new model (see store-model createInitialNodes).
 const STARTER_FACTOR_COUNT = 7;
@@ -133,14 +151,57 @@ export default {
     nodeById() {
       return Object.fromEntries(this.nodes.map((n) => [n.id, n]));
     },
+    limitAssessment() {
+      return assessDraftLimits({
+        nodes: this.nodes || [],
+        baseline: this.baseline,
+        simulationParams: this.currentModel?.simulationParams
+      });
+    },
+    namedLimitNames() {
+      if (!this.limitAssessment?.namedLimits) return [];
+      const seen = new Set();
+      const names = [];
+      for (const limit of this.limitAssessment.namedLimits) {
+        for (const name of limit.factorNames || []) {
+          if (name && !seen.has(name)) {
+            seen.add(name);
+            names.push(name);
+          }
+        }
+      }
+      return names;
+    },
+    unconnectedDefaultFactors() {
+      const defaultRoleKeys = ["orgBenefit", "orgCost", "worldBenefit", "worldCost"];
+      const unlinkedIds = new Set(
+        (this.limitAssessment?.unlinkedFactors || []).map((f) => f.id)
+      );
+
+      return defaultRoleKeys
+        .map((k) => this.nodeById[this.roleNodes[k]])
+        .filter((n) => {
+          if (!n) return false;
+          if (unlinkedIds.has(n.id)) return true;
+          const hasIn = Array.isArray(n.influencers) && n.influencers.length > 0;
+          const hasOut = Array.isArray(n.influencees) && n.influencees.length > 0;
+          return (!hasIn && !hasOut) || n.class === "unlinked";
+        });
+    },
+    unconnectedDefaultNames() {
+      return this.unconnectedDefaultFactors.map((n) => n.name || n.symbol || n.id);
+    },
+    isModelClosed() {
+      const hasBalancingLoop = (this.limitAssessment?.balancingLoops || []).length > 0;
+      const noUnboundedLoops = (this.limitAssessment?.unboundedReinforcingLoops || []).length === 0;
+      const noUnboundedGrowth = (this.limitAssessment?.growingFactors || []).length === 0;
+      const boundsGrowth = hasBalancingLoop && noUnboundedLoops && noUnboundedGrowth;
+      const noUnconnectedDefaults = this.unconnectedDefaultFactors.length === 0;
+
+      return boundsGrowth && noUnconnectedDefaults;
+    },
     steps() {
       const hourly = this.nodeById[this.roleNodes.averageEffortCostPerHour];
-      const linked = ["orgBenefit", "orgCost", "worldBenefit", "worldCost"].some(
-        (role) => {
-          const node = this.nodeById[this.roleNodes[role]];
-          return node && node.influencers && node.influencers.length > 0;
-        }
-      );
       const calculated = !!(
         this.baseline &&
         this.baseline.modelId == this.modelId &&
@@ -163,9 +224,15 @@ export default {
           go: () => this.$emit("add-factor")
         },
         {
-          key: "linkFactors",
-          done: linked,
-          go: () => this.selectNode(this.roleNodes.worldBenefit || this.roleNodes.orgBenefit)
+          key: "closeModel",
+          done: this.isModelClosed,
+          go: () => {
+            const targetNode =
+              (this.unconnectedDefaultFactors[0] && this.unconnectedDefaultFactors[0].id) ||
+              this.roleNodes.worldBenefit ||
+              this.roleNodes.orgBenefit;
+            this.selectNode(targetNode);
+          }
         },
         { key: "calculate", done: calculated },
         {

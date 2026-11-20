@@ -483,9 +483,17 @@ export default {
       "button": "Add factor"
     },
     "linkFactors": {
-      "title": "Connect them to the benefits and costs",
-      "text": "Link your factors to the benefit and cost factors, so mipa knows what each one is worth to your organization and to the world.",
-      "button": "Open benefit to the world"
+      "title": "便益とコストに接続する",
+      "text": "各要素を組織および世界への便益・コスト要素とリンクさせ、それぞれの価値を mipa に認識させます。",
+      "button": "世界の便益を開く"
+    },
+    "closeModel": {
+      "title": "モデルを閉合する",
+      "text": "際限のない成長を抑える調節ループ（限界制約）を組み込み、すべての基本要素を接続します。",
+      "button": "世界の便益を開く",
+      "limitsNotice": "このモデルが示す制約要素：{limits}",
+      "noLimits": "調節制約がまだ検出されていません。このモデルの際限のない成長を抑える現実の制約は何ですか？",
+      "unconnectedDefaults": "未接続の基本要素：{factors}"
     },
     "calculate": {
       "title": "Calculate",

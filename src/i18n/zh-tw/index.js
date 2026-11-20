@@ -495,6 +495,14 @@ export default {
     hourlyCost: { title: "設定每小時工作成本", text: "開啟標示 (new) 的因素，輸入組織每小時工作的成本，然後儲存。", button: "開啟" },
     addFactors: { title: "加入對你重要的事物", text: "新增銷售額、服務人數或排放量等因素，並為每個因素寫公式。", button: "新增因素" },
     linkFactors: { title: "把它們連結到效益與成本", text: "把你的因素連結到效益和成本因素，讓 mipa 知道每個因素對組織和世界的價值。", button: "開啟世界的效益" },
+    closeModel: {
+      title: "閉合模型",
+      text: "加入抑制無限制增長的調節循環（限制），並連結所有預設因素。",
+      button: "開啟世界的效益",
+      limitsNotice: "此模型認定的限制為：{limits}",
+      noLimits: "尚未偵測到調節限制。現實中有什麼限制會阻止此模型無限增長？",
+      unconnectedDefaults: "尚未連結的預設因素：{factors}"
+    },
     calculate: { title: "計算", text: "mipa 會往未來計算你的模型。修正它回報的問題後，再計算一次。" },
     addAction: { title: "新增第一個行動", text: "描述組織可以做的一件事，以及它需要的工時、金錢和它的影響。", button: "前往行動" },
     compare: { title: "比較行動", text: "在「行動」頁按「重新計算」，就能看到每個行動的效益、成本和效應比。", button: "前往行動" }

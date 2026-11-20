@@ -483,9 +483,17 @@ export default {
       "button": "Add factor"
     },
     "linkFactors": {
-      "title": "Connect them to the benefits and costs",
-      "text": "Link your factors to the benefit and cost factors, so mipa knows what each one is worth to your organization and to the world.",
-      "button": "Open benefit to the world"
+      "title": "Conectar con beneficios y costos",
+      "text": "Vincule sus factores a los de beneficio y costo para que mipa sepa cuánto vale cada uno para su organización y el mundo.",
+      "button": "Abrir beneficio para el mundo"
+    },
+    "closeModel": {
+      "title": "Cerrar el modelo",
+      "text": "Agregue límites de equilibrio que eviten el crecimiento infinito y conecte todos los factores predeterminados.",
+      "button": "Abrir beneficio para el mundo",
+      "limitsNotice": "Este modelo indica que sus límites son: {limits}",
+      "noLimits": "Aún no se detectan límites de equilibrio. ¿Qué restricción real detiene el crecimiento infinito de este modelo?",
+      "unconnectedDefaults": "Factores predeterminados aún no conectados: {factors}"
     },
     "calculate": {
       "title": "Calculate",
