@@ -44,6 +44,14 @@ service cloud.firestore {
           && request.resource.data.invitedBy == request.auth.uid;
         allow delete: if isOrgAdmin(org) || isInvitee(resource.data);
       }
+
+      // Automated reviews (MIPA-43). Written once, only by Cloud Functions,
+      // with the model and methodology version that produced them; never
+      // edited, so an old review keeps the version it used.
+      match /reviews/{reviewId} {
+        allow read: if userInOrg(org);
+        allow write: if false;
+      }
     }
 
     // Lets people find invitations addressed to them across organizations.

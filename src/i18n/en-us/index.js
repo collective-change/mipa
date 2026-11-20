@@ -1385,5 +1385,14 @@ export default {
   counterfactualMethod_synthetic_control: "Synthetic Control",
   counterfactualMethod_natural_experiment: "Natural Experiment",
   counterfactualMethod_interrupted_time_series: "Interrupted Time Series",
-  counterfactualMethod_other: "Other Empirical Comparison"
+  counterfactualMethod_other: "Other Empirical Comparison",
+
+  // Automated review mark (MIPA-43), generated from stored provenance only.
+  reviewMarkText: "Checked against mipa methodology v{methodology} by model {model} ({provider}) on {date}.",
+  reviewMarkUnpinned: "The provider does not pin this model identifier to fixed weights, so this check may not reproduce.",
+  reviewMarkDrift: "Since this check, the {fields} changed; this record keeps the version it used.",
+  reviewMarkField_provider: "provider",
+  reviewMarkField_model: "model",
+  reviewMarkField_methodologyVersion: "methodology",
+  reviewMarkFieldSeparator: ", "
 };
