@@ -77,3 +77,32 @@ and an account UID. Redacting them in HEAD does not unpublish them - they stay i
 - **Never hardcode a credential as a test fallback** (`process.env.X || "secret"`): the fallback is
   the leak. Require the variable and throw when it is absent.
 - Reviewers: a diff that adds a line looking like log output is a publication decision, not a doc edit.
+
+## Before you build an automation: three rules
+
+An automation here is a cron job, a `scripts/` helper, a Cloud Function, a workflow step, or an agent
+loop. Three things are true of every one of them, and each has already gone wrong in this repository.
+
+- **Instrument before automating.** A process that has run fewer than a handful of times gets **a log
+  and a counter**, not a system: automating a rare event costs the most and breaks the most. **And the
+  counter must be able to read non-zero** - a dashboard that has only ever shown `0` has not been
+  tested, it has been decorated.
+- **It must fail loudly.** Silent failure is the default: a webhook that stops firing, a form that
+  drops a submission, a heading a parser cannot match, an `add` that returns `ok:true` while changing
+  nothing, a send whose "response" is an echo of what you sent. For each new one, state **the sentinel
+  that notices** and **the human it wakes**. Verify on the other side of the call, against that side's
+  own state - never against the reply the call returned.
+- **It must include its own removal.** Anything that creates - files, records, exports, logs, backups -
+  needs a retention rule in the same change. Measured 2026-11-21: ~140 `.bak` files in `docs/` with no
+  retention rule, most of them from a "back up before editing" habit.
+
+**Two boundaries here that are not engineering choices.**
+
+- **No automation may manufacture attention.** No cold outreach, no nagging growth loops, nothing that
+  spends someone else's attention without their consent. The only legitimate acquisition is being
+  findable, and being worth telling someone about. (Ted, M-9: *"We cannot force people, we can only
+  remind them."*)
+- **No automation may decide something that can hurt a person:** removing someone's content, taking
+  money back, naming a person, contacting a third party about their conduct. Intake, triage, drafting,
+  scheduling, reminding and recording may be automated. **Adjudication may not.**
+
