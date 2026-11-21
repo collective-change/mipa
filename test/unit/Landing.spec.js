@@ -108,4 +108,14 @@ describe("PageLanding.vue", () => {
       }
     }
   });
+
+  it("MIPA-65: renders the hero badge with wrap-capable class and full untruncated text in en-us and zh-tw", () => {
+    for (const locale of ["en-us", "zh-tw"]) {
+      const wrapper = mountLanding(locale);
+      const badge = wrapper.find('[data-testid="landing-hero-badge"]');
+      expect(badge.exists()).toBe(true);
+      expect(badge.classes()).toContain("hero-badge");
+      expect(badge.text()).toContain(messages[locale].landingHeroBadge);
+    }
+  });
 });

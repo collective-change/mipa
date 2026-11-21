@@ -6,10 +6,11 @@
         <q-badge
           color="blue-1"
           text-color="primary"
-          class="q-px-md q-py-xs text-subtitle2 text-weight-medium rounded-borders q-mb-md"
+          data-testid="landing-hero-badge"
+          class="hero-badge q-px-md q-py-xs text-subtitle2 text-weight-medium rounded-borders q-mb-md"
         >
           <q-icon name="hub" class="q-mr-xs" />
-          {{ $t("landingHeroBadge") }}
+          <span>{{ $t("landingHeroBadge") }}</span>
         </q-badge>
 
         <h1 class="text-h3 text-weight-bolder text-grey-9 q-my-sm hero-title">
@@ -336,6 +337,17 @@ export default {
 
 .landing-hero {
   background: linear-gradient(180deg, #f0f7fc 0%, #ffffff 100%);
+}
+
+.hero-badge {
+  max-width: 100%;
+  white-space: normal;
+  flex-wrap: wrap;
+  justify-content: center;
+  word-break: normal;
+  overflow-wrap: break-word;
+  text-align: center;
+  line-height: 1.4;
 }
 
 .hero-title {
