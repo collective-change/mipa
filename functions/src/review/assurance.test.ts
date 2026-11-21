@@ -16,6 +16,11 @@ import {
   effectiveTier,
   publicReviewLedger,
   ReviewConclusion,
+  elicitOmissionFollowUp,
+  draftUnconfirmedOmissionRecord,
+  discardAiOmissionDraft,
+  isLowConfidenceFactor,
+  checkIgnoranceSensitivity,
 } from "./assurance";
 import { CRITERIA, TIERS, LIMITS, DISCLOSURE, totalWeight } from "./rubric";
 import { JUDGE_SYSTEM_PROMPT, parseJudgeReply } from "./judge";
@@ -34,7 +39,14 @@ function goodDossier(): ReviewInput {
     modelId: "m1",
     factors: [
       { id: "f1", name: "Volunteers", initialValue: 120, units: "people", description: "Active volunteers", sourceCitation: "2025 roster" },
-      { id: "f2", name: "Meals", formula: "f1 * 3", units: "meals/day", description: "Meals served" },
+      {
+        id: "f2",
+        name: "Meals",
+        formula: "f1 * 3",
+        units: "meals/day",
+        description: "Meals served",
+        omissionRecord: "no other significant factors, because kitchen capacity and ingredients are contracted in full for 2025",
+      },
     ],
     actions: [
       {
@@ -265,4 +277,173 @@ test("a judge reply is parsed strictly", () => {
   assert.throws(() => parseJudgeReply(JSON.stringify({ scores: {}, findings: [] })));
   assert.throws(() => parseJudgeReply(JSON.stringify({ scores: { internalConsistency: 1, recalculation: 1 }, findings: [] })));
   assert.throws(() => parseJudgeReply(JSON.stringify({ scores: { internalConsistency: 2 }, findings: [] })));
+});
+
+// --- todo212: forced omission record & sensitivity to ignorance ----------------
+
+test("todo212 (regression): a model missing its dominant factor omission record can no longer reach tier2 or tier3", async () => {
+  const d = goodDossier();
+  // Exact v1.0.0 shape where outcome factor f2 had no forced omission record (previously scored 100 / tier3).
+  delete d.factors[1].omissionRecord;
+  const store = memoryReviewStore<ReviewConclusion>();
+  const { record } = await reviewDossier({ judge: judgeAll(1), store, now: () => AT }, { input: d, provider: "anthropic", model: MODEL });
+  assert.ok(record.conclusion.score < 100, `expected < 100, got ${record.conclusion.score}`);
+  assert.equal(record.conclusion.tier, "tier1", "missing omission record must block tier2 and tier3");
+  assert.ok(
+    record.conclusion.findings.some((f) => f.criterion === "antiPatterns" && f.subject === "f2" && f.code === "omission-record"),
+    "expected omission-record finding on outcome factor f2"
+  );
+  assert.equal(record.conclusion.omissionRecords[0].status, "missing");
+});
+
+test("todo212: placeholder reasons, flagged omissions and unconfirmed AI drafts block upper tiers; adding a driver satisfies the check", async () => {
+  // Placeholder underscores are rejected
+  const placeholder = goodDossier();
+  placeholder.factors[1].omissionRecord = "no other significant factors, because ____";
+  const cPlaceholder = scoreReview([...mechanicalChecks(placeholder), { id: "internalConsistency", score: 1, findings: [] }]);
+  assert.equal(cPlaceholder.tier, "tier1");
+  assert.ok(elicitOmissionFollowUp(placeholder.factors[1]).includes('What else drives "Meals"?'));
+
+  // Flagged omission is rejected
+  const flagged = goodDossier();
+  flagged.factors[1].omissionFlagged = true;
+  const cFlagged = scoreReview([...mechanicalChecks(flagged), { id: "internalConsistency", score: 1, findings: [] }]);
+  assert.equal(cFlagged.tier, "tier1");
+  assert.equal(cFlagged.omissionRecords[0].status, "flagged");
+
+  // AI ceiling: unconfirmed AI draft is marked unconfirmed + discardable in one action and blocks upper tiers
+  const aiDraft = draftUnconfirmedOmissionRecord("seasonal volatility is captured elsewhere");
+  assert.equal(aiDraft.draftedByAi, true);
+  assert.equal(aiDraft.confirmed, false);
+  assert.equal(aiDraft.discardable, true);
+  assert.equal(discardAiOmissionDraft(aiDraft), null);
+
+  const withAiDraft = goodDossier();
+  withAiDraft.factors[1].omissionRecord = aiDraft;
+  const cAi = scoreReview([...mechanicalChecks(withAiDraft), { id: "internalConsistency", score: 1, findings: [] }]);
+  assert.equal(cAi.tier, "tier1");
+  assert.equal(cAi.omissionRecords[0].status, "unconfirmed-ai-draft");
+
+  // Adding a missing dominant driver factor and wiring it into formula satisfies the record and earns tier3
+  const withAddedDriver = goodDossier();
+  withAddedDriver.factors.push({
+    id: "f3",
+    name: "KitchenCapacity",
+    initialValue: 400,
+    units: "meals/day",
+    description: "Daily kitchen throughput",
+    sourceCitation: "2025 facility audit",
+  });
+  withAddedDriver.factors[1].formula = "min(f1 * 3, f3)";
+  withAddedDriver.factors[1].omissionRecord = { addedFactorIds: ["f3"] };
+
+  const store = memoryReviewStore<ReviewConclusion>();
+  const { record } = await reviewDossier({ judge: judgeAll(1), store, now: () => AT }, { input: withAddedDriver, provider: "anthropic", model: MODEL });
+  assert.equal(record.conclusion.score, 100);
+  assert.equal(record.conclusion.tier, "tier3");
+  const ledger = publicReviewLedger(record);
+  assert.deepEqual(ledger.omissionRecords[0], {
+    factorId: "f2",
+    factorName: "Meals",
+    status: "added-driver",
+    addedFactorIds: ["f3"],
+    statement: undefined,
+  });
+});
+
+test("todo212: sensitivity to ignorance widens low-confidence factors, flips decision and names the assumption", async () => {
+  function ignoranceDossier(confidence: "low" | "high"): ReviewInput {
+    return {
+      modelId: "m-ign",
+      factors: [
+        {
+          id: "f_vol",
+          symbol: "volunteers",
+          name: "Volunteers",
+          initialValue: 100,
+          units: "people",
+          description: "Estimated active volunteers",
+          sourceCitation: confidence === "high" ? "Verified 2025 registry" : "Rough field guess",
+          confidence,
+          isEstimate: confidence === "low",
+        },
+        {
+          id: "f_out",
+          name: "Meals",
+          formula: "f_vol * 3",
+          units: "meals/day",
+          description: "Meals delivered",
+          omissionRecord: "no other significant factors, because kitchen supplies scale linearly with volunteer shifts",
+        },
+      ],
+      actions: [
+        {
+          id: "a1",
+          title: "Outreach Drive",
+          marginalTotalBenefitNpv: 7500,
+          marginalTotalCostNpv: 2500,
+          marginalNetTotalBenefitNpv: 5000,
+          totalRoi: 2,
+          outstandingDirectCosts: 1000,
+          actionLeverage: lev(5000, 2, 1000), // 10.0; at -30% -> 3.025 > 3.0, at -75% -> -0.156 < 3.0
+          deadweight: 10,
+          impacts: [{ nodeId: "f_vol", symbol: "volunteers", operand: 5 }],
+        },
+        {
+          id: "a2",
+          title: "Partner Hub",
+          marginalTotalBenefitNpv: 3000,
+          marginalTotalCostNpv: 1500,
+          marginalNetTotalBenefitNpv: 1500,
+          totalRoi: 1,
+          outstandingDirectCosts: 500,
+          actionLeverage: lev(1500, 1, 500), // 3.0
+          deadweight: 5,
+          impacts: [{ operand: 2 }],
+        },
+      ],
+      robustness: { probabilityPositive: 0.95 },
+    };
+  }
+
+  // With high confidence & citation, decision is supported and earns tier3
+  const highStore = memoryReviewStore<ReviewConclusion>();
+  const highRun = await reviewDossier({ judge: judgeAll(1), store: highStore, now: () => AT }, { input: ignoranceDossier("high"), provider: "anthropic", model: MODEL });
+  assert.equal(highRun.record.conclusion.tier, "tier3");
+  assert.equal(highRun.record.conclusion.decisionSupport.supportsDecision, true);
+  assert.equal(highRun.record.conclusion.decisionSupport.flippingAssumptions.length, 0);
+
+  // With low confidence, widened ±75% range flips from Outreach Drive to Partner Hub around 69.85
+  const lowInput = ignoranceDossier("low");
+  assert.equal(isLowConfidenceFactor(lowInput.factors[0]), true);
+  const direct = checkIgnoranceSensitivity(lowInput);
+  assert.equal(direct.decisionSupport.supportsDecision, false);
+  assert.match(direct.decisionSupport.verdict, /this model does not support this decision/i);
+  assert.equal(direct.decisionSupport.flippingAssumptions.length, 1);
+  const flip = direct.decisionSupport.flippingAssumptions[0];
+  assert.equal(flip.factorId, "f_vol");
+  assert.equal(flip.fromActionId, "a1");
+  assert.equal(flip.toActionId, "a2");
+  assert.ok(flip.turningPoint !== null && flip.turningPoint > 69 && flip.turningPoint < 70.5, `turningPoint=${flip.turningPoint}`);
+  assert.match(flip.assumption, /Volunteers/);
+
+  const lowStore = memoryReviewStore<ReviewConclusion>();
+  const lowRun = await reviewDossier({ judge: judgeAll(1), store: lowStore, now: () => AT }, { input: lowInput, provider: "anthropic", model: MODEL });
+  assert.equal(lowRun.record.conclusion.tier, "tier1", "ignorance flip blocks upper tiers");
+  assert.ok(
+    lowRun.record.conclusion.findings.some(
+      (f) => f.criterion === "robustness" && f.code === "ignorance-flip" && /Volunteers/.test(f.text)
+    )
+  );
+  const ledger = publicReviewLedger(lowRun.record);
+  assert.equal(ledger.decisionSupport.supportsDecision, false);
+  assert.match(ledger.decisionSupport.verdict, /this model does not support this decision/i);
+});
+
+test("todo212: LIMITS and judge prompt reflect both forced omission records and sensitivity to ignorance", () => {
+  const joinedLimits = LIMITS.join("\n").toLowerCase();
+  assert.ok(joinedLimits.includes("omission"), "LIMITS states what omission check cannot see");
+  assert.ok(joinedLimits.includes("low-confidence") || joinedLimits.includes("ignorance"), "LIMITS states what sensitivity to ignorance cannot see");
+  assert.ok(JUDGE_SYSTEM_PROMPT.includes("Read outcome factors"), "judge prompt includes adversarial check");
+  assert.ok(JUDGE_SYSTEM_PROMPT.includes("without deciding"), "judge prompt enforces AI ceiling");
 });

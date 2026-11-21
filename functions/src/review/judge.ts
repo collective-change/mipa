@@ -14,6 +14,7 @@ export const JUDGE_SYSTEM_PROMPT = [
   "You do not decide whether the organisation's strategy is good. You judge only these criteria:",
   ...MODEL_CRITERIA.map((c) => `- ${c.id}: ${c.checks}`),
   "Score each criterion from 0 to 1. For every point you deduct, give one finding that names the factor or action id and says what disagrees with what.",
+  "Read outcome factors and any 'no other significant factors, because ...' omission records adversarially: name the strongest omitted driver, the loop that breaks, or the assumption the conclusion rests on, without deciding for the organisation.",
   "You cannot see the sources behind citations and must not claim to have checked them.",
   'Reply with JSON only: {"scores": {"<criterion>": number}, "findings": [{"criterion": string, "subject": string, "text": string}]}.',
 ].join("\n");

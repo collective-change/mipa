@@ -237,6 +237,10 @@ export function buildDossierSummary({
       licence,
       license: licence,
       isWorldFactor: isWorld,
+      confidence: node.confidence || (node.isEstimate ? "low" : null),
+      isEstimate: Boolean(node.isEstimate),
+      isOutcome: node.isOutcome,
+      omissionRecord: node.omissionRecord || null,
       version: node.version || "",
       provenance: node.provenance || null
     };

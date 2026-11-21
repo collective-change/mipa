@@ -13,6 +13,22 @@ import { formatCurrencyValue, formatRatioValue } from "./decisionBrief";
  * 4. Produces executive findings with dignified bilingual phrasing.
  */
 
+export const LOW_CONFIDENCE_PERTURBATION_RANGE = 0.75;
+
+/**
+ * Determine whether a factor should be treated as low confidence for sensitivity to ignorance.
+ */
+export function isLowConfidenceFactor(node) {
+  if (!node) return false;
+  if (node.confidence === "low") return true;
+  if (node.confidence === "high" || node.confidence === "medium") return false;
+  return Boolean(
+    node.isEstimate ||
+    /\bestimate\b/i.test(node.notes || "") ||
+    /\bestimate\b/i.test(node.description || "")
+  );
+}
+
 /**
  * List candidate inputs that feed the compared actions' results.
  */
@@ -59,6 +75,7 @@ export function listSensitivityInputs(actionA, actionB, nodes = [], simulationPa
         if (!isNaN(operand) && operand !== 0) {
           const matchedNode = nodes.find((n) => n.id === imp.nodeId || n.symbol === imp.symbol);
           const factorName = matchedNode ? (matchedNode.name || matchedNode.symbol) : (imp.symbol || `Impact ${idx + 1}`);
+          const isLow = matchedNode ? isLowConfidenceFactor(matchedNode) : false;
           inputs.push({
             id: `${actionKey}_impact_${idx}`,
             type: "action_impact",
@@ -71,6 +88,8 @@ export function listSensitivityInputs(actionA, actionB, nodes = [], simulationPa
             baseValue: operand,
             unit: matchedNode ? (matchedNode.unit || "") : "",
             isEstimate: Boolean(matchedNode?.isEstimate || matchedNode?.notes?.includes("estimate")),
+            confidence: matchedNode?.confidence || (isLow ? "low" : "medium"),
+            isLowConfidence: isLow,
             min: operand > 0 ? operand * 0.1 : operand * 3.0,
             max: operand > 0 ? operand * 3.0 : operand * 0.1
           });
@@ -87,6 +106,7 @@ export function listSensitivityInputs(actionA, actionB, nodes = [], simulationPa
     const rawVal = Number(n.symbolFormula ?? n.sysFormula ?? n.value);
     const isConstant = n.class === "constant" || (!isNaN(rawVal) && rawVal > 0);
     if (isConstant && !isNaN(rawVal) && rawVal > 0) {
+      const isLow = isLowConfidenceFactor(n);
       inputs.push({
         id: `node_${n.symbol || n.id}`,
         type: "model_constant",
@@ -96,6 +116,9 @@ export function listSensitivityInputs(actionA, actionB, nodes = [], simulationPa
         baseValue: rawVal,
         unit: n.unit || "",
         isEstimate: Boolean(n.isEstimate || n.notes?.includes("estimate")),
+        confidence: n.confidence || (isLow ? "low" : "medium"),
+        isLowConfidence: isLow,
+        affectedActionIds: Array.isArray(n.affectedActionIds) ? n.affectedActionIds : undefined,
         min: rawVal * 0.1,
         max: rawVal * 3.0
       });
@@ -303,6 +326,104 @@ export function findTurningPoint(actionA, actionB, input, maxIterations = 24) {
 }
 
 /**
+ * Re-run action comparison with widened uncertainty ranges on low-confidence factors.
+ * Reports whether the preferred action flips and names the flipping assumption.
+ */
+export function runIgnoranceSensitivity(actionA, actionB, nodes = [], simulationParams = {}, options = {}) {
+  if (!actionA || !actionB) return null;
+
+  const lowConfidenceRange =
+    typeof options.lowConfidenceRange === "number" && options.lowConfidenceRange > 0
+      ? options.lowConfidenceRange
+      : LOW_CONFIDENCE_PERTURBATION_RANGE;
+
+  const inputs = listSensitivityInputs(actionA, actionB, nodes, simulationParams).filter(
+    (inp) => inp.isLowConfidence || inp.isEstimate || inp.confidence === "low"
+  );
+
+  const titleA = actionA.title || actionA.id || "Option A";
+  const titleB = actionB.title || actionB.id || "Option B";
+  const baseA = actionA.actionLeverage ?? 0;
+  const baseB = actionB.actionLeverage ?? 0;
+  const preferredTitle = baseA >= baseB ? titleA : titleB;
+  const challengerTitle = baseA >= baseB ? titleB : titleA;
+
+  const flippingAssumptions = [];
+
+  for (const inp of inputs) {
+    if (!inp.baseValue) continue;
+    const valLow = inp.baseValue * (1 - lowConfidenceRange);
+    const valHigh = inp.baseValue * (1 + lowConfidenceRange);
+    const widenedMin = Math.min(valLow, valHigh);
+    const widenedMax = Math.max(valLow, valHigh);
+
+    const diffBase =
+      evaluatePerturbedAction(actionA, inp, inp.baseValue).actionLeverage -
+      evaluatePerturbedAction(actionB, inp, inp.baseValue).actionLeverage;
+    const diffLow =
+      evaluatePerturbedAction(actionA, inp, valLow).actionLeverage -
+      evaluatePerturbedAction(actionB, inp, valLow).actionLeverage;
+    const diffHigh =
+      evaluatePerturbedAction(actionA, inp, valHigh).actionLeverage -
+      evaluatePerturbedAction(actionB, inp, valHigh).actionLeverage;
+
+    const flipEdges = [];
+    if ((diffBase > 0 && diffLow < 0) || (diffBase < 0 && diffLow > 0)) {
+      flipEdges.push(valLow);
+    }
+    if ((diffBase > 0 && diffHigh < 0) || (diffBase < 0 && diffHigh > 0)) {
+      flipEdges.push(valHigh);
+    }
+    if (flipEdges.length === 0) continue;
+
+    let bestTp = null;
+    for (const edge of flipEdges) {
+      const bracketMin = Math.min(inp.baseValue, edge);
+      const bracketMax = Math.max(inp.baseValue, edge);
+      const tp = findTurningPoint(actionA, actionB, {
+        ...inp,
+        min: bracketMin,
+        max: bracketMax
+      });
+      if (tp.found && (!bestTp || Math.abs(tp.percentShift) < Math.abs(bestTp.percentShift))) {
+        bestTp = tp;
+      }
+    }
+
+    const turningPoint = bestTp ? bestTp.turningPoint : flipEdges[0];
+    const percentShift = bestTp
+      ? bestTp.percentShift
+      : ((flipEdges[0] - inp.baseValue) / inp.baseValue) * 100;
+    const rangePct = Math.round(lowConfidenceRange * 100);
+    const assumption = `Assumption "${inp.name}" (base ${inp.baseValue}${inp.unit ? ` ${inp.unit}` : ""}, widened ±${rangePct}% to [${formatNumber(widenedMin, 2)}, ${formatNumber(widenedMax, 2)}]) flips preferred action from "${preferredTitle}" to "${challengerTitle}" past ${formatNumber(turningPoint, 2)} (${percentShift >= 0 ? "+" : ""}${percentShift.toFixed(1)}%).`;
+
+    flippingAssumptions.push({
+      factorId: inp.nodeId || inp.id,
+      name: inp.name,
+      symbol: inp.symbol,
+      baseValue: inp.baseValue,
+      turningPoint,
+      percentShift,
+      fromActionTitle: preferredTitle,
+      toActionTitle: challengerTitle,
+      assumption
+    });
+  }
+
+  const supportsDecision = flippingAssumptions.length === 0;
+  const verdict = supportsDecision
+    ? "Decision supported across widened low-confidence factor ranges."
+    : `This model does not support this decision: ${flippingAssumptions.map((f) => f.assumption).join(" ")}`;
+
+  return {
+    supportsDecision,
+    verdict,
+    lowConfidenceRange,
+    flippingAssumptions
+  };
+}
+
+/**
  * Generate comprehensive Sensitivity and Robustness Report (Feature 3).
  */
 export function generateSensitivityReport(actionA, actionB, nodes = [], simulationParams = {}, options = {}) {
@@ -429,6 +550,8 @@ export function generateSensitivityReport(actionA, actionB, nodes = [], simulati
     }
   }
 
+  const ignoranceSensitivity = runIgnoranceSensitivity(actionA, actionB, nodes, simulationParams, options);
+
   return {
     actionA: { id: actionA.id, title: titleA },
     actionB: { id: actionB.id, title: titleB },
@@ -438,6 +561,7 @@ export function generateSensitivityReport(actionA, actionB, nodes = [], simulati
     screenedCount: screened.length,
     flippingInputsCount: screened.filter((s) => s.flipsRanking).length,
     turningPoints,
+    ignoranceSensitivity,
     executiveSummary,
     narrative
   };

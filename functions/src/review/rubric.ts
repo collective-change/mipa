@@ -55,14 +55,14 @@ export const CRITERIA: readonly Criterion[] = Object.freeze([
     weight: 15,
     method: "mechanical",
     checks:
-      "The top-ranked action does not claim the top leverage band with deadweight, attribution and displacement all left at zero; no action claims positive leverage while every one of its impacts is zero. Each pattern found costs half the criterion.",
+      "The top-ranked action does not claim the top leverage band with deadweight, attribution and displacement all left at zero; no action claims positive leverage while every one of its impacts is zero; every outcome factor records a completed 'what else drives this?' pass (either adding a driver factor or recording 'no other significant factors, because ...' confirmed by the organisation). Each pattern found costs half the criterion.",
   },
   {
     id: "robustness",
     weight: 10,
     method: "mechanical",
     checks:
-      "The top action's Monte Carlo probability of a positive outcome; full marks at 0.9 or more, none below 0.5, linear between.",
+      "The top action's Monte Carlo probability of a positive outcome (full marks at 0.9 or more, none below 0.5, linear between), and the preferred action does not flip when low-confidence factor ranges are widened under sensitivity to ignorance.",
   },
   {
     id: "internalConsistency",
@@ -95,6 +95,8 @@ export const LIMITS: readonly string[] = Object.freeze([
   "Whether a cited source actually says what the dossier says it does: the review checks that a citation is present and, through the model, that it is plausible; it does not fetch or read the source.",
   "Whether the model's structure is the right structure: the review checks the arithmetic follows from the stated formulas, not that the formulas describe the world.",
   "Anything not entered into mipa: omitted factors, actions or side effects are invisible to every check.",
+  "Whether a recorded omission reason is true in the world: the forced omission record requires every outcome factor either to add a driver or to state 'no other significant factors, because ...' in the published record (and rejects unconfirmed AI drafts), so an omission cannot stay silent; it cannot see factors the organisation and the review model both fail to name, or verify that a stated reason holds outside the dossier.",
+  "Whether the right factors were marked low-confidence or whether the widened range covers the true ignorance: sensitivity to ignorance widens factors marked confidence 'low', flagged isEstimate (or described as an estimate), or carrying an unsourced stated value, and tests whether the preferred action flips under linear benefit scaling; it cannot see deep uncertainty on factors the organisation marked high-confidence with a citation, or non-linear structural tipping points outside the stated formulas.",
   "The model-judged criterion depends on the AI model named in the mark; another model may judge differently, which is why the model and methodology version are published with every review.",
 ]);
 
