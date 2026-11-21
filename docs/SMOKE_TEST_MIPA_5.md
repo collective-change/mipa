@@ -1,3 +1,8 @@
+> **Recipient addresses are redacted.** This document quoted a production smoke-test log verbatim,
+> which published real people's email addresses in a public repository (they remain in git history;
+> HEAD no longer carries them). **Production log output must never be pasted into a tracked file** —
+> synthesise an example instead.
+
 # MIPA-5: End-to-End Production Smoke Test Report
 
 - **Date**: 2026-11-17
@@ -89,10 +94,10 @@
   - Log output:
     ```
     Executing scheduled Monday Morning Strategic Digest
-    Sending strategic digest to marcovinab@gmail.com (1 actions)
-    Sending strategic digest to lisa.hong@drs.network (9 actions)
-    Sending strategic digest to xin@tedhwang.org (9 actions)
-    Sending strategic digest to tedchwang@gmail.com (53 actions)
+    Sending strategic digest to <recipient-1@example.org> (1 actions)
+    Sending strategic digest to <recipient-2@example.org> (9 actions)
+    Sending strategic digest to <test-account@example.org> (9 actions)
+    Sending strategic digest to <operator@example.org> (53 actions)
     ...
     Strategic Digest complete: {"actionsAggregated":260,"emailsSent":16,"processedUsers":16}
     ```
@@ -122,5 +127,5 @@
 
 ## 3. Recommendations & Next Actions
 1. **Resolve A-15 / MIPA-18**: Establish the intended registration architecture (server-side invitation validation vs open preview policy) so invited members can register self-serve.
-2. **Promote Ted's Account to SuperAdmin**: Set `isSuperAdmin: true` on `users/7hgDRxFgd7S7KNjWqWac2MgJ08B3` (`tedchwang@gmail.com`) to enable authorized manual dispatch of `triggerStrategicDigestNow`.
+2. **Promote Ted's Account to SuperAdmin**: Set `isSuperAdmin: true` on `users/<operator-uid>` (`<operator@example.org>`) to enable authorized manual dispatch of `triggerStrategicDigestNow`.
 3. **Provision Secrets in Secret Manager**: When ready to activate billing and transactional email delivery, configure `LEMON_SQUEEZY_API_KEY`, `LEMON_SQUEEZY_WEBHOOK_SECRET`, and `SENDGRID_API_KEY` in Google Cloud Secret Manager for `mipa-2`.

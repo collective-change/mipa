@@ -19,7 +19,12 @@ test.describe("MIPA-51: Org Viewer & Empty Graph Guardrails", () => {
     const passwordField = page.locator("input[type=password]").first();
 
     const testEmail = process.env.TEST_USER_EMAIL || "xin@tedhwang.org";
-    const testPassword = process.env.TEST_USER_PASSWORD || "correct-horse-42";
+    const testPassword = process.env.TEST_USER_PASSWORD;
+    // CI does NOT set this, and it must not: playwright.config defaults baseURL to
+    // PRODUCTION, so a value here is a live login, and a default value would publish it
+    // (one did - a live password string was committed here). The harness is therefore opt-in:
+    // give it a credential locally, or it skips.
+    test.skip(!testPassword, "needs TEST_USER_PASSWORD; there is deliberately no default");
 
     if (await emailField.isVisible()) {
       await emailField.fill(testEmail);
