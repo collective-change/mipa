@@ -71,3 +71,11 @@ scripts/mipa-bridge.js
 scripts/mipa-ops.json
 scripts/mipa-mcp-config.json
 
+# Private whitelist data, access logs, and credentials (scripts in private/ stay tracked)
+private/*.local*
+private/*.log
+private/*.jsonl
+private/whitelist.json
+private/*secret*
+private/*credential*
+
