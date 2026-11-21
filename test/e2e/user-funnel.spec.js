@@ -68,7 +68,8 @@ test.describe("MIPA-6: User Comprehension & Visual Funnel Harness", () => {
     const passwordField = page.locator("input[type=password]").first();
 
     const testEmail = process.env.TEST_USER_EMAIL || "xin@tedhwang.org";
-    const testPassword = process.env.TEST_USER_PASSWORD || "correct-horse-42";
+    const testPassword = process.env.TEST_USER_PASSWORD; // no default: see the note in org-viewer.spec.js
+    test.skip(!testPassword, "needs TEST_USER_PASSWORD; there is deliberately no default");
 
     await emailField.fill(testEmail);
     await passwordField.fill(testPassword);

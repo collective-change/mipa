@@ -65,3 +65,15 @@ firebase emulators:start --only auth,firestore,functions --project demo-mipa --i
 
 ## 7. Completed Follow-ups
 - Chinese short names: migrated 40 live factors with Chinese short names and 55 factors with missing/invalid symbols in production `mipa-2` to meaningful English ASCII symbols; updated referring formulas; updated AddNode.vue and NodeSummary.vue with short name input and uniqueness validation.
+
+## Never paste production log output into a tracked file
+
+This repository is PUBLIC, so committing is publishing. A smoke-test document once quoted a
+production log verbatim and published four real email addresses (including two third parties')
+and an account UID. Redacting them in HEAD does not unpublish them - they stay in git history.
+
+- **Synthesise an example** (`<recipient-1@example.org>`); never paste a real address, UID, token or
+  identifier that came from a live system.
+- **Never hardcode a credential as a test fallback** (`process.env.X || "secret"`): the fallback is
+  the leak. Require the variable and throw when it is absent.
+- Reviewers: a diff that adds a line looking like log output is a publication decision, not a doc edit.
