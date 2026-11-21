@@ -10,72 +10,79 @@ test.beforeAll(() => {
   }
 });
 
+function requireCredentials() {
+  const testEmail = process.env.TEST_USER_EMAIL;
+  const testPassword = process.env.TEST_USER_PASSWORD;
+  expect(testEmail, "TEST_USER_EMAIL must be set").toBeTruthy();
+  expect(testPassword, "TEST_USER_PASSWORD must be set").toBeTruthy();
+  return { testEmail, testPassword };
+}
+
+async function signIn(page, email, password) {
+  await page.goto("/auth?tab=login", { waitUntil: "load" });
+  const emailField = page.locator("input[type=email]").first();
+  const passwordField = page.locator("input[type=password]").first();
+  await expect(emailField).toBeVisible();
+  await expect(passwordField).toBeVisible();
+
+  await emailField.fill(email);
+  await passwordField.fill(password);
+  const submitBtn = page.locator("button[type=submit], button").filter({ hasText: /Sign in|登入/i }).first();
+  await submitBtn.click();
+
+  await expect(page).not.toHaveURL(/\/auth\b/, { timeout: 15000 });
+}
+
 test.describe("MIPA-51: Org Viewer & Empty Graph Guardrails", () => {
   test("Viewer granted via viewers.org opens model and renders non-zero graph nodes or graph canvas", async ({ page }) => {
-    // 1. Visit auth login
+    const { testEmail, testPassword } = requireCredentials();
+    await signIn(page, testEmail, testPassword);
+
+    // Navigate to org model route and verify the graph canvas actually renders
+    await page.goto("/org/mipa-ops/model/ZpZkSmHRzIpI2CvnR9Lh/ZpZkSmHRzIpI2CvnR9Lh", { waitUntil: "load" });
+
+    const svgGraph = page.locator("#dependencyGraph");
+    const noAccessBox = page.locator("[data-testid='no-model-access']");
+    await expect(svgGraph).toBeVisible({ timeout: 15000 });
+    await expect(noAccessBox).toHaveCount(0);
+
+    const shotPath = path.join(SCREENSHOT_DIR, "01_viewer_graph_nodes.png");
+    await page.screenshot({ path: shotPath, fullPage: false });
+  });
+
+  test("Unauthorized user navigating to inaccessible model sees explicit no-access state", async ({ page }) => {
+    const { testEmail, testPassword } = requireCredentials();
+    await signIn(page, testEmail, testPassword);
+
+    // Visit an inaccessible private model route while signed in
+    await page.goto("/org/org-unauthorized/model/org-unauthorized/model-unauthorized", { waitUntil: "load" });
+
+    const noAccessBox = page.locator("[data-testid='no-model-access']");
+    const viewerBanner = page.locator(".q-banner").filter({ hasText: /stakeholder|利益關係人/i });
+    await expect(noAccessBox).toBeVisible({ timeout: 15000 });
+    await expect(noAccessBox).toContainText(/No Access|無權限/i);
+    await expect(viewerBanner).toHaveCount(0);
+    await expect(page.locator("#dependencyGraph")).toHaveCount(0);
+
+    const shotPath = path.join(SCREENSHOT_DIR, "02_no_access_state.png");
+    await page.screenshot({ path: shotPath, fullPage: false });
+  });
+
+  test("Fails sign-in when password is wrong and stays on /auth", async ({ page }) => {
+    const { testEmail, testPassword } = requireCredentials();
     await page.goto("/auth?tab=login", { waitUntil: "load" });
 
     const emailField = page.locator("input[type=email]").first();
     const passwordField = page.locator("input[type=password]").first();
+    await expect(emailField).toBeVisible();
+    await expect(passwordField).toBeVisible();
 
-    const testEmail = process.env.TEST_USER_EMAIL || "xin@tedhwang.org";
-    const testPassword = process.env.TEST_USER_PASSWORD;
-    // CI does NOT set this, and it must not: playwright.config defaults baseURL to
-    // PRODUCTION, so a value here is a live login, and a default value would publish it
-    // (one did - a live password string was committed here). The harness is therefore opt-in:
-    // give it a credential locally, or it skips.
-    test.skip(!testPassword, "needs TEST_USER_PASSWORD; there is deliberately no default");
+    await emailField.fill(testEmail);
+    await passwordField.fill(`${testPassword}-wrong`);
+    const submitBtn = page.locator("button[type=submit], button").filter({ hasText: /Sign in|登入/i }).first();
+    await submitBtn.click();
 
-    if (await emailField.isVisible()) {
-      await emailField.fill(testEmail);
-      await passwordField.fill(testPassword);
-      const submitBtn = page.locator("button[type=submit], button").filter({ hasText: /Sign in|登入/i }).first();
-      await submitBtn.click();
-      await page.waitForTimeout(3000);
-    }
-
-    // 2. Navigate to org model route
-    const modelLink = page.locator("a[href*='/model/']").first();
-    if (await modelLink.isVisible()) {
-      await modelLink.click();
-      await page.waitForTimeout(3000);
-    } else {
-      await page.goto("/org/mipa-ops/model/ZpZkSmHRzIpI2CvnR9Lh/ZpZkSmHRzIpI2CvnR9Lh", { waitUntil: "load" });
-      await page.waitForTimeout(4000);
-    }
-
-    const shotPath = path.join(SCREENSHOT_DIR, "01_viewer_graph_nodes.png");
-    await page.screenshot({ path: shotPath, fullPage: false });
-
-    // 3. Verify graph SVG or access state is rendered
-    const svgGraph = page.locator("#dependencyGraph, svg").first();
-    const noAccessBox = page.locator("[data-testid='no-model-access']");
-    const hasSvg = await svgGraph.isVisible();
-    const hasNoAccess = await noAccessBox.isVisible();
-
-    // Either the graph canvas loaded or explicit no access is shown (never silent crash)
-    expect(hasSvg || hasNoAccess).toBe(true);
-
-    if (hasSvg) {
-      // When graph is displayed, verify graph container is present
-      await expect(svgGraph).toBeVisible();
-    }
-  });
-
-  test("Unauthorized stranger navigating to inaccessible model sees explicit no-access state", async ({ page }) => {
-    // Visit a non-existent or inaccessible private model route directly
-    await page.goto("/org-unauthorized/model/model-unauthorized", { waitUntil: "load" });
-    await page.waitForTimeout(3000);
-
-    const shotPath = path.join(SCREENSHOT_DIR, "02_no_access_state.png");
-    await page.screenshot({ path: shotPath, fullPage: false });
-
-    // Verify explicit no-access card is shown and NOT the misleading viewer notice over empty graph
-    const noAccessBox = page.locator("[data-testid='no-model-access']");
-    if (await noAccessBox.isVisible()) {
-      await expect(noAccessBox).toContainText(/No Access|無權限/i);
-      const viewerBanner = page.locator(".q-banner").filter({ hasText: /stakeholder|利益關係人/i });
-      await expect(viewerBanner).not.toBeVisible();
-    }
+    await expect(page.locator(".q-dialog")).toBeVisible({ timeout: 10000 });
+    await expect(page).toHaveURL(/\/auth\b/);
   });
 });
