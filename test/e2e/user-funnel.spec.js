@@ -62,23 +62,23 @@ test.describe("MIPA-6: User Comprehension & Visual Funnel Harness", () => {
   });
 
   test("Step 3: Model View & Sample Explorer", async ({ page }) => {
-    // Attempt login if credentials available, or visit demo model directly
     await page.goto("/auth?tab=login", { waitUntil: "load" });
     const emailField = page.locator("input[type=email]").first();
     const passwordField = page.locator("input[type=password]").first();
 
-    const testEmail = process.env.TEST_USER_EMAIL || "xin@tedhwang.org";
-    const testPassword = process.env.TEST_USER_PASSWORD; // no default: see the note in org-viewer.spec.js
-    test.skip(!testPassword, "needs TEST_USER_PASSWORD; there is deliberately no default");
+    const testEmail = process.env.TEST_USER_EMAIL;
+    const testPassword = process.env.TEST_USER_PASSWORD;
+    expect(testEmail, "TEST_USER_EMAIL must be set").toBeTruthy();
+    expect(testPassword, "TEST_USER_PASSWORD must be set").toBeTruthy();
 
+    await expect(emailField).toBeVisible();
+    await expect(passwordField).toBeVisible();
     await emailField.fill(testEmail);
     await passwordField.fill(testPassword);
     const submitBtn = page.locator("button[type=submit], button").filter({ hasText: /Sign in|登入/i }).first();
     await submitBtn.click();
 
-    // Wait for navigation or notice
-    await page.waitForTimeout(3000);
-    const currentUrl = page.url();
+    await expect(page).not.toHaveURL(/\/auth\b/, { timeout: 15000 });
 
     const modelShot = path.join(SCREENSHOT_DIR, "04_model_view.png");
     await page.screenshot({ path: modelShot, fullPage: false });

@@ -33,8 +33,16 @@ jobs:
         run: npx --yes firebase-tools@15.36.0 emulators:exec --only auth,firestore --project demo-mipa "npm test"
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
-      - name: Run E2E Visual Funnel Harness
-        run: npm run test:e2e
+      - name: Run E2E Visual Funnel Harness (Local App + Auth & Firestore Emulators)
+        env:
+          BASE_URL: http://127.0.0.1:9000
+          useEmulators: "true"
+          apiKey: demo-api-key
+          projectId: demo-mipa
+          authDomain: demo-mipa.firebaseapp.com
+          TEST_USER_EMAIL: viewer@demo-mipa.local
+          TEST_USER_PASSWORD: e2e-emulator-${{ github.run_id }}
+        run: npx --yes firebase-tools@15.36.0 emulators:exec --only auth,firestore --project demo-mipa "node scripts/seed-e2e-emulator.mjs && npm run test:e2e"
       - run: npm run build
 
   functions:
