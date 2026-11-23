@@ -1,6 +1,7 @@
 // @vitest-environment node
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { signedSqrt } from "@/utils/leverage";
 import {
   COUNTERFACTUAL_METHODS,
   ARM_TYPES,
@@ -228,7 +229,7 @@ describe("MIPA-40: Accept an OBSERVED counterfactual & Attribution Loop", () => 
       expect(n.outstandingDirectCosts).toBe(cost);
       expect(n.marginalWorldBenefitNpv).toBeCloseTo(benefit, 9);
       expect(n.totalRoi).toBeCloseTo(roi, 9);
-      expect(n.actionLeverage).toBeCloseTo(((net * roi) / cost) * Math.sign(net), 9);
+      expect(n.actionLeverage).toBeCloseTo(signedSqrt(((net * roi) / cost) * Math.sign(net)), 9);
 
       // Verify counterfactual status on declared action
       expect(n.counterfactualStatus).toBe("declared");
@@ -279,7 +280,7 @@ describe("MIPA-40: Accept an OBSERVED counterfactual & Attribution Loop", () => 
       const expectedBenefit = npvOfConstant(expectedMarginalTrees);
       const expectedNet = expectedBenefit - cost;
       const expectedRoi = expectedNet / cost;
-      const expectedLeverage = ((expectedNet * expectedRoi) / cost) * Math.sign(expectedNet);
+      const expectedLeverage = signedSqrt(((expectedNet * expectedRoi) / cost) * Math.sign(expectedNet));
 
       expect(n.marginalWorldBenefitNpv).toBeCloseTo(expectedBenefit, 6);
       expect(n.totalRoi).toBeCloseTo(expectedRoi, 6);

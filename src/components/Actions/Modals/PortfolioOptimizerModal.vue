@@ -161,7 +161,7 @@
                 <q-card flat bordered class="bg-white q-pa-sm text-center">
                   <div class="text-caption text-grey-7">{{ $t("Leverage") }}</div>
                   <div class="text-h6 text-weight-bold text-primary">
-                    {{ formatNumber(result.portfolioLeverage, 2) }}x
+                    {{ formatNumber(result.portfolioLeverage, 2) }}
                   </div>
                 </q-card>
               </div>
@@ -335,7 +335,7 @@ export default {
         { name: "hrs", label: this.$t("estEffortHrs"), field: (row) => `${formatNumber(row.estEffortHrs || 0, 1)}h`, align: "right" },
         { name: "cost", label: this.$t("outstandingDirectCost"), field: (row) => `${formatNumber(row.outstandingDirectCosts ?? row.outstandingDirectCost ?? 0, 2)} ${this.currency}`, align: "right" },
         { name: "netBenefit", label: this.$t("marginalNetTotalBenefitNpv"), field: (row) => `${formatNumber(row.marginalNetTotalBenefitNpv || 0, 2)} ${this.currency}`, align: "right" },
-        { name: "leverage", label: this.$t("Leverage"), field: (row) => `${formatNumber(row.actionLeverage || 0, 2)}x`, align: "right" }
+        { name: "leverage", label: this.$t("Leverage"), field: (row) => formatNumber(row.actionLeverage || 0, 2), align: "right" }
       ];
     },
     excludedColumns() {

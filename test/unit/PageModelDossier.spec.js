@@ -89,7 +89,7 @@ describe("PageModelDossier.vue", () => {
     expect(wrapper.vm.rawActions).toHaveLength(2);
     expect(wrapper.vm.dossier.actionsCount).toBe(2);
     expect(wrapper.vm.dossier.rankedActions[0].title).toBe("Top action");
-    expect(wrapper.vm.topLeverageFormatted).toBe("12.25x");
+    expect(wrapper.vm.topLeverageFormatted).toBe("12.25");
   });
 
   it("MIPA-14: a failed actions read leaves the dossier rendering with zero actions", async () => {

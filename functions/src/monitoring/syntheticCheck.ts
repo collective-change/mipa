@@ -41,8 +41,8 @@ export interface SyntheticCheckOptions {
 }
 
 /**
- * Calculates action leverage per Mipa core domain formula:
- * actionLeverage = (netBenefitNpv * totalRoi / outstandingDirectCosts) * sign(net)
+ * Calculates action leverage per Mipa core domain formula (signed square root, todo242):
+ * actionLeverage = sign(net) * sqrt(abs(netBenefitNpv * totalRoi / outstandingDirectCosts))
  */
 export function evaluateSyntheticModelCalculation(
   netBenefitNpv: number,
@@ -50,8 +50,8 @@ export function evaluateSyntheticModelCalculation(
   outstandingDirectCosts: number
 ): number {
   if (outstandingDirectCosts <= 0) return 0;
-  const signNet = netBenefitNpv >= 0 ? 1 : -1;
-  return (netBenefitNpv * totalRoi / outstandingDirectCosts) * signNet;
+  const rawLeverage = (netBenefitNpv * totalRoi / outstandingDirectCosts) * (netBenefitNpv >= 0 ? 1 : -1);
+  return Math.sign(rawLeverage) * Math.sqrt(Math.abs(rawLeverage));
 }
 
 /**
@@ -192,7 +192,7 @@ export async function executeSyntheticFunnelCheck(
     const mockAction = {
       id: "synthetic-action-1",
       title: "Clean Energy Transition",
-      leverage: 19.36,
+      leverage: 4.4,
       rank: 1
     };
 
