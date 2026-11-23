@@ -356,4 +356,44 @@ describe("PageModelDossier.vue", () => {
     expect(secondWrapper.vm.rawModel.name).toBe("河濱食物銀行（範例）");
     expect(secondWrapper.vm.dossier.actionsCount).toBe(3);
   });
+
+  it("todo236: dossier table headers carry units for benefit (currency) and roi (dimensionless multiple)", async () => {
+    mockGetActions.mockResolvedValue({
+      data: {
+        actions: [
+          { id: "a1", title: "Action A", actionLeverage: 94928.48, marginalTotalBenefitNpv: 278194, totalRoi: 308.1 }
+        ]
+      }
+    });
+    const wrapper = mountDossier("en-us");
+    await wrapper.vm.fetchDossierData();
+
+    // Leverage formatted with thousands separator and unitless (no 'x')
+    expect(wrapper.vm.topLeverageFormatted).toBe("94,928.48");
+
+    // Column headers carry units
+    const cols = wrapper.vm.actionColumns;
+    const benefitCol = cols.find(c => c.name === "benefit");
+    const roiCol = cols.find(c => c.name === "roi");
+    const leverageCol = cols.find(c => c.name === "leverage");
+
+    expect(benefitCol).toBeDefined();
+    expect(benefitCol.label).toBe("Total benefit (USD)");
+
+    expect(roiCol).toBeDefined();
+    expect(roiCol.label).toBe("ROI (x)");
+
+    expect(leverageCol).toBeDefined();
+    expect(leverageCol.label).toContain("Leverage");
+
+    // In zh-tw locale with TWD currency
+    wrapper.vm.rawModel = { ...wrapper.vm.rawModel, currency: "TWD" };
+    wrapper.vm.$i18n.locale = "zh-tw";
+    await wrapper.vm.$nextTick();
+    const colsZh = wrapper.vm.actionColumns;
+    const benefitColZh = colsZh.find(c => c.name === "benefit");
+    const roiColZh = colsZh.find(c => c.name === "roi");
+    expect(benefitColZh.label).toBe("總邊際效益 (TWD)");
+    expect(roiColZh.label).toBe("總 ROI (x)");
+  });
 });

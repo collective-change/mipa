@@ -609,11 +609,8 @@ export default {
   },
   computed: {
     isPartialView() {
-      return (
-        !this.showingAllNodes &&
-        typeof this.nodesTotalCount === "number" &&
-        this.nodesTotalCount > this.rawNodes.length
-      );
+      return !this.showingAllNodes && typeof this.nodesTotalCount === "number" &&
+        this.nodesTotalCount > this.rawNodes.length;
     },
     modelId() {
       return this.$route.params.modelId;
@@ -639,12 +636,15 @@ export default {
       const lev = this.dossier.topAction.actionLeverage;
       return this.formatNumber(lev, 2);
     },
+    currency() {
+      return (this.rawModel && this.rawModel.currency) || (this.rawOrg && this.rawOrg.currency) || "USD";
+    },
     actionColumns() {
       const cols = [
         { name: "title", label: this.$t("Title"), field: "title", align: "left", sortable: true },
         { name: "leverage", label: this.$t("Leverage") + " (效應比)", field: "actionLeverage", align: "center", sortable: true },
-        { name: "benefit", label: this.$t("marginalTotalBenefitNpv"), field: "marginalTotalBenefitNpv", align: "right" },
-        { name: "roi", label: this.$t("totalRoi"), field: "totalRoi", align: "right" },
+        { name: "benefit", label: `${this.$t("marginalTotalBenefitNpv")} (${this.currency})`, field: "marginalTotalBenefitNpv", align: "right" },
+        { name: "roi", label: `${this.$t("totalRoi")} (x)`, field: "totalRoi", align: "right" },
         {
           name: "counterfactualArm",
           label: this.$t("counterfactualArmLabel") || "Counterfactual Arm",
