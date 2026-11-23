@@ -4,7 +4,10 @@ import {
   evaluatePerturbedAction,
   screenInputSensitivity,
   findTurningPoint,
-  generateSensitivityReport
+  generateSensitivityReport,
+  LOW_CONFIDENCE_PERTURBATION_RANGE,
+  isLowConfidenceFactor,
+  runIgnoranceSensitivity
 } from "@/utils/sensitivityAnalysis";
 
 const mockNodes = [
@@ -164,5 +167,61 @@ describe("Feature 3: Sensitivity & Turning-Point Analysis Engine", () => {
     expect(report50.perturbationRange).toBe(0.50);
     expect(report50.perturbationPct).toBe(50);
     expect(report50.narrative).toContain("±50% 區間");
+  });
+
+  it("todo212: identifies low-confidence factors and names flipping assumption under sensitivity to ignorance", () => {
+    expect(isLowConfidenceFactor({ confidence: "low" })).toBe(true);
+    expect(isLowConfidenceFactor({ isEstimate: true })).toBe(true);
+    expect(isLowConfidenceFactor({ notes: "Based on field estimate" })).toBe(true);
+    expect(isLowConfidenceFactor({ confidence: "high", isEstimate: true })).toBe(false);
+
+    const nodes = [
+      {
+        id: "node_reach",
+        symbol: "reachPerEvent",
+        name: "Household Reach per Event",
+        unit: "households",
+        class: "constant",
+        sysFormula: "100",
+        confidence: "low",
+        isEstimate: true,
+        affectedActionIds: ["act_outreach"]
+      }
+    ];
+    const actionOutreach = {
+      id: "act_outreach",
+      title: "Outreach Campaign",
+      actionLeverage: 10,
+      marginalTotalBenefitNpv: 7500,
+      marginalTotalCostNpv: 2500,
+      marginalNetTotalBenefitNpv: 5000,
+      outstandingDirectCosts: 1000,
+      totalRoi: 2,
+      impacts: []
+    };
+    const actionPartner = {
+      id: "act_partner",
+      title: "Local Hub Partner",
+      actionLeverage: 3,
+      marginalTotalBenefitNpv: 3000,
+      marginalTotalCostNpv: 1500,
+      marginalNetTotalBenefitNpv: 1500,
+      outstandingDirectCosts: 500,
+      totalRoi: 1,
+      impacts: []
+    };
+
+    // Standard +/-30% range holds (at 70, Outreach leverage is 3.025 > 3.0), while widened +/-75% flips
+    const ignorance = runIgnoranceSensitivity(actionOutreach, actionPartner, nodes, {}, {});
+    expect(ignorance.lowConfidenceRange).toBe(LOW_CONFIDENCE_PERTURBATION_RANGE);
+    expect(ignorance.supportsDecision).toBe(false);
+    expect(ignorance.verdict.toLowerCase()).toContain("this model does not support this decision");
+    expect(ignorance.flippingAssumptions).toHaveLength(1);
+    expect(ignorance.flippingAssumptions[0].name).toBe("Household Reach per Event");
+    expect(ignorance.flippingAssumptions[0].turningPoint).toBeGreaterThan(69);
+    expect(ignorance.flippingAssumptions[0].turningPoint).toBeLessThan(70.5);
+
+    const fullReport = generateSensitivityReport(actionOutreach, actionPartner, nodes, {}, { locale: "en-us", currency: "USD" });
+    expect(fullReport.ignoranceSensitivity.supportsDecision).toBe(false);
   });
 });

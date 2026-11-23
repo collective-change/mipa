@@ -28,7 +28,7 @@ import type { ProviderId } from "../ai/providers";
 // The version of the published mipa methodology an automated review checks
 // against. Bump it whenever the rubric, its weights or the review prompt
 // change: a review run under a new methodology is a different claim.
-export const METHODOLOGY_VERSION = "1.0.0";
+export const METHODOLOGY_VERSION = "1.1.0";
 
 // Shape version of the stored provenance block itself.
 export const PROVENANCE_SCHEMA_VERSION = 1;
