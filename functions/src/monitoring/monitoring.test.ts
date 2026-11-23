@@ -47,11 +47,11 @@ test("dispatchProductionAlert dispatches to specified channel with audit record"
 });
 
 test("evaluateSyntheticModelCalculation calculates action leverage with 100% domain fidelity", () => {
-  // Formula: actionLeverage = (netBenefitNpv * totalRoi / outstandingDirectCosts) * sign(net)
+  // Formula: actionLeverage = Math.sign(net) * Math.sqrt(Math.abs((netBenefitNpv * totalRoi / outstandingDirectCosts))) (todo242)
   // Solar Fleet: netBenefitNpv = $220,000, totalRoi = 4.4, directCosts = $50,000
-  // expected: (220,000 * 4.4 / 50,000) * 1 = 19.36
+  // raw: (220,000 * 4.4 / 50,000) * 1 = 19.36; signedSqrt(19.36) = 4.4
   const leverage = evaluateSyntheticModelCalculation(220000, 4.4, 50000);
-  assert.equal(Math.round(leverage * 100) / 100, 19.36);
+  assert.equal(Math.round(leverage * 100) / 100, 4.4);
 
   // When direct costs <= 0, leverage is 0
   assert.equal(evaluateSyntheticModelCalculation(1000, 2.0, 0), 0);
@@ -59,8 +59,9 @@ test("evaluateSyntheticModelCalculation calculates action leverage with 100% dom
 
   // Negative net benefit carries negative sign
   // (totalRoi is netBenefit / denominator, so totalRoi is also negative when netBenefit is negative)
+  // raw: ((-50000 * -0.5) / 100000) * -1 = -0.25; signedSqrt(-0.25) = -0.5
   const negativeLeverage = evaluateSyntheticModelCalculation(-50000, -0.5, 100000);
-  assert.equal(negativeLeverage, -0.25);
+  assert.equal(negativeLeverage, -0.5);
 });
 
 test("executeSyntheticFunnelCheck passes all 4 steps when services are normal", async () => {

@@ -5,6 +5,7 @@
 // independently in each test rather than copied from the worker's output.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { signedSqrt } from "@/utils/leverage";
 import {
   node,
   message,
@@ -378,7 +379,7 @@ describe("actions", () => {
     expect(n.marginalWorldBenefitNpv).toBeCloseTo(benefit, 9);
     expect(n.marginalNetTotalBenefitNpv).toBeCloseTo(net, 9);
     expect(n.totalRoi).toBeCloseTo(roi, 9);
-    expect(n.actionLeverage).toBeCloseTo(((net * roi) / cost) * Math.sign(net), 9);
+    expect(n.actionLeverage).toBeCloseTo(signedSqrt(((net * roi) / cost) * Math.sign(net)), 9);
     expect(result.effectiveChainedCostsAndImpacts.includedActionIds).toEqual(["plant"]);
   });
 

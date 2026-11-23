@@ -2,6 +2,7 @@
 import { create, all } from "mathjs";
 import { evaluateGuardrailViolations } from "@/utils/guardrails";
 import { isCurrencyRoleNode } from "@/utils/util-model-draft";
+import { signedSqrt } from "@/utils/leverage";
 import {
   getCounterfactualMethodLabel,
   formatCounterfactualStatement,
@@ -21,7 +22,6 @@ import {
 
 const math = create(all);
 
-//var idb = {}; //placeholder for IndexedDB
 
 var firebaseApp, firebaseAuth, firebaseDb;
 
@@ -1026,14 +1026,15 @@ function calcActionResultsFromTimeSeries(
     totalRoi = marginalNetTotalBenefitNpv / totalCostDenominator;
   }
 
-  // Leverage is sign(net) * net^2 / (C * (C + E)) where C = outstandingDirectCosts.
+  // Leverage is signedSqrt(sign(net) * net^2 / (C * (C + E))) where C = outstandingDirectCosts (todo242).
   // Defined as null when C <= 0 (e.g. fully complete or zero outstanding cost),
   // preventing unbounded Infinity or NaN values from dominating action rankings.
   let actionLeverage = null;
   if (outstandingDirectCosts > 0 && totalRoi !== null) {
-    actionLeverage =
+    actionLeverage = signedSqrt(
       ((marginalNetTotalBenefitNpv * totalRoi) / outstandingDirectCosts) *
-      Math.sign(marginalNetTotalBenefitNpv);
+      Math.sign(marginalNetTotalBenefitNpv)
+    );
   }
 
   if (isNaN(totalRoi) || !isFinite(totalRoi)) totalRoi = null;

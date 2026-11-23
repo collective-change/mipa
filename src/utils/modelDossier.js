@@ -3,6 +3,7 @@ import { runMonteCarloSimulation } from "@/utils/monteCarlo";
 import { isWorldFactor } from "@/utils/worldModel";
 import { sumPortfolioPressures } from "@/utils/conversionFactors";
 import { buildActionCounterfactualSummary } from "@/utils/counterfactual";
+import { signedSqrt } from "@/utils/leverage";
 import {
   generateCoverageStatement,
   formatDimensionWeightSource,
@@ -145,7 +146,7 @@ function simulateSampleAction(action, baselineSeries, scale) {
   const totalRoi = totalCostDenominator > 0 ? marginalNetTotalBenefitNpv / totalCostDenominator : null;
   const actionLeverage =
     outstandingDirectCosts > 0 && totalRoi !== null
-      ? ((marginalNetTotalBenefitNpv * totalRoi) / outstandingDirectCosts) * Math.sign(marginalNetTotalBenefitNpv)
+      ? signedSqrt(((marginalNetTotalBenefitNpv * totalRoi) / outstandingDirectCosts) * Math.sign(marginalNetTotalBenefitNpv))
       : null;
 
   return {

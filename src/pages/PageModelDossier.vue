@@ -167,7 +167,7 @@
               <q-td :props="props">
                 <div class="row items-center justify-center q-gutter-xs">
                   <q-chip dense color="blue-1" text-color="primary" class="text-weight-bold">
-                    {{ Number(props.value || 0).toFixed(2) }}x
+                    {{ formatNumber(props.value, 2) }}
                   </q-chip>
                   <q-badge
                     v-if="props.row.valueFlags && props.row.valueFlags.actionLeverage"
@@ -636,8 +636,8 @@ export default {
     },
     topLeverageFormatted() {
       if (!this.dossier.topAction) return "-";
-      const lev = Number(this.dossier.topAction.actionLeverage) || 0;
-      return `${lev.toFixed(2)}x`;
+      const lev = this.dossier.topAction.actionLeverage;
+      return this.formatNumber(lev, 2);
     },
     actionColumns() {
       const cols = [
