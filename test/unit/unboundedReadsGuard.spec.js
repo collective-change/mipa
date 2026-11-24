@@ -8,7 +8,9 @@ import {
   scanSourceForUnboundedReads,
   scanWorkspaceForUnboundedReads,
   validateExceptionList,
-  measureOrgFirestoreReadCost
+  measureOrgFirestoreReadCost,
+  findMatchingException,
+  normalizeCode
 } from "@/utils/unboundedReadsGuard";
 
 describe("MIPA-45: Unbounded Firestore Read Guard & Read Cost Measurement", () => {
@@ -181,5 +183,77 @@ describe("MIPA-45: Unbounded Firestore Read Guard & Read Cost Measurement", () =
     expect(costReport.largeScaleOrg.bounded.monthlyReads).toBe(237500);
     expect(costReport.largeScaleOrg.savings.monthlyReadsSaved).toBe(304300);
     expect(costReport.largeScaleOrg.savings.reductionPct).toBeCloseTo(56.16, 1);
+  });
+
+  describe("todo254: Anchor-based exception matching and line-shift tolerance", () => {
+    it("an edit that shifts an exempted read's line (e.g. inserting two filler lines above it) does not break the guard", () => {
+      const original = fs.readFileSync(path.resolve(process.cwd(), "functions/src/notifications/weeklyDigest.ts"), "utf8");
+      const lines = original.split(/\r?\n/);
+      // Insert two filler lines above line 512 (e.g. at line 500)
+      lines.splice(499, 0, "// todo254: filler line 1", "// todo254: filler line 2");
+      const shiftedSource = lines.join("\n");
+
+      const scan = scanSourceForUnboundedReads(shiftedSource, "functions/src/notifications/weeklyDigest.ts");
+      expect(scan.violations).toEqual([]);
+      // The exempted read was shifted from line 512 to 514, and is matched cleanly via its anchor
+      expect(scan.approvedExceptionsHit.some((e) => e.id === "WEEKLY-DIGEST-FETCH-MOCK-FALLBACK" && e.line === 514)).toBe(true);
+    });
+
+    it("a genuinely new unbounded read at a previously-exempted line still fails (negative control)", () => {
+      const original = fs.readFileSync(path.resolve(process.cwd(), "functions/src/notifications/weeklyDigest.ts"), "utf8");
+      const lines = original.split(/\r?\n/);
+      // At line 512 (0-based 511), replace the exempted read with an unauthorized unbounded read
+      lines[511] = "      const snap = await db.collection('unauthorizedNewUnboundedCollection').get();";
+      const tamperedSource = lines.join("\n");
+
+      const scan = scanSourceForUnboundedReads(tamperedSource, "functions/src/notifications/weeklyDigest.ts");
+      expect(scan.violations.length).toBeGreaterThanOrEqual(1);
+      const violation = scan.violations.find((v) => v.line === 512);
+      expect(violation).toBeDefined();
+      expect(violation.message).toContain("unauthorizedNewUnboundedCollection");
+    });
+
+    it("findMatchingException resolves by anchor across proximity window and ignores non-matching code", () => {
+      const mockExceptions = [
+        {
+          id: "EX-1",
+          file: "src/store/test-store.js",
+          line: 20,
+          anchor: 'collection(firebaseDb, "actions")',
+          date: "2026-11-24",
+          reason: "Approved exception for testing anchor matching logic."
+        }
+      ];
+
+      // Match with shifted line within proximity window (line 25 in a 30-line file)
+      const validLines = Array(30).fill("// filler");
+      validLines[24] = 'const q = collection(firebaseDb, "actions");';
+      const match = findMatchingException(mockExceptions, "src/store/test-store.js", 25, {
+        rawLines: validLines
+      });
+      expect(match).not.toBeNull();
+      expect(match?.id).toBe("EX-1");
+
+      // Mismatch when anchor is absent even if line is identical (line 20)
+      const mismatchLines = Array(30).fill("// filler");
+      mismatchLines[19] = "const q = collection(firebaseDb, 'completelyDifferentCollection');";
+      const mismatch = findMatchingException(mockExceptions, "src/store/test-store.js", 20, {
+        rawLines: mismatchLines
+      });
+      expect(mismatch).toBeNull();
+
+      // Mismatch when exception has already been claimed in the same file
+      const claimedSet = new Set(["EX-1"]);
+      const alreadyClaimed = findMatchingException(mockExceptions, "src/store/test-store.js", 25, {
+        rawLines: validLines,
+        claimedIds: claimedSet
+      });
+      expect(alreadyClaimed).toBeNull();
+    });
+
+    it("normalizeCode handles whitespace, newlines, and punctuation variations", () => {
+      expect(normalizeCode("  foo(  bar ,  baz  ) ")).toBe("foo(bar,baz)");
+      expect(normalizeCode("a\n  ? b\n  : c")).toBe("a?b:c");
+    });
   });
 });

@@ -46,13 +46,15 @@ export const KNOWN_FIXED_INSTANCES = [
 /**
  * Explicit dated exception registry for collection reads that are intentionally unbounded
  * or bounded by user/org invariants other than limit()/window().
- * Every entry requires a non-empty reason and an ISO YYYY-MM-DD date.
+ * Every entry requires an anchor signature (statement/call pattern), a non-empty reason,
+ * and an ISO YYYY-MM-DD date. A recorded baseline line number is preserved as a proximity hint.
  */
 export const UNBOUNDED_READ_EXCEPTIONS = [
   {
     id: "STARTER-NODES-INIT",
     file: "src/store/store-model.js",
     line: 159,
+    anchor: 'collection(firebaseDb, "models", payload.modelId, "nodes")',
     date: "2026-11-20",
     reason: "Runs once during createInitialNodes immediately after writing the 7 starter role factors (fixed cardinality = 7)."
   },
@@ -60,6 +62,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "MIPA-23-LOAD-ALL",
     file: "src/store/store-model.js",
     line: 334,
+    anchor: 'isUnbounded ? collection(firebaseDb, "models", modelId, "nodes")',
     date: "2026-11-20",
     reason: "MIPA-23: Explicit user-triggered 'Load all factors' opt-in branch (isUnbounded) after default limit(50) bounded graph load."
   },
@@ -67,6 +70,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "MIPA-38-LOAD-ALL",
     file: "src/pages/PageModelDossier.vue",
     line: 743,
+    anchor: "showAll ? nodesCol : query(nodesCol, limit(this.nodesLimit))",
     date: "2026-11-20",
     reason: "MIPA-38: Explicit user-triggered 'Load all factors' opt-in branch (showAll) on public dossier after default limit(50) partial view."
   },
@@ -74,6 +78,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "USER-UNREAD-CHATS",
     file: "src/store/store-chats.js",
     line: 139,
+    anchor: 'bindFirestoreRef("unreadChats"',
     date: "2026-11-20",
     reason: "Scoped strictly to signed-in user's currently unread chats (members array-contains uid && unreadBy.<uid> == true)."
   },
@@ -81,6 +86,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "USER-MY-INVITATIONS",
     file: "src/store/store-members.js",
     line: 133,
+    anchor: 'bindFirestoreRef("myInvitations"',
     date: "2026-11-20",
     reason: "Scoped strictly to pending invitations addressed to the signed-in user's normalized lowercase email."
   },
@@ -88,6 +94,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "ORG-INVITATIONS-SEAT-BOUNDED",
     file: "src/store/store-members.js",
     line: 144,
+    anchor: 'bindFirestoreRef("orgInvitations"',
     date: "2026-11-20",
     reason: "Bounded by construction to organization tier seatLimit (1..150) enforced server-side in functions/src/orgMembers.ts createInvitation."
   },
@@ -95,6 +102,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "USER-ORGS-MEMBERSHIP",
     file: "src/store/store-orgs.js",
     line: 267,
+    anchor: 'bindFirestoreRef("orgs"',
     date: "2026-11-20",
     reason: "Scoped to organizations where the signed-in user is an active member (users array-contains uid)."
   },
@@ -102,6 +110,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "ORG-MEMBERS-SEAT-BOUNDED",
     file: "src/store/store-users.js",
     line: 55,
+    anchor: 'bindFirestoreRef("currentOrgUsers"',
     date: "2026-11-20",
     reason: "Bounded by construction to organization tier seatLimit (1..150) enforced server-side in functions/src/orgMembers.ts acceptInvitation."
   },
@@ -109,6 +118,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "EARLY-ACCESS-INVITE-FALLBACK",
     file: "src/utils/earlyAccess.js",
     line: 61,
+    anchor: 'where("email", "==", normalized)',
     date: "2026-11-20",
     reason: "Client fallback when checkUserAccess callable is unavailable; scoped to single normalized email address."
   },
@@ -116,6 +126,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "WORKER-CHAINED-ACTIONS-IN-LIST",
     file: "src/workers/calcWorker.js",
     line: 885,
+    anchor: 'where("id", "in", actionIds)',
     date: "2026-11-20",
     reason: "Bounded by explicit actionIds array via Firestore 'in' filter (max 30 IDs per query)."
   },
@@ -123,6 +134,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "ORG-MODELS-TX-SYNC-BY-ORGID",
     file: "functions/src/orgMembers.ts",
     line: 42,
+    anchor: 'where("orgId", "==", orgId)',
     date: "2026-11-20",
     reason: "Admin transaction syncing member editors.users across an organization's models during membership changes."
   },
@@ -130,6 +142,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "ORG-MODELS-TX-SYNC-LEGACY",
     file: "functions/src/orgMembers.ts",
     line: 43,
+    anchor: 'where("viewers.org", "array-contains", orgId)',
     date: "2026-11-20",
     reason: "Admin transaction syncing member editors.users across legacy viewers.org models during membership changes."
   },
@@ -137,6 +150,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "ORG-INVITATIONS-CAPACITY-CHECK",
     file: "functions/src/orgMembers.ts",
     line: 147,
+    anchor: "tx.get(invitationsCol)",
     date: "2026-11-20",
     reason: "Admin transaction counting pending org invitations (bounded <= seatLimit 1..150) during createInvitation."
   },
@@ -144,6 +158,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "WEEKLY-DIGEST-FETCH-MOCK-FALLBACK",
     file: "functions/src/notifications/weeklyDigest.ts",
     line: 512,
+    anchor: 'typeof col.limit === "function" ? await col.limit(1000).get() : await col.get()',
     date: "2026-11-20",
     reason: "MIPA-37: Test-mock fallback branch only reached when mock collection lacks .limit(); production uses db.getAll or .limit(1000)."
   },
@@ -151,6 +166,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
     id: "WEEKLY-DIGEST-ACTIONS-MOCK-FALLBACK",
     file: "functions/src/notifications/weeklyDigest.ts",
     line: 580,
+    anchor: 'typeof actionsQuery.limit === "function" ? await actionsQuery.limit(actionCap).get() : await actionsQuery.get()',
     date: "2026-11-20",
     reason: "MIPA-37: Test-mock fallback branch only reached when mock query lacks .limit(); production always executes .limit(actionCap)."
   }
@@ -502,9 +518,68 @@ function normalizeFilePath(filePath) {
   return String(filePath || "").replace(/\\/g, "/");
 }
 
-function findMatchingException(exceptions, filePath, line) {
+export function normalizeCode(str) {
+  return String(str || "")
+    .replace(/\s+/g, " ")
+    .replace(/\s*([(),?:;=])\s*/g, "$1")
+    .trim();
+}
+
+/**
+ * Resolves a registered exception against a detected unbounded read site.
+ * Prefers stable code anchor matching (statement/expression snippet) near reportLine,
+ * falling back to proximity within recorded line window, or legacy line match.
+ */
+export function findMatchingException(exceptions, filePath, line, context = {}) {
   const norm = normalizeFilePath(filePath);
-  return (exceptions || []).find((ex) => normalizeFilePath(ex.file) === norm && Number(ex.line) === Number(line));
+  const candidates = (exceptions || []).filter((ex) => normalizeFilePath(ex.file) === norm);
+  if (candidates.length === 0) return null;
+
+  const { rawLines, effective, claimedIds } = context;
+
+  let snippetWindow = "";
+  if (rawLines && Array.isArray(rawLines)) {
+    const start = Math.max(0, line - 4);
+    const end = Math.min(rawLines.length, line + 3);
+    snippetWindow = rawLines.slice(start, end).join("\n");
+  }
+  const normSnippetWindow = normalizeCode(snippetWindow);
+  const normEffective = normalizeCode(effective);
+
+  for (const ex of candidates) {
+    if (claimedIds && claimedIds.has(ex.id)) {
+      continue;
+    }
+
+    // 1. Anchor-based matching: anchor signature must match near the reportLine or in the read expression
+    if (ex.anchor) {
+      const normAnchor = normalizeCode(ex.anchor);
+      const anchorMatches =
+        normSnippetWindow.includes(normAnchor) ||
+        normEffective.includes(normAnchor);
+
+      if (!anchorMatches) {
+        continue;
+      }
+
+      // If line is also recorded, ensure reportLine is within reasonable proximity (default window: 80 lines)
+      if (typeof ex.line === "number" && ex.line > 0) {
+        const windowSize = ex.window || 80;
+        if (Math.abs(line - ex.line) > windowSize) {
+          continue;
+        }
+      }
+
+      return ex;
+    }
+
+    // 2. Legacy fallback: bare line number match
+    if (typeof ex.line === "number" && Number(ex.line) === Number(line)) {
+      return ex;
+    }
+  }
+
+  return null;
 }
 
 function buildViolation(filePath, line, rawLines) {
@@ -531,6 +606,7 @@ export function scanSourceForUnboundedReads(sourceText, filePath, exceptions = U
   const violations = [];
   const approvedExceptionsHit = [];
   const recordedSites = new Set();
+  const claimedExceptionIds = new Set();
   let checkedReads = 0;
 
   const inspectReadCandidate = (exprText, exprOffset, sinkLine) => {
@@ -603,8 +679,14 @@ export function scanSourceForUnboundedReads(sourceText, filePath, exceptions = U
     if (recordedSites.has(siteKey)) return;
     recordedSites.add(siteKey);
 
-    const ex = findMatchingException(exceptions, normPath, reportLine);
+    const ex = findMatchingException(exceptions, normPath, reportLine, {
+      rawLines,
+      effective,
+      branchExpr,
+      claimedIds: claimedExceptionIds
+    });
     if (ex) {
+      claimedExceptionIds.add(ex.id);
       approvedExceptionsHit.push({ ...ex, line: reportLine });
     } else {
       violations.push(buildViolation(normPath, reportLine, rawLines));
@@ -747,8 +829,8 @@ export function scanWorkspaceForUnboundedReads(
 }
 
 /**
- * Validates that every registered exception carries a non-empty reason,
- * a valid ISO YYYY-MM-DD date, and points to an existing workspace file/line.
+ * Validates that every registered exception carries an anchor signature, a non-empty reason,
+ * a valid ISO YYYY-MM-DD date, and points to an existing workspace file/anchor.
  */
 export function validateExceptionList(
   exceptions = UNBOUNDED_READ_EXCEPTIONS,
@@ -769,8 +851,11 @@ export function validateExceptionList(
       errors.push(`Exception ${ex.id || "(unknown)"} is missing a file path.`);
       continue;
     }
-    if (!Number.isInteger(ex.line) || ex.line < 1) {
+    if (ex.line !== undefined && (!Number.isInteger(ex.line) || ex.line < 1)) {
       errors.push(`Exception ${ex.id} has invalid line number: ${ex.line}.`);
+    }
+    if (!ex.anchor || typeof ex.anchor !== "string" || !ex.anchor.trim()) {
+      errors.push(`Exception ${ex.id} (${ex.file}) must carry an anchor signature string.`);
     }
     if (!ex.date || !isoDateRe.test(ex.date)) {
       errors.push(`Exception ${ex.id} (${ex.file}:${ex.line}) must carry an ISO YYYY-MM-DD date.`);
@@ -783,9 +868,15 @@ export function validateExceptionList(
     if (!fs.existsSync(abs)) {
       errors.push(`Exception ${ex.id} references missing file: ${ex.file}.`);
     } else {
-      const lines = fs.readFileSync(abs, "utf8").split(/\r?\n/);
-      if (ex.line > lines.length) {
-        errors.push(`Exception ${ex.id} line ${ex.line} exceeds ${ex.file} length (${lines.length}).`);
+      const fileContent = fs.readFileSync(abs, "utf8");
+      if (ex.anchor && !normalizeCode(fileContent).includes(normalizeCode(ex.anchor))) {
+        errors.push(`Exception ${ex.id} anchor not found in ${ex.file}: "${ex.anchor}".`);
+      }
+      if (typeof ex.line === "number") {
+        const lines = fileContent.split(/\r?\n/);
+        if (ex.line > lines.length) {
+          errors.push(`Exception ${ex.id} line ${ex.line} exceeds ${ex.file} length (${lines.length}).`);
+        }
       }
     }
   }
