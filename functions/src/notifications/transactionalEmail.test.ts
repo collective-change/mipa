@@ -249,12 +249,14 @@ test("MIPA-44: Resend and SendGrid transports send exact HTTP payloads and log s
     const body = JSON.parse(String(init?.body || "{}")) as Record<string, unknown>;
     captured.push({ url, headers, body });
 
-    let hostname = "";
-    try {
-      hostname = new URL(url).hostname;
-    } catch {
-      hostname = "";
-    }
+    const parsed = (() => {
+      try {
+        return new URL(url);
+      } catch {
+        return null;
+      }
+    })();
+    const hostname = parsed ? parsed.hostname : "";
 
     if (hostname === "api.resend.com") {
       return new Response(JSON.stringify({ id: "re_msg_999" }), { status: 200 });
