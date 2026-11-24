@@ -189,26 +189,38 @@ describe("MIPA-45: Unbounded Firestore Read Guard & Read Cost Measurement", () =
     it("an edit that shifts an exempted read's line (e.g. inserting two filler lines above it) does not break the guard", () => {
       const original = fs.readFileSync(path.resolve(process.cwd(), "functions/src/notifications/weeklyDigest.ts"), "utf8");
       const lines = original.split(/\r?\n/);
-      // Insert two filler lines above line 512 (e.g. at line 500)
-      lines.splice(499, 0, "// todo254: filler line 1", "// todo254: filler line 2");
+      // Locate the exempted read dynamically by its code anchor rather than hardcoding line 512
+      const readIndex = lines.findIndex((l) => l.includes("col.limit(1000).get()"));
+      expect(readIndex).toBeGreaterThanOrEqual(0);
+      const originalLineNumber = readIndex + 1;
+
+      // Insert two filler lines above the exempted read
+      const insertIndex = Math.max(0, readIndex - 5);
+      lines.splice(insertIndex, 0, "// todo254: filler line 1", "// todo254: filler line 2");
       const shiftedSource = lines.join("\n");
+      const expectedShiftedLine = originalLineNumber + 2;
 
       const scan = scanSourceForUnboundedReads(shiftedSource, "functions/src/notifications/weeklyDigest.ts");
       expect(scan.violations).toEqual([]);
-      // The exempted read was shifted from line 512 to 514, and is matched cleanly via its anchor
-      expect(scan.approvedExceptionsHit.some((e) => e.id === "WEEKLY-DIGEST-FETCH-MOCK-FALLBACK" && e.line === 514)).toBe(true);
+      // The exempted read was shifted, and is matched cleanly via its anchor
+      expect(scan.approvedExceptionsHit.some((e) => e.id === "WEEKLY-DIGEST-FETCH-MOCK-FALLBACK" && e.line === expectedShiftedLine)).toBe(true);
     });
 
     it("a genuinely new unbounded read at a previously-exempted line still fails (negative control)", () => {
       const original = fs.readFileSync(path.resolve(process.cwd(), "functions/src/notifications/weeklyDigest.ts"), "utf8");
       const lines = original.split(/\r?\n/);
-      // At line 512 (0-based 511), replace the exempted read with an unauthorized unbounded read
-      lines[511] = "      const snap = await db.collection('unauthorizedNewUnboundedCollection').get();";
+      // Locate the exempted read dynamically by its code anchor rather than hardcoding line 512
+      const readIndex = lines.findIndex((l) => l.includes("col.limit(1000).get()"));
+      expect(readIndex).toBeGreaterThanOrEqual(0);
+      const targetLine = readIndex + 1;
+
+      // At the exempted line, replace the exempted read with an unauthorized unbounded read
+      lines[readIndex] = "      const snap = await db.collection('unauthorizedNewUnboundedCollection').get();";
       const tamperedSource = lines.join("\n");
 
       const scan = scanSourceForUnboundedReads(tamperedSource, "functions/src/notifications/weeklyDigest.ts");
       expect(scan.violations.length).toBeGreaterThanOrEqual(1);
-      const violation = scan.violations.find((v) => v.line === 512);
+      const violation = scan.violations.find((v) => v.line === targetLine);
       expect(violation).toBeDefined();
       expect(violation.message).toContain("unauthorizedNewUnboundedCollection");
     });
