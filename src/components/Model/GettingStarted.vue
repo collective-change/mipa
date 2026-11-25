@@ -268,7 +268,7 @@ export default {
       return !this.hidden && !!this.currentModel && this.currentModel.isOrgMainModel;
     },
     storageKey() {
-      return `mipa.gettingStarted.hidden.${this.modelId}`;
+      return `longecho.gettingStarted.hidden.${this.modelId}`;
     },
     sampleOrg() {
       const orgs = this.$store?.state?.orgs?.orgs;

@@ -10,10 +10,10 @@
       </q-banner>
 
       <p class="q-mt-md">
-        mipa is a strategic coordination web application from the collective-change.org
+        Longecho is a strategic coordination web application from the collective-change.org
         project that helps organizations achieve success. Teams model how they work, compare
         possible actions by their relief per unit of cost (效應比 / leverage), and publish
-        citable decision dossiers with the world in view. By using or accessing mipa, you
+        citable decision dossiers with the world in view. By using or accessing Longecho, you
         agree to these Terms of Service.
       </p>
 
@@ -27,8 +27,8 @@
 
       <h2 class="text-h6 q-mt-lg q-mb-sm">Contact</h2>
       <p>
-        For questions about these terms or mipa's policies, please open an issue on
-        <a :href="issuesUrl" target="_blank" rel="noopener">mipa's GitHub issues</a>.
+        For questions about these terms or Longecho's policies, please open an issue on
+        <a :href="issuesUrl" target="_blank" rel="noopener">Longecho's GitHub issues</a>.
       </p>
       <p>
         To report a security vulnerability confidentially, please use
@@ -49,9 +49,9 @@ export default {
       securityAdvisoryUrl: SECURITY_ADVISORY_URL,
       sections: [
         {
-          title: "1. What mipa provides and subscription tiers",
+          title: "1. What Longecho provides and subscription tiers",
           paragraphs: [
-            "mipa provides system dynamics modeling, action leverage ranking, and decision governance tools. In our tiered model, seats represent alignment units — the team members who discuss, evaluate, and agree on the shared model — rather than mere login counts.",
+            "Longecho provides system dynamics modeling, action leverage ranking, and decision governance tools. In our tiered model, seats represent alignment units — the team members who discuss, evaluate, and agree on the shared model — rather than mere login counts.",
           ],
           items: [
             "Community Tier ($0): A free tier designed for individuals, small non-profits, and students. The free tier serves as our primary mission delivery mechanism and is subsidized by paid tiers. It includes 1 active model builder seat, client-side simulation engine, standard planetary and social boundary indicators, and 1 lifetime publication right.",
@@ -65,7 +65,7 @@ export default {
           title: "2. Client-side calculations and decision support",
           paragraphs: [
             "All model calculations, Monte Carlo simulations, and action leverage formulas (效應比) execute entirely on your device inside your web browser (via a Web Worker with Math.js). Calculations never run on our servers.",
-            "mipa's calculations and rankings are decision-support instruments designed to illuminate trade-offs and clarify strategic choices. They do not constitute financial, investment, legal, or accounting advice.",
+            "Longecho's calculations and rankings are decision-support instruments designed to illuminate trade-offs and clarify strategic choices. They do not constitute financial, investment, legal, or accounting advice.",
           ],
         },
         {
@@ -106,13 +106,13 @@ export default {
         {
           title: "8. Acceptable use and conduct",
           paragraphs: [
-            "You agree not to misuse mipa, attempt unauthorized access to restricted collections or other organizations' private data, or use the platform to violate applicable laws or third-party rights.",
+            "You agree not to misuse Longecho, attempt unauthorized access to restricted collections or other organizations' private data, or use the platform to violate applicable laws or third-party rights.",
           ],
         },
         {
           title: "9. Disclaimer of warranties and limitation of liability",
           paragraphs: [
-            "mipa is provided 'AS IS' and 'AS AVAILABLE', without warranties of any kind, whether express or implied. To the maximum extent permitted by applicable law, collective-change.org and mipa maintainers shall not be liable for any indirect, incidental, consequential, or punitive damages arising from your use of the service.",
+            "Longecho is provided 'AS IS' and 'AS AVAILABLE', without warranties of any kind, whether express or implied. To the maximum extent permitted by applicable law, collective-change.org and Longecho maintainers shall not be liable for any indirect, incidental, consequential, or punitive damages arising from your use of the service.",
           ],
         },
       ],

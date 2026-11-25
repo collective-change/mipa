@@ -1,6 +1,6 @@
 export default {
   separationBetweenWords: "",
-  appTitle: "mipa",
+  appTitle: "Longecho",
   person: "人",
   people: "人",
 
@@ -284,17 +284,17 @@ export default {
   "Visit our website": "造訪我們的網站",
   "Report a problem or suggest an idea": "回報問題或提出建議",
   "Source code": "原始碼",
-  helpTitle: "開始使用 mipa",
-  helpIntro: "mipa 估計每個點子對组织和世界的效益，並與它的成本相比，幫助组织決定下一步要做什麼。",
+  helpTitle: "開始使用 Longecho",
+  helpIntro: "Longecho 估計每個點子對组织和世界的效益，並與它的成本相比，幫助组织決定下一步要做什麼。",
   helpOrgTitle: "1. 新增你的组织",
   helpOrgText:
-    "在「我的儀錶板」选择「新增组织」，輸入名稱、目標和幣別。mipa 會為它创建一個模型，內含起始因素：每小時工作成本、行动所需的工时和金錢，以及對组织和世界的成本與效益。",
+    "在「我的儀錶板」选择「新增组织」，輸入名稱、目標和幣別。Longecho 會為它创建一個模型，內含起始因素：每小時工作成本、行动所需的工时和金錢，以及對组织和世界的成本與效益。",
   helpModelTitle: "2. 创建模型",
   helpModelText:
     "打開「模型」。每個圓圈都是一個因素，代表一個數字，例如每月銷售額或排放量。點選因素即可编辑它的计算方式（公式）和单位。兩個因素链接後，公式就可以用代號引用另一個因素（在圖上對因素按右鍵即可链接）。要累積隨時間變化的量，請用 delay(代號, dt, 0)，它會取得該因素前一個時間點的值。\n\n先處理標示 (new) 的因素：设置每小時工作成本。用「新增因素」加入更多因素，用「模型设置」調整计算的頻率和要看多遠，然後按「计算」。",
   helpActionsTitle: "3. 新增並比較行动",
   helpActionsText:
-    "打開「行动」並选择「新增」。描述這個點子，估計所需的工时和金錢，並加入它的影响：會改變哪些因素、改變多少、持續多久。按「重新计算」，mipa 會分別计算做與不做每個行动的結果。\n\n行动依效应比排序：行动為组织和世界帶來的净效益，相對於它的成本有多大。從排在最前面的行动開始。",
+    "打開「行动」並选择「新增」。描述這個點子，估計所需的工时和金錢，並加入它的影响：會改變哪些因素、改變多少、持續多久。按「重新计算」，Longecho 會分別计算做與不做每個行动的結果。\n\n行动依效应比排序：行动為组织和世界帶來的净效益，相對於它的成本有多大。從排在最前面的行动開始。",
   helpAchieveTitle: "4. 付諸實行",
   helpAchieveText:
     "為每個行动指定負責人和當責人，並隨著核准與完成推進它的状态。「待辦」會列出由你負責的行动。每個節點和行动都有聊天室，讓討論緊貼著工作本身。",
@@ -344,7 +344,7 @@ export default {
   Invite: "邀请",
   "Invite someone": "邀请成員",
   inviteHelp:
-    "對方用這個電子郵件地址登录 mipa 時，會在儀錶板上看到邀请，並可选择接受或拒絕。管理员可以邀请與移除成員，以及變更角色。",
+    "對方用這個電子郵件地址登录 Longecho 時，會在儀錶板上看到邀请，並可选择接受或拒絕。管理员可以邀请與移除成員，以及變更角色。",
   "Waiting for a reply": "等待回覆",
   Withdraw: "撤回",
   "Member options": "成員選項",
@@ -428,7 +428,7 @@ export default {
   Delete: "删除",
   "Model name": "模型名稱",
   Time: "時間",
-  timeIntro: "mipa 會一步一步往未來计算你的模型：例如每個月一次，共 120 步（10 年）。",
+  timeIntro: "Longecho 會一步一步往未來计算你的模型：例如每個月一次，共 120 步（10 年）。",
   "Calculate every": "每隔多久计算一次",
   "Time unit": "時間单位",
   "Enter a number greater than 0": "请输入大於 0 的數字",
@@ -439,7 +439,7 @@ export default {
   "Looks ahead to": "计算到",
   "Key factors": "關鍵因素",
   keyFactorsIntro:
-    "mipa 用這些因素比較行动：行动需要的工时和金錢，以及它如何改變组织和世界的成本與效益。",
+    "Longecho 用這些因素比較行动：行动需要的工时和金錢，以及它如何改變组织和世界的成本與效益。",
   "Hourly cost of work": "每小時工作成本",
   "Work hours an action needs": "行动所需工时",
   "Money an action needs": "行动所需金錢",
@@ -473,7 +473,7 @@ export default {
     "公式算出的結果单位和因素的单位不同。如果公式只是一個數字，請加上单位（例如 30 USD），或修改因素的单位。圖上已選取這個因素。",
   errLoopTitle: "有些因素互相依賴，形成循環",
   errLoopAdvice:
-    "標示為橘色的因素在同一時間互相使用對方的值，所以 mipa 無法決定先算哪一個。請讓其中一個改用對方前一個時間點的值，也就是 delay(代號, dt, 0)，來打破循環。",
+    "標示為橘色的因素在同一時間互相使用對方的值，所以 Longecho 無法決定先算哪一個。請讓其中一個改用對方前一個時間點的值，也就是 delay(代號, dt, 0)，來打破循環。",
   errParseTitle: "無法讀取公式",
   errParseAdvice: "請檢查公式是否少了括號或運算符號，或代號拼錯。",
   errEvalTitle: "無法计算公式",
@@ -482,7 +482,7 @@ export default {
   errEvalAdviceAlreadyLinked:
     "请检查公式中的单位是否可以结合（例如 kg 不能与 USD 相加）以及运算是否有效。图上已选取这个因素。",
   errUnknownUnitTitle: "不明的单位",
-  errUnknownUnitAdvice: "請使用 mipa 認得的单位，例如 USD、TWD、kg、km、hours 或 people，純數字請將单位留空。",
+  errUnknownUnitAdvice: "請使用 Longecho 認得的单位，例如 USD、TWD、kg、km、hours 或 people，純數字請將单位留空。",
   errValueTitle: "無法讀取目前数值",
   errValueAdvice: "請以純數字輸入目前数值。",
   Glossary: "名詞解釋",
@@ -490,11 +490,11 @@ export default {
     factor: { term: "因素", text: "對组织重要、可以衡量的事物，例如銷售額、志工人數或排放量。模型中的每個圓圈都是一個因素。" },
     shortName: { term: "代號", text: "公式用來引用因素的名稱，不能有空格，例如 monthlySales。" },
     formula: { term: "公式", text: "因素的计算方式，例如 sales * 0.2。可以使用和它链接的因素。" },
-    unit: { term: "单位", text: "因素的衡量单位，例如 USD、kg 或 people。mipa 會檢查公式中的单位是否正確搭配。" },
+    unit: { term: "单位", text: "因素的衡量单位，例如 USD、kg 或 people。Longecho 會檢查公式中的单位是否正確搭配。" },
     link: { term: "链接", text: "兩個因素之間的箭頭：箭頭指向的因素會在公式中使用另一個因素。" },
     delay: { term: "delay(代號, dt, 0)", text: "因素前一個時間點的值，一開始為 0。用於隨時間累積的量，例如存款或種下的樹。" },
-    step: { term: "步", text: "mipa 一次计算一步未來，例如一個月。dt 是一步的長度。" },
-    keyFactors: { term: "關鍵因素", text: "mipa 用來比較行动的因素：每小時工作成本、行动所需的工时和金錢，以及组织和世界的成本與效益。" },
+    step: { term: "步", text: "Longecho 一次计算一步未來，例如一個月。dt 是一步的長度。" },
+    keyFactors: { term: "關鍵因素", text: "Longecho 用來比較行动的因素：每小時工作成本、行动所需的工时和金錢，以及组织和世界的成本與效益。" },
     action: { term: "行动", text: "组织可以做的一件事，包含所需工时和金錢的估計。" },
     impact: { term: "影响", text: "行动如何改變一個因素：改變多少、持續多久。" },
     netBenefit: { term: "净效益", text: "行动對组织和世界的效益減去成本，隨時間加總，越晚的年份權重略低。" },
@@ -515,7 +515,7 @@ export default {
   helpLeverage: "行动的净效益相對於其直接成本之比率。效应比对净效益呈二次敏感度（net² / [C · (C + E)]），高度奖励以极少直接支出创造庞大净效益之行动。",
   helpState: "行动目前所處的階段：提案中、已核准、已完成等。",
   helpResponsibleAccountable: "負責：实际做事的人。當責：對結果負最終責任的人。",
-  helpBenefit: "行动在 mipa 计算的整段期間內，為组织和世界帶來的所有效益，越晚的年份權重略低。",
+  helpBenefit: "行动在 Longecho 计算的整段期間內，為组织和世界帶來的所有效益，越晚的年份權重略低。",
   helpCost: "行动對组织和世界造成的所有成本，包括它本身需要的工时和支出。",
   helpNetBenefit: "效益減去成本。大於 0 表示行动帶來的好處多於成本。",
   helpRemainingCost: "行动還需要的工时和金錢，以你的幣別计算。",
@@ -524,7 +524,7 @@ export default {
   helpRelated: "這個行动所屬、包含或依賴的其他行动。",
   noActionsTitle: "目前沒有可顯示的行动",
   noActionsText:
-    "行动是组织可以做的一件事，例如新的計畫或改變做事的方式。新增行动，估計它需要的工时和金錢，以及它會改變什麼，mipa 就會计算它對组织和世界的成本與效益。如果你預期這裡會有行动，請檢查上方的筛选條件。",
+    "行动是组织可以做的一件事，例如新的計畫或改變做事的方式。新增行动，估計它需要的工时和金錢，以及它會改變什麼，Longecho 就會计算它對组织和世界的成本與效益。如果你預期這裡會有行动，請檢查上方的筛选條件。",
   "Add an action": "新增行动",
   "Remaining work hours": "剩余工时",
   actionsChartHint:
@@ -582,7 +582,7 @@ export default {
   gs: {
     hourlyCost: { title: "设置每小時工作成本", text: "開啟標示 (new) 的因素，輸入组织每小時工作的成本，然後保存。", button: "開啟" },
     addFactors: { title: "加入對你重要的事物", text: "新增銷售額、服務人數或排放量等因素，並為每個因素寫公式。", button: "新增因素" },
-    linkFactors: { title: "把它們链接到效益與成本", text: "把你的因素链接到效益和成本因素，讓 mipa 知道每個因素對组织和世界的价值。", button: "開啟世界的效益" },
+    linkFactors: { title: "把它們链接到效益與成本", text: "把你的因素链接到效益和成本因素，讓 Longecho 知道每個因素對组织和世界的价值。", button: "開啟世界的效益" },
     closeModel: {
       title: "闭合模型",
       text: "加入抑制无限制增长的调节回路（限制），并链接所有预设因素。",
@@ -591,7 +591,7 @@ export default {
       noLimits: "尚未侦测到调节限制。现实中有什麽限制会阻止此模型无限增长？",
       unconnectedDefaults: "尚未链接的预设因素：{factors}"
     },
-    calculate: { title: "计算", text: "mipa 會往未來计算你的模型。修正它回報的問題後，再计算一次。" },
+    calculate: { title: "计算", text: "Longecho 會往未來计算你的模型。修正它回報的問題後，再计算一次。" },
     addAction: { title: "新增第一個行动", text: "描述组织可以做的一件事，以及它需要的工时、金錢和它的影响。", button: "前往行动" },
     compare: { title: "比較行动", text: "在「行动」頁按「重新计算」，就能看到每個行动的效益、成本和效应比。", button: "前往行动" }
   },
@@ -717,7 +717,7 @@ export default {
       goal: "讓社區裡沒有人挨餓。"
     },
     factors: {
-      averageEffortCostPerHour: { name: "每小時工作成本", notes: "職工或志工一小時的時間對组织的价值。mipa 用它把行动所需的工时換算成金額。" },
+      averageEffortCostPerHour: { name: "每小時工作成本", notes: "職工或志工一小時的時間對组织的价值。Longecho 用它把行动所需的工时換算成金額。" },
       oneTimeEffort: { name: "行动工时", notes: "比較行动時，每個行动會把所需的工时加在這裡。請保持為 0。" },
       oneTimeSpending: { name: "行动支出", notes: "比較行动時，每個行动會把所需的金額加在這裡。請保持為 0。" },
       costToOrganizationDuringInterval: { name: "每月的组织成本", notes: "營運成本，加上行动所需的工时和金額。" },
@@ -784,11 +784,11 @@ export default {
   "Remove AI draft": "移除 AI 草稿",
   estimate: "估計值",
   "hourly cost": "每小時成本",
-  aiWhatTitle: "AI 在 mipa 能做什麼",
+  aiWhatTitle: "AI 在 Longecho 能做什麼",
   aiWhatText:
     "AI 可以根據您用自己的話所做的描述，起草组织的模型：重要的因素、它們如何链接，以及初步估計值，並逐一帮助。草稿加入前您會先查看，之後也能一步移除。",
   aiOwnProviderText:
-    "mipa 本身不提供 AI。您的组织链接自己的 AI 供應商帳號，並直接向供應商付費。起草一個模型通常約需 0.40 至 0.70 美元。",
+    "Longecho 本身不提供 AI。您的组织链接自己的 AI 供應商帳號，並直接向供應商付費。起草一個模型通常約需 0.40 至 0.70 美元。",
   aiDataText:
     "有人使用 AI 時，其描述和模型的因素（名稱、公式、单位）會傳送給供應商；成員、電子郵件、聊天、行动和筆記不會。供應商是否保留或用這些数据訓練，取決於其條款，請选择符合貴组织政策的供應商。",
   aiStatusTitle: "供應商",
@@ -800,7 +800,7 @@ export default {
   aiCompatibleHelp:
     "任何提供 OpenAI chat completions API 的服務，例如 OpenRouter、Azure OpenAI、Mistral 或自行架設的模型。请输入其網址、模型名稱和 API 金鑰。",
   aiHttpsOnly: "網址必須以 https:// 開頭",
-  aiModelHint: "推薦的模型已在 mipa 測試過，其他模型產生的草稿可能較不可靠。",
+  aiModelHint: "推薦的模型已在 Longecho 測試過，其他模型產生的草稿可能較不可靠。",
   aiCompatibleModelHint: "請完全依照供應商的拼法輸入模型名稱。",
   aiKeepKeyHint: "留空即保留目前的金鑰。",
   aiConnected: "已链接 AI 供應商",
@@ -858,12 +858,12 @@ export default {
   aiRemoveKept: "這些因素在草稿後被修改過，因此保留目前的公式：{names}",
   aiDraftRemoved: "已移除 AI 草稿",
   Menu: "選單",
-  swUpdateAvailable: "mipa 有新版本可用。",
+  swUpdateAvailable: "Longecho 有新版本可用。",
   Reload: "重新加载",
   Dismiss: "关闭",
 
   // Landing / Home page for collective-change.org
-  landingHeroBadge: "mipa · 推動集體變革的策略協作平台",
+  landingHeroBadge: "Longecho · 推動集體變革的策略協作平台",
   landingHeroTitle: "為您的组织找出最高效应比的關鍵行动",
   landingHeroSubtitle: "创建複雜系統模型、模拟時間延遲與連鎖影响，並依據真實效应比精準排序行动，讓團隊的有限资源發揮最大衝擊力。",
   landingGetStarted: "免費開始使用",
@@ -881,9 +881,9 @@ export default {
   landingWhySubtitle: "追求使命與社会變革的组织，無法承擔盲目摸索的代價。",
   landingTraditionalPlanning: "傳統規劃方式",
   landingWhyP1: "傳統規劃常仰賴靜態試算表與直覺，容易忽略時間延遲、隱性回饋圈以及资源瓶頸。",
-  landingMipaApproach: "mipa 系統模拟方式",
+  landingMipaApproach: "Longecho 系統模拟方式",
   landingWhyP2: "将系统动力学与数学模拟带入企业、非营利组织、政府机关、社区团体、学校项目与各类使命导向计划，把复杂的组织运作转化为清晰、具备数据支持的效应比决策依据。",
-  landingStepsHeading: "mipa 如何運作",
+  landingStepsHeading: "Longecho 如何運作",
   landingStep1Title: "创建系統模型",
   landingStep1Subtitle: "定義因素與因果關係",
   landingStep1Desc: "用清楚易懂的因素與公式链接原因與結果。視覺化呈現资源投入、社会信任與成果如何隨時間相互影响。",
@@ -892,7 +892,7 @@ export default {
   landingStep2Desc: "在多元時間尺度上模拟各項候選项目。運算引擎會精確评估延遲效應、成本支出與跨部门的連鎖漣漪。",
   landingStep3Title: "依效应比排序",
   landingStep3Subtitle: "聚焦於乘數效果最高的環節",
-  landingStep3Desc: "效应比綜合净效益、整體投報率與未付直接成本。mipa 依效应比精確排序所有行动，協助領導層凝聚最高效益共識。",
+  landingStep3Desc: "效应比綜合净效益、整體投報率與未付直接成本。Longecho 依效应比精確排序所有行动，協助領導層凝聚最高效益共識。",
   landingTrustHeading: "以隱私、安全與自主為核心設計",
   landingTrustP1Title: "純瀏覽器本機運算",
   landingTrustP1Desc: "所有模拟運算均透過 Web Worker 在您的裝置本機執行。组织的模型與策略數據無需傳送至中央運算伺服器。",
@@ -931,7 +931,7 @@ export default {
   briefSection4Title: "核心模型假設與评估基礎",
   briefSection5Title: "模型未涵蓋之外部考量",
   briefSubtitle: "專為组织決策領導層呈報之精簡备忘录",
-  briefDisclaimer: "本备忘录所有數據均由 mipa 本機系統動態學推演引擎验证生成。",
+  briefDisclaimer: "本备忘录所有數據均由 Longecho 本機系統動態學推演引擎验证生成。",
   briefExport: "导出",
   quickSelect: "快速預設",
   top3: "前 3 項",
@@ -965,7 +965,7 @@ export default {
   rankingInvarianceTitle: "排名敏感度与稳健性",
   rankingInvariantBadge: "不影响排名",
   rankingCanMoveBadge: "可能改变排名",
-  rankingInvariantDesc: "此因子同比例缩放所有行动之效益。在 mipa 中，效应比对效益量级具尺度不变性（以 k² 等比缩放），因此调整其数值大小不会改变行动优先顺序。",
+  rankingInvariantDesc: "此因子同比例缩放所有行动之效益。在 Longecho 中，效应比对效益量级具尺度不变性（以 k² 等比缩放），因此调整其数值大小不会改变行动优先顺序。",
   rankingSubsetDesc: "此因子仅影响部分行动（{total} 项中的 {fed} 项）。调整其数值会改变相对效益，可能影响行动优先顺序。",
   rankingTurningPointHint: "决策翻转点：若此数值{direction} {percent}% 至 {threshold}，「{runnerUp}」将超越「{topAction}」。",
   rankingHighlyRobustHint: "高度稳健：在合理的数值变动范围（±50%）内，顶尖行动之排名均维持稳定。",
@@ -1253,21 +1253,21 @@ export default {
   catPhilanthropy: "公益慈善",
   searchTemplatesPlaceholder: "依关键字或标签搜索范本...",
   noTemplatesFound: "查无符合之模型范本。",
-  pasteTemplateJsonHint: "请粘贴共享之 Mipa 模型范本 JSON 内容：",
+  pasteTemplateJsonHint: "请粘贴共享之 Longecho 模型范本 JSON 内容：",
   importAndCloneBtn: "确认导入并复制",
   templateClonedSuccess: "范本要素已成功复制至当前模型。",
   templateExportedSuccess: "模型已成功导出为开放分享之范本 JSON。",
   gsStarterTemplatesPrompt: "想从经过实证之范本开始建置？",
   gsSeeFinishedExample: "查看完成的范例",
-  guidedTourLabel: "Mipa 系统导览",
+  guidedTourLabel: "Longecho 系统导览",
   tourStep1Title: "建置组织系统要素与因果关联",
-  tourStep1Desc: "组织运作乃由相互关联之系统所构成。在 Mipa 中，您可定义要素（如志愿者留存积蓄量、物资流动率或成果指标），并通过直观公式建立因果关联，无需复杂的数学行话。",
+  tourStep1Desc: "组织运作乃由相互关联之系统所构成。在 Longecho 中，您可定义要素（如志愿者留存积蓄量、物资流动率或成果指标），并通过直观公式建立因果关联，无需复杂的数学行话。",
   tourStep1Takeaway: "系统动态学有助于洞察隐蔽的反馈循环与时间延迟，避免善意的策略遭遇政策反弹。",
   tourStep2Title: "规划候选策略行动方案",
   tourStep2Desc: "策略行动代表团队可推动的各项方案。详细填写所需的直接经费、志愿者投入工时，以及该行动对核心要素的长远影响。",
   tourStep2Takeaway: "各项行动均可基于模型特征进行精准比对，亦可藉由 AI 智慧辅助自动生成具体推行草案。",
   tourStep3Title: "全动态模拟推演与效应比排序",
-  tourStep3Desc: "效应比绝非单纯的「每小时善行成果」。Mipa 在您的本地设备上进行全周期动态模拟，以总净效益折现值除以所需直接经费，呈现真正的策略杠杆。",
+  tourStep3Desc: "效应比绝非单纯的「每小时善行成果」。Longecho 在您的本地设备上进行全周期动态模拟，以总净效益折现值除以所需直接经费，呈现真正的策略杠杆。",
   tourStep3Takeaway: "高效应比的关键决策往往着眼于深层反馈循环与结构杠杆点，而非耗费巨额资源于表面病征。",
   tourStep4Title: "高阶决策简报与治理留痕",
   tourStep4Desc: "一键产出结构化的高阶五段式决策简报。所有引述数据皆经严格数学核验，并整合蒙特卡洛风险区间与不可篡改的加密模型快照留痕。",
@@ -1279,7 +1279,7 @@ export default {
   openTemplateLibraryBtn: "探索模型范本库",
 
   // Auth Access Notice
-  authAccessNotice: "Mipa 尚未全面开放。待准备就绪时，将向所有人开放使用，无需申请亦无候补名单。若您的团队已收到邀请，可在下方登录或创建账号。",
+  authAccessNotice: "Longecho 尚未全面开放。待准备就绪时，将向所有人开放使用，无需申请亦无候补名单。若您的团队已收到邀请，可在下方登录或创建账号。",
 
   // Workspace Tier Governance & Multi-Seat Meter
   tierCommunity: "公益普及方案",

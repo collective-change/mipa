@@ -334,7 +334,7 @@
           </a>
         </div>
         <div>
-          <span>mipa · strategic coordination for collective-change.org</span>
+          <span>Longecho · strategic coordination for collective-change.org</span>
           <span class="q-mx-xs">·</span>
           <span>License: {{ record.license }}</span>
         </div>
@@ -389,7 +389,7 @@ export default {
       return state;
     },
     copyCitation() {
-      const citationText = `Mipa Decision Register. "${this.record.title}". Citation ID: ${this.record.citationId}. Published: ${this.record.publishedDate}. URL: ${this.record.permanentUrl}`;
+      const citationText = `Longecho Decision Register. "${this.record.title}". Citation ID: ${this.record.citationId}. Published: ${this.record.publishedDate}. URL: ${this.record.permanentUrl}`;
       if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
         navigator.clipboard.writeText(citationText);
       }

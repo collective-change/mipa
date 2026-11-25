@@ -23,10 +23,10 @@ const tFor = (messages) => (key, params = {}) => {
 describe("MIPA-43: review mark wording is generated from stored provenance", () => {
   it("renders the M-3 sentence from the stored fields only", () => {
     expect(reviewMarkText(stored, tFor(enUS))).toBe(
-      "Checked against mipa methodology v1.0.0 by model claude-3-5-sonnet-20241022 (anthropic) on 2026-11-20."
+      "Checked against Longecho methodology v1.0.0 by model claude-3-5-sonnet-20241022 (anthropic) on 2026-11-20."
     );
     expect(reviewMarkText(stored, tFor(zhTW))).toBe(
-      "依 mipa 方法論 v1.0.0，由模型 claude-3-5-sonnet-20241022（anthropic）於 2026-11-20 檢核。"
+      "依 Longecho 方法論 v1.0.0，由模型 claude-3-5-sonnet-20241022（anthropic）於 2026-11-20 檢核。"
     );
   });
 

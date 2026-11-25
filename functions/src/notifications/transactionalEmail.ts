@@ -22,7 +22,7 @@ export type EmailCategory = "invitation" | "password_reset" | "weekly_digest" | 
 
 export const DEFAULT_SENDING_DOMAIN = "collective-change.org";
 export const DEFAULT_FROM_ADDRESS = "notifications@collective-change.org";
-export const DEFAULT_FROM_NAME = "mipa";
+export const DEFAULT_FROM_NAME = "Longecho";
 export const DEFAULT_BASE_URL = "https://collective-change.org";
 
 export const EMAIL_RATE_LIMITS = {
@@ -823,18 +823,18 @@ export function formatInvitationEmail(
   )}&invitationId=${encodeURIComponent(input.invitationId)}`;
   const isZh = (input.locale || "").toLowerCase().startsWith("zh");
   const inviter = input.invitedByName || (isZh ? "組織管理員" : "An administrator");
-  const orgDisplay = input.orgName || (isZh ? "Mipa 組織" : "a mipa organization");
+  const orgDisplay = input.orgName || (isZh ? "Longecho 組織" : "a Longecho organization");
 
   if (isZh) {
     const roleLabel = input.role === "admin" ? "管理員" : "成員";
-    const subject = `邀請您加入 ${orgDisplay} — mipa 策略協調平台`;
+    const subject = `邀請您加入 ${orgDisplay} — Longecho 策略協調平台`;
     const html = `<!DOCTYPE html>
 <html lang="zh-TW">
 <head><meta charset="utf-8"><title>${escapeHtml(subject)}</title></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Noto Sans TC', sans-serif; background: #f9fafb; margin: 0; padding: 24px; color: #1f2937;">
   <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden;">
     <div style="background: #1976d2; padding: 20px 24px; color: #ffffff;">
-      <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">mipa 策略協調平台</div>
+      <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">Longecho 策略協調平台</div>
       <h1 style="margin: 6px 0 0; font-size: 20px;">組織加入邀請</h1>
     </div>
     <div style="padding: 24px;">
@@ -862,14 +862,14 @@ export function formatInvitationEmail(
   }
 
   const roleLabel = input.role === "admin" ? "Admin" : "Member";
-  const subject = `You are invited to join ${orgDisplay} on mipa`;
+  const subject = `You are invited to join ${orgDisplay} on Longecho`;
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><title>${escapeHtml(subject)}</title></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f9fafb; margin: 0; padding: 24px; color: #1f2937;">
   <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden;">
     <div style="background: #1976d2; padding: 20px 24px; color: #ffffff;">
-      <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;">mipa Strategic Coordination</div>
+      <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;">Longecho Strategic Coordination</div>
       <h1 style="margin: 6px 0 0; font-size: 20px;">Organization Invitation</h1>
     </div>
     <div style="padding: 24px;">
@@ -945,20 +945,20 @@ export function formatPasswordResetEmail(input: {
   const cleanEmail = normalizeEmail(input.recipientEmail);
 
   if (isZh) {
-    const subject = "重設您的 mipa 密碼";
+    const subject = "重設您的 Longecho 密碼";
     const html = `<!DOCTYPE html>
 <html lang="zh-TW">
 <head><meta charset="utf-8"><title>${escapeHtml(subject)}</title></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Noto Sans TC', sans-serif; background: #f9fafb; margin: 0; padding: 24px; color: #1f2937;">
   <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden;">
     <div style="background: #1976d2; padding: 20px 24px; color: #ffffff;">
-      <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">mipa 策略協調平台</div>
+      <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em;">Longecho 策略協調平台</div>
       <h1 style="margin: 6px 0 0; font-size: 20px;">密碼重設要求</h1>
     </div>
     <div style="padding: 24px;">
       <p style="margin: 0 0 12px; font-size: 15px;">您好，</p>
       <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.6;">
-        我們收到重設 <strong>${escapeHtml(cleanEmail)}</strong> mipa 帳號密碼的要求。
+        我們收到重設 <strong>${escapeHtml(cleanEmail)}</strong> Longecho 帳號密碼的要求。
       </p>
       <div style="text-align: center; margin: 24px 0;">
         <a href="${escapeHtml(input.resetLink)}" style="background: #1976d2; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">
@@ -975,24 +975,24 @@ export function formatPasswordResetEmail(input: {
   </div>
 </body>
 </html>`;
-    const text = `我們收到重設 ${cleanEmail} mipa 帳號密碼的要求。\n\n請開啟以下連結重設您的密碼：\n${input.resetLink}\n\n若您未提出此要求，請忽略這封郵件。\n`;
+    const text = `我們收到重設 ${cleanEmail} Longecho 帳號密碼的要求。\n\n請開啟以下連結重設您的密碼：\n${input.resetLink}\n\n若您未提出此要求，請忽略這封郵件。\n`;
     return { subject, html, text };
   }
 
-  const subject = "Reset your mipa password";
+  const subject = "Reset your Longecho password";
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><title>${escapeHtml(subject)}</title></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f9fafb; margin: 0; padding: 24px; color: #1f2937;">
   <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden;">
     <div style="background: #1976d2; padding: 20px 24px; color: #ffffff;">
-      <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;">mipa Strategic Coordination</div>
+      <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;">Longecho Strategic Coordination</div>
       <h1 style="margin: 6px 0 0; font-size: 20px;">Password Reset Request</h1>
     </div>
     <div style="padding: 24px;">
       <p style="margin: 0 0 12px; font-size: 15px;">Hello,</p>
       <p style="margin: 0 0 16px; font-size: 15px; line-height: 1.6;">
-        We received a request to reset the password for your mipa account (<strong>${escapeHtml(cleanEmail)}</strong>).
+        We received a request to reset the password for your Longecho account (<strong>${escapeHtml(cleanEmail)}</strong>).
       </p>
       <div style="text-align: center; margin: 24px 0;">
         <a href="${escapeHtml(input.resetLink)}" style="background: #1976d2; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block;">
@@ -1009,7 +1009,7 @@ export function formatPasswordResetEmail(input: {
   </div>
 </body>
 </html>`;
-  const text = `We received a request to reset the password for your mipa account (${cleanEmail}).\n\nOpen this link to reset your password:\n${input.resetLink}\n\nIf you did not request a password reset, you can safely ignore this email.\n`;
+  const text = `We received a request to reset the password for your Longecho account (${cleanEmail}).\n\nOpen this link to reset your password:\n${input.resetLink}\n\nIf you did not request a password reset, you can safely ignore this email.\n`;
   return { subject, html, text };
 }
 

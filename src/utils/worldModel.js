@@ -268,7 +268,7 @@ export function getShippedCountryModel(countryCode = "USA", version = WDI_DEFAUL
         canonicalCitationUrl,
         licence: ind.licence || WDI_DEFAULT_LICENSE,
         retrievedAt: "2026-11-18",
-        verifiedBy: "Mipa World Model Registry"
+        verifiedBy: "Longecho World Model Registry"
       }
     };
   });

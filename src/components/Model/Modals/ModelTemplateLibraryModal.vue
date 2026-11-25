@@ -455,7 +455,7 @@ export default {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exported, null, 2));
         const downloadAnchor = document.createElement("a");
         downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `mipa_model_${exported.id}.json`);
+        downloadAnchor.setAttribute("download", `longecho_model_${exported.id}.json`);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();

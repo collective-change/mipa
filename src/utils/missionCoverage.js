@@ -4,8 +4,8 @@
  * Mipa Mission Coverage & Claim Verification Register Record (MIPA-39 / Decision M-9).
  *
  * Principles:
- * 1. Symmetry: Mipa asks organizations to publish what their model does not cover
- *    (Decision Brief Section 5). Mipa publishes the identical disclosure about itself.
+ * 1. Symmetry: Longecho asks organizations to publish what their model does not cover
+ *    (Decision Brief Section 5). Longecho publishes the identical disclosure about itself.
  * 2. Permanent Register Record: Published as an immutable, citable register record
  *    with a permanent URL, citation ID, and dated version.
  * 3. Separation of Claims: Separates claims into mechanical, attributed, declared,
@@ -27,10 +27,10 @@ import {
 } from "./dimensions";
 
 export const COVERAGE_VERSION = "1.0.0";
-export const COVERAGE_RECORD_ID = "mipa-mission-coverage-v1";
+export const COVERAGE_RECORD_ID = "mission-coverage-v1";
 export const COVERAGE_RECORD_DATE = "2026-11-19";
 export const COVERAGE_CITATION_ID = "MIPA-REGISTER-2026-11-19-COV1";
-export const COVERAGE_CANONICAL_URL = "https://collective-change.org/records/mipa-mission-coverage-v1";
+export const COVERAGE_CANONICAL_URL = "https://collective-change.org/records/mission-coverage-v1";
 export const METHODOLOGY_VERSION = "v1.0.0";
 
 /**
@@ -333,7 +333,7 @@ export function buildMissionCoverageRecord(options = {}) {
   return {
     recordId,
     recordType: "mission_coverage_statement",
-    title: "Mipa Mission Coverage & Claim Verification Statement",
+    title: "Longecho Mission Coverage & Claim Verification Statement",
     shortTitle: "Mission Coverage Statement",
     version: COVERAGE_VERSION,
     publishedDate,
@@ -342,7 +342,7 @@ export function buildMissionCoverageRecord(options = {}) {
     isPermanent: true,
     isRevoked: false,
     methodology: `checked against methodology ${METHODOLOGY_VERSION} on ${publishedDate}`,
-    governancePrinciple: "Symmetry of Disclosure (Decision M-9): Mipa holds itself to the same coverage disclosure standard required of users in Decision Brief Section 5.",
+    governancePrinciple: "Symmetry of Disclosure (Decision M-9): Longecho holds itself to the same coverage disclosure standard required of users in Decision Brief Section 5.",
     claimsSeparation: VERIFICATION_CLAIMS,
     missionRequirements: MISSION_REQUIREMENTS,
     shippedCapabilities,

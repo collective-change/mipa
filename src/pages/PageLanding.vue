@@ -134,7 +134,7 @@
       </div>
     </section>
 
-    <!-- How Mipa Works: 3 Steps -->
+    <!-- How Longecho Works: 3 Steps -->
     <section class="q-py-xl q-px-md bg-grey-1" id="how-it-works">
       <div class="landing-container">
         <div class="text-center q-mb-xl">
@@ -290,7 +290,7 @@
       <div class="landing-container">
         <div class="row items-center justify-between q-col-gutter-md">
           <div class="col-12 col-md-6 text-center text-md-left">
-            <span class="text-weight-bold text-primary">mipa</span>
+            <span class="text-weight-bold text-primary">Longecho</span>
             <span class="q-mx-xs">·</span>
             <span class="text-caption text-grey-7">{{ $t("landingFooterMission") }}</span>
           </div>

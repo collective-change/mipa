@@ -29,7 +29,7 @@ register(import.meta.env.QUASAR_SERVICE_WORKER_FILE, {
 
   updated(/* registration */) {
     console.log("New content is available; please refresh.");
-    window.dispatchEvent(new CustomEvent("mipa-update-available"));
+    window.dispatchEvent(new CustomEvent("longecho-update-available"));
   },
 
   offline() {

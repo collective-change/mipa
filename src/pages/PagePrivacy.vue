@@ -10,13 +10,13 @@
       </q-banner>
 
       <p class="q-mt-md">
-        mipa is a strategic coordination web application from the collective-change.org
+        Longecho is a strategic coordination web application from the collective-change.org
         project that helps organizations model how they work, compare possible actions by
         their relief per unit of cost to the organization and the world (效應比 / leverage),
-        and track strategic alignment. This policy explains what information mipa collects,
+        and track strategic alignment. This policy explains what information Longecho collects,
         why, how it is processed and protected, who can see it, and your rights and choices.
         Questions are welcome on
-        <a :href="issuesUrl" target="_blank" rel="noopener">mipa's GitHub issues</a>.
+        <a :href="issuesUrl" target="_blank" rel="noopener">Longecho's GitHub issues</a>.
       </p>
 
       <section v-for="section in sections" :key="section.title">
@@ -39,7 +39,7 @@
       <p>
         For questions about this policy, problems or suggestions, please open
         an issue on
-        <a :href="issuesUrl" target="_blank" rel="noopener">mipa's GitHub issues</a>.
+        <a :href="issuesUrl" target="_blank" rel="noopener">Longecho's GitHub issues</a>.
         Issues are public, so don't include personal or confidential organization information in them.
       </p>
       <p>
@@ -72,7 +72,7 @@ export default {
             "Technical telemetry: IP address, browser user-agent, and connection diagnostics received by our hosting infrastructure (Google Firebase) during network requests.",
           ],
           paragraphs: [
-            "mipa does not use advertising, marketing tracking cookies, or commercial third-party trackers, and does not sell or rent personal information.",
+            "Longecho does not use advertising, marketing tracking cookies, or commercial third-party trackers, and does not sell or rent personal information.",
           ],
         },
         {
@@ -87,7 +87,7 @@ export default {
           title: "Who can see your information",
           items: [
             "Organization Members: Authenticated members of your organization can see its private models, financial formulas, action estimates, and open chats. Chats marked for specific members are restricted to those designated participants.",
-            "Other Organizations: Other mipa users cannot view your organization's private models, private actions, or member roster.",
+            "Other Organizations: Other Longecho users cannot view your organization's private models, private actions, or member roster.",
             "Public Dossiers and the Register: When an authorized administrator chooses to publish a model or dossier to the public Register (/m/:modelId), that specific dossier and its ranked actions become publicly accessible to anyone with the link.",
             "Service Maintainers: System maintainers can access stored data only when strictly necessary to operate the service, debug reported errors, or comply with legal requirements.",
             "Legal Compliance: We disclose information to public authorities only when compelled by valid legal process.",
@@ -96,11 +96,11 @@ export default {
         {
           title: "Service providers and Merchant of Record",
           paragraphs: [
-            "mipa relies on trusted service providers to deliver infrastructure and commercial billing:",
+            "Longecho relies on trusted service providers to deliver infrastructure and commercial billing:",
           ],
           items: [
             "Google Firebase (Authentication, Cloud Firestore, Cloud Storage, Hosting, and Cloud Functions): Hosts the application, database, and scheduled disaster-recovery backups.",
-            "Lemon Squeezy: Operates as our Merchant of Record for subscription management, card payment processing, invoicing, and tax remittance. Payment details (card numbers) are collected directly by Lemon Squeezy and never touch mipa servers.",
+            "Lemon Squeezy: Operates as our Merchant of Record for subscription management, card payment processing, invoicing, and tax remittance. Payment details (card numbers) are collected directly by Lemon Squeezy and never touch Longecho servers.",
             "Fixer (fixer.io): Provides foreign exchange rates for multi-currency factor conversions. No personal data is transmitted.",
             "Google Charts (gstatic.com): Delivers charting libraries; Google receives standard network request telemetry (IP address) when charts load.",
           ],
@@ -108,7 +108,7 @@ export default {
         {
           title: "AI features and architectural data flow",
           paragraphs: [
-            "mipa provides optional AI features to assist in drafting models, suggesting factors, formulating actions, and summarizing strategic progress.",
+            "Longecho provides optional AI features to assist in drafting models, suggesting factors, formulating actions, and summarizing strategic progress.",
             "Architectural disclosure (A-4 decision): API keys provided by your organization are encrypted at rest using AES-256-GCM and stored in secure Firestore documents accessible only to authorized Cloud Functions. Cloud Firestore enforces role-based security rules and TLS transit encryption rather than client-side zero-knowledge encryption.",
             "When an AI drafting feature is invoked, relevant model context — including factor names, mathematical relationships, estimated costs, and action summaries — is sent over TLS to the AI provider connected by your organization (e.g., Anthropic or OpenAI) or via our designated starter allowance. Member email addresses and passwords are never transmitted.",
             "Data handling by AI providers: The handling and retention of prompt data is governed by your organization's agreement with the connected provider. AI-generated suggestions are always presented for human review and require explicit confirmation before modifying your model.",
