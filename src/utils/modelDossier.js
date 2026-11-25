@@ -15,7 +15,6 @@ import { buildSampleOrg, sampleCurrencyFor } from "@/utils/sample-org";
 import { compileDraftNodes, ROLE_SYMBOLS } from "@/utils/util-model-draft";
 
 const SAMPLE_STEPS = 120;
-const MONTH_SECONDS = 2629800;
 const SECONDS_PER_YEAR = 31556952;
 const YEARLY_DISCOUNT_RATE = 0.05;
 const SAMPLE_MONEY_SCALE = { USD: 1, TWD: 30 };
@@ -98,8 +97,10 @@ function simulateSampleTrajectory(scale, overrides = {}) {
 
 function getSampleMarginalNpv(ifDoneSeries, baselineSeries) {
   let npv = 0;
+  const startMs = Date.UTC(2026, 0, 1);
   for (let step = 0; step <= SAMPLE_STEPS; step++) {
-    const tYears = (step * MONTH_SECONDS) / SECONDS_PER_YEAR;
+    const elapsedSeconds = (Date.UTC(2026, step, 1) - startMs) / 1000;
+    const tYears = elapsedSeconds / SECONDS_PER_YEAR;
     npv += (ifDoneSeries[step] - baselineSeries[step]) / Math.pow(1 + YEARLY_DISCOUNT_RATE, tYears);
   }
   return npv;
