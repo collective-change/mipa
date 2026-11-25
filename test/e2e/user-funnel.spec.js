@@ -11,7 +11,7 @@ test.beforeAll(() => {
 });
 
 test.describe("MIPA-6: User Comprehension & Visual Funnel Harness", () => {
-  test("Step 1: Landing page & Waitlist gate", async ({ page }) => {
+  test("Step 1: Landing page & Registration link", async ({ page }) => {
     // 1. Visit landing page
     await page.goto("/", { waitUntil: "load" });
     await expect(page).toHaveTitle(/mipa/i);
@@ -22,26 +22,26 @@ test.describe("MIPA-6: User Comprehension & Visual Funnel Harness", () => {
     expect(fs.existsSync(heroShot)).toBe(true);
 
     // Verify key hero elements
-    const ctaWaitlist = page.locator("a, button").filter({ hasText: /Request Early Access|申請先導體驗/i }).first();
-    await expect(ctaWaitlist).toBeVisible();
+    const ctaGetStarted = page.locator("a, button").filter({ hasText: /Get started free|免費開始使用/i }).first();
+    await expect(ctaGetStarted).toBeVisible();
 
-    // 2. Click Request Early Access to visit waitlist form
-    await ctaWaitlist.click();
-    await page.waitForURL(/tab=waitlist/, { timeout: 10000 }).catch(async () => {
-      await page.goto("/auth?tab=waitlist", { waitUntil: "load" });
+    // 2. Click Get Started to visit registration
+    await ctaGetStarted.click();
+    await page.waitForURL(/tab=register/, { timeout: 10000 }).catch(async () => {
+      await page.goto("/auth?tab=register", { waitUntil: "load" });
     });
 
-    // Save waitlist screenshot
-    const waitlistShot = path.join(SCREENSHOT_DIR, "02_waitlist_form.png");
-    await page.screenshot({ path: waitlistShot, fullPage: false });
-    expect(fs.existsSync(waitlistShot)).toBe(true);
+    // Save registration screenshot
+    const registerShot = path.join(SCREENSHOT_DIR, "02_register_form.png");
+    await page.screenshot({ path: registerShot, fullPage: false });
+    expect(fs.existsSync(registerShot)).toBe(true);
 
-    // Check waitlist form fields
+    // Check register form fields
     const emailInput = page.locator("input[type=email]").first();
     await expect(emailInput).toBeVisible();
   });
 
-  test("Step 2: Sign-in page & Private Preview Notice", async ({ page }) => {
+  test("Step 2: Sign-in page & Auth Access Notice", async ({ page }) => {
     // Visit auth sign-in tab
     await page.goto("/auth?tab=login", { waitUntil: "load" });
 
@@ -56,9 +56,9 @@ test.describe("MIPA-6: User Comprehension & Visual Funnel Harness", () => {
     await expect(emailField).toBeVisible();
     await expect(passwordField).toBeVisible();
 
-    // Verify Private Preview notice is present
-    const previewNotice = page.locator(".q-banner, .text-caption").filter({ hasText: /Private Preview|preview/i }).first();
-    await expect(previewNotice).toBeVisible();
+    // Verify Auth Access notice is present
+    const accessNotice = page.locator(".q-banner, .text-caption").filter({ hasText: /not open yet|尚未全面開放/i }).first();
+    await expect(accessNotice).toBeVisible();
   });
 
   test("Step 3: Model View & Sample Explorer", async ({ page }) => {

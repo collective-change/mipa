@@ -103,16 +103,5 @@ describe("MIPA-18: Invitations & Early Access Rules (Emulator Verified)", { time
         invitedBy: "invited-uid"
       })
     );
-
-    // 8. Early Access Requests waitlist: public submit-only
-    await assertSucceeds(
-      addDoc(collection(unauthDb, "earlyAccessRequests"), {
-        email: "visitor@foundation.org",
-        name: "Visitor",
-        sector: "foundation"
-      })
-    );
-    await assertFails(getDocs(collection(unauthDb, "earlyAccessRequests")));
-    await assertFails(getDocs(collection(invitedDb, "earlyAccessRequests")));
   });
 });

@@ -53,11 +53,9 @@ vi.mock("@/boot/firebase", () => ({
 }));
 
 const mockVerifyUserAccess = vi.fn();
-const mockSubmitEarlyAccessRequest = vi.fn().mockResolvedValue({ success: true, id: "req-1" });
 
 vi.mock("@/utils/earlyAccess", () => ({
   verifyUserAccess: (...args) => mockVerifyUserAccess(...args),
-  submitEarlyAccessRequest: (...args) => mockSubmitEarlyAccessRequest(...args),
   checkEmailHasPendingInvitation: vi.fn()
 }));
 
@@ -129,7 +127,7 @@ describe("MIPA-18: store-auth registration & OAuth auth order", () => {
       expect(mockDeleteUser).not.toHaveBeenCalled();
     });
 
-    it("gates uninvited stranger to waitlist and cleans up auth user", async () => {
+    it("blocks uninvited stranger and cleans up auth user, redirecting to register", async () => {
       const strangerUser = {
         uid: "stranger-uid",
         email: "stranger@unknown.com",
@@ -151,20 +149,13 @@ describe("MIPA-18: store-auth registration & OAuth auth order", () => {
       // 2. Verified access
       expect(mockVerifyUserAccess).toHaveBeenCalledWith(strangerUser);
 
-      // 3. Uninvited: records waitlist request
-      expect(mockSubmitEarlyAccessRequest).toHaveBeenCalledWith(
-        expect.objectContaining({
-          email: "stranger@unknown.com"
-        })
-      );
-
-      // 4. Deleted uninvited user credential
+      // 3. Deleted uninvited user credential
       expect(strangerUser.delete).toHaveBeenCalledTimes(1);
 
-      // 5. Routed to waitlist tab with email
+      // 4. Routed to register tab without waitlist query
       expect(mockRouter.push).toHaveBeenCalledWith({
         path: "/auth",
-        query: { tab: "waitlist", email: "stranger@unknown.com" }
+        query: { tab: "register", email: "stranger@unknown.com" }
       });
       expect(mockSetDoc).not.toHaveBeenCalled();
     });
@@ -199,7 +190,7 @@ describe("MIPA-18: store-auth registration & OAuth auth order", () => {
       );
     });
 
-    it("gates uninvited new OAuth user to waitlist and cleans up credential", async () => {
+    it("blocks uninvited new OAuth user and cleans up credential, redirecting to register", async () => {
       const deleteFn = vi.fn().mockResolvedValue(undefined);
       const strangerOauthUser = {
         uid: "stranger-google-uid",
@@ -218,15 +209,10 @@ describe("MIPA-18: store-auth registration & OAuth auth order", () => {
       const user = await action();
 
       expect(user).toBeNull();
-      expect(mockSubmitEarlyAccessRequest).toHaveBeenCalledWith(
-        expect.objectContaining({
-          email: "stranger.oauth@example.com"
-        })
-      );
       expect(deleteFn).toHaveBeenCalledTimes(1);
       expect(mockRouter.push).toHaveBeenCalledWith({
         path: "/auth",
-        query: { tab: "waitlist", email: "stranger.oauth@example.com" }
+        query: { tab: "register", email: "stranger.oauth@example.com" }
       });
     });
 

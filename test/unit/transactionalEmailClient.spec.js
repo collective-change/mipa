@@ -63,8 +63,7 @@ vi.mock("@/router/public-paths", () => ({
 }));
 
 vi.mock("@/utils/earlyAccess", () => ({
-  verifyUserAccess: vi.fn(),
-  submitEarlyAccessRequest: vi.fn()
+  verifyUserAccess: vi.fn()
 }));
 
 vi.mock("@/boot/i18n", () => ({

@@ -117,7 +117,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
   {
     id: "EARLY-ACCESS-INVITE-FALLBACK",
     file: "src/utils/earlyAccess.js",
-    line: 61,
+    line: 19,
     anchor: 'where("email", "==", normalized)',
     date: "2026-11-20",
     reason: "Client fallback when checkUserAccess callable is unavailable; scoped to single normalized email address."
