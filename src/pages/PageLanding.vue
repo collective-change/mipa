@@ -23,13 +23,13 @@
 
         <div class="row items-center justify-center q-gutter-md q-mb-sm">
           <q-btn
-            to="/auth?tab=waitlist"
+            to="/auth?tab=register"
             color="primary"
             unelevated
             size="lg"
             no-caps
             icon-right="arrow_forward"
-            :label="$t('landingRequestAccess')"
+            :label="$t('landingGetStarted')"
             class="cta-btn"
           />
           <q-btn
@@ -63,7 +63,6 @@
             {{ $t("landingViewDemo") }}
           </router-link>
           <span>·</span>
-          <span>{{ $t("earlyAccessAlreadyInvited") }}</span>
           <router-link to="/auth?tab=register" class="text-primary text-weight-medium">
             {{ $t("Create account") }}
           </router-link>
@@ -262,13 +261,13 @@
         </p>
         <div class="row justify-center q-gutter-md">
           <q-btn
-            to="/auth?tab=waitlist"
+            to="/auth?tab=register"
             color="primary"
             unelevated
             size="lg"
             no-caps
             icon-right="arrow_forward"
-            :label="$t('landingRequestAccess')"
+            :label="$t('landingCtaBtn')"
             class="cta-btn"
           />
           <q-btn

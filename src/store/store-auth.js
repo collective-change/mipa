@@ -18,7 +18,7 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { isPublicPath } from "@/router/public-paths";
 import { i18n } from "@/boot/i18n";
-import { verifyUserAccess, submitEarlyAccessRequest } from "@/utils/earlyAccess";
+import { verifyUserAccess } from "@/utils/earlyAccess";
 
 async function verifyAccessOrGate(result, router) {
   const additional = getAdditionalUserInfo(result);
@@ -28,32 +28,20 @@ async function verifyAccessOrGate(result, router) {
     const access = await verifyUserAccess(user);
     if (!access.allowed) {
       try {
-        await submitEarlyAccessRequest({
-          email,
-          name: user.displayName || email.split("@")[0],
-          orgName: "",
-          sector: "other",
-          note: "Automatic waitlist routing from gated OAuth signup"
-        });
-      } catch (reqErr) {
-        console.warn("Could not record early access request for gated OAuth user:", reqErr);
-      }
-
-      try {
         await user.delete();
       } catch (delErr) {
         await signOut(firebaseAuth);
       }
 
       Notify.create({
-        message: i18n.global.t("authPrivatePreviewNotice"),
+        message: i18n.global.t("authAccessNotice"),
         type: "info",
         timeout: 7000
       });
       if (router) {
         router.push({
           path: "/auth",
-          query: { tab: "waitlist", email: email || "" }
+          query: { tab: "register", email: email || "" }
         });
       }
       return false;
@@ -101,18 +89,6 @@ const actions = {
       const access = await verifyUserAccess(cred.user);
       if (!access.allowed) {
         try {
-          await submitEarlyAccessRequest({
-            email: payload.email,
-            name: payload.email.split("@")[0],
-            orgName: "",
-            sector: "other",
-            note: "Automatic waitlist routing from gated registration"
-          });
-        } catch (reqErr) {
-          console.warn("Could not record early access request for gated registration:", reqErr);
-        }
-
-        try {
           await cred.user.delete();
         } catch (delErr) {
           await signOut(firebaseAuth);
@@ -120,14 +96,14 @@ const actions = {
 
         Loading.hide();
         Notify.create({
-          message: i18n.global.t("authPrivatePreviewNotice"),
+          message: i18n.global.t("authAccessNotice"),
           type: "info",
           timeout: 7000
         });
         if (this.$router) {
           this.$router.push({
             path: "/auth",
-            query: { tab: "waitlist", email: payload.email || "" }
+            query: { tab: "register", email: payload.email || "" }
           });
         }
         return;
