@@ -23,6 +23,13 @@ import { i18n } from "@/boot/i18n";
 
 const t = (key, values) => i18n.global.t(key, values);
 
+function currentLocale() {
+  const loc = i18n?.global?.locale;
+  if (typeof loc === "string") return loc;
+  if (loc && typeof loc.value === "string") return loc.value;
+  return "en-us";
+}
+
 async function call(name, data) {
   try {
     await httpsCallable(firebaseFunctions, name)(data);
@@ -41,15 +48,25 @@ const state = {
 const actions = {
   async inviteMember({}, { org, email, role }) {
     const user = firebaseAuth.currentUser;
-    // Server-side createInvitation callable enforces seat limits
+    // Server-side createInvitation callable enforces seat limits, rate limits, and sends email
     try {
       const fn = httpsCallable(firebaseFunctions, "createInvitation");
-      await fn({ orgId: org.id, email, role });
+      await fn({ orgId: org.id, email, role, locale: currentLocale() });
       Notify.create({ type: "positive", message: t("Invitation created") });
       return true;
     } catch (serverError) {
-      if (serverError.code === "functions/failed-precondition" || serverError.code === "failed-precondition") {
+      const code = serverError && serverError.code;
+      if (code === "functions/failed-precondition" || code === "failed-precondition") {
         showErrorMessage(t("Seat Limit Reached"), serverError.message);
+        return false;
+      }
+      if (
+        code === "functions/resource-exhausted" ||
+        code === "resource-exhausted" ||
+        code === "functions/permission-denied" ||
+        code === "permission-denied"
+      ) {
+        showErrorMessage(t("Something went wrong"), serverError.message);
         return false;
       }
       try {
@@ -82,6 +99,30 @@ const actions = {
 
   async resendInvitation({}, { orgId, invitationId, email }) {
     try {
+      if (firebaseFunctions && typeof httpsCallable === "function") {
+        try {
+          const fn = httpsCallable(firebaseFunctions, "resendInvitation");
+          await fn({ orgId, invitationId, email, locale: currentLocale() });
+          Notify.create({
+            type: "positive",
+            message: t("toastInvitationResent", { email })
+          });
+          return true;
+        } catch (serverError) {
+          const code = serverError && serverError.code;
+          if (
+            code === "functions/resource-exhausted" ||
+            code === "resource-exhausted" ||
+            code === "functions/permission-denied" ||
+            code === "permission-denied" ||
+            code === "functions/not-found" ||
+            code === "not-found"
+          ) {
+            showErrorMessage(t("Something went wrong"), serverError.message);
+            return false;
+          }
+        }
+      }
       await updateDoc(doc(firebaseDb, "orgs", orgId, "invitations", invitationId), {
         lastSentTime: serverTimestamp()
       });

@@ -11,7 +11,9 @@
 //                                    editors.users[], owners.users[]
 
 import { onCall, HttpsError, CallableRequest } from "firebase-functions/v2/https";
-import { getFirestore, FieldValue, Transaction } from "firebase-admin/firestore";
+import { Firestore, getFirestore, FieldValue, Transaction } from "firebase-admin/firestore";
+import { aiKeyEncryptionKey } from "./ai/keyBox";
+import { sendInvitationEmail, SendEmailOptions } from "./notifications/transactionalEmail";
 
 type Role = "member" | "admin";
 
@@ -119,24 +121,33 @@ export const acceptInvitation = onCall(async (request) => {
   return { orgId };
 });
 
-/** An administrator invites someone by email, enforcing tier seat limit. */
-export const createInvitation = onCall(async (request) => {
-  const auth = requireAuth(request);
-  const orgId = requireString(request.data?.orgId, "orgId");
-  const email = requireString(request.data?.email, "email").trim().toLowerCase();
-  const role = requireRole(request.data?.role);
+export interface CreateInvitationInput {
+  uid: string;
+  callerName?: string;
+  callerEmail?: string;
+  orgId: string;
+  email: string;
+  role: Role;
+  locale?: string;
+}
 
-  const db = getFirestore();
-  const orgRef = db.doc(`orgs/${orgId}`);
+export async function executeCreateInvitation(
+  db: Firestore,
+  input: CreateInvitationInput,
+  emailOptions?: SendEmailOptions & { throwOnRateLimit?: boolean; throwOnFailure?: boolean }
+): Promise<{ success: boolean; invitationId: string; emailSent: boolean; messageId?: string }> {
+  const orgRef = db.doc(`orgs/${input.orgId}`);
   const invitationsCol = orgRef.collection("invitations");
+  const cleanEmail = input.email.trim().toLowerCase();
+  const inviterName = input.callerName || input.callerEmail || "";
 
-  const invitationId = await db.runTransaction(async (tx) => {
+  const { invitationId, orgName } = await db.runTransaction(async (tx) => {
     const org = await tx.get(orgRef);
     if (!org.exists) {
       throw new HttpsError("not-found", "Organization does not exist.");
     }
     const superAdmins = (org.get("superAdmins") as string[]) || [];
-    if (!superAdmins.includes(auth.uid)) {
+    if (!superAdmins.includes(input.uid)) {
       throw new HttpsError("permission-denied", "Only administrators can invite new members.");
     }
 
@@ -155,20 +166,162 @@ export const createInvitation = onCall(async (request) => {
     }
 
     const newDocRef = invitationsCol.doc();
+    const resolvedOrgName = (org.get("name") as string) || "";
     tx.set(newDocRef, {
-      email,
-      role,
-      orgId,
-      orgName: org.get("name") || "",
-      invitedBy: auth.uid,
-      invitedByName: auth.token.name || auth.token.email || "",
+      email: cleanEmail,
+      role: input.role,
+      orgId: input.orgId,
+      orgName: resolvedOrgName,
+      invitedBy: input.uid,
+      invitedByName: inviterName,
       createTime: FieldValue.serverTimestamp()
     });
 
-    return newDocRef.id;
+    return { invitationId: newDocRef.id, orgName: resolvedOrgName };
   });
 
-  return { success: true, invitationId };
+  const mailRes = await sendInvitationEmail(
+    db,
+    {
+      recipientEmail: cleanEmail,
+      orgId: input.orgId,
+      orgName,
+      role: input.role,
+      invitedBy: input.uid,
+      invitedByName: inviterName,
+      invitationId,
+      locale: input.locale
+    },
+    emailOptions
+  );
+
+  const invRef = invitationsCol.doc(invitationId);
+  if (typeof invRef?.set === "function") {
+    await invRef.set(
+      {
+        lastSentTime: FieldValue.serverTimestamp(),
+        emailDeliveryStatus: mailRes.sent ? "sent" : "failed",
+        lastMessageId: mailRes.messageId || null
+      },
+      { merge: true }
+    );
+  }
+
+  return {
+    success: true,
+    invitationId,
+    emailSent: mailRes.sent,
+    ...(mailRes.messageId ? { messageId: mailRes.messageId } : {})
+  };
+}
+
+/** An administrator invites someone by email, enforcing tier seat limit and sending invitation email. */
+export const createInvitation = onCall({ secrets: [aiKeyEncryptionKey] }, async (request) => {
+  const auth = requireAuth(request);
+  const orgId = requireString(request.data?.orgId, "orgId");
+  const email = requireString(request.data?.email, "email").trim().toLowerCase();
+  const role = requireRole(request.data?.role);
+  const locale = typeof request.data?.locale === "string" ? request.data.locale : undefined;
+
+  const db = getFirestore();
+  return executeCreateInvitation(db, {
+    uid: auth.uid,
+    callerName: auth.token.name,
+    callerEmail: auth.token.email,
+    orgId,
+    email,
+    role,
+    locale
+  });
+});
+
+export interface ResendInvitationInput {
+  uid: string;
+  callerName?: string;
+  callerEmail?: string;
+  orgId: string;
+  invitationId: string;
+  locale?: string;
+}
+
+export async function executeResendInvitation(
+  db: Firestore,
+  input: ResendInvitationInput,
+  emailOptions?: SendEmailOptions & { throwOnRateLimit?: boolean; throwOnFailure?: boolean }
+): Promise<{ success: boolean; invitationId: string; emailSent: boolean; messageId?: string }> {
+  const orgRef = db.doc(`orgs/${input.orgId}`);
+  const invitationRef = orgRef.collection("invitations").doc(input.invitationId);
+  const [org, invitation] = await Promise.all([orgRef.get(), invitationRef.get()]);
+
+  if (!org.exists) {
+    throw new HttpsError("not-found", "Organization does not exist.");
+  }
+  const superAdmins = (org.get("superAdmins") as string[]) || [];
+  if (!superAdmins.includes(input.uid)) {
+    throw new HttpsError("permission-denied", "Only administrators can resend invitations.");
+  }
+  if (!invitation.exists) {
+    throw new HttpsError("not-found", "This invitation no longer exists.");
+  }
+
+  const email = String(invitation.get("email") || "").trim().toLowerCase();
+  const role: Role = invitation.get("role") === "admin" ? "admin" : "member";
+  const orgName = String(invitation.get("orgName") || org.get("name") || "");
+  const invitedByName = String(
+    invitation.get("invitedByName") || input.callerName || input.callerEmail || ""
+  );
+
+  const mailRes = await sendInvitationEmail(
+    db,
+    {
+      recipientEmail: email,
+      orgId: input.orgId,
+      orgName,
+      role,
+      invitedBy: input.uid,
+      invitedByName,
+      invitationId: input.invitationId,
+      locale: input.locale
+    },
+    emailOptions
+  );
+
+  if (typeof invitationRef.set === "function") {
+    await invitationRef.set(
+      {
+        lastSentTime: FieldValue.serverTimestamp(),
+        resendCount: FieldValue.increment(1),
+        emailDeliveryStatus: mailRes.sent ? "sent" : "failed",
+        lastMessageId: mailRes.messageId || null
+      },
+      { merge: true }
+    );
+  }
+
+  return {
+    success: true,
+    invitationId: input.invitationId,
+    emailSent: mailRes.sent,
+    ...(mailRes.messageId ? { messageId: mailRes.messageId } : {})
+  };
+}
+
+/** An administrator resends a pending organization invitation email (rate-limited). */
+export const resendInvitation = onCall({ secrets: [aiKeyEncryptionKey] }, async (request) => {
+  const auth = requireAuth(request);
+  const orgId = requireString(request.data?.orgId, "orgId");
+  const invitationId = requireString(request.data?.invitationId, "invitationId");
+  const locale = typeof request.data?.locale === "string" ? request.data.locale : undefined;
+
+  const db = getFirestore();
+  return executeResendInvitation(db, {
+    uid: auth.uid,
+    callerName: auth.token.name,
+    callerEmail: auth.token.email,
+    orgId,
+    invitationId,
+    locale
+  });
 });
 
 /**

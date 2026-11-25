@@ -275,14 +275,36 @@ const actions = {
       Loading.hide();
     }
   },
-  sendPasswordResetEmail({}, payload) {
-    sendPasswordResetEmail(firebaseAuth, payload.email)
-      .then(function() {
-        Notify.create(i18n.global.t("toastEmailSent"));
-      })
-      .catch(error => {
-        showErrorMessage("Error", error.message);
-      });
+  async sendPasswordResetEmail({}, payload) {
+    try {
+      let sentViaFunction = false;
+      if (firebaseFunctions && typeof httpsCallable === "function") {
+        try {
+          const loc = i18n?.global?.locale;
+          const locale = typeof loc === "string" ? loc : (loc && typeof loc.value === "string" ? loc.value : "en-us");
+          const fn = httpsCallable(firebaseFunctions, "requestPasswordReset");
+          await fn({ email: payload.email, locale });
+          sentViaFunction = true;
+        } catch (fnError) {
+          const code = fnError && fnError.code;
+          if (
+            code === "functions/resource-exhausted" ||
+            code === "resource-exhausted" ||
+            code === "functions/invalid-argument" ||
+            code === "invalid-argument"
+          ) {
+            throw fnError;
+          }
+          // Fall back to Firebase Auth native email in offline or client-only emulator setups
+        }
+      }
+      if (!sentViaFunction) {
+        await sendPasswordResetEmail(firebaseAuth, payload.email);
+      }
+      Notify.create(i18n.global.t("toastEmailSent"));
+    } catch (error) {
+      showErrorMessage("Error", error.message);
+    }
   },
   handleAuthStateChange({ commit, dispatch }) {
     onAuthStateChanged(firebaseAuth, user => {
