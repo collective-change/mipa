@@ -176,7 +176,7 @@ describe("Layout Header (MIPA-7)", () => {
     // Logo button is present with spacing class
     const logoBtn = wrapper.find(".text-primary.q-toolbar__title");
     expect(logoBtn.exists()).toBe(true);
-    expect(logoBtn.text()).toBe("mipa");
+    expect(logoBtn.text()).toBe("Longecho");
   });
 
   it("handles long organization names >= 40 characters without dropping title or tooltip", () => {
