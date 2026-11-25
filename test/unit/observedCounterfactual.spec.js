@@ -28,7 +28,6 @@ vi.mock("firebase/app", () => fb.app);
 vi.mock("firebase/auth", () => fb.auth);
 vi.mock("firebase/firestore", () => fb.firestore);
 
-const MATHJS_YEAR_S = 365.25 * 24 * 3600;
 
 beforeEach(() => {
   actionsInFirestore = [];
@@ -106,9 +105,11 @@ async function calcActions(actions) {
 
 // NPV of a constant yearly amount across simulation time points, discounted at 5%/year
 function npvOfConstant(amount, points = 5) {
+  // Calendar years starting at FIXED_NOW (2026-01-01): 2026, 2027, 2028 (leap), 2029, 2030
+  const days = [0, 365, 730, 1096, 1461];
   let npv = 0;
   for (let i = 0; i < points; i++) {
-    const tYears = (i * MATHJS_YEAR_S) / YEAR_S;
+    const tYears = ((days[i] ?? i * 365.25) * 86400) / YEAR_S;
     npv += amount / Math.pow(1.05, tYears);
   }
   return npv;
