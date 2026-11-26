@@ -27,6 +27,14 @@
         </ul>
       </section>
 
+      <section>
+        <h2 class="text-h6 q-mt-lg q-mb-sm">Product Telemetry &amp; Instrumentation Notice</h2>
+        <p>
+          mipa uses first-party, cookieless, non-identifying instrumentation to measure feature usage without profiling individuals. The receiving collector verifiably discards IP addresses upon receipt and retains no persistent identifiers. For full details on our measurement rules and technical safeguards, see the
+          <router-link to="/instrumentation" class="text-primary text-weight-medium">Instrumentation Notice</router-link>.
+        </p>
+      </section>
+
       <h2 class="text-h6 q-mt-lg q-mb-sm">Contact</h2>
       <p>
         For questions about this policy, problems or suggestions, please open

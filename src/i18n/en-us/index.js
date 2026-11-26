@@ -307,6 +307,7 @@ export default {
 
   // for PagePrivacy.vue & PageTerms.vue
   privacyPolicyTitle: "Privacy Policy",
+  instrumentationNoticeTitle: "Instrumentation & Telemetry Notice",
   "Privacy Policy": "Privacy Policy",
   termsOfServiceTitle: "Terms of Service",
   "Terms of Service": "Terms of Service",

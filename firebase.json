@@ -20,6 +20,10 @@
     ],
     "rewrites": [
       {
+        "source": "/api/collect",
+        "function": "collectTelemetry"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

@@ -234,6 +234,7 @@ import {
   formatRatioValue
 } from "@/utils/decisionBrief";
 import { generateSensitivityReport } from "@/utils/sensitivityAnalysis";
+import { measure } from "@/utils/measure";
 
 export default {
   name: "ExplainRankingModal",
@@ -339,6 +340,11 @@ export default {
     }
   },
   watch: {
+    modelValue(val) {
+      if (val) {
+        measure("ranking_explained");
+      }
+    },
     action: {
       immediate: true,
       handler(newAction) {

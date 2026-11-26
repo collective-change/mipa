@@ -69,6 +69,7 @@
 
 <script>
 import LoginRegister from "@/components/Auth/LoginRegister.vue";
+import { measure } from "@/utils/measure";
 
 export default {
   components: {
@@ -97,7 +98,17 @@ export default {
       ]
     };
   },
+  mounted() {
+    if (this.tab === "register") {
+      measure("signup_started");
+    }
+  },
   watch: {
+    tab(newTab) {
+      if (newTab === "register") {
+        measure("signup_started");
+      }
+    },
     "$route.query.tab"(newTab) {
       if (newTab === "register") {
         this.tab = "register";

@@ -302,6 +302,7 @@ export default {
 
   // for PagePrivacy.vue & PageTerms.vue
   privacyPolicyTitle: "隐私权政策",
+  instrumentationNoticeTitle: "产品量测与遥测说明",
   "Privacy Policy": "隐私权政策",
   termsOfServiceTitle: "服务条款",
   "Terms of Service": "服务条款",

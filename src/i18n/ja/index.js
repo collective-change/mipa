@@ -272,6 +272,7 @@ export default {
   "helpAchieveText": "Give each action a responsible and an accountable person, and move it through its states as it is approved and completed. My to-do lists the actions you are responsible for. Every node and action has a chat, so the discussion stays next to the work.",
   "helpMore": "Something unclear or not working?",
   "privacyPolicyTitle": "プライバシーポリシー",
+  "instrumentationNoticeTitle": "製品計測・テレメトリに関する告知",
   "Privacy Policy": "プライバシーポリシー",
   "termsOfServiceTitle": "利用規約",
   "Terms of Service": "利用規約",

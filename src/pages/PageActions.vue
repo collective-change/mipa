@@ -46,6 +46,7 @@ import ActionsChart from "@/components/Actions/ActionsChart.vue";
 import UnprioritizedActionsList from "@/components/Actions/UnprioritizedActionsList.vue";
 import ActionSummary from "@/components/Actions/ActionSummary.vue";
 import EmptyState from "@/components/Shared/EmptyState.vue";
+import { measure } from "@/utils/measure";
 
 export default {
   components: {
@@ -108,6 +109,14 @@ export default {
   },*/
   mounted() {
     this.refreshSelectedAction();
+    if (typeof sessionStorage !== "undefined" && !sessionStorage.getItem("ranking_viewed")) {
+      try {
+        sessionStorage.setItem("ranking_viewed", "1");
+      } catch {
+        // sessionStorage blocked or restricted
+      }
+      measure("ranking_viewed");
+    }
   },
 
   methods: {
