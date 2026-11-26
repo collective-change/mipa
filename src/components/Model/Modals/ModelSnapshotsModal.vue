@@ -292,6 +292,7 @@ import {
   saveSnapshotToStorage,
   loadSnapshotsFromStorage
 } from "@/utils/modelSnapshots";
+import { measure } from "@/utils/measure";
 
 export default {
   name: "ModelSnapshotsModal",
@@ -462,6 +463,7 @@ export default {
       });
 
       saveSnapshotToStorage(this.model.id, snap);
+      measure("record_published", { modelId: this.model.id });
       this.reloadSnapshots();
       this.selectedSnapshotId = snap.id;
 

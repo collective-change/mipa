@@ -5,6 +5,7 @@ export const PUBLIC_PATHS = [
   "/landing",
   "/auth",
   "/privacy",
+  "/instrumentation",
   "/terms",
   "/settings/help",
   "/help",

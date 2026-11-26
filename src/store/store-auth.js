@@ -19,6 +19,7 @@ import { showErrorMessage } from "@/utils/util-show-error-message";
 import { isPublicPath } from "@/router/public-paths";
 import { i18n } from "@/boot/i18n";
 import { verifyUserAccess } from "@/utils/earlyAccess";
+import { measure } from "@/utils/measure";
 
 async function verifyAccessOrGate(result, router) {
   const additional = getAdditionalUserInfo(result);
@@ -56,6 +57,7 @@ async function verifyAccessOrGate(result, router) {
       },
       { merge: true }
     );
+    measure("signup_completed", { method: "oauth" });
   }
   return true;
 }
@@ -119,6 +121,7 @@ const actions = {
         displayName: payload.email.split("@")[0],
         registrationTime: serverTimestamp()
       });
+      measure("signup_completed", { method: "email" });
 
       Loading.hide();
       if (this.$router) {

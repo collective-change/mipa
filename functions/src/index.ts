@@ -30,5 +30,8 @@ export {
   triggerSyntheticCheck
 } from "./monitoring/syntheticCheck";
 export {
+  collectTelemetry
+} from "./monitoring/telemetryCollector";
+export {
   submitSupportTicket
 } from "./support/supportIntake";

@@ -21,6 +21,7 @@ import {
 import { firestoreAction } from "./firestore-bind";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { i18n } from "@/boot/i18n";
+import { measure } from "@/utils/measure";
 
 export const DEFAULT_ACTIONS_LIMIT = 50;
 
@@ -189,6 +190,7 @@ const actions = {
       .then(function(docRef) {
         Notify.create(i18n.global.t("toastActionAdded"));
         dispatch("ui/setSelectedActionId", docRef.id, { root: true });
+        measure("goal_created");
       })
       .catch(function(error) {
         showErrorMessage("Error adding action", error.message);

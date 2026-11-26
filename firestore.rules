@@ -101,6 +101,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // First-party cookieless telemetry events: written strictly via Admin SDK in Cloud Functions.
+    // Closed to all direct browser reads and writes.
+    match /telemetryEvents/{docId} {
+      allow read, write: if false;
+    }
+
     match /actions/{action}  {
       allow create: if userInOrg(request.resource.data.orgId);
       allow update: if userInOrg(resource.data.orgId) && userInOrg(request.resource.data.orgId);

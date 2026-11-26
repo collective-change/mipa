@@ -14,6 +14,7 @@ const routes = [
       { path: "/help", redirect: "/settings/help" },
       { path: "/auth", component: () => import("@/pages/PageAuth.vue") },
       { path: "/privacy", component: () => import("@/pages/PagePrivacy.vue") },
+      { path: "/instrumentation", component: () => import("@/pages/PageInstrumentation.vue") },
       { path: "/terms", component: () => import("@/pages/PageTerms.vue") },
       {
         path: "/m/:modelId",

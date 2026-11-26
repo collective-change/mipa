@@ -131,6 +131,7 @@ import { collection, getDocs, limit, query, where } from "firebase/firestore";
 import { firebaseDb } from "@/boot/firebase";
 import CalculatorUi from "@/components/Calc/CalculatorUi.vue";
 import { assessDraftLimits } from "@/utils/draftLimitCheck";
+import { measure } from "@/utils/measure";
 
 // Starter factors created with every new model (see store-model createInitialNodes).
 const STARTER_FACTOR_COUNT = 7;
@@ -328,6 +329,12 @@ export default {
     },
     hide() {
       this.hidden = true;
+      if (!this.allDone) {
+        measure("first_run_abandon", {
+          doneCount: this.doneCount,
+          total: this.steps.length
+        });
+      }
       try {
         localStorage.setItem(this.storageKey, "1");
       } catch {
