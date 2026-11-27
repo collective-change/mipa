@@ -15,6 +15,11 @@ export default defineConfig({
     environment: "happy-dom",
     testTimeout: 20000,
     include: ["test/unit/**/*.spec.js"],
-    server: { deps: { inline: ["quasar"] } }
+    server: { deps: { inline: ["quasar"] } },
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json-summary", "json"],
+      include: ["src/**/*.{js,vue}"]
+    }
   }
 });
