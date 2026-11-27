@@ -1,6 +1,6 @@
 # Transactional Email, Domain Authentication & Delivery Architecture (MIPA-44)
 
-This document describes mipa's transactional email architecture for `collective-change.org` (`mipa-2`), including provider configuration, secret management, required DNS authentication records (SPF, DKIM, DMARC), rate limiting, emulator behavior, and MIPA-36 alerting integration.
+This document describes Longecho's transactional email architecture for `collective-change.org` (`mipa-2`), including provider configuration, secret management, required DNS authentication records (SPF, DKIM, DMARC), rate limiting, emulator behavior, and MIPA-36 alerting integration.
 
 ---
 
@@ -27,7 +27,7 @@ The provider API key must **never** be committed to the repository. `sendTransac
 
 Optional sender overrides (non-secret):
 - `TRANSACTIONAL_EMAIL_FROM` (defaults to `notifications@collective-change.org`)
-- `TRANSACTIONAL_EMAIL_FROM_NAME` (defaults to `mipa`)
+- `TRANSACTIONAL_EMAIL_FROM_NAME` (defaults to `Longecho`)
 - `TRANSACTIONAL_EMAIL_PROVIDER` (`resend` | `sendgrid` | `webhook`)
 
 ---

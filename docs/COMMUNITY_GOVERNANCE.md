@@ -1,12 +1,14 @@
-# Mipa Decentralized Community Governance & Open Ecosystem Blueprint
+# Longecho Decentralized Community Governance & Open Ecosystem Blueprint
 
-This document specifies the open governance model, community stewardship pathways, and zero-maintenance architectural principles that enable Mipa to scale its global societal impact sustainably with near-zero ongoing demand on the creator's personal time.
+Collective Change provides the organizational and open-governance foundation, while Longecho is the strategic dynamics product.
+
+This document specifies the open governance model, community stewardship pathways, and zero-maintenance architectural principles that enable Longecho to scale its global societal impact sustainably with near-zero ongoing demand on the creator's personal time.
 
 ---
 
 ## 1. Zero-Maintenance Architectural Principles
 
-Mipa was architected from inception to scale horizontally and sustainably without requiring costly server infrastructure or full-time administrative oversight:
+Longecho was architected from inception to scale horizontally and sustainably without requiring costly server infrastructure or full-time administrative oversight:
 
 1. **Client-First Calculation Engine**:
    - All system-dynamics simulations, Math.js mathematical evaluations, Monte Carlo risk runs, and SROI deductions execute directly in the user's web browser (`src/workers/calcWorker.js`).
@@ -29,7 +31,7 @@ Mipa was architected from inception to scale horizontally and sustainably withou
 
 System dynamics models represent shared societal wisdom. To foster peer-to-peer learning between humanitarian and social organizations worldwide:
 
-- **Open License**: All public starter models in Mipa are licensed under [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/).
+- **Open License**: All public starter models in Longecho are licensed under [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/).
 - **Model Portability**: Any organization can export their model via `exportModelAsShareableTemplate()` as a sanitized JSON payload. Sensitive organizational secrets, member IDs, and internal chats are automatically excluded.
 - **Attribution Covenant**: Organizations that fork or adapt an open model retain author attribution to honor the originators while sharing refinements with the global community.
 
@@ -49,10 +51,10 @@ To distribute stewardship beyond a single creator:
    - All bug reports, feature suggestions, and methodology questions are handled publicly via [GitHub Issues](https://github.com/collective-change/mipa/issues) and [GitHub Discussions](https://github.com/collective-change/mipa/discussions).
    - No private email support channel; answers to questions become permanently searchable public knowledge.
 3. **Academic & Research Partnerships**:
-   - Universities and systems thinking researchers (e.g. System Dynamics Society, NGO strategy labs) are invited to audit formulas, evaluate archetype dynamics, and publish case studies using open Mipa models.
+   - Universities and systems thinking researchers (e.g. System Dynamics Society, NGO strategy labs) are invited to audit formulas, evaluate archetype dynamics, and publish case studies using open Longecho models.
 
 ---
 
 ## 4. Sustainability & Longevity Guarantee
 
-Because Mipa uses standard Firebase Serverless components, static asset hosting, and local client-side computation, the entire application can run autonomously and cost-neutrally for years. Even if the original development team is offline, organizations worldwide can continue modeling, simulating, and optimizing leverage for societal good.
+Because Longecho uses standard Firebase Serverless components, static asset hosting, and local client-side computation, the entire application can run autonomously and cost-neutrally for years. Even if the original development team is offline, organizations worldwide can continue modeling, simulating, and optimizing leverage for societal good.

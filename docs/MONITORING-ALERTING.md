@@ -1,6 +1,6 @@
 # Production Monitoring, Synthetic Funnel & Support Intake (MIPA-36)
 
-This document specifies the production monitoring architecture, alert routing, synthetic funnel verification, and customer support intake workflows implemented for `collective-change.org` (production Firebase project `mipa-2`).
+This document specifies the production monitoring architecture, alert routing, synthetic funnel verification, and customer support intake workflows implemented for Longecho at `collective-change.org` (production Firebase project `mipa-2`).
 
 ---
 
