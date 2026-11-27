@@ -26,6 +26,7 @@
     "katex": "^0.19.1",
     "mathjs": "^15.2.0",
     "object-sizeof": "^2.6.5",
+    "pinia": "^4.1.0",
     "quasar": "^2.35.4",
     "vue": "^3.5.45",
     "vue-google-charts": "^1.1.1",

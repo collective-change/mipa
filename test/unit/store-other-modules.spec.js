@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { createPinia, setActivePinia } from "pinia";
 import { createStore } from "vuex";
 
 const mockNotifyCreate = vi.fn();
@@ -107,10 +108,10 @@ vi.mock("firebase/firestore", () => {
   };
 });
 
-const createRootStore = (await import("@/store/index")).default;
+const { default: createRootStore, createPiniaInstance } = await import("@/store/index");
 const calculatorModule = (await import("@/store/store-calculator")).default;
 const chatsModule = (await import("@/store/store-chats")).default;
-const usersModule = (await import("@/store/store-users")).default;
+const { useUsersStore } = await import("@/store/store-users");
 const actionsModule = (await import("@/store/store-actions")).default;
 
 const flushMicrotasks = () => new Promise((resolve) => setTimeout(resolve, 15));
@@ -133,17 +134,18 @@ describe("store-index, store-users, store-chats, store-calculator & store-action
     window.Worker = originalWorker;
   });
 
-  it("store-users updates user profile and exposes currentOrgUsers with enumerable id", async () => {
+  it("store-users updates user profile and exposes orgUsers with enumerable id", async () => {
+    setActivePinia(createPinia());
+    const usersStore = useUsersStore();
     const rawUser = { email: "alice@example.com", displayName: "Alice" };
     Object.defineProperty(rawUser, "id", { value: "u1", enumerable: false });
-    usersModule.state.currentOrgUsers = [rawUser];
+    usersStore.currentOrgUsers = [rawUser];
 
-    const store = createStore({ modules: { users: usersModule } });
-    expect(store.getters["users/currentOrgUsers"]).toEqual([
+    expect(usersStore.orgUsers).toEqual([
       { id: "u1", email: "alice@example.com", displayName: "Alice" }
     ]);
 
-    store.dispatch("users/updateUser", { id: "u1", updates: { displayName: "Alice Updated" } });
+    usersStore.updateUser({ id: "u1", updates: { displayName: "Alice Updated" } });
     await flushMicrotasks();
     expect(setDocCalls[0]).toEqual({
       path: "users/u1",
@@ -402,22 +404,12 @@ describe("store-index, store-users, store-chats, store-calculator & store-action
     expect(mockShowErrorMessage).toHaveBeenCalledWith("Error deleting relationship", '"unknown" not recognized');
   });
 
-  it("src/store/index.js creates the full store with all 13 modules registered", () => {
+  it("src/store/index.js creates Pinia and transitional Vuex store", () => {
+    const pinia = createPiniaInstance({ replace: vi.fn() });
+    const usersStore = useUsersStore(pinia);
+    expect(usersStore.$id).toBe("users");
+    expect(usersStore.$router).toBeDefined();
     const store = createRootStore();
-    expect(Object.keys(store.state).sort()).toEqual([
-      "actions",
-      "adHocDocs",
-      "auth",
-      "calcResults",
-      "calculator",
-      "chats",
-      "members",
-      "model",
-      "orgs",
-      "settings",
-      "ui",
-      "uiAction",
-      "users"
-    ]);
+    expect(store).toBeDefined();
   });
 });

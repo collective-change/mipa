@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 
 let listeners = [];
 vi.mock("firebase/firestore", () => {
@@ -25,8 +25,7 @@ vi.mock("@/boot/firebase", () => ({
   firebaseDb: {}
 }));
 
-const { firestoreMutations } = await import("@/store/firestore-bind");
-const adHocDocsModule = (await import("@/store/store-adHocDocs")).default;
+const { useAdHocDocsStore } = await import("@/store/store-adHocDocs");
 
 const makeDocSnap = (id, data) => ({
   id,
@@ -34,52 +33,38 @@ const makeDocSnap = (id, data) => ({
   data: () => ({ ...data })
 });
 
-function makeTestStore() {
-  return createStore({
-    mutations: { ...firestoreMutations },
-    modules: {
-      adHocDocs: {
-        ...adHocDocsModule,
-        state: () => ({
-          appSummary: null,
-          exchangeRates: null
-        })
-      }
-    }
-  });
-}
-
-describe("store-adHocDocs characterization", () => {
+describe("store-adHocDocs (Pinia)", () => {
   beforeEach(() => {
     listeners = [];
+    setActivePinia(createPinia());
   });
 
   it("starts with null appSummary and exchangeRates", () => {
-    const store = makeTestStore();
-    expect(store.state.adHocDocs.appSummary).toBeNull();
-    expect(store.state.adHocDocs.exchangeRates).toBeNull();
+    const store = useAdHocDocsStore();
+    expect(store.appSummary).toBeNull();
+    expect(store.exchangeRates).toBeNull();
   });
 
   it("binds appSummary document and preserves cached data on unbindAppSummary", async () => {
-    const store = makeTestStore();
-    const bindPromise = store.dispatch("adHocDocs/bindAppSummary");
+    const store = useAdHocDocsStore();
+    const bindPromise = store.bindAppSummary();
     expect(listeners).toHaveLength(1);
     expect(listeners[0].ref.path).toBe("adHocDocs/appSummary");
 
     listeners[0].next(makeDocSnap("appSummary", { promptToReloadNumber: 4 }));
     await bindPromise;
 
-    expect(store.state.adHocDocs.appSummary).toEqual({ promptToReloadNumber: 4 });
-    expect(store.state.adHocDocs.appSummary.id).toBe("appSummary");
+    expect(store.appSummary).toEqual({ promptToReloadNumber: 4 });
+    expect(store.appSummary.id).toBe("appSummary");
 
-    store.dispatch("adHocDocs/unbindAppSummary");
+    store.unbindAppSummary();
     expect(listeners[0].unsubscribed).toBe(true);
-    expect(store.state.adHocDocs.appSummary).toEqual({ promptToReloadNumber: 4 });
+    expect(store.appSummary).toEqual({ promptToReloadNumber: 4 });
   });
 
   it("binds exchangeRates document and preserves cached data on unbindExchangeRates", async () => {
-    const store = makeTestStore();
-    const bindPromise = store.dispatch("adHocDocs/bindExchangeRates");
+    const store = useAdHocDocsStore();
+    const bindPromise = store.bindExchangeRates();
     expect(listeners).toHaveLength(1);
     expect(listeners[0].ref.path).toBe("adHocDocs/exchangeRates");
 
@@ -87,10 +72,10 @@ describe("store-adHocDocs characterization", () => {
     listeners[0].next(makeDocSnap("exchangeRates", ratesPayload));
     await bindPromise;
 
-    expect(store.state.adHocDocs.exchangeRates).toEqual(ratesPayload);
+    expect(store.exchangeRates).toEqual(ratesPayload);
 
-    store.dispatch("adHocDocs/unbindExchangeRates");
+    store.unbindExchangeRates();
     expect(listeners[0].unsubscribed).toBe(true);
-    expect(store.state.adHocDocs.exchangeRates).toEqual(ratesPayload);
+    expect(store.exchangeRates).toEqual(ratesPayload);
   });
 });

@@ -1,85 +1,64 @@
-import { uid, Notify } from "quasar";
+import { defineStore } from "pinia";
 import { firebaseDb, firebaseAuth } from "@/boot/firebase";
 import { collection, doc, setDoc } from "firebase/firestore";
 import { firestoreAction } from "./firestore-bind";
 import { showErrorMessage } from "@/utils/util-show-error-message";
-import { slugify } from "@/utils/util-slugify";
-import { i18n } from "@/boot/i18n";
 
-const state = {
-  currentUser: null,
-  currentOrgUsers: null
-};
+export const useUsersStore = defineStore("users", {
+  state: () => ({
+    currentUser: null,
+    currentOrgUsers: null
+  }),
 
-const mutations = {
-  /*clearOrgs(state) {
-    state.orgs = null;
-  }*/
-};
-const actions = {
-  updateUser({ dispatch }, payload) {
-    //console.log(payload);
-    setDoc(doc(firebaseDb, "users", payload.id), payload.updates, {
-      merge: true
-    })
-      .then(function() {
-        //let keys = Object.keys(payload.updates);
-        //console.log("keys: ", keys);
-        //Notify.create(i18n.global.t("toastUserUpdated"));
-      })
-      .catch(function(error) {
-        showErrorMessage("Error updating user information", error.message);
-      });
+  getters: {
+    orgUsers: (state) => {
+      if (!state.currentOrgUsers) {
+        return [];
+      }
+      return state.currentOrgUsers.map((user) => ({ ...user, id: user.id }));
+    }
   },
 
-  bindCurrentUser: firestoreAction(({ bindFirestoreRef }) => {
-    let userId = firebaseAuth.currentUser.uid;
-    // return the promise returned by `bindFirestoreRef`
-    return bindFirestoreRef(
-      "currentUser",
-      doc(firebaseDb, "users", userId),
-      {
-        wait: true //this also forces reset: false
-      }
-    );
-  }),
+  actions: {
+    updateUser(payload) {
+      return setDoc(doc(firebaseDb, "users", payload.id), payload.updates, {
+        merge: true
+      }).catch(function (error) {
+        showErrorMessage("Error updating user information", error.message);
+      });
+    },
 
-  unbindCurrentUser: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("currentUser", false); //don't reset data when unbinding
-  }),
+    bindCurrentUser: firestoreAction(({ bindFirestoreRef }) => {
+      const userId = firebaseAuth.currentUser.uid;
+      return bindFirestoreRef(
+        "currentUser",
+        doc(firebaseDb, "users", userId),
+        {
+          wait: true // this also forces reset: false
+        }
+      );
+    }),
 
-  // Members' names and emails, from orgs/{orgId}/members (the users
-  // collection is private to each user).
-  bindCurrentOrgUsers: firestoreAction(({ bindFirestoreRef }, orgId) => {
-    // return the promise returned by `bindFirestoreRef`
-    return bindFirestoreRef(
-      "currentOrgUsers",
-      collection(firebaseDb, "orgs", orgId, "members"),
-      {
-        wait: true //this also forces reset: false
-      }
-    );
-  }),
+    unbindCurrentUser: firestoreAction(({ unbindFirestoreRef }) => {
+      unbindFirestoreRef("currentUser", false); // don't reset data when unbinding
+    }),
 
-  unbindCurrentOrgUsers: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("currentOrgUsers", true);
-  })
-};
+    // Members' names and emails, from orgs/{orgId}/members (the users
+    // collection is private to each user).
+    bindCurrentOrgUsers: firestoreAction(({ bindFirestoreRef }, orgId) => {
+      return bindFirestoreRef(
+        "currentOrgUsers",
+        collection(firebaseDb, "orgs", orgId, "members"),
+        {
+          wait: true // this also forces reset: false
+        }
+      );
+    }),
 
-const getters = {
-  currentOrgUsers: state => {
-    if (!state.currentOrgUsers) {
-      return [];
-    }
-    let temp = state.currentOrgUsers.map(user => ({ ...user, id: user.id }));
-    return temp;
+    unbindCurrentOrgUsers: firestoreAction(({ unbindFirestoreRef }) => {
+      unbindFirestoreRef("currentOrgUsers", true);
+    })
   }
-};
+});
 
-export default {
-  namespaced: true,
-  state,
-  mutations,
-  actions,
-  getters
-};
+export default useUsersStore;

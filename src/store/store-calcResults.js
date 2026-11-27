@@ -1,46 +1,37 @@
+import { defineStore } from "pinia";
 import idb from "@/api/idb";
 
-const state = {
-  baseline: {},
-  resultsOfAction: {}
-};
+export const useCalcResultsStore = defineStore("calcResults", {
+  state: () => ({
+    baseline: {},
+    resultsOfAction: {}
+  }),
 
-const mutations = {
-  setBaseline(state, baseline) {
-    state.baseline = baseline;
-  },
-  setResultsOfAction(state, resultsOfAction) {
-    state.resultsOfAction = resultsOfAction;
-  },
-  clearResultsOfAction(state) {
-    state.resultsOfAction = {};
+  actions: {
+    setBaseline(baseline) {
+      this.baseline = baseline;
+    },
+
+    setResultsOfAction(resultsOfAction) {
+      this.resultsOfAction = resultsOfAction;
+    },
+
+    async saveBaseline(baseline) {
+      await idb.saveBaseline(baseline);
+    },
+
+    async loadBaseline(modelId) {
+      this.setBaseline(await idb.getBaseline(modelId));
+    },
+
+    async loadResultsOfAction(actionId) {
+      this.setResultsOfAction(await idb.getResultsOfAction(actionId));
+    },
+
+    clearResultsOfAction() {
+      this.resultsOfAction = {};
+    }
   }
-};
+});
 
-const actions = {
-  async saveBaseline({ dispatch }, baseline) {
-    await idb.saveBaseline(baseline);
-  },
-
-  async loadBaseline({ commit }, modelId) {
-    commit("setBaseline", await idb.getBaseline(modelId));
-  },
-
-  async loadResultsOfAction({ commit }, actionId) {
-    commit("setResultsOfAction", await idb.getResultsOfAction(actionId));
-  },
-
-  clearResultsOfAction({ commit }, actionId) {
-    commit("clearResultsOfAction");
-  }
-};
-
-const getters = {};
-
-export default {
-  namespaced: true,
-  state,
-  mutations,
-  actions,
-  getters
-};
+export default useCalcResultsStore;

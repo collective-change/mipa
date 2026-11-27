@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createPinia, setActivePinia } from "pinia";
 
 // Mock Firebase modular SDK to inspect queries and limits
 let countQueries = [];
@@ -28,14 +29,24 @@ vi.mock("firebase/firestore", async (importOriginal) => {
 let boundRefs = [];
 vi.mock("@/store/firestore-bind", () => {
   return {
-    firestoreAction: (fn) => (context, payload) => {
-      const bindFirestoreRef = vi.fn((key, q, options) => {
-        boundRefs.push({ key, query: q, options });
-        return Promise.resolve([]);
-      });
-      const unbindFirestoreRef = vi.fn();
-      return fn({ ...context, bindFirestoreRef, unbindFirestoreRef }, payload);
-    }
+    firestoreAction: (fn) =>
+      function (...args) {
+        const isPinia = Boolean(this && typeof this.$id === "string" && this.$state);
+        const bindFirestoreRef = vi.fn((key, q, options) => {
+          boundRefs.push({ key, query: q, options });
+          return Promise.resolve([]);
+        });
+        const unbindFirestoreRef = vi.fn();
+        if (isPinia) {
+          return fn.call(
+            this,
+            { state: this.$state, store: this, bindFirestoreRef, unbindFirestoreRef },
+            args[0]
+          );
+        }
+        const [context, payload] = args;
+        return fn.call(this, { ...context, bindFirestoreRef, unbindFirestoreRef }, payload);
+      }
   };
 });
 
@@ -46,7 +57,7 @@ vi.mock("@/boot/firebase", () => ({
 
 const { DEFAULT_NODES_LIMIT, default: modelModule } = await import("@/store/store-model");
 const { default: chatsModule } = await import("@/store/store-chats");
-const { default: usersModule } = await import("@/store/store-users");
+const { useUsersStore } = await import("@/store/store-users");
 
 describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
   beforeEach(() => {
@@ -137,8 +148,10 @@ describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
   });
 
   it("store-users binds do not request maxRefDepth: 1", () => {
-    usersModule.actions.bindCurrentUser({});
-    usersModule.actions.bindCurrentOrgUsers({}, "org-1");
+    setActivePinia(createPinia());
+    const usersStore = useUsersStore();
+    usersStore.bindCurrentUser();
+    usersStore.bindCurrentOrgUsers("org-1");
 
     expect(boundRefs).toHaveLength(2);
     expect(boundRefs[0].options.maxRefDepth).toBeUndefined();
