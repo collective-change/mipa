@@ -1,179 +1,14 @@
-import { getField, updateField } from "vuex-map-fields";
-
-const fieldsToTriggerRecalculation = [
-  "estEffortHrs",
-  "effortCompletionPercentage",
-  "estSpending",
-  "spentAmount"
-];
+import { defineStore } from "pinia";
 
 const fieldsToIgnoreForUiActionChanged = [
   "actionMchState",
-  //"saveFullResults", //a temporary field that's not saved
-  "ownDirectCost", //a computed field
-  "outstandingDirectCost", //a computed field
-  "sunkenDirectCost", //a computed field
-  "outstandingDirectEffortHrs", //a computed field
-  "outstandingDirectEffortCost", //a computed field
-  "outstandingSpending" //a computed field
+  "ownDirectCost",
+  "outstandingDirectCost",
+  "sunkenDirectCost",
+  "outstandingDirectEffortHrs",
+  "outstandingDirectEffortCost",
+  "outstandingSpending"
 ];
-
-const state = {
-  uiAction: {},
-  uiActionChanged: false,
-  uiActionChangedFields: []
-};
-
-const mutations = {
-  setUiAction(state, action) {
-    state.uiAction = action;
-
-    //initialize newly coded properties if they're missing from the retrieved action
-    initializeNewlyAddedProperties(state.uiAction);
-
-    state.uiActionChanged = false;
-    state.uiActionChangedFields = [];
-  },
-  mergeNewActionToUiAction(state, newAction) {
-    let tempUiAction = {
-      id: state.uiAction.id
-    };
-    for (const property in newAction) {
-      //if property name is in changedFields, then keep user's changes
-      // else set uiAction's property to new value
-      if (state.uiActionChangedFields.includes(property)) {
-        tempUiAction[property] = state.uiAction[property];
-      } else tempUiAction[property] = newAction[property];
-    }
-    //add in property that's not persisted
-    //tempUiAction.saveFullResults = state.uiAction.saveFullResults;
-    state.uiAction = tempUiAction;
-  },
-  updateUiActionField(state, field) {
-    if (state.uiAction.id == undefined) return;
-    let fieldName = field.path.replace("uiAction.", "");
-    //console.log(field);
-    updateField(state, field);
-    if (!fieldsToIgnoreForUiActionChanged.includes(fieldName)) {
-      state.uiActionChanged = true;
-      if (!state.uiActionChangedFields.includes(fieldName))
-        state.uiActionChangedFields.push(fieldName);
-      //console.log("uiActionChanged due to field", fieldName);
-    }
-    //console.log(state.uiAction.saveFullResults);
-  },
-
-  setUiActionChanged(state, value) {
-    state.uiActionChanged = value;
-  },
-  setActionMchState(state, actionMchState) {
-    state.uiAction.actionMchState = Object.assign({}, actionMchState);
-    //console.log(state.uiAction.actionMchState);
-  },
-  addImpact(state, impact) {
-    state.uiAction.impacts.push(impact);
-    if (!state.uiActionChangedFields.includes("impacts"))
-      state.uiActionChangedFields.push("impacts");
-    state.uiActionChanged = true;
-  },
-  updateImpact(state, impact) {
-    let index = state.uiAction.impacts.map(imp => imp.id).indexOf(impact.id);
-    state.uiAction.impacts[index] = impact;
-    if (!state.uiActionChangedFields.includes("impacts"))
-      state.uiActionChangedFields.push("impacts");
-    state.uiActionChanged = true;
-  },
-  deleteImpact(state, impactId) {
-    state.uiAction.impacts = state.uiAction.impacts.filter(impact => {
-      return impact.id != impactId;
-    });
-    if (!state.uiActionChangedFields.includes("impacts"))
-      state.uiActionChangedFields.push("impacts");
-    state.uiActionChanged = true;
-  },
-  addNodeIdToChart(state, nodeId) {
-    if (state.uiAction.nodeIdsToChart.indexOf(nodeId) === -1)
-      state.uiAction.nodeIdsToChart.push(nodeId);
-  },
-  removeNodeIdToChart(state, nodeId) {
-    const index = state.uiAction.nodeIdsToChart.indexOf(nodeId);
-    if (index > -1) state.uiAction.nodeIdsToChart.splice(index, 1);
-  },
-  addNodeIdsToChart(state, nodeIds) {
-    nodeIds.forEach(nodeId => {
-      if (state.uiAction.nodeIdsToChart.indexOf(nodeId) === -1)
-        state.uiAction.nodeIdsToChart.push(nodeId);
-    });
-  },
-  setNodeIdsToChart(state, nodeIds) {
-    if (Array.isArray(nodeIds)) state.uiAction.nodeIdsToChart = nodeIds;
-  }
-};
-
-const actions = {
-  setUiAction({ commit }, action) {
-    if (action.nodeIdsToChart == undefined) action.nodeIdsToChart = [];
-    commit("setUiAction", action);
-  },
-  addNodeIdToChart({ commit, dispatch }, nodeId) {
-    if (state.uiAction.nodeIdsToChart.indexOf(nodeId) === -1) {
-      commit("addNodeIdToChart", nodeId);
-      dispatch(
-        "actions/updateAction",
-        {
-          id: state.uiAction.id,
-          updates: { nodeIdsToChart: state.uiAction.nodeIdsToChart }
-        },
-        { root: true }
-      );
-    }
-  },
-  removeNodeIdToChart({ commit, dispatch }, nodeId) {
-    commit("removeNodeIdToChart", nodeId);
-    dispatch(
-      "actions/updateAction",
-      {
-        id: state.uiAction.id,
-        updates: { nodeIdsToChart: state.uiAction.nodeIdsToChart }
-      },
-      { root: true }
-    );
-  },
-  addNodeIdsToChart({ commit, dispatch }, nodeIds) {
-    //check if nodeIds already exist in nodeIdsToChart
-    let needToAdd = false;
-    nodeIds.forEach(nodeId => {
-      if (state.uiAction.nodeIdsToChart.indexOf(nodeId) === -1)
-        needToAdd = true;
-    });
-    if (needToAdd) {
-      commit("addNodeIdsToChart", nodeIds);
-      dispatch(
-        "actions/updateAction",
-        {
-          id: state.uiAction.id,
-          updates: { nodeIdsToChart: state.uiAction.nodeIdsToChart }
-        },
-        { root: true }
-      );
-    }
-  },
-  setNodeIdsToChart({ commit, dispatch }, nodeIds) {
-    if (Array.isArray(nodeIds)) {
-      commit("setNodeIdsToChart", nodeIds);
-      dispatch(
-        "actions/updateAction",
-        {
-          id: state.uiAction.id,
-          updates: { nodeIdsToChart: state.uiAction.nodeIdsToChart }
-        },
-        { root: true }
-      );
-    }
-  }
-};
-
-const getters = { getField };
 
 function initializeNewlyAddedProperties(uiAction) {
   const newProperties = {
@@ -189,15 +24,161 @@ function initializeNewlyAddedProperties(uiAction) {
     counterfactual: null
   };
   for (const newProperty in newProperties) {
-    if (!uiAction.hasOwnProperty(newProperty))
-      state.uiAction[newProperty] = newProperties[newProperty];
+    if (!Object.prototype.hasOwnProperty.call(uiAction, newProperty)) {
+      const defaultVal = newProperties[newProperty];
+      uiAction[newProperty] = Array.isArray(defaultVal) ? [...defaultVal] : defaultVal;
+    }
   }
 }
 
-export default {
-  namespaced: true,
-  state,
-  mutations,
-  actions,
-  getters
-};
+function setFieldByPath(target, pathStr, value) {
+  const segments = pathStr
+    .replace(/\[(\w+)\]/g, ".$1")
+    .split(".")
+    .filter(Boolean);
+  let cur = target;
+  for (let i = 0; i < segments.length - 1; i++) {
+    if (cur[segments[i]] == null) {
+      cur[segments[i]] = {};
+    }
+    cur = cur[segments[i]];
+  }
+  if (segments.length > 0) {
+    cur[segments[segments.length - 1]] = value;
+  }
+}
+
+export const useUiActionStore = defineStore("uiAction", {
+  state: () => ({
+    uiAction: {},
+    uiActionChanged: false,
+    uiActionChangedFields: []
+  }),
+
+  actions: {
+    setUiAction(action) {
+      if (!action) {
+        this.uiAction = {};
+        this.uiActionChanged = false;
+        this.uiActionChangedFields = [];
+        return;
+      }
+      if (action.nodeIdsToChart == undefined) {
+        action.nodeIdsToChart = [];
+      }
+      this.uiAction = action;
+      initializeNewlyAddedProperties(this.uiAction);
+      this.uiActionChanged = false;
+      this.uiActionChangedFields = [];
+    },
+
+    mergeNewActionToUiAction(newAction) {
+      const tempUiAction = {
+        id: this.uiAction.id
+      };
+      for (const property in newAction) {
+        if (this.uiActionChangedFields.includes(property)) {
+          tempUiAction[property] = this.uiAction[property];
+        } else {
+          tempUiAction[property] = newAction[property];
+        }
+      }
+      this.uiAction = tempUiAction;
+    },
+
+    updateUiActionField(field) {
+      if (!this.uiAction || this.uiAction.id == undefined) return;
+      const fieldName = field.path.replace(/^uiAction\./, "");
+      const rootField = fieldName.split(/[.[]/)[0];
+      setFieldByPath(this.uiAction, fieldName, field.value);
+      if (!fieldsToIgnoreForUiActionChanged.includes(rootField)) {
+        this.uiActionChanged = true;
+        if (!this.uiActionChangedFields.includes(rootField)) {
+          this.uiActionChangedFields.push(rootField);
+        }
+      }
+    },
+
+    setUiActionChanged(value) {
+      this.uiActionChanged = value;
+    },
+
+    setActionMchState(actionMchState) {
+      this.uiAction.actionMchState = Object.assign({}, actionMchState);
+    },
+
+    addImpact(impact) {
+      this.uiAction.impacts.push(impact);
+      if (!this.uiActionChangedFields.includes("impacts")) {
+        this.uiActionChangedFields.push("impacts");
+      }
+      this.uiActionChanged = true;
+    },
+
+    updateImpact(impact) {
+      const index = this.uiAction.impacts.map((imp) => imp.id).indexOf(impact.id);
+      this.uiAction.impacts[index] = impact;
+      if (!this.uiActionChangedFields.includes("impacts")) {
+        this.uiActionChangedFields.push("impacts");
+      }
+      this.uiActionChanged = true;
+    },
+
+    deleteImpact(impactId) {
+      this.uiAction.impacts = this.uiAction.impacts.filter(
+        (impact) => impact.id != impactId
+      );
+      if (!this.uiActionChangedFields.includes("impacts")) {
+        this.uiActionChangedFields.push("impacts");
+      }
+      this.uiActionChanged = true;
+    },
+
+    async _persistNodeIdsToChart() {
+      const actionsMod = await import("./store-actions");
+      if (actionsMod.useActionsStore) {
+        actionsMod.useActionsStore(this.$pinia).updateAction({
+          id: this.uiAction.id,
+          updates: { nodeIdsToChart: this.uiAction.nodeIdsToChart }
+        });
+      }
+    },
+
+    async addNodeIdToChart(nodeId) {
+      if (this.uiAction.nodeIdsToChart.indexOf(nodeId) === -1) {
+        this.uiAction.nodeIdsToChart.push(nodeId);
+        await this._persistNodeIdsToChart();
+      }
+    },
+
+    async removeNodeIdToChart(nodeId) {
+      const index = this.uiAction.nodeIdsToChart.indexOf(nodeId);
+      if (index > -1) {
+        this.uiAction.nodeIdsToChart.splice(index, 1);
+      }
+      await this._persistNodeIdsToChart();
+    },
+
+    async addNodeIdsToChart(nodeIds) {
+      let needToAdd = false;
+      nodeIds.forEach((nodeId) => {
+        if (this.uiAction.nodeIdsToChart.indexOf(nodeId) === -1) {
+          needToAdd = true;
+          this.uiAction.nodeIdsToChart.push(nodeId);
+        }
+      });
+      if (needToAdd) {
+        await this._persistNodeIdsToChart();
+      }
+    },
+
+    async setNodeIdsToChart(nodeIds) {
+      if (Array.isArray(nodeIds)) {
+        this.uiAction.nodeIdsToChart = nodeIds;
+        await this._persistNodeIdsToChart();
+      }
+    }
+  }
+});
+
+export default useUiActionStore;

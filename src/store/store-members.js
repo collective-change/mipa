@@ -2,6 +2,7 @@
 // Accepting, removing and role changes run in Cloud Functions
 // (functions/src/orgMembers.ts) so member lists and model access change
 // together; invitations themselves are plain Firestore documents.
+import { defineStore } from "pinia";
 import { Notify } from "quasar";
 import { httpsCallable } from "firebase/functions";
 import { sendEmailVerification } from "firebase/auth";
@@ -40,161 +41,159 @@ async function call(name, data) {
   }
 }
 
-const state = {
-  myInvitations: [],
-  orgInvitations: []
-};
+export const useMembersStore = defineStore("members", {
+  state: () => ({
+    myInvitations: [],
+    orgInvitations: []
+  }),
 
-const actions = {
-  async inviteMember({}, { org, email, role }) {
-    const user = firebaseAuth.currentUser;
-    // Server-side createInvitation callable enforces seat limits, rate limits, and sends email
-    try {
-      const fn = httpsCallable(firebaseFunctions, "createInvitation");
-      await fn({ orgId: org.id, email, role, locale: currentLocale() });
-      Notify.create({ type: "positive", message: t("Invitation created") });
-      return true;
-    } catch (serverError) {
-      const code = serverError && serverError.code;
-      if (code === "functions/failed-precondition" || code === "failed-precondition") {
-        showErrorMessage(t("Seat Limit Reached"), serverError.message);
-        return false;
-      }
-      if (
-        code === "functions/resource-exhausted" ||
-        code === "resource-exhausted" ||
-        code === "functions/permission-denied" ||
-        code === "permission-denied"
-      ) {
-        showErrorMessage(t("Something went wrong"), serverError.message);
-        return false;
-      }
+  actions: {
+    async inviteMember({ org, email, role }) {
+      const user = firebaseAuth.currentUser;
+      // Server-side createInvitation callable enforces seat limits, rate limits, and sends email
       try {
-        await addDoc(collection(firebaseDb, "orgs", org.id, "invitations"), {
-          email: email.trim().toLowerCase(),
-          role,
-          orgId: org.id,
-          orgName: org.name,
-          invitedBy: user.uid,
-          invitedByName: user.email,
-          createTime: serverTimestamp()
-        });
+        const fn = httpsCallable(firebaseFunctions, "createInvitation");
+        await fn({ orgId: org.id, email, role, locale: currentLocale() });
         Notify.create({ type: "positive", message: t("Invitation created") });
+        return true;
+      } catch (serverError) {
+        const code = serverError && serverError.code;
+        if (code === "functions/failed-precondition" || code === "failed-precondition") {
+          showErrorMessage(t("Seat Limit Reached"), serverError.message);
+          return false;
+        }
+        if (
+          code === "functions/resource-exhausted" ||
+          code === "resource-exhausted" ||
+          code === "functions/permission-denied" ||
+          code === "permission-denied"
+        ) {
+          showErrorMessage(t("Something went wrong"), serverError.message);
+          return false;
+        }
+        try {
+          await addDoc(collection(firebaseDb, "orgs", org.id, "invitations"), {
+            email: email.trim().toLowerCase(),
+            role,
+            orgId: org.id,
+            orgName: org.name,
+            invitedBy: user.uid,
+            invitedByName: user.email,
+            createTime: serverTimestamp()
+          });
+          Notify.create({ type: "positive", message: t("Invitation created") });
+          return true;
+        } catch (error) {
+          showErrorMessage(t("Something went wrong"), error.message);
+          return false;
+        }
+      }
+    },
+
+    // Used by admins (withdraw) and by the invited person (decline).
+    async deleteInvitation({ orgId, invitationId }) {
+      try {
+        await deleteDoc(doc(firebaseDb, "orgs", orgId, "invitations", invitationId));
+      } catch (error) {
+        showErrorMessage(t("Something went wrong"), error.message);
+      }
+    },
+
+    async resendInvitation({ orgId, invitationId, email }) {
+      try {
+        if (firebaseFunctions && typeof httpsCallable === "function") {
+          try {
+            const fn = httpsCallable(firebaseFunctions, "resendInvitation");
+            await fn({ orgId, invitationId, email, locale: currentLocale() });
+            Notify.create({
+              type: "positive",
+              message: t("toastInvitationResent", { email })
+            });
+            return true;
+          } catch (serverError) {
+            const code = serverError && serverError.code;
+            if (
+              code === "functions/resource-exhausted" ||
+              code === "resource-exhausted" ||
+              code === "functions/permission-denied" ||
+              code === "permission-denied" ||
+              code === "functions/not-found" ||
+              code === "not-found"
+            ) {
+              showErrorMessage(t("Something went wrong"), serverError.message);
+              return false;
+            }
+          }
+        }
+        await updateDoc(doc(firebaseDb, "orgs", orgId, "invitations", invitationId), {
+          lastSentTime: serverTimestamp()
+        });
+        Notify.create({
+          type: "positive",
+          message: t("toastInvitationResent", { email })
+        });
         return true;
       } catch (error) {
         showErrorMessage(t("Something went wrong"), error.message);
         return false;
       }
-    }
-  },
+    },
 
-  // Used by admins (withdraw) and by the invited person (decline).
-  async deleteInvitation({}, { orgId, invitationId }) {
-    try {
-      await deleteDoc(doc(firebaseDb, "orgs", orgId, "invitations", invitationId));
-    } catch (error) {
-      showErrorMessage(t("Something went wrong"), error.message);
-    }
-  },
+    async acceptInvitation({ orgId, invitationId }) {
+      const ok = await call("acceptInvitation", { orgId, invitationId });
+      if (ok) Notify.create({ type: "positive", message: t("You joined the organization") });
+      return ok;
+    },
 
-  async resendInvitation({}, { orgId, invitationId, email }) {
-    try {
-      if (firebaseFunctions && typeof httpsCallable === "function") {
-        try {
-          const fn = httpsCallable(firebaseFunctions, "resendInvitation");
-          await fn({ orgId, invitationId, email, locale: currentLocale() });
-          Notify.create({
-            type: "positive",
-            message: t("toastInvitationResent", { email })
-          });
-          return true;
-        } catch (serverError) {
-          const code = serverError && serverError.code;
-          if (
-            code === "functions/resource-exhausted" ||
-            code === "resource-exhausted" ||
-            code === "functions/permission-denied" ||
-            code === "permission-denied" ||
-            code === "functions/not-found" ||
-            code === "not-found"
-          ) {
-            showErrorMessage(t("Something went wrong"), serverError.message);
-            return false;
-          }
-        }
+    removeMember({ orgId, memberId }) {
+      return call("removeMember", { orgId, memberId });
+    },
+
+    setMemberRole({ orgId, memberId, role }) {
+      return call("setMemberRole", { orgId, memberId, role });
+    },
+
+    async sendVerificationEmail() {
+      try {
+        await sendEmailVerification(firebaseAuth.currentUser);
+        Notify.create(t("Verification email sent"));
+      } catch (error) {
+        showErrorMessage(t("Something went wrong"), error.message);
       }
-      await updateDoc(doc(firebaseDb, "orgs", orgId, "invitations", invitationId), {
-        lastSentTime: serverTimestamp()
-      });
-      Notify.create({
-        type: "positive",
-        message: t("toastInvitationResent", { email })
-      });
-      return true;
-    } catch (error) {
-      showErrorMessage(t("Something went wrong"), error.message);
-      return false;
-    }
-  },
+    },
 
-  async acceptInvitation({}, { orgId, invitationId }) {
-    const ok = await call("acceptInvitation", { orgId, invitationId });
-    if (ok) Notify.create({ type: "positive", message: t("You joined the organization") });
-    return ok;
-  },
+    // After the user clicks the link in the email: refresh the sign-in token
+    // so the server sees the verified address. Returns whether it is verified.
+    async refreshEmailVerified() {
+      const user = firebaseAuth.currentUser;
+      await user.reload();
+      await user.getIdToken(true);
+      return user.emailVerified;
+    },
 
-  removeMember({}, { orgId, memberId }) {
-    return call("removeMember", { orgId, memberId });
-  },
+    bindMyInvitations: firestoreAction(({ bindFirestoreRef }) => {
+      const email = (firebaseAuth.currentUser.email || "").toLowerCase();
+      return bindFirestoreRef(
+        "myInvitations",
+        query(collectionGroup(firebaseDb, "invitations"), where("email", "==", email)),
+        { wait: true }
+      );
+    }),
+    unbindMyInvitations: firestoreAction(({ unbindFirestoreRef }) => {
+      unbindFirestoreRef("myInvitations", true);
+    }),
 
-  setMemberRole({}, { orgId, memberId, role }) {
-    return call("setMemberRole", { orgId, memberId, role });
-  },
+    bindOrgInvitations: firestoreAction(({ bindFirestoreRef }, orgId) => {
+      return bindFirestoreRef(
+        "orgInvitations",
+        collection(firebaseDb, "orgs", orgId, "invitations"),
+        { wait: true }
+      );
+    }),
+    unbindOrgInvitations: firestoreAction(({ unbindFirestoreRef }) => {
+      unbindFirestoreRef("orgInvitations", true);
+    })
+  }
+});
 
-  async sendVerificationEmail() {
-    try {
-      await sendEmailVerification(firebaseAuth.currentUser);
-      Notify.create(t("Verification email sent"));
-    } catch (error) {
-      showErrorMessage(t("Something went wrong"), error.message);
-    }
-  },
-
-  // After the user clicks the link in the email: refresh the sign-in token
-  // so the server sees the verified address. Returns whether it is verified.
-  async refreshEmailVerified() {
-    const user = firebaseAuth.currentUser;
-    await user.reload();
-    await user.getIdToken(true);
-    return user.emailVerified;
-  },
-
-  bindMyInvitations: firestoreAction(({ bindFirestoreRef }) => {
-    const email = (firebaseAuth.currentUser.email || "").toLowerCase();
-    return bindFirestoreRef(
-      "myInvitations",
-      query(collectionGroup(firebaseDb, "invitations"), where("email", "==", email)),
-      { wait: true }
-    );
-  }),
-  unbindMyInvitations: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("myInvitations", true);
-  }),
-
-  bindOrgInvitations: firestoreAction(({ bindFirestoreRef }, orgId) => {
-    return bindFirestoreRef(
-      "orgInvitations",
-      collection(firebaseDb, "orgs", orgId, "invitations"),
-      { wait: true }
-    );
-  }),
-  unbindOrgInvitations: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("orgInvitations", true);
-  })
-};
-
-export default {
-  namespaced: true,
-  state,
-  actions
-};
+export default useMembersStore;

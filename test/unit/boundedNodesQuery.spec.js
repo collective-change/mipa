@@ -56,7 +56,7 @@ vi.mock("@/boot/firebase", () => ({
 }));
 
 const { DEFAULT_NODES_LIMIT, default: modelModule } = await import("@/store/store-model");
-const { default: chatsModule } = await import("@/store/store-chats");
+const { useChatsStore } = await import("@/store/store-chats");
 const { useUsersStore } = await import("@/store/store-users");
 
 describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
@@ -139,8 +139,10 @@ describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
   });
 
   it("store-chats binds do not request maxRefDepth: 1", () => {
-    chatsModule.actions.bindUnreadChats({});
-    chatsModule.actions.bindCurrentChat({}, "chat-1");
+    setActivePinia(createPinia());
+    const chatsStore = useChatsStore();
+    chatsStore.bindUnreadChats("user-1");
+    chatsStore.bindCurrentChat("chat-1");
 
     expect(boundRefs).toHaveLength(2);
     expect(boundRefs[0].options.maxRefDepth).toBeUndefined();

@@ -1,3 +1,4 @@
+import { defineStore } from "pinia";
 import { firebaseDb, firebaseAuth } from "@/boot/firebase";
 import {
   collection,
@@ -16,173 +17,165 @@ import { Notify } from "quasar";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import { i18n } from "@/boot/i18n";
 
-const state = {
-  currentChat: null,
-  unreadChats: null
-};
+export const useChatsStore = defineStore("chats", {
+  state: () => ({
+    currentChat: null,
+    unreadChats: null
+  }),
 
-const mutations = {};
-
-const actions = {
-  async fsAddChat({ dispatch }, payload) {
-    let chat = {
-      orgId: payload.orgId,
-      orgNameCached: payload.orgName,
-      orgNameSlugCached: payload.orgNameSlug,
-      members: payload.members,
-      membersOnly: payload.membersOnly ? true : false,
-      subjectDocType: payload.subjectDocType,
-      subjectDocLineage: payload.subjectDocLineage,
-      subjectDocTitle: payload.subjectDocTitle,
-      newestMessages: []
-    };
-
-    let newChatRef = await addDoc(collection(firebaseDb, "chats"), chat);
-
-    //add chatId to the subject doc
-    switch (payload.subjectDocType) {
-      case "action":
-        dispatch(
-          "actions/updateAction",
-          {
-            id: payload.subjectDocLineage.actionId,
-            updates: { chatId: newChatRef.id }
-          },
-          { root: true }
-        );
-        break;
-      case "node":
-        dispatch(
-          "model/updateNode",
-          {
-            modelId: payload.subjectDocLineage.modelId,
-            updates: {
-              id: payload.subjectDocLineage.nodeId,
-              chatId: newChatRef.id
-            },
-            successNotice: "Chat added to node"
-          },
-          { root: true }
-        );
-        break;
+  getters: {
+    sortedUnreadChats: (state) => {
+      if (state.unreadChats) {
+        const tempChats = [...state.unreadChats];
+        return tempChats.sort((a, b) => b.updateTime - a.updateTime);
+      }
+      return null;
     }
-
-    return newChatRef.id;
   },
 
-  fsAddChatMember({ dispatch }, payload) {
-    updateDoc(doc(firebaseDb, "chats", payload.chatId), {
+  actions: {
+    async fsAddChat(payload) {
+      const chat = {
+        orgId: payload.orgId,
+        orgNameCached: payload.orgName,
+        orgNameSlugCached: payload.orgNameSlug,
+        members: payload.members,
+        membersOnly: Boolean(payload.membersOnly),
+        subjectDocType: payload.subjectDocType,
+        subjectDocLineage: payload.subjectDocLineage,
+        subjectDocTitle: payload.subjectDocTitle,
+        newestMessages: []
+      };
+
+      const newChatRef = await addDoc(collection(firebaseDb, "chats"), chat);
+
+      switch (payload.subjectDocType) {
+        case "action": {
+          const actionsMod = await import("./store-actions");
+          if (actionsMod.useActionsStore) {
+            actionsMod.useActionsStore(this.$pinia).updateAction({
+              id: payload.subjectDocLineage.actionId,
+              updates: { chatId: newChatRef.id }
+            });
+          }
+          break;
+        }
+        case "node": {
+          const modelMod = await import("./store-model");
+          if (modelMod.useModelStore) {
+            modelMod.useModelStore(this.$pinia).updateNode({
+              modelId: payload.subjectDocLineage.modelId,
+              updates: {
+                id: payload.subjectDocLineage.nodeId,
+                chatId: newChatRef.id
+              },
+              successNotice: "Chat added to node"
+            });
+          }
+          break;
+        }
+      }
+
+      return newChatRef.id;
+    },
+
+    fsAddChatMember(payload) {
+      return updateDoc(doc(firebaseDb, "chats", payload.chatId), {
         members: arrayUnion(payload.memberId),
         [`unreadCounts.${payload.memberId}`]: 0,
         [`unreadBy.${payload.memberId}`]: false
       })
-      .then(function() {
-        Notify.create(i18n.global.t("toastChatMemberAdded"));
-      })
-      .catch(function(error) {
-        showErrorMessage("Error adding chat member", error.message);
-      });
-  },
+        .then(function () {
+          Notify.create(i18n.global.t("toastChatMemberAdded"));
+        })
+        .catch(function (error) {
+          showErrorMessage("Error adding chat member", error.message);
+        });
+    },
 
-  fsRemoveChatMember({ dispatch }, payload) {
-    updateDoc(doc(firebaseDb, "chats", payload.chatId), {
+    fsRemoveChatMember(payload) {
+      return updateDoc(doc(firebaseDb, "chats", payload.chatId), {
         members: arrayRemove(payload.memberId),
         [`unreadCounts.${payload.memberId}`]: deleteField(),
         [`unreadBy.${payload.memberId}`]: deleteField()
       })
-      .then(function() {
-        Notify.create(i18n.global.t("toastChatMemberRemoved"));
-      })
-      .catch(function(error) {
-        showErrorMessage("Error removing chat member", error.message);
+        .then(function () {
+          Notify.create(i18n.global.t("toastChatMemberRemoved"));
+        })
+        .catch(function (error) {
+          showErrorMessage("Error removing chat member", error.message);
+        });
+    },
+
+    fsAddMessage(payload) {
+      let unreadCounts = {};
+      let unreadBy = {};
+      if (this.currentChat) {
+        unreadCounts = this.currentChat.unreadCounts
+          ? Object.assign({}, this.currentChat.unreadCounts)
+          : {};
+        unreadBy = this.currentChat.unreadBy
+          ? Object.assign({}, this.currentChat.unreadBy)
+          : {};
+        this.currentChat.members.forEach((memberId) => {
+          if (memberId != firebaseAuth.currentUser.uid) {
+            unreadBy[memberId] = true;
+            if (Object.prototype.hasOwnProperty.call(unreadCounts, memberId)) {
+              unreadCounts[memberId]++;
+            } else {
+              unreadCounts[memberId] = 1;
+            }
+          }
+        });
+      }
+      return updateDoc(doc(firebaseDb, "chats", payload.chatId), {
+        members: arrayUnion(firebaseAuth.currentUser.uid),
+        newestMessages: arrayUnion(payload.message),
+        unreadCounts,
+        unreadBy,
+        updateTime: serverTimestamp()
       });
-  },
+    },
 
-  fsAddMessage({ state }, payload) {
-    //TODO: if newestMessages is too large, then move old messages to log
+    fsResetReadCount(payload) {
+      return updateDoc(doc(firebaseDb, "chats", payload.chatId), {
+        [`unreadCounts.${payload.userId}`]: 0,
+        [`unreadBy.${payload.userId}`]: false
+      });
+    },
 
-    let unreadCounts = {};
-    let unreadBy = {};
-    if (state.currentChat) {
-      if (state.currentChat.unreadCounts)
-        unreadCounts = Object.assign({}, state.currentChat.unreadCounts);
-      else unreadCounts = {};
-      if (state.currentChat.unreadBy)
-        unreadBy = Object.assign({}, state.currentChat.unreadBy);
-      else unreadBy = {};
-      state.currentChat.members.forEach(memberId => {
-        if (memberId != firebaseAuth.currentUser.uid) {
-          unreadBy[memberId] = true;
-          if (unreadCounts.hasOwnProperty(memberId)) unreadCounts[memberId]++;
-          else unreadCounts[memberId] = 1;
+    bindUnreadChats: firestoreAction(({ bindFirestoreRef }, userId) => {
+      return bindFirestoreRef(
+        "unreadChats",
+        query(
+          collection(firebaseDb, "chats"),
+          where("members", "array-contains", userId),
+          where(`unreadBy.${userId}`, "==", true)
+        ),
+        {
+          wait: true // this also forces reset: false
         }
-      });
-    } else unreadCounts = {};
-    updateDoc(doc(firebaseDb, "chats", payload.chatId), {
-      members: arrayUnion(firebaseAuth.currentUser.uid),
-      newestMessages: arrayUnion(payload.message),
-      unreadCounts,
-      unreadBy,
-      updateTime: serverTimestamp()
-    });
-  },
+      );
+    }),
 
-  fsResetReadCount({}, payload) {
-    updateDoc(doc(firebaseDb, "chats", payload.chatId), {
-      [`unreadCounts.${payload.userId}`]: 0,
-      [`unreadBy.${payload.userId}`]: false
-    });
-  },
+    unbindUnreadChats: firestoreAction(({ unbindFirestoreRef }) => {
+      unbindFirestoreRef("unreadChats", true);
+    }),
 
-  bindUnreadChats: firestoreAction(({ bindFirestoreRef }, userId) => {
-    // return the promise returned by `bindFirestoreRef`
-    return bindFirestoreRef(
-      "unreadChats",
-      //firebaseDb.collection("chats").where("members", "array-contains", userId),
-      query(
-        collection(firebaseDb, "chats"),
-        where("members", "array-contains", userId),
-        where(`unreadBy.${userId}`, "==", true)
-      ),
-      {
-        wait: true //this also forces reset: false
-      }
-    );
-  }),
+    bindCurrentChat: firestoreAction(({ bindFirestoreRef }, chatId) => {
+      return bindFirestoreRef(
+        "currentChat",
+        doc(firebaseDb, "chats", chatId),
+        {
+          wait: true // this also forces reset: false
+        }
+      );
+    }),
 
-  unbindUnreadChats: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("unreadChats", true);
-  }),
-
-  bindCurrentChat: firestoreAction(({ bindFirestoreRef }, chatId) => {
-    // return the promise returned by `bindFirestoreRef`
-    return bindFirestoreRef(
-      "currentChat",
-      doc(firebaseDb, "chats", chatId),
-      {
-        wait: true //this also forces reset: false
-      }
-    );
-  }),
-
-  unbindCurrentChat: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("currentChat", true);
-  })
-};
-
-const getters = {
-  unreadChats: state => {
-    if (state.unreadChats) {
-      let tempChats = [...state.unreadChats];
-      return tempChats.sort((a, b) => b.updateTime - a.updateTime);
-    } else return null;
+    unbindCurrentChat: firestoreAction(({ unbindFirestoreRef }) => {
+      unbindFirestoreRef("currentChat", true);
+    })
   }
-};
+});
 
-export default {
-  namespaced: true,
-  state,
-  mutations,
-  actions,
-  getters
-};
+export default useChatsStore;

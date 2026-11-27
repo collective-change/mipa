@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createPinia, setActivePinia } from "pinia";
 
 const mockNotifyCreate = vi.fn();
 const mockShowErrorMessage = vi.fn();
@@ -75,23 +76,26 @@ vi.mock("@/boot/i18n", () => ({
   }
 }));
 
-import storeMembers from "@/store/store-members";
+import { useMembersStore } from "@/store/store-members";
 import storeAuth from "@/store/store-auth";
 
 describe("MIPA-44: Client store transactional email wiring", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setActivePinia(createPinia());
   });
 
   describe("store-members.js", () => {
     it("inviteMember invokes createInvitation callable with locale and notifies success", async () => {
       const callableFn = vi.fn().mockResolvedValueOnce({ data: { success: true, invitationId: "inv-1" } });
       mockHttpsCallable.mockReturnValueOnce(callableFn);
+      const membersStore = useMembersStore();
 
-      const ok = await storeMembers.actions.inviteMember(
-        {},
-        { org: { id: "org-1", name: "Tzu Chi" }, email: "teammate@tzuchi.org.tw", role: "member" }
-      );
+      const ok = await membersStore.inviteMember({
+        org: { id: "org-1", name: "Tzu Chi" },
+        email: "teammate@tzuchi.org.tw",
+        role: "member"
+      });
 
       expect(ok).toBe(true);
       expect(mockHttpsCallable).toHaveBeenCalledWith(expect.anything(), "createInvitation");
@@ -109,11 +113,13 @@ describe("MIPA-44: Client store transactional email wiring", () => {
       const err = new Error("Rate limit exceeded");
       err.code = "functions/resource-exhausted";
       mockHttpsCallable.mockReturnValueOnce(vi.fn().mockRejectedValueOnce(err));
+      const membersStore = useMembersStore();
 
-      const ok = await storeMembers.actions.inviteMember(
-        {},
-        { org: { id: "org-1", name: "Tzu Chi" }, email: "teammate@tzuchi.org.tw", role: "member" }
-      );
+      const ok = await membersStore.inviteMember({
+        org: { id: "org-1", name: "Tzu Chi" },
+        email: "teammate@tzuchi.org.tw",
+        role: "member"
+      });
 
       expect(ok).toBe(false);
       expect(mockShowErrorMessage).toHaveBeenCalledWith("Something went wrong", "Rate limit exceeded");
@@ -123,11 +129,13 @@ describe("MIPA-44: Client store transactional email wiring", () => {
     it("resendInvitation invokes resendInvitation Cloud Function and notifies on success", async () => {
       const callableFn = vi.fn().mockResolvedValueOnce({ data: { success: true, emailSent: true } });
       mockHttpsCallable.mockReturnValueOnce(callableFn);
+      const membersStore = useMembersStore();
 
-      const ok = await storeMembers.actions.resendInvitation(
-        {},
-        { orgId: "org-1", invitationId: "inv-9", email: "teammate@tzuchi.org.tw" }
-      );
+      const ok = await membersStore.resendInvitation({
+        orgId: "org-1",
+        invitationId: "inv-9",
+        email: "teammate@tzuchi.org.tw"
+      });
 
       expect(ok).toBe(true);
       expect(mockHttpsCallable).toHaveBeenCalledWith(expect.anything(), "resendInvitation");
@@ -147,11 +155,13 @@ describe("MIPA-44: Client store transactional email wiring", () => {
       const err = new Error("Too many invitations sent");
       err.code = "functions/resource-exhausted";
       mockHttpsCallable.mockReturnValueOnce(vi.fn().mockRejectedValueOnce(err));
+      const membersStore = useMembersStore();
 
-      const ok = await storeMembers.actions.resendInvitation(
-        {},
-        { orgId: "org-1", invitationId: "inv-9", email: "teammate@tzuchi.org.tw" }
-      );
+      const ok = await membersStore.resendInvitation({
+        orgId: "org-1",
+        invitationId: "inv-9",
+        email: "teammate@tzuchi.org.tw"
+      });
 
       expect(ok).toBe(false);
       expect(mockShowErrorMessage).toHaveBeenCalledWith("Something went wrong", "Too many invitations sent");

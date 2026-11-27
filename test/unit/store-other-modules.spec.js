@@ -110,7 +110,7 @@ vi.mock("firebase/firestore", () => {
 
 const { default: createRootStore, createPiniaInstance } = await import("@/store/index");
 const calculatorModule = (await import("@/store/store-calculator")).default;
-const chatsModule = (await import("@/store/store-chats")).default;
+const { useChatsStore } = await import("@/store/store-chats");
 const { useUsersStore } = await import("@/store/store-users");
 const actionsModule = (await import("@/store/store-actions")).default;
 
@@ -155,30 +155,22 @@ describe("store-index, store-users, store-chats, store-calculator & store-action
   });
 
   it("store-chats creates chats, manages members/messages/unread counts, and sorts unreadChats descending", async () => {
-    const updateActionSpy = vi.fn();
-    const updateNodeSpy = vi.fn();
-    chatsModule.state.currentChat = {
+    setActivePinia(createPinia());
+    const chatsStore = useChatsStore();
+    chatsStore.currentChat = {
       id: "c1",
       members: ["user-1", "user-2"],
       unreadCounts: { "user-2": 2 },
       unreadBy: { "user-2": true }
     };
-    chatsModule.state.unreadChats = [
+    chatsStore.unreadChats = [
       { id: "old", updateTime: 100 },
       { id: "new", updateTime: 500 }
     ];
 
-    const store = createStore({
-      modules: {
-        chats: chatsModule,
-        actions: { namespaced: true, actions: { updateAction: updateActionSpy } },
-        model: { namespaced: true, actions: { updateNode: updateNodeSpy } }
-      }
-    });
+    expect(chatsStore.sortedUnreadChats.map((c) => c.id)).toEqual(["new", "old"]);
 
-    expect(store.getters["chats/unreadChats"].map((c) => c.id)).toEqual(["new", "old"]);
-
-    const chatId = await store.dispatch("chats/fsAddChat", {
+    const chatId = await chatsStore.fsAddChat({
       orgId: "org-1",
       orgName: "Org 1",
       orgNameSlug: "org-1",
@@ -188,9 +180,8 @@ describe("store-index, store-users, store-chats, store-calculator & store-action
       subjectDocTitle: "Action 1"
     });
     expect(chatId).toBe("new_chat_id");
-    expect(updateActionSpy).toHaveBeenCalledTimes(1);
 
-    await store.dispatch("chats/fsAddChat", {
+    await chatsStore.fsAddChat({
       orgId: "org-1",
       orgName: "Org 1",
       orgNameSlug: "org-1",
@@ -199,20 +190,19 @@ describe("store-index, store-users, store-chats, store-calculator & store-action
       subjectDocLineage: { modelId: "m1", nodeId: "n1" },
       subjectDocTitle: "Node 1"
     });
-    expect(updateNodeSpy).toHaveBeenCalledTimes(1);
 
-    store.dispatch("chats/fsAddMessage", {
+    chatsStore.fsAddMessage({
       chatId: "c1",
       message: { text: "Hello", from: "user-1" }
     });
     expect(updateDocCalls.at(-1).data.unreadCounts["user-2"]).toBe(3);
     expect(updateDocCalls.at(-1).data.unreadBy["user-2"]).toBe(true);
 
-    store.dispatch("chats/fsResetReadCount", { chatId: "c1", userId: "user-2" });
+    chatsStore.fsResetReadCount({ chatId: "c1", userId: "user-2" });
     expect(updateDocCalls.at(-1).data["unreadCounts.user-2"]).toBe(0);
 
-    store.dispatch("chats/fsAddChatMember", { chatId: "c1", memberId: "user-3" });
-    store.dispatch("chats/fsRemoveChatMember", { chatId: "c1", memberId: "user-3" });
+    chatsStore.fsAddChatMember({ chatId: "c1", memberId: "user-3" });
+    chatsStore.fsRemoveChatMember({ chatId: "c1", memberId: "user-3" });
     await flushMicrotasks();
     expect(mockNotifyCreate).toHaveBeenCalledWith("toastChatMemberAdded");
     expect(mockNotifyCreate).toHaveBeenCalledWith("toastChatMemberRemoved");

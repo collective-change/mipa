@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createStore } from "vuex";
-import uiModule from "@/store/store-ui";
+import { createPiniaInstance } from "@/store/index";
+import { useUiStore } from "@/store/store-ui";
 
 function makeTestStore(routeNodeId = undefined) {
   const router = {
@@ -13,37 +13,19 @@ function makeTestStore(routeNodeId = undefined) {
     },
     replace: vi.fn()
   };
-
-  // Reset module state before each test since Vuex module state in store-ui.js is an object literal
-  Object.assign(uiModule.state, {
-    selectedNodeId: null,
-    selectedNodeGroupId: null,
-    uiNodeChanged: false,
-    uiNodeChangedFields: [],
-    selectedIssueId: null,
-    selectedActionId: null,
-    selectedSituationId: null,
-    expandedNodeGroups: null,
-    circularNodeIds: null
-  });
-
-  const store = createStore({
-    modules: {
-      ui: uiModule
-    }
-  });
-  store.$router = router;
+  const pinia = createPiniaInstance(router);
+  const store = useUiStore(pinia);
   return { store, router };
 }
 
-describe("store-ui characterization", () => {
+describe("store-ui (Pinia)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it("starts with expected default UI selection and dirty flags", () => {
     const { store } = makeTestStore();
-    expect(store.state.ui).toEqual({
+    expect(store.$state).toEqual({
       selectedNodeId: null,
       selectedNodeGroupId: null,
       uiNodeChanged: false,
@@ -56,67 +38,63 @@ describe("store-ui characterization", () => {
     });
   });
 
-  it("setSelectedNodeId selects initial node without router.replace, and calls router.replace when switching from an already-selected node", async () => {
+  it("setSelectedNodeId selects initial node without router.replace, and calls router.replace when switching from an already-selected node", () => {
     const { store, router } = makeTestStore("node-1");
 
-    // Initial selection when selectedNodeId is null: does not call router.replace
-    await store.dispatch("ui/setSelectedNodeId", "node-1");
-    expect(store.state.ui.selectedNodeId).toBe("node-1");
+    store.setSelectedNodeId("node-1");
+    expect(store.selectedNodeId).toBe("node-1");
     expect(router.replace).not.toHaveBeenCalled();
 
-    // Mark dirty before switching nodes
-    store.commit("ui/setUiNodeChanged", true);
-    store.commit("ui/addUiNodeChangedFields", ["name", "unit"]);
-    expect(store.state.ui.uiNodeChanged).toBe(true);
-    expect(store.state.ui.uiNodeChangedFields).toEqual(["name", "unit"]);
+    store.setUiNodeChanged(true);
+    store.addUiNodeChangedFields(["name", "unit"]);
+    expect(store.uiNodeChanged).toBe(true);
+    expect(store.uiNodeChangedFields).toEqual(["name", "unit"]);
 
-    // Switching from node-1 to node-2 when route param is still node-1 calls router.replace and resets dirty state
-    await store.dispatch("ui/setSelectedNodeId", "node-2");
+    store.setSelectedNodeId("node-2");
     expect(router.replace).toHaveBeenCalledTimes(1);
     expect(router.replace).toHaveBeenCalledWith({
       name: "model-node",
       params: { nodeId: "node-2" }
     });
-    expect(store.state.ui.selectedNodeId).toBe("node-2");
-    expect(store.state.ui.uiNodeChanged).toBe(false);
-    expect(store.state.ui.uiNodeChangedFields).toEqual([]);
+    expect(store.selectedNodeId).toBe("node-2");
+    expect(store.uiNodeChanged).toBe(false);
+    expect(store.uiNodeChangedFields).toEqual([]);
 
-    // Selecting the same node again does not call router.replace
     router.replace.mockClear();
-    await store.dispatch("ui/setSelectedNodeId", "node-2");
+    store.setSelectedNodeId("node-2");
     expect(router.replace).not.toHaveBeenCalled();
   });
 
   it("setUiNodeChanged(false) clears uiNodeChangedFields while true preserves them, and addUiNodeChangedFields deduplicates", () => {
     const { store } = makeTestStore();
 
-    store.commit("ui/addUiNodeChangedFields", ["name", "symbol"]);
-    store.commit("ui/addUiNodeChangedFields", ["symbol", "symbolFormula"]);
-    store.commit("ui/setUiNodeChanged", true);
+    store.addUiNodeChangedFields(["name", "symbol"]);
+    store.addUiNodeChangedFields(["symbol", "symbolFormula"]);
+    store.setUiNodeChanged(true);
 
-    expect(store.state.ui.uiNodeChanged).toBe(true);
-    expect(store.state.ui.uiNodeChangedFields).toEqual(["name", "symbol", "symbolFormula"]);
+    expect(store.uiNodeChanged).toBe(true);
+    expect(store.uiNodeChangedFields).toEqual(["name", "symbol", "symbolFormula"]);
 
-    store.commit("ui/setUiNodeChanged", false);
-    expect(store.state.ui.uiNodeChanged).toBe(false);
-    expect(store.state.ui.uiNodeChangedFields).toEqual([]);
+    store.setUiNodeChanged(false);
+    expect(store.uiNodeChanged).toBe(false);
+    expect(store.uiNodeChangedFields).toEqual([]);
   });
 
-  it("updates node groups, circularNodeIds, and selected action/issue/situation IDs", async () => {
+  it("updates node groups, circularNodeIds, and selected action/issue/situation IDs", () => {
     const { store } = makeTestStore();
 
-    store.commit("ui/setSelectedNodeGroupId", "grp-1");
-    store.commit("ui/setExpandedNodeGroups", ["grp-1", "grp-2"]);
-    await store.dispatch("ui/setSelectedIssueId", "iss-1");
-    await store.dispatch("ui/setSelectedActionId", "act-1");
-    await store.dispatch("ui/setSelectedSituationId", "sit-1");
-    await store.dispatch("ui/setCircularNodeIds", ["n1", "n2"]);
+    store.setSelectedNodeGroupId("grp-1");
+    store.setExpandedNodeGroups(["grp-1", "grp-2"]);
+    store.setSelectedIssueId("iss-1");
+    store.setSelectedActionId("act-1");
+    store.setSelectedSituationId("sit-1");
+    store.setCircularNodeIds(["n1", "n2"]);
 
-    expect(store.state.ui.selectedNodeGroupId).toBe("grp-1");
-    expect(store.state.ui.expandedNodeGroups).toEqual(["grp-1", "grp-2"]);
-    expect(store.state.ui.selectedIssueId).toBe("iss-1");
-    expect(store.state.ui.selectedActionId).toBe("act-1");
-    expect(store.state.ui.selectedSituationId).toBe("sit-1");
-    expect(store.state.ui.circularNodeIds).toEqual(["n1", "n2"]);
+    expect(store.selectedNodeGroupId).toBe("grp-1");
+    expect(store.expandedNodeGroups).toEqual(["grp-1", "grp-2"]);
+    expect(store.selectedIssueId).toBe("iss-1");
+    expect(store.selectedActionId).toBe("act-1");
+    expect(store.selectedSituationId).toBe("sit-1");
+    expect(store.circularNodeIds).toEqual(["n1", "n2"]);
   });
 });

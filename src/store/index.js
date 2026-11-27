@@ -6,12 +6,8 @@ import { firestoreMutations } from "./firestore-bind";
 import actions from "./store-actions";
 import auth from "./store-auth";
 import calculator from "./store-calculator";
-import chats from "./store-chats";
-import members from "./store-members";
 import model from "./store-model";
 import orgs from "./store-orgs";
-import ui from "./store-ui";
-import uiAction from "./store-uiAction";
 
 export function createPiniaInstance(router) {
   const pinia = createPinia();
@@ -37,12 +33,8 @@ export default function (/* { ssrContext } */) {
       actions,
       auth,
       calculator,
-      chats,
-      members,
       model,
-      orgs,
-      ui,
-      uiAction
+      orgs
     },
     strict: import.meta.env.DEV === true
   });
