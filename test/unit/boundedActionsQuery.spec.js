@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createPinia, setActivePinia } from "pinia";
 
-// Mock Firebase modular SDK to inspect queries and limits
-let capturedQueries = [];
 let countQueries = [];
 
 vi.mock("firebase/firestore", async (importOriginal) => {
@@ -22,31 +21,36 @@ vi.mock("firebase/firestore", async (importOriginal) => {
       return {
         data: () => ({ count: 60 })
       };
-    }),
+    })
   };
 });
 
 let boundRefs = [];
 vi.mock("@/store/firestore-bind", () => {
   return {
-    firestoreAction: (fn) => (context, payload) => {
-      const bindFirestoreRef = vi.fn((key, q, options) => {
-        boundRefs.push({ key, query: q, options });
-        return Promise.resolve([]);
-      });
-      const unbindFirestoreRef = vi.fn();
-      return fn({ ...context, bindFirestoreRef, unbindFirestoreRef }, payload);
-    }
+    firestoreAction: (fn) =>
+      function (...args) {
+        const bindFirestoreRef = vi.fn((key, q, options) => {
+          boundRefs.push({ key, query: q, options });
+          return Promise.resolve([]);
+        });
+        const unbindFirestoreRef = vi.fn();
+        return fn.call(
+          this,
+          { state: this.$state, store: this, bindFirestoreRef, unbindFirestoreRef },
+          args[0]
+        );
+      }
   };
 });
 
-const { DEFAULT_ACTIONS_LIMIT, default: actionsModule } = await import("@/store/store-actions");
+const { DEFAULT_ACTIONS_LIMIT, useActionsStore } = await import("@/store/store-actions");
 
 describe("MIPA-10: Bounded Actions Query and Pagination", () => {
   beforeEach(() => {
-    capturedQueries = [];
     countQueries = [];
     boundRefs = [];
+    setActivePinia(createPinia());
   });
 
   it("exports DEFAULT_ACTIONS_LIMIT as 50", () => {
@@ -54,31 +58,25 @@ describe("MIPA-10: Bounded Actions Query and Pagination", () => {
   });
 
   it("bindActions applies default limit(50) and issues getCountFromServer", async () => {
-    const commit = vi.fn();
-    const actionFn = actionsModule.actions.bindActions;
-
-    await actionFn({ commit }, "org-test-123");
+    const store = useActionsStore();
+    await store.bindActions("org-test-123");
 
     expect(boundRefs).toHaveLength(1);
     const bound = boundRefs[0];
     expect(bound.key).toBe("actions");
-    expect(bound.options.maxRefDepth).toBeUndefined(); // maxRefDepth removed
+    expect(bound.options.maxRefDepth).toBeUndefined();
 
-    // Check limit constraint in query
     const limitConstraint = bound.query.constraints.find((c) => c.type === "limit");
     expect(limitConstraint).toBeDefined();
     expect(limitConstraint.limit).toBe(50);
 
-    // Check getCountFromServer was called and count committed
     expect(countQueries).toHaveLength(1);
-    expect(commit).toHaveBeenCalledWith("setActionsTotalCount", 60);
+    expect(store.actionsTotalCount).toBe(60);
   });
 
   it("bindActions respects custom limit when provided in payload object", async () => {
-    const commit = vi.fn();
-    const actionFn = actionsModule.actions.bindActions;
-
-    await actionFn({ commit }, { orgId: "org-test-123", limit: 25 });
+    const store = useActionsStore();
+    await store.bindActions({ orgId: "org-test-123", limit: 25 });
 
     expect(boundRefs).toHaveLength(1);
     const bound = boundRefs[0];
@@ -88,9 +86,7 @@ describe("MIPA-10: Bounded Actions Query and Pagination", () => {
   });
 
   it("bindMatchingActions applies default limit(50), preserves filters, and issues getCountFromServer", async () => {
-    const commit = vi.fn();
-    const actionFn = actionsModule.actions.bindMatchingActions;
-
+    const store = useActionsStore();
     const payload = {
       orgId: "org-test-456",
       actionStatesToSearch: ["approved", "eligible"],
@@ -98,40 +94,33 @@ describe("MIPA-10: Bounded Actions Query and Pagination", () => {
       accountablePersonToSearch: null
     };
 
-    await actionFn({ commit }, payload);
+    await store.bindMatchingActions(payload);
 
     expect(boundRefs).toHaveLength(1);
     const bound = boundRefs[0];
     expect(bound.key).toBe("matchingActions");
-    expect(bound.options.maxRefDepth).toBeUndefined(); // maxRefDepth removed
+    expect(bound.options.maxRefDepth).toBeUndefined();
 
-    // Check filters preserved
     const whereConstraints = bound.query.constraints.filter((c) => c.type === "where");
     expect(whereConstraints.some((w) => w.field === "orgId" && w.val === "org-test-456")).toBe(true);
     expect(whereConstraints.some((w) => w.field === "actionMchState.value" && Array.isArray(w.val))).toBe(true);
     expect(whereConstraints.some((w) => w.field === "responsiblePerson" && w.val === "user-abc")).toBe(true);
 
-    // Check limit constraint
     const limitConstraint = bound.query.constraints.find((c) => c.type === "limit");
     expect(limitConstraint).toBeDefined();
     expect(limitConstraint.limit).toBe(50);
 
-    // Check count query committed
     expect(countQueries).toHaveLength(1);
-    expect(commit).toHaveBeenCalledWith("setMatchingActionsTotalCount", 60);
+    expect(store.matchingActionsTotalCount).toBe(60);
   });
 
   it("bindMatchingActions supports pagination window expansion with custom limit", async () => {
-    const commit = vi.fn();
-    const actionFn = actionsModule.actions.bindMatchingActions;
-
-    const payload = {
+    const store = useActionsStore();
+    await store.bindMatchingActions({
       orgId: "org-test-456",
       actionStatesToSearch: ["approved"],
       limit: 100
-    };
-
-    await actionFn({ commit }, payload);
+    });
 
     const bound = boundRefs[0];
     const limitConstraint = bound.query.constraints.find((c) => c.type === "limit");
@@ -140,8 +129,8 @@ describe("MIPA-10: Bounded Actions Query and Pagination", () => {
   });
 
   it("bindCurrentAction does not request maxRefDepth: 1", () => {
-    const actionFn = actionsModule.actions.bindCurrentAction;
-    actionFn({}, "action-789");
+    const store = useActionsStore();
+    store.bindCurrentAction("action-789");
 
     expect(boundRefs).toHaveLength(1);
     const bound = boundRefs[0];
@@ -149,20 +138,16 @@ describe("MIPA-10: Bounded Actions Query and Pagination", () => {
     expect(bound.options.maxRefDepth).toBeUndefined();
   });
 
-  it("store mutations update total counts and limit state", () => {
-    const state = {
-      actionsTotalCount: null,
-      matchingActionsTotalCount: null,
-      actionsLimit: 50
-    };
+  it("store setter actions update total counts and limit state", () => {
+    const store = useActionsStore();
 
-    actionsModule.mutations.setActionsTotalCount(state, 120);
-    expect(state.actionsTotalCount).toBe(120);
+    store.setActionsTotalCount(120);
+    expect(store.actionsTotalCount).toBe(120);
 
-    actionsModule.mutations.setMatchingActionsTotalCount(state, 85);
-    expect(state.matchingActionsTotalCount).toBe(85);
+    store.setMatchingActionsTotalCount(85);
+    expect(store.matchingActionsTotalCount).toBe(85);
 
-    actionsModule.mutations.setActionsLimit(state, 150);
-    expect(state.actionsLimit).toBe(150);
+    store.setActionsLimit(150);
+    expect(store.actionsLimit).toBe(150);
   });
 });

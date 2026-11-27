@@ -3,11 +3,7 @@ import { markRaw } from "vue";
 import { createStore } from "vuex";
 import { firestoreMutations } from "./firestore-bind";
 
-import actions from "./store-actions";
-import auth from "./store-auth";
-import calculator from "./store-calculator";
 import model from "./store-model";
-import orgs from "./store-orgs";
 
 export function createPiniaInstance(router) {
   const pinia = createPinia();
@@ -30,11 +26,7 @@ export default function (/* { ssrContext } */) {
       ...firestoreMutations
     },
     modules: {
-      actions,
-      auth,
-      calculator,
-      model,
-      orgs
+      model
     },
     strict: import.meta.env.DEV === true
   });

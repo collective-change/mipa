@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
-import { createStore } from "vuex";
 
 const mockNotifyCreate = vi.fn();
 const mockShowErrorMessage = vi.fn();
@@ -109,10 +108,13 @@ vi.mock("firebase/firestore", () => {
 });
 
 const { default: createRootStore, createPiniaInstance } = await import("@/store/index");
-const calculatorModule = (await import("@/store/store-calculator")).default;
+const { useCalculatorStore } = await import("@/store/store-calculator");
+const { useCalcResultsStore } = await import("@/store/store-calcResults");
+const { useUiStore } = await import("@/store/store-ui");
+const { useUiActionStore } = await import("@/store/store-uiAction");
 const { useChatsStore } = await import("@/store/store-chats");
 const { useUsersStore } = await import("@/store/store-users");
-const actionsModule = (await import("@/store/store-actions")).default;
+const { useActionsStore } = await import("@/store/store-actions");
 
 const flushMicrotasks = () => new Promise((resolve) => setTimeout(resolve, 15));
 
@@ -225,75 +227,50 @@ describe("store-index, store-users, store-chats, store-calculator & store-action
       }
     };
 
-    const saveBaselineSpy = vi.fn().mockResolvedValue(undefined);
-    const loadBaselineSpy = vi.fn().mockResolvedValue(undefined);
-    const loadResultsOfActionSpy = vi.fn().mockResolvedValue(undefined);
-    const updateActionsResultsSpy = vi.fn().mockResolvedValue(undefined);
-    const setCircularNodeIdsSpy = vi.fn();
-    const setSelectedNodeIdSpy = vi.fn().mockResolvedValue(undefined);
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const calculatorStore = useCalculatorStore(pinia);
+    const calcResultsStore = useCalcResultsStore(pinia);
+    const uiStore = useUiStore(pinia);
 
-    const store = createStore({
-      modules: {
-        calculator: calculatorModule,
-        calcResults: {
-          namespaced: true,
-          actions: {
-            saveBaseline: saveBaselineSpy,
-            loadBaseline: loadBaselineSpy,
-            loadResultsOfAction: loadResultsOfActionSpy
-          }
-        },
-        actions: {
-          namespaced: true,
-          actions: {
-            updateActionsResults: updateActionsResultsSpy
-          }
-        },
-        ui: {
-          namespaced: true,
-          actions: {
-            setCircularNodeIds: setCircularNodeIdsSpy,
-            setSelectedNodeId: setSelectedNodeIdSpy
-          }
-        }
-      }
-    });
+    const saveBaselineSpy = vi.spyOn(calcResultsStore, "saveBaseline").mockResolvedValue(undefined);
+    const loadBaselineSpy = vi.spyOn(calcResultsStore, "loadBaseline").mockResolvedValue(undefined);
+    const setCircularNodeIdsSpy = vi.spyOn(uiStore, "setCircularNodeIds");
 
-    await store.dispatch("calculator/calculate", {
+    await calculatorStore.calculate({
       calculationType: "baseline",
       orgId: "org-1",
       modelId: "m1",
-      nodes: [{ id: "n1", symbol: "a", sysFormula: "$n2", influencers: ["n2"] }, { id: "n2", symbol: "b" }],
+      nodes: [
+        { id: "n1", symbol: "a", sysFormula: "$n2", influencers: ["n2"] },
+        { id: "n2", symbol: "b" }
+      ],
       exchangeRates: {},
       simulationParams: {},
       roleNodes: {},
       orgCurrency: "USD"
     });
 
-    expect(store.state.calculator.calculatorIsRunning).toBe(true);
+    expect(calculatorStore.calculatorIsRunning).toBe(true);
     expect(lastWorker.messages).toHaveLength(1);
 
-    // Busy guard while running
-    const busyRes = await store.dispatch("calculator/getNewCalcWorker");
+    const busyRes = calculatorStore.getNewCalcWorker();
     expect(busyRes).toBeUndefined();
     expect(mockShowErrorMessage).toHaveBeenCalled();
 
-    // Progress message
     await lastWorker.onmessage({ data: { progressValue: 0.65 } });
-    expect(store.state.calculator.calculationProgress).toBe(0.65);
+    expect(calculatorStore.calculationProgress).toBe(0.65);
 
-    // Baseline result finishes and terminates worker
     await lastWorker.onmessage({
       data: { resultsType: "baseline", calcTimeMs: 120, calcTimeStages: {} }
     });
     expect(saveBaselineSpy).toHaveBeenCalledTimes(1);
-    expect(loadBaselineSpy).toHaveBeenCalledWith(expect.anything(), "m1");
+    expect(loadBaselineSpy).toHaveBeenCalledWith("m1");
     expect(lastWorker.terminated).toBe(true);
-    expect(store.state.calculator.calculatorIsRunning).toBe(false);
-    expect(store.state.calculator.calculationProgress).toBe(0);
+    expect(calculatorStore.calculatorIsRunning).toBe(false);
+    expect(calculatorStore.calculationProgress).toBe(0);
 
-    // Circular dependency error path
-    await store.dispatch("calculator/calculate", {
+    await calculatorStore.calculate({
       calculationType: "actions",
       orgId: "org-1",
       modelId: "m1",
@@ -307,12 +284,18 @@ describe("store-index, store-users, store-chats, store-calculator & store-action
         errorData: [{ id: "n1" }, { id: "n2" }]
       }
     });
-    expect(setCircularNodeIdsSpy).toHaveBeenCalledWith(expect.anything(), ["n1", "n2"]);
-    expect(store.state.calculator.calculatorIsRunning).toBe(false);
+    expect(setCircularNodeIdsSpy).toHaveBeenCalledWith(["n1", "n2"]);
+    expect(calculatorStore.calculatorIsRunning).toBe(false);
   });
 
   it("store-actions manages CRUD, updateActionsResults significance threshold, relationships, and getters", async () => {
-    actionsModule.state.actions = [
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const actionsStore = useActionsStore(pinia);
+    const uiActionStore = useUiActionStore(pinia);
+    uiActionStore.uiAction = { id: "a1" };
+
+    actionsStore.actions = [
       {
         id: "a1",
         name: "Beta",
@@ -338,25 +321,15 @@ describe("store-index, store-users, store-chats, store-calculator & store-action
         }
       }
     ];
-    actionsModule.state.matchingActions = [...actionsModule.state.actions];
+    actionsStore.matchingActions = [...actionsStore.actions];
 
-    const setSelectedActionIdSpy = vi.fn();
-    const store = createStore({
-      modules: {
-        actions: actionsModule,
-        ui: { namespaced: true, actions: { setSelectedActionId: setSelectedActionIdSpy } },
-        uiAction: { namespaced: true, state: () => ({ uiAction: { id: "a1" } }) }
-      }
-    });
-
-    expect(store.getters["actions/actions"]).toHaveLength(2);
-    expect(store.getters["actions/blockingRelationships"]).toEqual([{ blockerId: "a2", blockeeId: "a1" }]);
-    expect(store.getters["actions/blockingRelationshipsOfMatchingActions"]).toEqual([
+    expect(actionsStore.actionsList).toHaveLength(2);
+    expect(actionsStore.blockingRelationships).toEqual([{ blockerId: "a2", blockeeId: "a1" }]);
+    expect(actionsStore.blockingRelationshipsOfMatchingActions).toEqual([
       { blockerId: "a2", blockeeId: "a1" }
     ]);
 
-    // updateActionsResults: unchanged within 0.1% is skipped; changed > 0.1% is batch-updated
-    store.dispatch("actions/updateActionsResults", {
+    actionsStore.updateActionsResults({
       actionsResults: [
         {
           id: "a1",
@@ -380,17 +353,14 @@ describe("store-index, store-users, store-chats, store-calculator & store-action
     expect(batchInstances[0].ops).toHaveLength(1);
     expect(batchInstances[0].ops[0].path).toBe("actions/a2");
 
-    // Nesting & blocking relationships via transactions
     transactionDocs.set("actions/p1", { title: "Parent" });
     transactionDocs.set("actions/a1", { title: "Child" });
-    store.dispatch("actions/addParent", "p1");
-    await flushMicrotasks();
+    await actionsStore.addParent("p1");
     expect(transactionUpdates).toHaveLength(2);
 
-    store.dispatch("actions/deleteRelationship", { type: "nesting", parent: "p1", child: "a1" });
-    store.dispatch("actions/deleteRelationship", { type: "blocking", blocker: "a2", blockee: "a1" });
-    store.dispatch("actions/deleteRelationship", { type: "unknown" });
-    await flushMicrotasks();
+    await actionsStore.deleteRelationship({ type: "nesting", parent: "p1", child: "a1" });
+    await actionsStore.deleteRelationship({ type: "blocking", blocker: "a2", blockee: "a1" });
+    actionsStore.deleteRelationship({ type: "unknown" });
     expect(mockShowErrorMessage).toHaveBeenCalledWith("Error deleting relationship", '"unknown" not recognized');
   });
 

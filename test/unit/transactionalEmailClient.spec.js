@@ -30,11 +30,13 @@ vi.mock("firebase/firestore", () => ({
   collectionGroup: vi.fn(),
   deleteDoc: vi.fn(),
   doc: vi.fn((_db, ...segs) => ({ path: segs.join("/") })),
+  orderBy: vi.fn(),
   query: vi.fn(),
   serverTimestamp: vi.fn(() => "MOCK_TS"),
   setDoc: vi.fn(),
   updateDoc: (...args) => mockUpdateDoc(...args),
-  where: vi.fn()
+  where: vi.fn(),
+  writeBatch: vi.fn()
 }));
 
 vi.mock("firebase/auth", () => ({
@@ -77,7 +79,7 @@ vi.mock("@/boot/i18n", () => ({
 }));
 
 import { useMembersStore } from "@/store/store-members";
-import storeAuth from "@/store/store-auth";
+import { useAuthStore } from "@/store/store-auth";
 
 describe("MIPA-44: Client store transactional email wiring", () => {
   beforeEach(() => {
@@ -173,8 +175,9 @@ describe("MIPA-44: Client store transactional email wiring", () => {
     it("sendPasswordResetEmail invokes requestPasswordReset callable and shows toast", async () => {
       const callableFn = vi.fn().mockResolvedValueOnce({ data: { success: true, sent: true } });
       mockHttpsCallable.mockReturnValueOnce(callableFn);
+      const authStore = useAuthStore();
 
-      await storeAuth.actions.sendPasswordResetEmail({}, { email: "member@tzuchi.org.tw" });
+      await authStore.sendPasswordResetEmail({ email: "member@tzuchi.org.tw" });
 
       expect(mockHttpsCallable).toHaveBeenCalledWith(expect.anything(), "requestPasswordReset");
       expect(callableFn).toHaveBeenCalledWith({
@@ -189,8 +192,9 @@ describe("MIPA-44: Client store transactional email wiring", () => {
       const err = new Error("Too many password reset requests");
       err.code = "functions/resource-exhausted";
       mockHttpsCallable.mockReturnValueOnce(vi.fn().mockRejectedValueOnce(err));
+      const authStore = useAuthStore();
 
-      await storeAuth.actions.sendPasswordResetEmail({}, { email: "member@tzuchi.org.tw" });
+      await authStore.sendPasswordResetEmail({ email: "member@tzuchi.org.tw" });
 
       expect(mockShowErrorMessage).toHaveBeenCalledWith("Error", "Too many password reset requests");
       expect(mockSendPasswordResetEmail).not.toHaveBeenCalled();
@@ -201,8 +205,9 @@ describe("MIPA-44: Client store transactional email wiring", () => {
       unavailable.code = "functions/unavailable";
       mockHttpsCallable.mockReturnValueOnce(vi.fn().mockRejectedValueOnce(unavailable));
       mockSendPasswordResetEmail.mockResolvedValueOnce(undefined);
+      const authStore = useAuthStore();
 
-      await storeAuth.actions.sendPasswordResetEmail({}, { email: "member@tzuchi.org.tw" });
+      await authStore.sendPasswordResetEmail({ email: "member@tzuchi.org.tw" });
 
       expect(mockSendPasswordResetEmail).toHaveBeenCalledWith(expect.anything(), "member@tzuchi.org.tw");
       expect(mockNotifyCreate).toHaveBeenCalledWith("toastEmailSent");

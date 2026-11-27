@@ -1,13 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createPiniaInstance } from "@/store/index";
 
-// Mock quasar
 vi.mock("quasar", () => ({
   LocalStorage: { set: vi.fn(), get: vi.fn() },
   Loading: { show: vi.fn(), hide: vi.fn() },
   Notify: { create: vi.fn() }
 }));
 
-// Mock firebase
 const mockDeleteUser = vi.fn().mockResolvedValue(undefined);
 const mockUser = {
   uid: "test-user-uid",
@@ -41,8 +40,17 @@ vi.mock("firebase/auth", () => ({
 
 const mockSetDoc = vi.fn().mockResolvedValue(undefined);
 vi.mock("firebase/firestore", () => ({
+  collection: vi.fn(),
   doc: vi.fn((_db, col, id) => ({ path: `${col}/${id}` })),
   setDoc: (...args) => mockSetDoc(...args),
+  addDoc: vi.fn(),
+  deleteDoc: vi.fn(),
+  query: vi.fn(),
+  where: vi.fn(),
+  orderBy: vi.fn(),
+  writeBatch: vi.fn(),
+  onSnapshot: vi.fn(),
+  DocumentReference: class {},
   serverTimestamp: vi.fn(() => "MOCK_TIMESTAMP")
 }));
 
@@ -75,10 +83,11 @@ vi.mock("@/boot/i18n", () => ({
   }
 }));
 
-import storeAuth from "@/store/store-auth";
+import { useAuthStore } from "@/store/store-auth";
 
 describe("MIPA-18: store-auth registration & OAuth auth order", () => {
   let mockRouter;
+  let authStore;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -87,6 +96,8 @@ describe("MIPA-18: store-auth registration & OAuth auth order", () => {
       replace: vi.fn(),
       currentRoute: { value: { path: "/auth" } }
     };
+    const pinia = createPiniaInstance(mockRouter);
+    authStore = useAuthStore(pinia);
   });
 
   describe("registerUser action", () => {
@@ -94,15 +105,11 @@ describe("MIPA-18: store-auth registration & OAuth auth order", () => {
       mockCreateUser.mockResolvedValueOnce({ user: mockUser });
       mockVerifyUserAccess.mockResolvedValueOnce({ allowed: true, hasInvite: true, isMember: false });
 
-      const context = {};
-      const action = storeAuth.actions.registerUser.bind({ $router: mockRouter });
-
-      await action(context, {
+      await authStore.registerUser({
         email: "invited@tzuchi.org.tw",
         password: "securePassword123!"
       });
 
-      // 1. Must call createUserWithEmailAndPassword first
       expect(mockCreateUser).toHaveBeenCalledTimes(1);
       expect(mockCreateUser).toHaveBeenCalledWith(
         expect.anything(),
@@ -110,11 +117,9 @@ describe("MIPA-18: store-auth registration & OAuth auth order", () => {
         "securePassword123!"
       );
 
-      // 2. Must verify access with authenticated user
       expect(mockVerifyUserAccess).toHaveBeenCalledTimes(1);
       expect(mockVerifyUserAccess).toHaveBeenCalledWith(mockUser);
 
-      // 3. User is invited: must send verification email and create user doc
       expect(mockSendEmailVerification).toHaveBeenCalledWith(mockUser);
       expect(mockSetDoc).toHaveBeenCalledWith(
         expect.objectContaining({ path: "users/test-user-uid" }),
@@ -136,23 +141,14 @@ describe("MIPA-18: store-auth registration & OAuth auth order", () => {
       mockCreateUser.mockResolvedValueOnce({ user: strangerUser });
       mockVerifyUserAccess.mockResolvedValueOnce({ allowed: false, hasInvite: false, isMember: false });
 
-      const action = storeAuth.actions.registerUser.bind({ $router: mockRouter });
-
-      await action({}, {
+      await authStore.registerUser({
         email: "stranger@unknown.com",
         password: "strangerPassword123!"
       });
 
-      // 1. Auth created first
       expect(mockCreateUser).toHaveBeenCalledTimes(1);
-
-      // 2. Verified access
       expect(mockVerifyUserAccess).toHaveBeenCalledWith(strangerUser);
-
-      // 3. Deleted uninvited user credential
       expect(strangerUser.delete).toHaveBeenCalledTimes(1);
-
-      // 4. Routed to register tab without waitlist query
       expect(mockRouter.push).toHaveBeenCalledWith({
         path: "/auth",
         query: { tab: "register", email: "stranger@unknown.com" }
@@ -175,8 +171,7 @@ describe("MIPA-18: store-auth registration & OAuth auth order", () => {
       const { signInWithPopup } = await import("firebase/auth");
       vi.mocked(signInWithPopup).mockResolvedValueOnce({ user: oauthUser });
 
-      const action = storeAuth.actions.loginWithGoogle.bind({ $router: mockRouter });
-      const user = await action();
+      const user = await authStore.loginWithGoogle();
 
       expect(user).toBe(oauthUser);
       expect(mockVerifyUserAccess).toHaveBeenCalledWith(oauthUser);
@@ -205,8 +200,7 @@ describe("MIPA-18: store-auth registration & OAuth auth order", () => {
       const { signInWithPopup } = await import("firebase/auth");
       vi.mocked(signInWithPopup).mockResolvedValueOnce({ user: strangerOauthUser });
 
-      const action = storeAuth.actions.loginWithGoogle.bind({ $router: mockRouter });
-      const user = await action();
+      const user = await authStore.loginWithGoogle();
 
       expect(user).toBeNull();
       expect(deleteFn).toHaveBeenCalledTimes(1);
@@ -227,8 +221,7 @@ describe("MIPA-18: store-auth registration & OAuth auth order", () => {
       const { signInWithPopup } = await import("firebase/auth");
       vi.mocked(signInWithPopup).mockResolvedValueOnce({ user: existingUser });
 
-      const action = storeAuth.actions.loginWithGoogle.bind({ $router: mockRouter });
-      const user = await action();
+      const user = await authStore.loginWithGoogle();
 
       expect(user).toBe(existingUser);
       expect(mockVerifyUserAccess).not.toHaveBeenCalled();
