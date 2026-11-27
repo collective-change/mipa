@@ -107,6 +107,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Operator issue store (todo281): server-only subtree in mipa-2.
+    // All writes go exclusively through the opsStoreManager Cloud Function write gate,
+    // and no client (unauthenticated or signed-in user) may read or write ops/.
+    match /ops/{document=**} {
+      allow read, write: if false;
+    }
+
     match /actions/{action}  {
       allow create: if userInOrg(request.resource.data.orgId);
       allow update: if userInOrg(resource.data.orgId) && userInOrg(request.resource.data.orgId);
