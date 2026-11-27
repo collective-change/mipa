@@ -1,13 +1,11 @@
 /**
- * Support Intake & Automatic Board Filing (MIPA-36)
+ * Support Intake & In-App Customer Service (MIPA-36)
  *
  * Provides structured customer support intake with stated response expectations
- * and automatically files board items into docs/BACKLOG.md so that paying customers
- * enter the delivery pipeline without requiring human sales touch.
+ * and persists tickets directly into Firestore supportTickets collection.
+ * (Note: docs/BACKLOG.md filing was retired on 2026-11-26 in favor of the Firestore ops-store).
  */
 
-import fs from "fs";
-import path from "path";
 import { onCall, HttpsError, CallableRequest } from "firebase-functions/v2/https";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
@@ -52,7 +50,7 @@ export const SUPPORT_RESPONSE_EXPECTATIONS: Record<CustomerTier, StatedResponseE
 };
 
 /**
- * Finds the highest MIPA-<n> identifier in a backlog file string.
+ * Finds the highest MIPA-<n> identifier in a task string or backlog content.
  */
 export function findHighestMipaId(content: string): number {
   const matches = content.matchAll(/MIPA-(\d+)/g);
@@ -67,75 +65,36 @@ export function findHighestMipaId(content: string): number {
 }
 
 /**
- * Automatically appends a support ticket as a board task in docs/BACKLOG.md.
- * Fulfills the Backlog Protocol: stable ID, explicit criteria, anchored heading.
+ * Automatically appends a support ticket as a board task.
+ * (Retired: The markdown queue docs/BACKLOG.md was retired on 2026-11-26;
+ * support tickets are persisted to the Firestore supportTickets collection).
  */
 export function fileSupportBoardTask(
   ticketId: string,
   subject: string,
-  message: string,
-  email: string,
-  orgId: string,
-  tier: CustomerTier,
+  message?: string,
+  email?: string,
+  orgId?: string,
+  tier?: CustomerTier,
   backlogPath?: string
 ): { success: boolean; taskTitle: string; taskId?: string } {
-  const targetPath = backlogPath || path.resolve(__dirname, "../../../docs/BACKLOG.md");
-
-  if (!fs.existsSync(targetPath)) {
-    return {
-      success: false,
-      taskTitle: `Support: ${subject}`
-    };
-  }
-
-  const content = fs.readFileSync(targetPath, "utf8");
-  const highestId = findHighestMipaId(content);
-  const nextId = `MIPA-${highestId + 1}`;
-  const responseExpectation = SUPPORT_RESPONSE_EXPECTATIONS[tier];
-
-  const now = new Date();
-  const dateStr = now.toISOString().slice(0, 10);
-
-  const taskTitle = `${nextId}: Support Ticket: ${subject.trim()} (${tier.toUpperCase()} - ${ticketId})`;
-
-  const taskBlock = [
-    `### [TODO] ${taskTitle}`,
-    ``,
-    `- **Date**: ${dateStr}`,
-    `- **Ticket ID**: \`${ticketId}\``,
-    `- **Submitted by**: ${email}`,
-    `- **Organization**: \`${orgId || "individual"}\``,
-    `- **Customer Tier**: **${tier.toUpperCase()}** (${responseExpectation.displayText})`,
-    `- **Message**:`,
-    `  > ${message.replace(/\n/g, "\n  > ")}`,
-    `- **Acceptance Criteria**:`,
-    `  - [ ] Customer response sent within ${responseExpectation.hours || 48} hours (${email})`,
-    `  - [ ] Root cause identified and remediated in production`,
-    `  - [ ] Ticket closed with resolved status in Firestore supportTickets`
-  ].join("\n");
-
-  const queueHeaderRegex = /^## Queue \(Priority Order\)\s*$/m;
-  const match = content.match(queueHeaderRegex);
-
-  if (!match || match.index === undefined) {
-    throw new Error('Could not find "## Queue (Priority Order)" in BACKLOG.md');
-  }
-
-  const headerEnd = match.index + match[0].length;
-  const updatedContent = content.slice(0, headerEnd) + "\n\n" + taskBlock + "\n" + content.slice(headerEnd);
-
-  fs.writeFileSync(targetPath, updatedContent, "utf8");
-
+  // Retired: The markdown queue (docs/BACKLOG.md) was retired on 2026-11-26.
+  // Tickets are persisted directly to Firestore supportTickets.
+  void ticketId;
+  void message;
+  void email;
+  void orgId;
+  void tier;
+  void backlogPath;
   return {
-    success: true,
-    taskTitle,
-    taskId: nextId
+    success: false,
+    taskTitle: `Support: ${subject}`
   };
 }
 
 /**
  * Callable Cloud Function: In-app support ticket intake.
- * Validates requester, persists ticket in Firestore, and auto-files a board task.
+ * Validates requester and persists ticket in Firestore supportTickets collection.
  */
 export const submitSupportTicket = onCall(async (request: CallableRequest) => {
   if (!request.auth) {
@@ -191,7 +150,7 @@ export const submitSupportTicket = onCall(async (request: CallableRequest) => {
     isoTime: new Date().toISOString()
   });
 
-  // 2. Automatically file a board task in BACKLOG.md
+  // 2. Board filing (retired on 2026-11-26; tickets are stored in Firestore supportTickets)
   let boardFilingResult: { success: boolean; taskTitle: string; taskId?: string } = {
     success: false,
     taskTitle: subject
@@ -210,6 +169,6 @@ export const submitSupportTicket = onCall(async (request: CallableRequest) => {
     responseExpectation: expectation.displayText,
     responseHours: expectation.hours,
     boardFiled: boardFilingResult.success,
-    boardTaskId: boardFilingResult.taskId
+    boardTaskId: boardFilingResult.taskId || null
   };
 });

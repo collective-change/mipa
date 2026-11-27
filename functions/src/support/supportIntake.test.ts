@@ -1,8 +1,5 @@
 import { test } from "node:test";
 import * as assert from "node:assert/strict";
-import fs from "fs";
-import os from "os";
-import path from "path";
 import {
   SUPPORT_RESPONSE_EXPECTATIONS,
   findHighestMipaId,
@@ -37,45 +34,17 @@ test("findHighestMipaId finds highest integer MIPA-ID", () => {
   assert.equal(findHighestMipaId("No tasks here"), 0);
 });
 
-test("fileSupportBoardTask formats task and appends to Queue in BACKLOG.md", () => {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "mipa-test-"));
-  const tempBacklog = path.join(tempDir, "BACKLOG.md");
-
-  const initialBacklog = [
-    "# Backlog",
-    "",
-    "## Active / In Progress",
-    "",
-    "## Queue (Priority Order)",
-    "",
-    "### [TODO] MIPA-35: Terms and deletion",
-    "- **Date**: 2026-11-18",
-    "",
-    "## Completed",
-    "### [DONE] MIPA-34: Backup drill"
-  ].join("\n");
-
-  fs.writeFileSync(tempBacklog, initialBacklog, "utf8");
-
+test("fileSupportBoardTask is retired and safely returns without reading markdown files", () => {
+  // (Note: docs/BACKLOG.md was retired on 2026-11-26 in favor of the Firestore ops-store)
   const result = fileSupportBoardTask(
     "TICK-1795000000-xyz",
     "Calculations show NaN on delayed factors",
     "When I run delay() with 3 steps on monthly frequency, leverage shows NaN.",
     "buyer@tzuchi.org.tw",
     "org-tzuchi-1",
-    "starter",
-    tempBacklog
+    "starter"
   );
 
-  assert.equal(result.success, true);
-  assert.equal(result.taskId, "MIPA-36");
-  assert.ok(result.taskTitle.includes("Support Ticket: Calculations show NaN on delayed factors"));
-
-  const updatedContent = fs.readFileSync(tempBacklog, "utf8");
-  assert.ok(updatedContent.includes("### [TODO] MIPA-36: Support Ticket: Calculations show NaN on delayed factors (STARTER - TICK-1795000000-xyz)"));
-  assert.ok(updatedContent.includes("- **Customer Tier**: **STARTER** (48 business hours response expectation)"));
-  assert.ok(updatedContent.includes("buyer@tzuchi.org.tw"));
-
-  // Clean up
-  fs.rmSync(tempDir, { recursive: true, force: true });
+  assert.equal(result.success, false);
+  assert.ok(result.taskTitle.includes("Support: Calculations show NaN on delayed factors"));
 });
