@@ -235,7 +235,7 @@ describe("todo281: Ops Write Gate, Server-Only Rules, Single-Read Digest & Exact
 
     const handler = createOpsWriteGateHandler({
       db: adminDb,
-      expectedToken: gateToken,
+      expectedTokens: { antigravity: gateToken },
       verifyIdToken: async (token) => {
         if (token === `normal-user-jwt-${runId}`) {
           return { uid: `normal-user-${runId}` };
@@ -372,18 +372,29 @@ describe("todo281: Ops Write Gate, Server-Only Rules, Single-Read Digest & Exact
       })
     ).rejects.toMatchObject({ name: "OpsGateHttpError", code: "OPS_FORBIDDEN", status: 403 });
 
-    // Authorized operator via gate token succeeds and preserves pre-existing fields
-    const putRes = await writeViaOpsGate({
-      endpoint: gateServer.url,
-      gateToken,
-      actor: "antigravity",
-      op: "put_item",
-      idempotencyKey: `put-${runId}`,
-      payload: {
+    // Authorized operator via gate token succeeds, preserves pre-existing fields,
+    // and derives actor strictly from credential even when payload/header attempt spoofing.
+    const spoofRes = await fetch(gateServer.url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Ops-Gate-Token": gateToken,
+        "X-Ops-Actor": "spoofed-header-actor"
+      },
+      body: JSON.stringify({
+        op: "put_item",
+        idempotencyKey: `put-${runId}`,
         itemId,
-        fields: { status: "in_progress", marker: "CLAIMED" }
-      }
+        actor: "spoofed-payload-actor",
+        fields: {
+          status: "in_progress",
+          marker: "CLAIMED",
+          updatedBy: "spoofed-field-actor",
+          createdBy: "spoofed-creator"
+        }
+      })
     });
+    const putRes = await spoofRes.json();
     expect(putRes.ok).toBe(true);
     expect(putRes.deduplicated).toBe(false);
 
@@ -392,6 +403,11 @@ describe("todo281: Ops Write Gate, Server-Only Rules, Single-Read Digest & Exact
     expect(itemAfterPut.status).toBe("in_progress");
     expect(itemAfterPut.marker).toBe("CLAIMED");
     expect(itemAfterPut.acceptance_criteria).toEqual(["- [ ] Keep existing field intact"]);
+    expect(itemAfterPut.updatedBy).toBe("operator:antigravity");
+    expect(itemAfterPut.createdBy).toBe("operator:antigravity");
+
+    const putTransition = (await adminDb.doc(`${OPS_PATHS.TRANSITIONS_COLLECTION}/put-${runId}`).get()).data();
+    expect(putTransition.actor).toBe("operator:antigravity");
 
     // Authorized operator via Firebase opsOperator claim adds a comment
     const commentRes = await writeViaOpsGate({
@@ -499,7 +515,7 @@ describe("todo281: Ops Write Gate, Server-Only Rules, Single-Read Digest & Exact
       expect(httpPollStats.docsRead).toBe(1);
       expect(httpPollStats.calls[0].methodName).toBe("batchGetDocuments");
       expect(httpPollStats.calls[0].documents).toHaveLength(1);
-      expect(httpPollStats.calls[0].documents[0]).toMatch(/\/documents\/ops\/digest$/);
+      expect(httpPollStats.calls[0].documents[0]).toMatch(/\/documents\/ops\/views\/all\/digest$/);
 
       // Measured poll 2: direct server readOpsDigest
       meter.reset();
@@ -509,10 +525,10 @@ describe("todo281: Ops Write Gate, Server-Only Rules, Single-Read Digest & Exact
       expect(directPoll.reads).toBe(1);
       expect(directPollStats.rpcCount).toBe(1);
       expect(directPollStats.docsRead).toBe(1);
-      expect(directPollStats.calls[0].documents[0]).toMatch(/\/documents\/ops\/digest$/);
+      expect(directPollStats.calls[0].documents[0]).toMatch(/\/documents\/ops\/views\/all\/digest$/);
 
       console.info(
-        `[todo281][Acceptance 3] Control scan read ${controlStats.docsRead} docs; ops/digest HTTP poll issued rpcCount=${httpPollStats.rpcCount}, docsRead=${httpPollStats.docsRead}, method=${httpPollStats.calls[0].methodName}, path=${httpPollStats.calls[0].documents[0]} (totalItems=${httpPoll.digest.counts.totalItems}).`
+        `[todo281][Acceptance 3] Control scan read ${controlStats.docsRead} docs; ops/views/all/digest HTTP poll issued rpcCount=${httpPollStats.rpcCount}, docsRead=${httpPollStats.docsRead}, method=${httpPollStats.calls[0].methodName}, path=${httpPollStats.calls[0].documents[0]} (totalItems=${httpPoll.digest.counts.totalItems}).`
       );
     } finally {
       meter.restore();

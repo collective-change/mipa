@@ -33,7 +33,6 @@ export class OpsGateHttpError extends Error {
 export interface OpsGateAuthOptions {
   gateToken?: string;
   bearerToken?: string;
-  actor?: string;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
 }
@@ -60,9 +59,6 @@ function buildHeaders(options: OpsGateAuthOptions, includeJsonContentType: boole
   }
   if (options.bearerToken) {
     headers["Authorization"] = `Bearer ${options.bearerToken}`;
-  }
-  if (options.actor) {
-    headers["X-Ops-Actor"] = options.actor;
   }
   return headers;
 }
@@ -108,8 +104,7 @@ export async function writeViaOpsGate(options: OpsGateWriteOptions): Promise<Ops
   const body = {
     ...(options.payload || {}),
     op: options.op,
-    idempotencyKey,
-    ...(options.actor ? { actor: options.actor } : {})
+    idempotencyKey
   };
 
   let res: Response;

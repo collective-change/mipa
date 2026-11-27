@@ -8,7 +8,7 @@ export const OPS_PATHS = {
   ITEMS_COLLECTION: "ops/items/all",
   TRANSITIONS_COLLECTION: "ops/transitions/all",
   RELATIONS_COLLECTION: "ops/relations/all",
-  DIGEST_DOC: "ops/digest"
+  DIGEST_DOC: "ops/views/all/digest"
 } as const;
 
 export const MAX_RECENT_ITEMS = 25;
@@ -60,6 +60,7 @@ export interface DecodedOperatorToken {
   uid: string;
   opsAdmin?: unknown;
   opsOperator?: unknown;
+  opsActor?: unknown;
 }
 
 export interface OpsCaller {
@@ -119,6 +120,7 @@ export interface OpsMutationResponse {
 export interface OpsGateDeps {
   db?: Firestore;
   expectedToken?: string;
+  expectedTokens?: Record<string, string>;
   verifyIdToken?: (token: string) => Promise<DecodedOperatorToken>;
   now?: () => Date;
 }
@@ -171,31 +173,69 @@ function extractBearerToken(authHeader: string | undefined): string | undefined 
   return token || undefined;
 }
 
-function sanitizeActor(raw: unknown): string | undefined {
-  if (typeof raw !== "string") return undefined;
-  const trimmed = raw.trim();
-  if (!trimmed || trimmed.length > 128) return undefined;
-  return trimmed;
+function parseExpectedTokensMap(raw?: Record<string, string>): Record<string, string> {
+  if (raw && typeof raw === "object") {
+    return raw;
+  }
+  const envJson = (process.env.OPS_WRITE_GATE_TOKENS_JSON ?? "").trim();
+  if (!envJson) return {};
+  try {
+    const parsed = JSON.parse(envJson) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    const out: Record<string, string> = {};
+    for (const [actorKey, secret] of Object.entries(parsed as Record<string, unknown>)) {
+      if (typeof secret === "string" && secret.trim() && actorKey.trim()) {
+        out[actorKey.trim()] = secret.trim();
+      }
+    }
+    return out;
+  } catch {
+    return {};
+  }
 }
 
+function matchGateCredential(
+  candidate: string,
+  expectedToken: string,
+  expectedTokens: Record<string, string>
+): string | null {
+  let matchedActor: string | null = null;
+  for (const [actorId, secret] of Object.entries(expectedTokens)) {
+    if (secret && timingSafeStringEqual(candidate, secret)) {
+      matchedActor = `operator:${actorId}`;
+    }
+  }
+  if (matchedActor) return matchedActor;
+  if (expectedToken && timingSafeStringEqual(candidate, expectedToken)) {
+    const fingerprint = sha256Buffer(expectedToken).toString("hex").slice(0, 8);
+    return `operator:token:${fingerprint}`;
+  }
+  return null;
+}
+
+/**
+ * Authenticates an operator request and derives `actor` strictly from the
+ * verified credential (never from request payload fields or unverified headers).
+ */
 export async function authenticateOpsCaller(
   headers: Record<string, string | string[] | undefined>,
   options?: {
     expectedToken?: string;
+    expectedTokens?: Record<string, string>;
     verifyIdToken?: (token: string) => Promise<DecodedOperatorToken>;
-    actorHint?: unknown;
   }
 ): Promise<OpsCaller> {
   const expectedToken = (options?.expectedToken ?? process.env.OPS_WRITE_GATE_TOKEN ?? "").trim();
+  const expectedTokens = parseExpectedTokensMap(options?.expectedTokens);
   const xGateToken = readHeader(headers, "x-ops-gate-token");
   const bearerToken = extractBearerToken(readHeader(headers, "authorization"));
-  const actorHint = sanitizeActor(readHeader(headers, "x-ops-actor")) || sanitizeActor(options?.actorHint);
 
   if (xGateToken !== undefined) {
-    if (expectedToken && timingSafeStringEqual(xGateToken, expectedToken)) {
+    const matchedActor = matchGateCredential(xGateToken, expectedToken, expectedTokens);
+    if (matchedActor) {
       return {
         authenticated: true,
-        actor: actorHint || "operator:token",
+        actor: matchedActor,
         method: "gate_token"
       };
     }
@@ -203,10 +243,11 @@ export async function authenticateOpsCaller(
   }
 
   if (bearerToken !== undefined) {
-    if (expectedToken && timingSafeStringEqual(bearerToken, expectedToken)) {
+    const matchedActor = matchGateCredential(bearerToken, expectedToken, expectedTokens);
+    if (matchedActor) {
       return {
         authenticated: true,
-        actor: actorHint || "operator:token",
+        actor: matchedActor,
         method: "gate_token"
       };
     }
@@ -226,9 +267,13 @@ export async function authenticateOpsCaller(
     }
 
     if (decoded.opsAdmin === true || decoded.opsOperator === true) {
+      const claimActor =
+        typeof decoded.opsActor === "string" && decoded.opsActor.trim().length > 0 && decoded.opsActor.trim().length <= 64
+          ? `operator:${decoded.opsActor.trim()}`
+          : `uid:${decoded.uid}`;
       return {
         authenticated: true,
-        actor: `uid:${decoded.uid}`,
+        actor: claimActor,
         method: "firebase_claim"
       };
     }
@@ -398,6 +443,14 @@ function requireNonEmptyString(value: unknown, fieldName: string, maxLen = MAX_T
 }
 
 const RESERVED_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+const SERVER_AUTHORED_PROVENANCE_KEYS = new Set([
+  "actor",
+  "createdBy",
+  "updatedBy",
+  "closedBy",
+  "createdAt",
+  "updatedAt"
+]);
 
 function sanitizeItemFields(rawFields: unknown): Record<string, unknown> {
   if (!rawFields || typeof rawFields !== "object" || Array.isArray(rawFields)) {
@@ -407,6 +460,10 @@ function sanitizeItemFields(rawFields: unknown): Record<string, unknown> {
   for (const [key, val] of Object.entries(rawFields as Record<string, unknown>)) {
     if (RESERVED_KEYS.has(key) || key.startsWith("__") || key.includes("/")) {
       throw new OpsGateError("OPS_INVALID_ARGUMENT", 400, `Invalid field key: ${key}`);
+    }
+    if (SERVER_AUTHORED_PROVENANCE_KEYS.has(key)) {
+      // Never accept caller-supplied actor/provenance fields from payload.
+      continue;
     }
     if (val !== undefined) {
       clean[key] = val;
@@ -720,6 +777,7 @@ export async function executeOpsMutation(
       const writePayload: Record<string, unknown> = {
         ...fieldsPatch,
         id: targetId,
+        createdBy: typeof prev.createdBy === "string" ? prev.createdBy : actor,
         updatedAtIso: nowIso,
         updatedAt: FieldValue.serverTimestamp(),
         updatedBy: actor
@@ -960,6 +1018,7 @@ export function createOpsWriteGateHandler(deps: OpsGateDeps = {}) {
       if (req.method === "GET") {
         await authenticateOpsCaller(req.headers as Record<string, string | string[] | undefined>, {
           expectedToken: deps.expectedToken,
+          expectedTokens: deps.expectedTokens,
           verifyIdToken: deps.verifyIdToken
         });
         const poll = await readOpsDigest(db, now);
@@ -971,15 +1030,12 @@ export function createOpsWriteGateHandler(deps: OpsGateDeps = {}) {
         req.headers as Record<string, string | string[] | undefined>,
         {
           expectedToken: deps.expectedToken,
+          expectedTokens: deps.expectedTokens,
           verifyIdToken: deps.verifyIdToken
         }
       );
 
       const body = parseJsonBody(req.body);
-      const effectiveActor =
-        caller.method === "gate_token" && !readHeader(req.headers as Record<string, string | string[] | undefined>, "x-ops-actor")
-          ? sanitizeActor(body.actor) || caller.actor
-          : caller.actor;
 
       if (body.op === "get_digest") {
         const poll = await readOpsDigest(db, now);
@@ -987,7 +1043,8 @@ export function createOpsWriteGateHandler(deps: OpsGateDeps = {}) {
         return;
       }
 
-      const outcome = await executeOpsMutation(db, body, effectiveActor, now);
+      // Actor is strictly derived from caller's verified credential, never from request payload or headers.
+      const outcome = await executeOpsMutation(db, body, caller.actor, now);
       res.status(200).json(outcome);
     } catch (err: unknown) {
       if (err instanceof OpsGateError) {

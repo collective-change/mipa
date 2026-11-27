@@ -102,23 +102,25 @@ test("authenticateOpsCaller fails closed for unauthenticated and normal users, a
     (err: unknown) => err instanceof OpsGateError && err.code === "OPS_UNAUTHORIZED" && err.httpStatus === 401
   );
 
-  // Valid X-Ops-Gate-Token
+  // Valid X-Ops-Gate-Token derives actor strictly from credential (ignores x-ops-actor header)
   const byHeader = await authenticateOpsCaller(
-    { "x-ops-gate-token": "secret-token", "x-ops-actor": "xin" },
-    { expectedToken: "secret-token" }
+    { "x-ops-gate-token": "secret-token", "x-ops-actor": "spoofed-header-actor" },
+    { expectedTokens: { xin: "secret-token" } }
   );
-  assert.deepEqual(byHeader, { authenticated: true, actor: "xin", method: "gate_token" });
+  assert.deepEqual(byHeader, { authenticated: true, actor: "operator:xin", method: "gate_token" });
 
-  // Valid Bearer gate token
+  // Valid Bearer single gate token derives deterministic credential fingerprint actor (never payload/header)
   const byBearerToken = await authenticateOpsCaller(
-    { authorization: "Bearer secret-token" },
+    { authorization: "Bearer secret-token", "x-ops-actor": "spoofed" },
     { expectedToken: "secret-token" }
   );
-  assert.deepEqual(byBearerToken, { authenticated: true, actor: "operator:token", method: "gate_token" });
+  assert.equal(byBearerToken.authenticated, true);
+  assert.equal(byBearerToken.method, "gate_token");
+  assert.match(byBearerToken.actor, /^operator:token:[0-9a-f]{8}$/);
 
-  // Valid Firebase claim (opsOperator / opsAdmin)
+  // Valid Firebase claim (opsOperator / opsAdmin) derives actor strictly from verified JWT
   const byClaim = await authenticateOpsCaller(
-    { authorization: "Bearer op-jwt" },
+    { authorization: "Bearer op-jwt", "x-ops-actor": "spoofed" },
     {
       expectedToken: "",
       verifyIdToken: async () => ({ uid: "op-1", opsOperator: true })
