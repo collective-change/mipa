@@ -35,3 +35,4 @@ export {
 export {
   submitSupportTicket
 } from "./support/supportIntake";
+export { opsWriteGate } from "./ops/opsWriteGate";

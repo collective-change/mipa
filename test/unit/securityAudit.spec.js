@@ -76,6 +76,8 @@ describe("Security Audit & Hardening", () => {
     it("verifies sensitive collections remain completely inaccessible to unauthenticated visitors", () => {
       // orgSecrets is completely closed
       expect(rulesContent).toMatch(/match \/orgSecrets\/\{secret=\*\*\}\s*\{\s*allow read, write: if false;\s*\}/);
+      // ops operator issue store is completely closed to all direct client reads and writes
+      expect(rulesContent).toMatch(/match \/ops\/\{document=\*\*\}\s*\{\s*allow read, write: if false;\s*\}/);
       // members require org membership
       expect(rulesContent).toMatch(/match \/members\/\{memberId\}\s*\{\s*allow read: if userInOrg\(org\);/);
       // user profiles require matching UID

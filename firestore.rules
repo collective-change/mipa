@@ -107,6 +107,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Operator issue store (todo281): items, append-only transitions, relations,
+    // and coarse-grained digest. Written exclusively by the opsWriteGate Cloud
+    // Function via Admin SDK; all direct client reads and writes are denied.
+    match /ops/{document=**} {
+      allow read, write: if false;
+    }
+
     match /actions/{action}  {
       allow create: if userInOrg(request.resource.data.orgId);
       allow update: if userInOrg(resource.data.orgId) && userInOrg(request.resource.data.orgId);
