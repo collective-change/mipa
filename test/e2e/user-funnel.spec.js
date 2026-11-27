@@ -14,7 +14,7 @@ test.describe("MIPA-6: User Comprehension & Visual Funnel Harness", () => {
   test("Step 1: Landing page & Registration link", async ({ page }) => {
     // 1. Visit landing page
     await page.goto("/", { waitUntil: "load" });
-    await expect(page).toHaveTitle(/mipa/i);
+    await expect(page).toHaveTitle(/longecho/i);
 
     // Save hero screenshot
     const heroShot = path.join(SCREENSHOT_DIR, "01_landing_hero.png");
