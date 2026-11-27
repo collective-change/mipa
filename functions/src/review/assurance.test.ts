@@ -87,7 +87,7 @@ test("the rubric's weights total 100 and every criterion has a method", () => {
 
 test("the published methodology document matches the code, weight for weight", () => {
   const doc = readFileSync(resolve(__dirname, "../../../docs/methodology/review-methodology.md"), "utf8");
-  assert.ok(doc.includes(`# mipa review methodology v${METHODOLOGY_VERSION}`), "version heading");
+  assert.ok(doc.includes(`# Longecho review methodology v${METHODOLOGY_VERSION}`), "version heading");
   for (const c of CRITERIA) {
     assert.ok(doc.includes(`| ${c.id} | ${c.weight} | ${c.method} | ${c.checks} |`), `row for ${c.id}`);
   }
@@ -111,7 +111,7 @@ test("no published text claims assurance the method cannot support", () => {
 
 // --- mechanical checks ------------------------------------------------------
 
-test("leverage is recomputed with mipa's formula, null when direct costs are not positive", () => {
+test("leverage is recomputed with Longecho's formula, null when direct costs are not positive", () => {
   assert.equal(recomputeLeverage({ id: "x", marginalNetTotalBenefitNpv: 5000, totalRoi: 2, outstandingDirectCosts: 1000 }), 10);
   assert.equal(recomputeLeverage({ id: "x", marginalNetTotalBenefitNpv: -100, totalRoi: -0.5, outstandingDirectCosts: 10 }), -5);
   assert.equal(recomputeLeverage({ id: "x", marginalNetTotalBenefitNpv: 1, totalRoi: 1, outstandingDirectCosts: 0 }), null);

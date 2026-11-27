@@ -160,7 +160,7 @@ const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFin
 const hasText = (v: unknown) => typeof v === "string" && v.trim().length > 0;
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
-// mipa's leverage formula (calcWorker.js): sign(net) * net * ROI / C, null
+// Longecho's leverage formula (calcWorker.js): sign(net) * net * ROI / C, null
 // when C <= 0.
 export function recomputeLeverage(a: ReviewAction): number | null {
   const net = a.marginalNetTotalBenefitNpv;
