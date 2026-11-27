@@ -267,7 +267,7 @@
             </div>
           </div>
 
-          <!-- SECTION 2: Structured Numbers Table Computed by Mipa -->
+          <!-- SECTION 2: Structured Numbers Table Computed by Longecho -->
           <div class="section-block q-mb-xl">
             <div class="text-h6 text-weight-bold text-primary q-mb-sm row items-center">
               <span class="section-num q-mr-sm">2</span>

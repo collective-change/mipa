@@ -226,7 +226,7 @@ test("MIPA-44: formatInvitationEmail & formatPasswordResetEmail keep ZERO Chines
     resetLink: "https://collective-change.org/auth?mode=resetPassword&oobCode=abc",
     locale: "en-us"
   });
-  assert.ok(enReset.subject.includes("Reset your mipa password"));
+  assert.ok(enReset.subject.includes("Reset your Longecho password"));
   assert.ok(enReset.html.includes("oobCode=abc"));
   assert.equal((enReset.subject + enReset.html + enReset.text).match(/[\u4e00-\u9fff]/g), null);
 
@@ -235,7 +235,7 @@ test("MIPA-44: formatInvitationEmail & formatPasswordResetEmail keep ZERO Chines
     resetLink: "https://collective-change.org/auth?mode=resetPassword&oobCode=abc",
     locale: "zh-tw"
   });
-  assert.ok(zhReset.subject.includes("重設您的 mipa 密碼"));
+  assert.ok(zhReset.subject.includes("重設您的 Longecho 密碼"));
   assert.ok(zhReset.html.includes("重設密碼"));
 });
 

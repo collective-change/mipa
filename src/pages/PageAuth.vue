@@ -2,7 +2,7 @@
   <q-page padding class="auth-page">
     <div class="row q-col-gutter-xl items-center justify-center auth-content">
       <div class="col-12 col-md-6 intro">
-        <div class="text-h3 text-weight-bold text-primary">mipa</div>
+        <div class="text-h3 text-weight-bold text-primary">Longecho</div>
         <div class="text-h6 q-mt-sm text-grey-9">{{ $t("authTagline") }}</div>
         <q-list class="q-mt-lg">
           <q-item v-for="point in points" :key="point.title" class="q-px-none">

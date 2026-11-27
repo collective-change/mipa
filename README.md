@@ -1,13 +1,13 @@
-# mipa
+# Longecho
 
 ![Node.js CI](https://github.com/collective-change/mipa/workflows/Node.js%20CI/badge.svg)
 
-Mipa is strategic coordination software to help humanity achieve sustainability. 
+Longecho is strategic coordination software to help humanity achieve sustainability, stewarded by [collective-change.org](https://collective-change.org).
 
-The name comes from the first letters of Model, Ideate, Prioritize, and Achieve, the four activity types that an organization shuold do to reach its goal. This software helps an organization coordinate these activities, considering both organizational targets and welfare of the wider world. Through helping businesses succeed while transitioning to a sustainable economy, we hope to catalyze the urgent change needed to stop climate change before global warming reaches tipping point.
+Collective Change provides the organizational and open-governance foundation, while Longecho is the strategic dynamics product. It helps organizations coordinate their activities, considering both organizational targets and the welfare of the wider world. Through helping businesses and non-profits succeed while transitioning to a sustainable economy, we hope to catalyze the urgent change needed to stop climate change before global warming reaches tipping point.
 
 For more information, please check out 
-* https://collective-change.org -- the production instance of mipa
+* https://collective-change.org -- canonical production deployment
 * https://mipa.collective-change.org -- alternate production URL
 * https://github.com/collective-change/mipa/wiki -- the wiki for developers
 
@@ -149,7 +149,7 @@ approval before each deploy (Settings > Environments > production).
 
 ## Decision Register Backups & Permanence (MIPA-34)
 
-Mipa's decision register records are **permanent, citable, versioned, and not erasable** (Decisions M-1, M-6).
+Longecho's decision register records are **permanent, citable, versioned, and not erasable** (Decisions M-1, M-6).
 - **Scheduled Exports**: Managed Firestore export runs daily at 03:00 UTC via `scheduledFirestoreBackup` Cloud Function.
 - **Retention Tiers**: 30-day operational rolling recovery (GCS Standard), 1-year monthly archives (GCS Coldline), and 7-year statutory audit retention (GCS Archive).
 - **Restore Verification**: Exercise and verify backup restore drills using `node scripts/restore-drill.js`.

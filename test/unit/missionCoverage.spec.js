@@ -52,7 +52,7 @@ describe("MIPA-39: Mipa Mission Coverage & Decision Register Architecture", () =
     expect(record.version).toBe(COVERAGE_VERSION);
     expect(record.isPermanent).toBe(true);
     expect(record.isRevoked).toBe(false);
-    expect(record.permanentUrl).toContain("/records/mipa-mission-coverage-v1");
+    expect(record.permanentUrl).toContain("/records/mission-coverage-v1");
     expect(record.publishedDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(record.methodology).toContain("checked against methodology v1.0.0");
   });
@@ -164,7 +164,7 @@ describe("MIPA-39: Mipa Mission Coverage & Decision Register Architecture", () =
     const wrapper = mountRegisterRecord("en-us");
 
     const text = wrapper.text();
-    expect(text).toContain("Mipa Mission Coverage & Claim Verification Statement");
+    expect(text).toContain("Longecho Mission Coverage & Claim Verification Statement");
     expect(text).toContain("Permanent Register Entry");
     expect(text).toContain("Separation of Claims & Verification Modes");
     expect(text).toContain("Shipped Standard World Model & Capabilities");

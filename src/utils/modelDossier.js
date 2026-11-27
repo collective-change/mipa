@@ -387,7 +387,7 @@ export function buildSampleDossierData({ modelId = "sample", t, locale = "en-us"
  *
  * @param {string} [title] Document title for PDF filename
  */
-export function printDossierBrief(title = "Mipa Strategic Dossier") {
+export function printDossierBrief(title = "Longecho Strategic Dossier") {
   const originalTitle = document.title;
   document.title = `${title} - Executive Decision Brief`;
   if (typeof window !== "undefined" && typeof window.print === "function") {

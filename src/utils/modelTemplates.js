@@ -460,7 +460,7 @@ export function exportModelAsShareableTemplate(model = {}, nodes = [], actions =
     title: model.name || "Community System Model",
     category: metadata.category || "Social Impact",
     sector: metadata.sector || "Civil Society",
-    summary: metadata.summary || model.notes || "System dynamics leverage model created in Mipa.",
+    summary: metadata.summary || model.notes || "System dynamics leverage model created in Longecho.",
     description: metadata.description || model.notes || "Open access strategic coordination model.",
     attribution: metadata.attribution || metadata.author || "Community Contributor (CC BY-SA 4.0)",
     license: "CC BY-SA 4.0",

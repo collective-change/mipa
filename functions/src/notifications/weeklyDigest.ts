@@ -261,7 +261,7 @@ export function formatDigestEmail(
   <div style="max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
     <div style="background-color: #1976d2; padding: 24px; color: #ffffff;">
       <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.9;">
-        Mipa 策略動力學平臺
+        Longecho 策略動力學平臺
       </div>
       <h1 style="margin: 8px 0 0; font-size: 22px; font-weight: 700;">週一策略洞察簡報</h1>
       <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.95;">
@@ -304,7 +304,7 @@ export function formatDigestEmail(
     </div>
 
     <div style="background-color: #f9fafb; padding: 18px 24px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #9ca3af; text-align: center;">
-      <p style="margin: 0 0 6px;">您收到此簡報係因您為 Mipa 平臺之策略行動負責人。</p>
+      <p style="margin: 0 0 6px;">您收到此簡報係因您為 Longecho 平臺之策略行動負責人。</p>
       <p style="margin: 0;">
         <a href="${digest.unsubscribeUrl}" style="color: #6b7280; text-decoration: underline;">取消訂閱每週簡報</a> · 
         <a href="${baseUrl}/privacy" style="color: #6b7280; text-decoration: underline;">隱私權政策</a>
@@ -363,7 +363,7 @@ export function formatDigestEmail(
   <div style="max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
     <div style="background-color: #1976d2; padding: 24px; color: #ffffff;">
       <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.9;">
-        Mipa Strategic Suite
+        Longecho Strategic Suite
       </div>
       <h1 style="margin: 8px 0 0; font-size: 22px; font-weight: 700;">Monday Strategic Digest</h1>
       <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.95;">
@@ -406,7 +406,7 @@ export function formatDigestEmail(
     </div>
 
     <div style="background-color: #f9fafb; padding: 18px 24px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #9ca3af; text-align: center;">
-      <p style="margin: 0 0 6px;">You are receiving this digest because you are an action owner in Mipa.</p>
+      <p style="margin: 0 0 6px;">You are receiving this digest because you are an action owner in Longecho.</p>
       <p style="margin: 0;">
         <a href="${digest.unsubscribeUrl}" style="color: #6b7280; text-decoration: underline;">Unsubscribe from weekly digests</a> · 
         <a href="${baseUrl}/privacy" style="color: #6b7280; text-decoration: underline;">Privacy Policy</a>

@@ -153,7 +153,7 @@ export function generateSroiMarkdownReport(action = {}, nodes = [], org = {}) {
   const currency = summary.currency;
 
   let md = `# Social Return on Investment (SROI) Analysis: ${summary.actionTitle}\n\n`;
-  md += `**Organization:** ${org.name || "Mipa Strategic Organization"}\n`;
+  md += `**Organization:** ${org.name || "Longecho Strategic Organization"}\n`;
   md += `**Calculated SROI Ratio:** **${ratioStr}**\n\n`;
 
   md += `## 1. Executive Summary & Value Proposition\n`;
@@ -193,6 +193,6 @@ export function generateSroiMarkdownReport(action = {}, nodes = [], org = {}) {
     md += `\n`;
   }
 
-  md += `*Report generated via Mipa SROI Framework conforming to Social Value International standards.*\n`;
+  md += `*Report generated via Longecho SROI Framework conforming to Social Value International standards.*\n`;
   return md;
 }

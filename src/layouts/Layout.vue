@@ -20,7 +20,7 @@
           :to="loggedIn ? '/orgs' : '/'"
         >
           <q-toolbar-title shrink class="text-weight-bold text-primary"
-            >mipa</q-toolbar-title
+            >Longecho</q-toolbar-title
           >
         </q-btn>
         <q-btn-dropdown
@@ -583,7 +583,7 @@ export default {
     })();
   },
   mounted() {
-    window.addEventListener("mipa-update-available", this.notifyUpdateAvailable);
+    window.addEventListener("longecho-update-available", this.notifyUpdateAvailable);
     const wanted = this.$q.cookies.has("locale")
       ? this.$q.cookies.get("locale")
       : this.$q.lang.getLocale();
@@ -605,7 +605,7 @@ export default {
     }
   },
   beforeUnmount() {
-    window.removeEventListener("mipa-update-available", this.notifyUpdateAvailable);
+    window.removeEventListener("longecho-update-available", this.notifyUpdateAvailable);
     this.unbindAllOrgRelatedData();
     this.unbindPublicData();
     this.$store.dispatch("users/unbindCurrentUser");

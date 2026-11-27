@@ -1,6 +1,6 @@
 export default {
   separationBetweenWords: " ",
-  appTitle: "mipa",
+  appTitle: "Longecho",
   person: "person",
   people: "people",
 
@@ -288,18 +288,18 @@ export default {
   "Visit our website": "Visit our website",
   "Report a problem or suggest an idea": "Report a problem or suggest an idea",
   "Source code": "Source code",
-  helpTitle: "Getting started with mipa",
+  helpTitle: "Getting started with Longecho",
   helpIntro:
-    "mipa helps an organization decide what to do next by estimating how much each idea would benefit the organization and the world, compared with what it costs.",
+    "Longecho helps an organization decide what to do next by estimating how much each idea would benefit the organization and the world, compared with what it costs.",
   helpOrgTitle: "1. Add your organization",
   helpOrgText:
-    "On My dashboard, choose Add organization and enter its name, goal and currency. mipa creates a model for it with starter factors: the hourly cost of work, work hours and money that actions need, and the costs and benefits to the organization and to the world.",
+    "On My dashboard, choose Add organization and enter its name, goal and currency. Longecho creates a model for it with starter factors: the hourly cost of work, work hours and money that actions need, and the costs and benefits to the organization and to the world.",
   helpModelTitle: "2. Build the model",
   helpModelText:
-    "Open Model. Each circle is a factor: a number such as monthly sales or emissions. Click a factor to edit how it is calculated (its formula) and its unit. A formula can use another factor by its short name once the two are linked (right-click a factor in the graph to link it). For something that builds up over time, use delay(name, dt, 0), which gives the factor's value one step earlier.\n\nStart with the factor marked (new): set the hourly cost of work. Use Add factor for more, and Model settings for how often and how far ahead mipa calculates. Then choose Calculate.",
+    "Open Model. Each circle is a factor: a number such as monthly sales or emissions. Click a factor to edit how it is calculated (its formula) and its unit. A formula can use another factor by its short name once the two are linked (right-click a factor in the graph to link it). For something that builds up over time, use delay(name, dt, 0), which gives the factor's value one step earlier.\n\nStart with the factor marked (new): set the hourly cost of work. Use Add factor for more, and Model settings for how often and how far ahead Longecho calculates. Then choose Calculate.",
   helpActionsTitle: "3. Add and compare actions",
   helpActionsText:
-    "Open Actions and choose Add. Describe the idea, estimate the hours and money it needs, and add its impacts: which factors it changes, by how much and for how long. Choose Recalculate, and mipa calculates the model with and without each action.\n\nActions are ranked by leverage: how strongly an action's net benefit, to the organization and to the world, outweighs what it costs. Start with the actions at the top.",
+    "Open Actions and choose Add. Describe the idea, estimate the hours and money it needs, and add its impacts: which factors it changes, by how much and for how long. Choose Recalculate, and Longecho calculates the model with and without each action.\n\nActions are ranked by leverage: how strongly an action's net benefit, to the organization and to the world, outweighs what it costs. Start with the actions at the top.",
   helpAchieveTitle: "4. Get it done",
   helpAchieveText:
     "Give each action a responsible and an accountable person, and move it through its states as it is approved and completed. My to-do lists the actions you are responsible for. Every node and action has a chat, so the discussion stays next to the work.",
@@ -349,7 +349,7 @@ export default {
   Invite: "Invite",
   "Invite someone": "Invite someone",
   inviteHelp:
-    "They will see the invitation on their dashboard when they sign in to mipa with this email address, and can accept or decline it. Admins can invite and remove members and change roles.",
+    "They will see the invitation on their dashboard when they sign in to Longecho with this email address, and can accept or decline it. Admins can invite and remove members and change roles.",
   "Waiting for a reply": "Waiting for a reply",
   Withdraw: "Withdraw",
   "Member options": "Member options",
@@ -435,7 +435,7 @@ export default {
   "Model name": "Model name",
   Time: "Time",
   timeIntro:
-    "mipa calculates your model step by step into the future: for example every month, for 120 steps (10 years).",
+    "Longecho calculates your model step by step into the future: for example every month, for 120 steps (10 years).",
   "Calculate every": "Calculate every",
   "Time unit": "Time unit",
   "Enter a number greater than 0": "Enter a number greater than 0",
@@ -447,7 +447,7 @@ export default {
   "Looks ahead to": "Looks ahead to",
   "Key factors": "Key factors",
   keyFactorsIntro:
-    "mipa uses these factors to compare actions: what an action costs in work and money, and how it changes the costs and benefits to your organization and to the world.",
+    "Longecho uses these factors to compare actions: what an action costs in work and money, and how it changes the costs and benefits to your organization and to the world.",
   "Hourly cost of work": "Hourly cost of work",
   "Work hours an action needs": "Work hours an action needs",
   "Money an action needs": "Money an action needs",
@@ -482,7 +482,7 @@ export default {
     "The formula gives a result in a different unit from the factor's unit. If the formula is a plain number, add the unit (for example 30 USD), or change the factor's unit. The factor is selected in the graph.",
   errLoopTitle: "Some factors depend on each other in a loop",
   errLoopAdvice:
-    "The factors marked in orange use each other's values at the same moment, so mipa can't decide which to calculate first. Break the loop by letting one of them use the other's value from one step earlier, with delay(name, dt, 0).",
+    "The factors marked in orange use each other's values at the same moment, so Longecho can't decide which to calculate first. Break the loop by letting one of them use the other's value from one step earlier, with delay(name, dt, 0).",
   errParseTitle: "A formula couldn't be read",
   errParseAdvice:
     "Check the formula for missing brackets or operators, or a misspelled short name.",
@@ -493,7 +493,7 @@ export default {
     "Check that the units can be combined (for example, kg can't be added to USD) and that the formula operations are valid. The factor is selected in the graph.",
   errUnknownUnitTitle: "Unknown unit",
   errUnknownUnitAdvice:
-    "Use a unit mipa knows, such as USD, TWD, kg, km, hours or people, or leave the unit empty for plain numbers.",
+    "Use a unit Longecho knows, such as USD, TWD, kg, km, hours or people, or leave the unit empty for plain numbers.",
   errValueTitle: "A current value couldn't be read",
   errValueAdvice: "Enter the current value as a plain number.",
   Glossary: "Glossary",
@@ -501,11 +501,11 @@ export default {
     factor: { term: "Factor", text: "Something you can measure that matters to your organization, like sales, volunteers or emissions. Each circle in the model is a factor." },
     shortName: { term: "Short name", text: "A name without spaces that formulas use to refer to a factor, like monthlySales." },
     formula: { term: "Formula", text: "How a factor is calculated, for example sales * 0.2. It can use the factors linked to it." },
-    unit: { term: "Unit", text: "What a factor is measured in, like USD, kg or people. mipa checks that formulas combine units correctly." },
+    unit: { term: "Unit", text: "What a factor is measured in, like USD, kg or people. Longecho checks that formulas combine units correctly." },
     link: { term: "Link", text: "An arrow between two factors: the factor it points to uses the other in its formula." },
     delay: { term: "delay(name, dt, 0)", text: "The factor's value one step earlier, with 0 at the start. Used for anything that builds up over time, like savings or trees planted." },
-    step: { term: "Step", text: "mipa calculates the future one step at a time, for example one month. dt is the length of a step." },
-    keyFactors: { term: "Key factors", text: "The factors mipa uses to compare actions: the hourly cost of work, the work hours and money actions need, and the costs and benefits to the organization and to the world." },
+    step: { term: "Step", text: "Longecho calculates the future one step at a time, for example one month. dt is the length of a step." },
+    keyFactors: { term: "Key factors", text: "The factors Longecho uses to compare actions: the hourly cost of work, the work hours and money actions need, and the costs and benefits to the organization and to the world." },
     action: { term: "Action", text: "Something your organization could do, with an estimate of the work hours and money it needs." },
     impact: { term: "Impact", text: "How an action changes a factor: by how much, and for how long." },
     netBenefit: { term: "Net benefit", text: "An action's benefits minus its costs, to the organization and to the world, added up over time with later years counting a little less." },
@@ -529,7 +529,7 @@ export default {
   helpResponsibleAccountable:
     "Responsible: the person doing the work. Accountable: the person who answers for the result.",
   helpBenefit:
-    "Everything the action adds, to the organization and to the world, over the whole period mipa calculates, with later years counting a little less.",
+    "Everything the action adds, to the organization and to the world, over the whole period Longecho calculates, with later years counting a little less.",
   helpCost: "Everything the action costs, to the organization and to the world, including its own work and spending.",
   helpNetBenefit: "Benefit minus cost. Above 0 means the action does more good than it costs.",
   helpRemainingCost: "The work and money the action still needs, in your currency.",
@@ -538,7 +538,7 @@ export default {
   helpRelated: "Actions this one is part of, contains, or depends on.",
   noActionsTitle: "No actions to show",
   noActionsText:
-    "An action is something your organization could do, like a new program or a change in how you work. Add one, estimate the work and money it needs and what it changes, and mipa calculates its costs and benefits to your organization and to the world. If you expected actions here, check the filters above.",
+    "An action is something your organization could do, like a new program or a change in how you work. Add one, estimate the work and money it needs and what it changes, and Longecho calculates its costs and benefits to your organization and to the world. If you expected actions here, check the filters above.",
   "Add an action": "Add an action",
   "Remaining work hours": "Remaining work hours",
   actionsChartHint:
@@ -596,7 +596,7 @@ export default {
   gs: {
     hourlyCost: { title: "Set the hourly cost of work", text: "Open the factor marked (new) and enter what an hour of work costs your organization, then save.", button: "Open it" },
     addFactors: { title: "Add what matters to you", text: "Add factors such as sales, people served or emissions, with a formula for each.", button: "Add factor" },
-    linkFactors: { title: "Connect them to the benefits and costs", text: "Link your factors to the benefit and cost factors, so mipa knows what each one is worth to your organization and to the world.", button: "Open benefit to the world" },
+    linkFactors: { title: "Connect them to the benefits and costs", text: "Link your factors to the benefit and cost factors, so Longecho knows what each one is worth to your organization and to the world.", button: "Open benefit to the world" },
     closeModel: {
       title: "Close the model",
       text: "Add balancing limits that keep growth from expanding forever, and connect all default factors.",
@@ -605,7 +605,7 @@ export default {
       noLimits: "No balancing limits detected yet. What real-world constraint stops this model from growing forever?",
       unconnectedDefaults: "Default factors still unconnected: {factors}"
     },
-    calculate: { title: "Calculate", text: "mipa calculates your model into the future. Fix anything it reports, then calculate again." },
+    calculate: { title: "Calculate", text: "Longecho calculates your model into the future. Fix anything it reports, then calculate again." },
     addAction: { title: "Add a first action", text: "Describe something your organization could do, with the work, money and impacts it needs.", button: "Go to actions" },
     compare: { title: "Compare actions", text: "On the Actions page, choose Recalculate to see each action's benefits, costs and leverage.", button: "Go to actions" }
   },
@@ -731,7 +731,7 @@ export default {
       goal: "No one in our neighbourhood goes hungry."
     },
     factors: {
-      averageEffortCostPerHour: { name: "hourly cost of work", notes: "What an hour of staff or volunteer time is worth to the organization. mipa uses it to turn the hours an action needs into money." },
+      averageEffortCostPerHour: { name: "hourly cost of work", notes: "What an hour of staff or volunteer time is worth to the organization. Longecho uses it to turn the hours an action needs into money." },
       oneTimeEffort: { name: "work hours for actions", notes: "When actions are compared, each one adds the hours it needs here. Leave it at 0." },
       oneTimeSpending: { name: "money spent on actions", notes: "When actions are compared, each one adds the money it needs here. Leave it at 0." },
       costToOrganizationDuringInterval: { name: "cost to the organization per month", notes: "Running costs, plus the hours and money that actions need." },
@@ -798,11 +798,11 @@ export default {
   "Remove AI draft": "Remove AI draft",
   estimate: "estimate",
   "hourly cost": "hourly cost",
-  aiWhatTitle: "What AI can do in mipa",
+  aiWhatTitle: "What AI can do in Longecho",
   aiWhatText:
     "AI can draft a model of your organization from a description in your own words: the factors that matter, how they connect, and first estimates, each explained. You review the draft before anything is added, and can remove it again in one step.",
   aiOwnProviderText:
-    "mipa doesn't provide AI itself. Your organization connects its own account with an AI provider and pays the provider directly. Drafting a model usually costs about US$0.40 to 0.70.",
+    "Longecho doesn't provide AI itself. Your organization connects its own account with an AI provider and pays the provider directly. Drafting a model usually costs about US$0.40 to 0.70.",
   aiDataText:
     "When someone uses AI, their description and the model's factors (names, formulas, units) are sent to the provider. Members, emails, chats, actions and notes are not. Whether the provider keeps or trains on this data depends on its terms, so choose one that fits your organization's policies.",
   aiStatusTitle: "Provider",
@@ -815,7 +815,7 @@ export default {
   aiCompatibleHelp:
     "Any service that offers the OpenAI chat completions API, such as OpenRouter, Azure OpenAI, Mistral or a self-hosted model. Enter its address, a model name and an API key.",
   aiHttpsOnly: "The address must start with https://",
-  aiModelHint: "Recommended models are tested with mipa. Others may give less reliable drafts.",
+  aiModelHint: "Recommended models are tested with Longecho. Others may give less reliable drafts.",
   aiCompatibleModelHint: "The model name exactly as the provider spells it.",
   aiKeepKeyHint: "Leave empty to keep the current key.",
   aiConnected: "AI provider connected",
@@ -877,12 +877,12 @@ export default {
   aiRemoveKept: "These factors were edited after the draft, so their current formulas are kept: {names}",
   aiDraftRemoved: "AI draft removed",
   Menu: "Menu",
-  swUpdateAvailable: "A new version of mipa is available.",
+  swUpdateAvailable: "A new version of Longecho is available.",
   Reload: "Reload",
   Dismiss: "Dismiss",
 
   // Landing / Home page for collective-change.org
-  landingHeroBadge: "mipa · Strategic Coordination for Collective Change",
+  landingHeroBadge: "Longecho · Strategic Coordination for Collective Change",
   landingHeroTitle: "Find the highest-leverage actions for your organization",
   landingHeroSubtitle: "Model complex systems, simulate delayed impacts over time, and mathematically rank actions by true leverage so your team focuses on what matters most.",
   landingGetStarted: "Get started free",
@@ -900,9 +900,9 @@ export default {
   landingWhySubtitle: "Purpose-driven organizations cannot afford to guess which actions will succeed.",
   landingTraditionalPlanning: "Traditional Planning",
   landingWhyP1: "Traditional planning relies on static spreadsheets and gut instinct, which miss delayed consequences, hidden feedback loops, and resource bottlenecks.",
-  landingMipaApproach: "The Mipa Approach",
-  landingWhyP2: "Mipa brings system dynamics and mathematical simulation to businesses, non-profits, government agencies, community groups, schools, and mission-driven initiatives, turning complex organizational interactions into clear, actionable leverage scores.",
-  landingStepsHeading: "How Mipa Works",
+  landingMipaApproach: "The Longecho Approach",
+  landingWhyP2: "Longecho brings system dynamics and mathematical simulation to businesses, non-profits, government agencies, community groups, schools, and mission-driven initiatives, turning complex organizational interactions into clear, actionable leverage scores.",
+  landingStepsHeading: "How Longecho Works",
   landingStep1Title: "Map your system",
   landingStep1Subtitle: "Define factors and relationships",
   landingStep1Desc: "Connect organizational causes and effects using plain-language factors and formulas. Visualize how resources, community trust, and outcomes interact over time.",
@@ -911,7 +911,7 @@ export default {
   landingStep2Desc: "Simulate candidate projects over multi-year horizons. The mathematical engine evaluates delayed compounding, costs, and systemic ripples across your organization.",
   landingStep3Title: "Rank by leverage",
   landingStep3Subtitle: "Focus where impact is highest",
-  landingStep3Desc: "Leverage is calculated from net benefit, total ROI, and outstanding cost. Mipa ranks every action to give leadership clear consensus on the highest-multiplier initiatives.",
+  landingStep3Desc: "Leverage is calculated from net benefit, total ROI, and outstanding cost. Longecho ranks every action to give leadership clear consensus on the highest-multiplier initiatives.",
   landingTrustHeading: "Built for Privacy, Security and Independence",
   landingTrustP1Title: "In-browser simulation",
   landingTrustP1Desc: "Calculations run 100% on your device using Web Workers. Your operational models never need to be processed on centralized servers.",
@@ -950,7 +950,7 @@ export default {
   briefSection4Title: "Key Simulation Assumptions & Estimates",
   briefSection5Title: "Unmodeled Considerations & Scope Limitations",
   briefSubtitle: "Executive briefing prepared for organizational leadership",
-  briefDisclaimer: "All calculations run client-side in mipa's simulation engine.",
+  briefDisclaimer: "All calculations run client-side in Longecho's simulation engine.",
   briefExport: "Export",
   quickSelect: "Quick presets",
   top3: "Top 3",
@@ -984,7 +984,7 @@ export default {
   rankingInvarianceTitle: "Ranking Sensitivity",
   rankingInvariantBadge: "Ranking-Invariant",
   rankingCanMoveBadge: "Can Change Ranking",
-  rankingInvariantDesc: "This factor scales all actions' benefits equally. In mipa, leverage is scale-invariant in benefit value (scales by k²), so tuning its magnitude will not alter the action priority ranking.",
+  rankingInvariantDesc: "This factor scales all actions' benefits equally. In Longecho, leverage is scale-invariant in benefit value (scales by k²), so tuning its magnitude will not alter the action priority ranking.",
   rankingSubsetDesc: "This factor feeds a subset of actions ({fed} of {total}). Adjusting its value changes relative benefits and can move action rankings.",
   rankingTurningPointHint: "Turning point: {runnerUp} overtakes {topAction} if this value shifts {direction} by {percent}% to {threshold}.",
   rankingHighlyRobustHint: "High stability: Ranking between top actions remains stable across a wide range of values (+/- 50%).",
@@ -1272,21 +1272,21 @@ export default {
   catPhilanthropy: "Philanthropy",
   searchTemplatesPlaceholder: "Search models by keyword or tag...",
   noTemplatesFound: "No matching model templates found.",
-  pasteTemplateJsonHint: "Paste a shared Mipa template JSON object or valid schema:",
+  pasteTemplateJsonHint: "Paste a shared Longecho template JSON object or valid schema:",
   importAndCloneBtn: "Import & Clone",
   templateClonedSuccess: "Template cloned successfully into your model.",
   templateExportedSuccess: "Model exported as open shareable template JSON.",
   gsStarterTemplatesPrompt: "Prefer to start from a proven template?",
   gsSeeFinishedExample: "See a finished example",
-  guidedTourLabel: "Mipa Interactive Tour",
+  guidedTourLabel: "Longecho Interactive Tour",
   tourStep1Title: "Map Your Factors & Causal Links",
-  tourStep1Desc: "Organizations succeed through interlinked systems. In Mipa, you define factors (stocks of volunteers, supply flows, or outcome indicators) and connect them with plain-language formulas without technical jargon.",
+  tourStep1Desc: "Organizations succeed through interlinked systems. In Longecho, you define factors (stocks of volunteers, supply flows, or outcome indicators) and connect them with plain-language formulas without technical jargon.",
   tourStep1Takeaway: "System dynamics reveals hidden feedback loops and delays where well-intentioned policies often encounter friction.",
   tourStep2Title: "Define Candidate Strategic Actions",
   tourStep2Desc: "Strategic actions represent decisions your team could make. Specify required direct cash spending, volunteer work hours, and the specific factors the action will impact over time.",
   tourStep2Takeaway: "Actions can be refined, compared, and augmented with AI suggestions based on your model's unique factors.",
   tourStep3Title: "Simulate Systemic Leverage",
-  tourStep3Desc: "Leverage is not mere good-done-per-hour. Mipa simulates all factor interactions over the entire planning horizon on your device, calculating net benefit NPV divided by required direct investment to reveal true leverage.",
+  tourStep3Desc: "Leverage is not mere good-done-per-hour. Longecho simulates all factor interactions over the entire planning horizon on your device, calculating net benefit NPV divided by required direct investment to reveal true leverage.",
   tourStep3Takeaway: "High-leverage interventions often target root feedback loops rather than spending heavy resources on surface symptoms.",
   tourStep4Title: "Executive Decision Briefs & Governance",
   tourStep4Desc: "Generate a verified 5-part leadership brief in one click. Every citation is mathematically guaranteed against hallucinations, enriched with Monte Carlo risk bounds and immutable cryptographic model snapshots.",
@@ -1298,7 +1298,7 @@ export default {
   openTemplateLibraryBtn: "Explore Starter Templates",
 
   // Auth Access Notice
-  authAccessNotice: "Mipa is not open yet. When it is ready, access will open to everyone — there is no waiting list and nothing to apply for. If your team has an invitation, you may sign in or create an account below.",
+  authAccessNotice: "Longecho is not open yet. When it is ready, access will open to everyone — there is no waiting list and nothing to apply for. If your team has an invitation, you may sign in or create an account below.",
 
   // Workspace Tier Governance & Multi-Seat Meter
   tierCommunity: "Community Tier",
@@ -1484,7 +1484,7 @@ export default {
   counterfactualMethod_other: "Other Empirical Comparison",
 
   // Automated review mark (MIPA-43), generated from stored provenance only.
-  reviewMarkText: "Checked against mipa methodology v{methodology} by model {model} ({provider}) on {date}.",
+  reviewMarkText: "Checked against Longecho methodology v{methodology} by model {model} ({provider}) on {date}.",
   reviewMarkUnpinned: "The provider does not pin this model identifier to fixed weights, so this check may not reproduce.",
   reviewMarkDrift: "Since this check, the {fields} changed; this record keeps the version it used.",
   reviewMarkField_provider: "provider",
