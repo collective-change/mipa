@@ -4,7 +4,7 @@
 
 ## 1. Executive Summary & The Permanence Promise
 
-The Mipa decision register provides **not erasable, citable, versioned, permanent** decision records (Decisions **M-1**, **M-6**, **M-8**). Counterparties, funders, and auditors rely on decision records under the guarantee that historical citations will remain valid and accessible across multi-year grant cycles.
+The Longecho decision register provides **not erasable, citable, versioned, permanent** decision records (Decisions **M-1**, **M-6**, **M-8**). Counterparties, funders, and auditors rely on decision records under the guarantee that historical citations will remain valid and accessible across multi-year grant cycles.
 
 Prior to **MIPA-34**, this permanence promise lacked an operational infrastructure mechanism. MIPA-34 establishes:
 1. **Automated Scheduled Backups**: Daily Cloud Function scheduler (`scheduledFirestoreBackup`) running managed exports to Google Cloud Storage.

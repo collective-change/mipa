@@ -5,15 +5,15 @@ function, AI settings with the Anthropic and OpenAI-compatible adapters,
 undo, English and Chinese. Still to do: Gemini and OpenAI adapters, the
 evaluation set and cost measurements, and a review of the privacy policy.
 Originally a proposal, November 2026. Available to all organizations at launch (no
-feature flag), once the organization connects its own AI provider. mipa does
+feature flag), once the organization connects its own AI provider. Longecho does
 not provide or pay for AI itself.
 
 ## Problem
 
-Building a model in mipa means turning "how my organization works" into nodes,
+Building a model in Longecho means turning "how my organization works" into nodes,
 formulas, units and links, and knowing when a value builds up over time
 (`delay(x, dt, 0)`). That is system-dynamics thinking, and most people starting
-mipa have never done it. Today a new organization gets seven starter nodes
+Longecho have never done it. Today a new organization gets seven starter nodes
 (effort, spending, and costs and benefits to the organization and the world)
 and an empty canvas.
 
@@ -38,9 +38,9 @@ this design and get their own documents.
 
 **Where it starts.** On the Model page, a "Draft with AI" button. When the
 model still has only the starter nodes, a banner offers it instead of the empty
-canvas: "Describe your organization and mipa drafts a model you can edit."
+canvas: "Describe your organization and Longecho drafts a model you can edit."
 
-**1. Describe.** A dialog with one text box, pre-filled with what mipa already
+**1. Describe.** A dialog with one text box, pre-filled with what Longecho already
 knows (organization name, goal, type, currency). Example prompt shown as a
 placeholder: "We are a bakery with 6 staff. We sell bread in our shop and to
 two cafés. Our biggest costs are flour, butter, energy for the ovens and wages.
@@ -52,7 +52,7 @@ description and this model are sent to <provider> to prepare the draft."
 policy.
 
 If the organization hasn't connected a provider yet, the button is still
-shown, and opens an explanation of what AI can do in mipa and how to connect
+shown, and opens an explanation of what AI can do in Longecho and how to connect
 a provider (see "Connecting a provider" below), so organizations are
 encouraged to set it up rather than left wondering why the feature is
 missing.
@@ -85,7 +85,7 @@ the Model page menu deletes those nodes and restores the starter-node formulas
 the draft changed, as long as the user hasn't edited them since (otherwise it
 asks).
 
-## How the draft maps onto mipa's data
+## How the draft maps onto Longecho's data
 
 Nodes live in `models/{modelId}/nodes/{nodeId}`. The fields that matter here
 and how each is produced:
@@ -145,7 +145,7 @@ Decisions behind this shape:
   a baseline calculation only needs the nodes, parameters and exchange rates
   passed in its message, which is exactly what the calc tests do.
   Calculations stay on the user's device (see ai-roadmap.md, "Calculations
-  stay on the user's device"), which keeps mipa's running costs low.
+  stay on the user's device"), which keeps Longecho's running costs low.
 - **Writes happen in the browser** after the user accepts, so the existing
   Firestore rules (only model editors may write nodes) apply unchanged.
 
@@ -154,9 +154,9 @@ Decisions behind this shape:
 Every request to the AI provider is built from these parts, in this order (the
 first part is the same for everyone, so it can be cached):
 
-1. **Fixed instructions:** how mipa models work (nodes, formulas that use node
+1. **Fixed instructions:** how Longecho models work (nodes, formulas that use node
    symbols, `delay(node, dt, initial)` for anything that builds up over time,
-   `dt` as the time step), the units and currencies mipa knows, what the
+   `dt` as the time step), the units and currencies Longecho knows, what the
    starter role nodes mean and that the draft must connect to them, how to
    answer (about 8-25 nodes, plain-language explanations, estimates marked
    with their reasoning, questions only when they change the model's
@@ -183,14 +183,14 @@ Each organization has AI settings, edited on a new "AI" tab of the
 organization settings:
 
 - **Provider:** the organization's own account with one of the supported
-  providers (mipa offers no default provider and pays for no AI usage):
+  providers (Longecho offers no default provider and pays for no AI usage):
   - Anthropic (Claude), with the organization's own API key;
   - OpenAI;
   - Google (Gemini);
   - "OpenAI-compatible endpoint" (a base URL plus key), which covers Azure
     OpenAI, OpenRouter, Mistral, self-hosted models (Ollama, vLLM) and many
     others.
-- **Model:** chosen from the provider's models. mipa marks the models it has
+- **Model:** chosen from the provider's models. Longecho marks the models it has
   tested with its evaluation set as "Recommended"; others can be chosen with a
   note that drafts may be less reliable.
 - **Who may change these settings:** organization admins, plus any members an
@@ -227,7 +227,7 @@ encouraged:
 
 - **Where it's offered:** on the first-run checklist, in the organization's
   settings, and wherever an AI button is pressed before a provider is
-  connected. The explanation shows what AI can do in mipa, what it would send,
+  connected. The explanation shows what AI can do in Longecho, what it would send,
   and a rough cost per use (for example "drafting a model usually costs
   US$0.40-0.70 on your provider's account").
 - **For admins and AI settings managers:** a short guided setup per provider:
@@ -236,7 +236,7 @@ encouraged:
   the provider's terms on data retention and training, and suggests setting a
   monthly spending limit in the provider's console.
 - **For other members:** "Ask an admin to connect an AI provider", which
-  sends a note to the organization's admins inside mipa.
+  sends a note to the organization's admins inside Longecho.
 - **Switching off:** disconnecting the provider turns AI off for the
   organization; there is no separate switch.
 
@@ -257,9 +257,9 @@ encouraged:
   Fields that don't apply to the kind are empty, which keeps the schema simple
   for strict structured output. Parse failures (`parsed_output` is null) are
   retried once.
-- **Prompt:** a fixed system prompt with mipa's modelling rules: formula
+- **Prompt:** a fixed system prompt with Longecho's modelling rules: formula
   syntax (mathjs), `delay(node, dt, initial)` for anything that builds up over
-  time, `dt` as the time step, mipa's units and custom units (person, workhour,
+  time, `dt` as the time step, Longecho's units and custom units (person, workhour,
   count...), currencies, linking to the role nodes, keeping drafts to about
   8-25 nodes, explaining in plain language, marking estimates, asking only
   questions that change the structure, and answering in the user's language.
@@ -293,7 +293,7 @@ prototype:
 | Output, including thinking, over 3-4 requests | ~15,000-30,000 | ~$0.30-$0.60 |
 | **Total per draft** | | **~$0.40-$0.70** |
 
-These costs are paid by the organization on its own provider account; mipa
+These costs are paid by the organization on its own provider account; Longecho
 pays nothing. The estimate is shown to admins when they connect a provider.
 There is no per-user daily limit. Controls that protect the organization's
 bill: a cap of 6 requests per draft session, a description size limit, the
@@ -319,7 +319,7 @@ organization's own agreement with it. Before launch:
 ## Quality
 
 A small evaluation set built before launch: about 20 organization descriptions
-covering the organization types mipa offers (just me, family, community,
+covering the organization types Longecho offers (just me, family, community,
 school project, business, non-profit, government), in English and Chinese,
 including vague and very short ones. Each draft is checked automatically:
 

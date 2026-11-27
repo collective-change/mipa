@@ -26,7 +26,7 @@
 - **Route**: `/auth?tab=login`
 - **Visual Evidence**: `docs/evidence/mipa-6/03_auth_login.png`
 - **Observed Findings**:
-  1. **Private Preview Gate Clarity**: The notice *"Mipa is currently in Private Preview for partner organizations. If you have an invitation, sign in with your invited email below"* clearly communicates access restrictions.
+  1. **Private Preview Gate Clarity**: The notice *"Longecho is currently in Private Preview for partner organizations. If you have an invitation, sign in with your invited email below"* clearly communicates access restrictions.
   2. **Clean Layout**: OAuth providers (Google, Microsoft, Apple) and email/password inputs are well-organized with standard Quasar inputs.
   3. **No Self-Serve Registration Tab**: Visiting `?tab=register` intentionally redirects to `?tab=waitlist` under current preview policy.
 
@@ -51,7 +51,7 @@
 
 ### Observation 1: *"Its complexity can be a bit daunting"*
 - **Answer**:
-  - **Written Reason / Architecture Context**: Mipa addresses complex system-dynamics feedback loops, multi-year discounting (NPV), and quadratic leverage formulas ($net^2 / [C \cdot (C + E)]$). Eliminating domain complexity entirely would compromise its mathematical decision engine.
+  - **Written Reason / Architecture Context**: Longecho addresses complex system-dynamics feedback loops, multi-year discounting (NPV), and quadratic leverage formulas ($net^2 / [C \cdot (C + E)]$). Eliminating domain complexity entirely would compromise its mathematical decision engine.
   - **Action Taken / Preserved**: We rely on **progressive disclosure**. The 6-step "Getting started" onboarding checklist breaks the workflow into manageable, discrete tasks rather than confronting the user with an empty canvas. In MIPA-7 and MIPA-6, we eliminated visual distractions (such as stray node labels at coordinate (0, 0) and overlapping header titles) to reduce cognitive overload. Wholesale redesign is declined under Rule 6 ("Nothing is fixed that the pass did not find. This item is not a licence to redesign").
 
 ### Observation 2: *"We need to test from the perspective of a human user. Best to get Antigravity to do its UI testing like a human looking at a browser."*
@@ -74,7 +74,7 @@
 ## 3. Desktop-First & Tooltip Breakpoint Policy
 
 ### Supported Breakpoints
-Mipa follows the Quasar / CSS standard responsive breakpoints:
+Longecho follows the Quasar / CSS standard responsive breakpoints:
 1. **Desktop Large ($\ge 1440$px)**: Primary operational mode for executive decision modeling, complex D3 graph authoring, and sensitivity perturbation.
 2. **Desktop Standard ($1024$px - $1439$px)**: Standard laptop screen; full graph and table views supported.
 3. **Tablet ($600$px - $1023$px)**: Collapsed drawer navigation, scrollable data tables, touch-friendly factor nodes.

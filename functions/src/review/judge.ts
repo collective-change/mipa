@@ -10,7 +10,7 @@ import type { Finding, ReviewInput } from "./assurance";
 const MODEL_CRITERIA = CRITERIA.filter((c) => c.method === "model");
 
 export const JUDGE_SYSTEM_PROMPT = [
-  "You check a strategic model dossier against the published mipa review methodology.",
+  "You check a strategic model dossier against the published Longecho review methodology.",
   "You do not decide whether the organisation's strategy is good. You judge only these criteria:",
   ...MODEL_CRITERIA.map((c) => `- ${c.id}: ${c.checks}`),
   "Score each criterion from 0 to 1. For every point you deduct, give one finding that names the factor or action id and says what disagrees with what.",

@@ -1,11 +1,11 @@
 // Provenance of an automated review (MIPA-43, decision M-3).
 //
 // M-3: the review is fully automated and no human reviews anything, so the
-// only honest claim mipa can make is a mechanical one -
-// "checked against mipa methodology vX by model Y on date Z". That sentence
+// only honest claim Longecho can make is a mechanical one -
+// "checked against Longecho methodology vX by model Y on date Z". That sentence
 // is true only if the record itself stores X, Y and Z, and stores them at the
 // moment of the review: a model provider can move a name to new weights
-// without asking, and mipa's methodology will change too. This module is the
+// without asking, and Longecho's methodology will change too. This module is the
 // storage contract behind the sentence:
 //
 //   - every review record carries provider, exact model identifier,
@@ -25,7 +25,7 @@
 import { createHash } from "node:crypto";
 import type { ProviderId } from "../ai/providers";
 
-// The version of the published mipa methodology an automated review checks
+// The version of the published Longecho methodology an automated review checks
 // against. Bump it whenever the rubric, its weights or the review prompt
 // change: a review run under a new methodology is a different claim.
 export const METHODOLOGY_VERSION = "1.1.0";
@@ -82,7 +82,7 @@ export function assessModelPin(model: string): PinAssessment {
   }
   return {
     status: "unverified",
-    reason: "the identifier carries no snapshot date or revision, so mipa cannot confirm the provider never moves it",
+    reason: "the identifier carries no snapshot date or revision, so Longecho cannot confirm the provider never moves it",
   };
 }
 

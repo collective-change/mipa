@@ -4,7 +4,7 @@
 
 ## 1. Executive Summary & Problem Context
 
-The core strategic thinking, decisions of record (**M-1** through **M-9**), agent memory, and operational history of Mipa reside in a **local-only layer**:
+The core strategic thinking, decisions of record (**M-1** through **M-9**), agent memory, and operational history of Longecho reside in a **local-only layer**:
 
 1. **Strategic Paper Trail (9 documents)**:
    - `docs/BACKLOG.md` (the task queue)

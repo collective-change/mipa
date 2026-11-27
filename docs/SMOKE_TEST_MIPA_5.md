@@ -5,6 +5,7 @@
 
 # MIPA-5: End-to-End Production Smoke Test Report
 
+- **Product**: Longecho (formerly Mipa)
 - **Date**: 2026-11-17
 - **Evaluator**: Antigravity (Staff Software Engineer)
 - **Target Project**: `mipa-2` (`https://collective-change.org`)

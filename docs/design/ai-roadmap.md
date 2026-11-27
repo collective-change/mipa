@@ -4,38 +4,38 @@ Status: proposal, November 2026. Companion to
 [draft-my-model.md](draft-my-model.md), which designs the first feature in
 detail.
 
-AI should help at every step of mipa's cycle (Model, Ideate, Prioritize,
+AI should help at every step of Longecho's cycle (Model, Ideate, Prioritize,
 Achieve), not only at the start. The first pilot is planned with the CEO's
 office of the Tzu Chi Foundation, so features that make a decision
 understandable to senior leaders come first.
 
 ## Principles
 
-0. **Clear to newcomers, with or without AI.** mipa must explain itself to
+0. **Clear to newcomers, with or without AI.** Longecho must explain itself to
    someone who has never heard of system dynamics: plain words, help where
    the question arises, and a clear next step on every screen. AI makes this
-   easier but must not be required for it; see "Making mipa self-explanatory"
+   easier but must not be required for it; see "Making Longecho self-explanatory"
    below.
 1. **AI proposes, people decide.** Nothing in an organization changes until a
    person reviews and accepts it. Accepted AI content is labeled as such.
 2. **Numbers come from the engine, words from the AI.** Results, rankings and
-   comparisons are calculated by mipa's simulation; the AI explains them and
+   comparisons are calculated by Longecho's simulation; the AI explains them and
    chooses what to test, but never types a result number itself. Values the
    AI estimates (inputs) are marked as estimates with reasoning or a source.
 3. **Send only what the feature needs.** Each feature declares which data it
    uses (table below). Features that use chats or notes ask before their first
    use. Email addresses and passwords are never sent.
 4. **The organization stays in control, and pays its own way.** AI works only
-   with a provider the organization connects with its own account; mipa
+   with a provider the organization connects with its own account; Longecho
    provides no AI and pays for none. Admins and designated members choose the
    provider and model, and disconnecting turns AI off (see draft-my-model.md,
-   "Choosing the provider and model" and "Connecting a provider"). mipa
+   "Choosing the provider and model" and "Connecting a provider"). Longecho
    encourages connecting a provider by showing what AI adds wherever it would
    help.
 5. **Show uncertainty.** Where a result depends on estimates, show ranges or
    the assumptions it hinges on, not just one precise-looking number.
 
-## Should mipa's AI be agentic?
+## Should Longecho's AI be agentic?
 
 Yes in how it works things out, no in what it changes.
 
@@ -43,14 +43,14 @@ Yes in how it works things out, no in what it changes.
   the AI decides on itself: read the model, run a calculation, try a changed
   assumption, compare, look up a published figure, then explain. That is an
   agent loop with tools, and it is what makes features like "What would change
-  the answer?" possible. The tools are mipa's own: read the organization's
+  the answer?" possible. The tools are Longecho's own: read the organization's
   model and actions, run a calculation on a scratch copy (on the user's own
   device, see below), and web search for public figures (no organization data
   in queries).
 - **No autonomous changes.** The agent's only way to change anything is to
   produce a proposal (a draft model, new actions, formula edits, a brief) that
   a person reviews. It does not save, send messages or emails, assign people,
-  or act outside mipa.
+  or act outside Longecho.
 - **Bounded.** Each run is limited to one organization, a set number of steps
   and tokens, and the permissions of the person who started it. Every run is
   logged (who started it, what it read, what it proposed, cost), so an admin
@@ -81,7 +81,7 @@ people rely on.
 | 12 | Break actions into steps and suggest owners | Achieve | action, member names | later |
 | 13 | Progress digest | Achieve | actions, updates, chats (asks first), member names | later |
 | 14 | Learn from results (forecast vs actual) | Achieve | model, results, recorded actuals | later |
-| 15 | Ask mipa (questions in plain words) | all | depends on the question; read-only tools | later |
+| 15 | Ask Longecho (questions in plain words) | all | depends on the question; read-only tools | later |
 | 16 | Translation (Chinese and English first) | all | the text being translated | later |
 
 ## Shared building blocks
@@ -89,7 +89,7 @@ people rely on.
 Built once, used by every feature:
 
 - **Provider adapters and settings:** from draft-my-model.md (the
-  organization's own provider and model; no mipa default), with prompt
+  organization's own provider and model; no Longecho default), with prompt
   caching on every provider.
 - **AI run service:** one Cloud Function entry point that checks permissions,
   loads only the data the feature declares, runs the agent loop with the
@@ -112,7 +112,7 @@ and the staff who prepare decisions for them.
 (Traditional Chinese or English), printable and exportable as PDF:
 
 1. The decision, in one sentence, and the options compared.
-2. A table, filled in by mipa (not the AI): for each option, the estimated
+2. A table, filled in by Longecho (not the AI): for each option, the estimated
    benefit and cost to the organization and to the world, net benefit,
    effort, and leverage, with ranges where inputs are uncertain.
 3. Why the top option ranks first, in plain words: which effects drive its
@@ -124,7 +124,7 @@ and the staff who prepare decisions for them.
 **How it works:** the staff member selects the actions to compare and starts
 "Prepare brief". The AI reads the actions, the model and the calculated
 results through read-only tools, and writes sections 1, 3 and 5 around the
-numbers mipa supplies. Every claim it makes about a number refers to a value
+numbers Longecho supplies. Every claim it makes about a number refers to a value
 in the results, and a check rejects text that cites a number not in them.
 The staff member edits the text before sharing; the brief records who edited
 it and when.
@@ -139,7 +139,7 @@ which assumptions would have to be different for B to win?"
 
 **How it works:**
 
-1. mipa lists the inputs that feed the compared actions' results: constant
+1. Longecho lists the inputs that feed the compared actions' results: constant
    nodes, the actions' estimated effort, spending and impacts, and the
    weighting between benefit to the organization and to the world.
 2. A quick screen (no AI): each input is moved up and down by a set amount
@@ -176,7 +176,7 @@ adding an action today.
 
 ## Calculations stay on the user's device
 
-Running calculations on the server would add to mipa's running costs, so
+Running calculations on the server would add to Longecho's running costs, so
 they stay where they are today: in a web worker in the user's browser.
 
 The AI can still use them. The agent loop is relayed through the Cloud
@@ -206,15 +206,15 @@ browser                     Cloud Function               AI provider
 
 | Cost | Who pays | Size |
 |---|---|---|
-| Hosting, database, sign-in (Firebase) | mipa | small at pilot scale: mostly within free quotas; Cloud Functions need the pay-as-you-go plan but cost cents at this volume |
+| Hosting, database, sign-in (Firebase) | Longecho | small at pilot scale: mostly within free quotas; Cloud Functions need the pay-as-you-go plan but cost cents at this volume |
 | Calculations | nobody extra | run on users' devices |
 | AI | the organization, on its own provider account | roughly US$0.40-0.70 per drafted model, more for agent features that run several steps; reduced by prompt caching |
 
-mipa provides no AI of its own, so its running costs stay small and the app
+Longecho provides no AI of its own, so its running costs stay small and the app
 can stay free. The cost of AI is visible to each organization on its own
-provider account, and mipa shows estimates before features are used.
+provider account, and Longecho shows estimates before features are used.
 
-## Making mipa self-explanatory
+## Making Longecho self-explanatory
 
 AI helps, but the app must be clear without it. Planned work:
 
@@ -228,7 +228,7 @@ AI helps, but the app must be clear without it. Planned work:
    | influencers / influencees | depends on / affects |
    | latest value (optional), used by `best_guess` in `delay()` | current value (optional), used as the starting point |
    | time step type, time step growth rate, number of time steps | "Calculate every [month] for [5 years]" |
-   | leverage | keep the word (it is mipa's own measure), with a one-line explanation in place, such as "how strongly the action's net benefit outweighs what it costs; higher leverage means do it sooner" |
+   | leverage | keep the word (it is Longecho's own measure), with a one-line explanation in place, such as "how strongly the action's net benefit outweighs what it costs; higher leverage means do it sooner" |
    | total ROI | benefit for each unit of cost |
    | outstanding direct cost | remaining cost |
    | benefit to world during interval | benefit to the world (per period) |
@@ -252,13 +252,13 @@ AI helps, but the app must be clear without it. Planned work:
 6. **Every empty screen says what to do next,** for example the Actions page
    before any actions exist.
 7. **Test with newcomers.** Before each release, a few people who have never
-   seen mipa try a set task while thinking aloud; the problems they hit are
+   seen Longecho try a set task while thinking aloud; the problems they hit are
    fixed first. The automated browser walkthrough used during development
    keeps the main paths working.
 
 ## Order of work
 
-1. Making mipa self-explanatory, steps 1, 2, 5 and 6 (no AI needed), then
+1. Making Longecho self-explanatory, steps 1, 2, 5 and 6 (no AI needed), then
    the first-run checklist and the example organization.
 2. Draft my model, with the shared provider adapters and run service, and the
    AI run relay with the calculation tool in the browser.
