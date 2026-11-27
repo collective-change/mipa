@@ -4,9 +4,8 @@
  * Local-Only Layer Backup & Disaster Recovery Mechanism (MIPA-42)
  *
  * Backs up the private, gitignored strategic coordination assets:
- * 1. Mipa docs: docs/BACKLOG*.md (the paper trail, decisions M-1..M-9)
- * 2. Hermes agent layer: memories/, skills/, notes/, cron/, shift-dispatched.json, SOUL.md
- * 3. Todo-board layer: inbox.jsonl, overrides.json
+ * 1. Hermes agent layer: memories/, skills/, notes/, cron/, shift-dispatched.json, SOUL.md
+ * (Note: docs/BACKLOG*.md and todo-board inbox.jsonl/overrides.json were retired on 2026-11-26 in favor of the Firestore ops-store).
  *
  * Security Invariants:
  * - NEVER includes secrets, credentials, tokens, .env files, or private directories.
@@ -88,7 +87,8 @@ export function getGitCommit(cwd) {
 }
 
 /**
- * Collect candidate files from mipa docs, hermes, and todo-board.
+ * Collect candidate files from local layers (Hermes agent layer).
+ * (docs/BACKLOG*.md and todo-board inbox.jsonl/overrides.json were retired on 2026-11-26).
  */
 export function collectLocalLayerFiles(options = {}) {
   const mipaRoot = options.mipaRoot || process.cwd();
@@ -101,28 +101,8 @@ export function collectLocalLayerFiles(options = {}) {
 
   const collected = [];
 
-  // 1. Mipa docs/BACKLOG*.md
-  const docsDir = path.join(mipaRoot, "docs");
-  if (fs.existsSync(docsDir)) {
-    const docEntries = fs.readdirSync(docsDir, { withFileTypes: true });
-    for (const entry of docEntries) {
-      if (!entry.isFile()) continue;
-      const name = entry.name;
-      if (name.startsWith("BACKLOG") && name.endsWith(".md")) {
-        if (!includeBakFiles && (name.includes(".bak") || name.includes(".corrupt"))) {
-          continue;
-        }
-        const fullPath = path.join(docsDir, name);
-        if (isExcludedPath(fullPath)) continue;
-
-        collected.push({
-          logicalPath: `mipa/docs/${name}`,
-          sourcePath: fullPath,
-          category: "docs"
-        });
-      }
-    }
-  }
+  // 1. Mipa docs: (docs/BACKLOG*.md was retired on 2026-11-26 in favor of the Firestore ops-store)
+  // The local markdown queue is no longer kept or collected.
 
   // 2. Hermes files
   if (includeHermes && fs.existsSync(hermesRoot)) {
@@ -157,20 +137,8 @@ export function collectLocalLayerFiles(options = {}) {
     }
   }
 
-  // 3. Todo-board files
-  if (includeTodoBoard && fs.existsSync(todoBoardRoot)) {
-    const todoFiles = ["inbox.jsonl", "overrides.json"];
-    for (const fileName of todoFiles) {
-      const fullPath = path.join(todoBoardRoot, fileName);
-      if (fs.existsSync(fullPath) && !isExcludedPath(fullPath)) {
-        collected.push({
-          logicalPath: `todo-board/${fileName}`,
-          sourcePath: fullPath,
-          category: "todo-board"
-        });
-      }
-    }
-  }
+  // 3. Todo-board files: (inbox.jsonl and overrides.json were retired on 2026-11-26 in favor of the Firestore ops-store)
+  // The local file-based board is no longer kept or collected.
 
   // Enrich with file metadata and SHA-256
   return collected.map((item) => {
@@ -362,39 +330,8 @@ export function runRestoreDrill(options = {}) {
   const assertions = [];
 
   try {
-    // 1. Prepare simulated local layer
-    const docsDir = path.join(mockWorkspace, "docs");
-    fs.mkdirSync(docsDir, { recursive: true });
-
-    // Populate standard 9 BACKLOG files
-    const docNames = [
-      "BACKLOG.md",
-      "BACKLOG-business.md",
-      "BACKLOG-business-plan.md",
-      "BACKLOG-roadmap.md",
-      "BACKLOG-world-model.md",
-      "BACKLOG-naming.md",
-      "BACKLOG-meeting.md",
-      "BACKLOG-business-daily.md",
-      "BACKLOG-a10-entity-and-tax.md"
-    ];
-
-    for (const name of docNames) {
-      fs.writeFileSync(
-        path.join(docsDir, name),
-        `# ${name}\nSimulated strategic decision content for drill ${drillId}\n`,
-        "utf8"
-      );
-    }
-
-    // Deliberately introduce secret files to verify exclusion safety filter
-    fs.writeFileSync(path.join(mockWorkspace, ".env"), "SECRET_KEY=leaked_secret\n", "utf8");
-    fs.writeFileSync(path.join(docsDir, "secret-key.token"), "top_secret_token\n", "utf8");
-    const privateDir = path.join(mockWorkspace, "private");
-    fs.mkdirSync(privateDir, { recursive: true });
-    fs.writeFileSync(path.join(privateDir, "id_rsa"), "-----BEGIN RSA PRIVATE KEY-----\n", "utf8");
-
-    // Populate simulated Hermes components
+    // 1. Prepare simulated local layer (Hermes components)
+    // (Note: docs/BACKLOG*.md and todo-board inbox.jsonl/overrides.json were retired on 2026-11-26 in favor of the Firestore ops-store)
     const hermesRoot = path.join(tmpRoot, "hermes");
     fs.mkdirSync(path.join(hermesRoot, "notes"), { recursive: true });
     fs.mkdirSync(path.join(hermesRoot, "cron"), { recursive: true });
@@ -403,23 +340,24 @@ export function runRestoreDrill(options = {}) {
     fs.writeFileSync(path.join(hermesRoot, "notes", "strategy.md"), "High-leverage focus\n", "utf8");
     fs.writeFileSync(path.join(hermesRoot, "cron", "jobs.json"), '{"jobs":[]}\n', "utf8");
 
-    // Populate simulated Todo-board
-    const todoBoardRoot = path.join(tmpRoot, "todo-board");
-    fs.mkdirSync(todoBoardRoot, { recursive: true });
-    fs.writeFileSync(path.join(todoBoardRoot, "inbox.jsonl"), '{"id":1,"task":"Verify backup"}\n', "utf8");
-    fs.writeFileSync(path.join(todoBoardRoot, "overrides.json"), '{"overrides":{}}\n', "utf8");
+    // Deliberately introduce secret files to verify exclusion safety filter
+    fs.mkdirSync(mockWorkspace, { recursive: true });
+    fs.writeFileSync(path.join(mockWorkspace, ".env"), "SECRET_KEY=leaked_secret\n", "utf8");
+    fs.writeFileSync(path.join(hermesRoot, "secret-key.token"), "top_secret_token\n", "utf8");
+    const privateDir = path.join(mockWorkspace, "private");
+    fs.mkdirSync(privateDir, { recursive: true });
+    fs.writeFileSync(path.join(privateDir, "id_rsa"), "-----BEGIN RSA PRIVATE KEY-----\n", "utf8");
 
-    // Check 1: File collection discovers all 9 docs + hermes + todo-board
+    // Check 1: File collection discovers Hermes local-layer files
     const collected = collectLocalLayerFiles({
       mipaRoot: mockWorkspace,
-      hermesRoot,
-      todoBoardRoot
+      hermesRoot
     });
 
-    const docItems = collected.filter((f) => f.category === "docs");
+    const hermesItems = collected.filter((f) => f.category === "hermes");
     assertions.push({
-      check: "Nine docs/BACKLOG*.md files discovered",
-      passed: docItems.length === 9
+      check: "Hermes local-layer files discovered",
+      passed: hermesItems.length === 4
     });
 
     // Check 2: Secret exclusion filter rejected .env, tokens, and private/ files
@@ -433,7 +371,6 @@ export function runRestoreDrill(options = {}) {
     const backupResult = createLocalLayerBackup({
       mipaRoot: mockWorkspace,
       hermesRoot,
-      todoBoardRoot,
       dest: backupStage
     });
 

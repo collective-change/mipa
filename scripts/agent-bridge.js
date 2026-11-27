@@ -24,7 +24,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const REPO_ROOT = path.resolve(__dirname, '..');
-export const BACKLOG_PATH = path.join(REPO_ROOT, 'docs', 'BACKLOG.md');
+// docs/BACKLOG.md was retired on 2026-11-26 in favor of the Firestore ops-store; BACKLOG_PATH is retired and returns null.
+export const BACKLOG_PATH = null;
 export const RULES_PATH = path.join(REPO_ROOT, '.agents', 'rules', 'mipa-rules.md');
 export const SKILL_PATH = path.join(REPO_ROOT, '.agents', 'skills', 'mipa-ops', 'SKILL.md');
 export const BRIDGE_VERSION = '1.2.0';
@@ -94,7 +95,8 @@ export function getLocalTodayDateString(timeZone = 'Asia/Taipei') {
 }
 
 /**
- * Pure parsing function for docs/BACKLOG.md using strict line-anchored regex.
+ * Pure parsing function for backlog markdown content using strict line-anchored regex.
+ * (Note: docs/BACKLOG.md was retired on 2026-11-26 in favor of the Firestore ops-store; retained for backwards compatibility).
  * Guarantees that [TODO] / [DONE] mentions in prose or descriptions are never counted.
  */
 export function parseBacklog(contentOrPath) {
@@ -314,12 +316,13 @@ export function queryKnowledge(query, options = {}) {
 }
 
 /**
- * Appends a task to ## Queue (Priority Order) in docs/BACKLOG.md.
+ * Appends a task to ## Queue (Priority Order) in markdown backlog.
+ * (Note: docs/BACKLOG.md was retired on 2026-11-26 in favor of the Firestore ops-store.)
  */
 export function queueBacklogTask(title, description, criteria = [], options = {}) {
   const backlogPath = options.backlogPath || BACKLOG_PATH;
-  if (!fs.existsSync(backlogPath)) {
-    throw new Error('BACKLOG.md does not exist at ' + backlogPath);
+  if (!backlogPath || !fs.existsSync(backlogPath)) {
+    throw new Error('Backlog file does not exist at ' + backlogPath);
   }
 
   const today = options.date || getLocalTodayDateString();
@@ -340,7 +343,7 @@ export function queueBacklogTask(title, description, criteria = [], options = {}
   const match = content.match(queueHeaderRegex);
 
   if (!match || match.index === undefined) {
-    throw new Error('Could not find "## Queue (Priority Order)" in BACKLOG.md');
+    throw new Error('Could not find "## Queue (Priority Order)" in backlog file');
   }
 
   const headerIndex = match.index;
@@ -423,7 +426,7 @@ export function runMcpServer(options = {}) {
             },
             {
               name: 'mipa_queue_task',
-              description: 'Directly append an engineering task to Mipa docs/BACKLOG.md for Antigravity to build and deploy.',
+              description: 'Directly append an engineering task to Mipa backlog for Antigravity to build and deploy.',
               inputSchema: {
                 type: 'object',
                 properties: {
