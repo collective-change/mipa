@@ -24,8 +24,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const REPO_ROOT = path.resolve(__dirname, '..');
-// docs/BACKLOG.md was retired on 2026-11-26 in favor of the Firestore ops-store; BACKLOG_PATH is retired and returns null.
-export const BACKLOG_PATH = null;
 export const RULES_PATH = path.join(REPO_ROOT, '.agents', 'rules', 'mipa-rules.md');
 export const SKILL_PATH = path.join(REPO_ROOT, '.agents', 'skills', 'mipa-ops', 'SKILL.md');
 export const BRIDGE_VERSION = '1.2.0';
@@ -94,65 +92,6 @@ export function getLocalTodayDateString(timeZone = 'Asia/Taipei') {
   return new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date());
 }
 
-/**
- * Pure parsing function for backlog markdown content using strict line-anchored regex.
- * (Note: docs/BACKLOG.md was retired on 2026-11-26 in favor of the Firestore ops-store; retained for backwards compatibility).
- * Guarantees that [TODO] / [DONE] mentions in prose or descriptions are never counted.
- */
-export function parseBacklog(contentOrPath) {
-  let content = '';
-  if (typeof contentOrPath === 'string') {
-    if (contentOrPath.includes('\n')) {
-      content = contentOrPath;
-    } else if (fs.existsSync(contentOrPath)) {
-      content = fs.readFileSync(contentOrPath, 'utf8');
-    }
-  }
-
-  const result = {
-    inProgress: [],
-    queue: [],
-    completed: []
-  };
-
-  if (!content) return result;
-
-  function getSection(startHeader, endHeader) {
-    const startIdx = content.indexOf(startHeader);
-    if (startIdx === -1) return '';
-    const sliceFrom = startIdx + startHeader.length;
-    let sliceTo = content.length;
-    if (endHeader) {
-      const endIdx = content.indexOf(endHeader, sliceFrom);
-      if (endIdx !== -1) sliceTo = endIdx;
-    }
-    return content.slice(sliceFrom, sliceTo);
-  }
-
-  const inProgressSection = getSection('## Active / In Progress', '## Queue (Priority Order)');
-  const queueSection = getSection('## Queue (Priority Order)', '## Completed');
-  const completedSection = getSection('## Completed', null);
-
-  function extractHeadings(sectionText, prefix) {
-    if (!sectionText) return [];
-    // Strip code blocks so markdown examples inside code fences aren't matched
-    const stripped = sectionText.replace(/```[\s\S]*?```/g, '');
-    const regex = new RegExp(`^###\\s+\\[${prefix}\\]\\s+([^\\r\\n]+)`, 'gm');
-    const items = [];
-    let m;
-    while ((m = regex.exec(stripped)) !== null) {
-      const title = m[1].trim();
-      if (title) items.push(title);
-    }
-    return items;
-  }
-
-  result.inProgress = extractHeadings(inProgressSection, 'IN PROGRESS');
-  result.queue = extractHeadings(queueSection, 'TODO');
-  result.completed = extractHeadings(completedSection, 'DONE');
-
-  return result;
-}
 
 /**
  * Loads operations content (pricing, billing, private operations knowledge).
@@ -201,7 +140,6 @@ export function loadOperationsContent(options = {}) {
  */
 export function getMipaStatus(options = {}) {
   const repoRoot = options.repoRoot || REPO_ROOT;
-  const backlogPath = options.backlogPath || BACKLOG_PATH;
   const degraded = [];
 
   // 1. Primary source: direct filesystem inspection
@@ -231,8 +169,12 @@ export function getMipaStatus(options = {}) {
     degraded.push('git');
   }
 
-  // 3. Parse backlog strictly
-  const backlogData = parseBacklog(backlogPath);
+  // 3. Backlog tasks (docs/BACKLOG.md retired on 2026-11-26; queue is Firestore ops-store)
+  const activeTasksCount = 0;
+  const activeQueue = [];
+  const inProgressCount = 0;
+  const inProgress = [];
+  const recentCompleted = [];
 
   // 4. Operations content (pricing tiers, etc.)
   const opsContent = loadOperationsContent(options);
@@ -250,11 +192,11 @@ export function getMipaStatus(options = {}) {
     degraded,
     platform: 'Mipa (collective-change.org)',
     workingBranch,
-    activeTasksCount: backlogData.queue.length,
-    activeQueue: backlogData.queue,
-    inProgressCount: backlogData.inProgress.length,
-    inProgress: backlogData.inProgress,
-    recentCompleted: backlogData.completed.slice(0, 5),
+    activeTasksCount,
+    activeQueue,
+    inProgressCount,
+    inProgress,
+    recentCompleted,
     recentCommits,
     leverageFormula: '(netBenefitNpv * totalRoi / outstandingDirectCosts) * sign(net)',
     leverageSensitivity: 'Quadratic in net benefit relative to direct spending (sign(net) * net^2 / (C * (C + E))), strongly rewarding high net benefits achieved with minimal outstanding direct spending.',
@@ -315,56 +257,6 @@ export function queryKnowledge(query, options = {}) {
   return results;
 }
 
-/**
- * Appends a task to ## Queue (Priority Order) in markdown backlog.
- * (Note: docs/BACKLOG.md was retired on 2026-11-26 in favor of the Firestore ops-store.)
- */
-export function queueBacklogTask(title, description, criteria = [], options = {}) {
-  const backlogPath = options.backlogPath || BACKLOG_PATH;
-  if (!backlogPath || !fs.existsSync(backlogPath)) {
-    throw new Error('Backlog file does not exist at ' + backlogPath);
-  }
-
-  const today = options.date || getLocalTodayDateString();
-  const formattedCriteria = (criteria && criteria.length > 0)
-    ? criteria.map(c => `  - [ ] ${c}`).join('\n')
-    : '  - [ ] Implementation complete\n  - [ ] Bilingual support (en-us and zh-tw with zero Chinese in en-us)\n  - [ ] Full unit test coverage and zero ESLint errors';
-
-  const newItem = [
-    `### [TODO] ${title.trim()}`,
-    `- **Date**: ${today}`,
-    `- **Description**: ${description.trim()}`,
-    `- **Acceptance Criteria**:`,
-    formattedCriteria
-  ].join('\n');
-
-  let content = fs.readFileSync(backlogPath, 'utf8');
-  const queueHeaderRegex = /^## Queue \(Priority Order\)\s*$/m;
-  const match = content.match(queueHeaderRegex);
-
-  if (!match || match.index === undefined) {
-    throw new Error('Could not find "## Queue (Priority Order)" in backlog file');
-  }
-
-  const headerIndex = match.index;
-  const headerEnd = headerIndex + match[0].length;
-
-  const afterHeader = content.slice(headerEnd);
-  const nextSectionMatch = afterHeader.match(/\n## /);
-  const sectionEnd = nextSectionMatch ? headerEnd + nextSectionMatch.index : content.length;
-
-  let sectionContent = content.slice(headerEnd, sectionEnd);
-  sectionContent = sectionContent.replace(/\s*\*\(Queue currently empty - all prioritized tasks completed\)\*\s*/g, '\n\n');
-
-  const trimmedSection = sectionContent.trim();
-  const newSection = '\n\n' + newItem.trim() + (trimmedSection ? '\n\n' + trimmedSection : '') + '\n\n';
-
-  const updatedContent = content.slice(0, headerEnd) + newSection + content.slice(sectionEnd);
-  fs.writeFileSync(backlogPath, updatedContent, 'utf8');
-
-  return { success: true, message: `Task queued: "${title.trim()}"` };
-}
-
 // -------------------------------------------------------------
 // MCP Protocol (Model Context Protocol) Implementation over stdio
 // -------------------------------------------------------------
@@ -423,19 +315,6 @@ export function runMcpServer(options = {}) {
                 },
                 required: ['query']
               }
-            },
-            {
-              name: 'mipa_queue_task',
-              description: 'Directly append an engineering task to Mipa backlog for Antigravity to build and deploy.',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  title: { type: 'string', description: 'Short title of the feature or bugfix.' },
-                  description: { type: 'string', description: 'Detailed specification and context.' },
-                  criteria: { type: 'array', items: { type: 'string' }, description: 'List of acceptance criteria.' }
-                },
-                required: ['title', 'description']
-              }
             }
           ]
         });
@@ -450,11 +329,6 @@ export function runMcpServer(options = {}) {
           const answer = queryKnowledge(args?.query || '', options);
           sendResponse(id, {
             content: [{ type: 'text', text: JSON.stringify(answer, null, 2) }]
-          });
-        } else if (name === 'mipa_queue_task') {
-          const result = queueBacklogTask(args.title, args.description, args.criteria || [], options);
-          sendResponse(id, {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }]
           });
         } else {
           sendResponse(id, null, { code: -32601, message: `Tool not found: ${name}` });
@@ -502,24 +376,13 @@ export function runHttpServer(port = 9876, options = {}) {
     }
 
     if (req.method === 'POST' && parsedUrl.pathname === '/task') {
-      let body = '';
-      req.on('data', chunk => { body += chunk; });
-      req.on('end', () => {
-        try {
-          const data = JSON.parse(body);
-          const result = queueBacklogTask(data.title, data.description, data.criteria, options);
-          res.writeHead(200);
-          res.end(JSON.stringify(result, null, 2));
-        } catch (err) {
-          res.writeHead(400);
-          res.end(JSON.stringify({ error: err.message }));
-        }
-      });
+      res.writeHead(410);
+      res.end(JSON.stringify({ error: 'Endpoint retired: queue is Firestore ops-store. File cards via ops-store.cjs.' }));
       return;
     }
 
     res.writeHead(404);
-    res.end(JSON.stringify({ error: 'Endpoint not found. Use /status, /query?q=..., or POST /task' }));
+    res.end(JSON.stringify({ error: 'Endpoint not found. Use /status or /query?q=...' }));
   });
 
   server.listen(port, '127.0.0.1', () => {
@@ -527,7 +390,6 @@ export function runHttpServer(port = 9876, options = {}) {
     console.log(`  Endpoints:`);
     console.log(`    GET  http://127.0.0.1:${port}/status`);
     console.log(`    GET  http://127.0.0.1:${port}/query?q=formula`);
-    console.log(`    POST http://127.0.0.1:${port}/task (JSON: { title, description, criteria })`);
   });
 }
 
@@ -563,26 +425,13 @@ export function runCli(args = process.argv.slice(2), options = {}) {
       const q = args.slice(1).join(' ');
       console.log(JSON.stringify(queryKnowledge(q, options), null, 2));
     } else if (command === 'queue') {
-      const title = args[1];
-      const description = args[2] || '';
-      if (!title) {
-        console.error('Error: Task title is required.');
-        console.error('Usage: node scripts/agent-bridge.js queue "<title>" "<description>"');
-        process.exit(1);
-      }
-      try {
-        const result = queueBacklogTask(title, description, [], options);
-        console.log(JSON.stringify(result, null, 2));
-      } catch (err) {
-        console.error('Error queuing task:', err.message);
-        process.exit(1);
-      }
+      console.error('Error: Markdown queue is retired. Queue is managed via Firestore ops-store.');
+      process.exit(1);
     } else {
       console.log(`Agent Bridge (v${BRIDGE_VERSION})`);
       console.log(`Usage:`);
       console.log(`  node scripts/agent-bridge.js status`);
       console.log(`  node scripts/agent-bridge.js query "<topic>"`);
-      console.log(`  node scripts/agent-bridge.js queue "<title>" "<description>"`);
       console.log(`  node scripts/agent-bridge.js --mcp           (Runs MCP stdio server)`);
       console.log(`  node scripts/agent-bridge.js --server [port] (Runs local HTTP API)`);
     }
@@ -596,9 +445,7 @@ if (isMainModule()) {
 export default {
   getMipaStatus,
   queryKnowledge,
-  queueBacklogTask,
   readGitInfoDirectly,
-  parseBacklog,
   getLocalTodayDateString,
   loadOperationsContent,
   runMcpServer,

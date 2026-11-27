@@ -4,9 +4,7 @@ import path from 'path';
 import os from 'os';
 import {
   readGitInfoDirectly,
-  parseBacklog,
   getLocalTodayDateString,
-  queueBacklogTask,
   loadOperationsContent,
   getMipaStatus,
   queryKnowledge,
@@ -75,62 +73,6 @@ describe('agent-bridge.js - Tracked Agent Bridge Mechanism Suite', () => {
     });
   });
 
-  describe('parseBacklog - Strict Line-Anchored Matching', () => {
-    it('correctly matches only anchored headings and ignores [TODO] in item bodies, bullet points, and code fences', () => {
-      const backlogContent = `
-# Mipa Feature & Improvement Backlog (Local)
-
-## Status Convention
-- [TODO] — Ready to be picked up.
-- [IN PROGRESS] — Currently being investigated.
-- [DONE] — Implemented and merged.
-
-## Active / In Progress
-
-### [IN PROGRESS] Active Working Task
-- **Description**: Working on something important.
-
-## Queue (Priority Order)
-
-### [TODO] Fix mipa-bridge reliability
-- **Date**: 2026-11-15
-- **Description**: Add a queue CLI subcommand: \`node scripts/mipa-bridge.js queue "<title>" "<description>"\` appends a correctly formatted ### [TODO] <Title> block under ## Queue (Priority Order).
-- **Acceptance Criteria**:
-  - [ ] Acceptance criterion mentioning ### [TODO] template
-  - [ ] Another line with \`### [TODO] nested in code\`
-  - [ ] Inside code fence:
-\`\`\`markdown
-### [TODO] Fake Task Inside Code Block
-\`\`\`
-  - [ ] End of item
-
-## Completed
-
-### [DONE] First Feature Merged
-- Description of feature.
-`;
-
-      const parsed = parseBacklog(backlogContent);
-
-      // Active / In Progress
-      expect(parsed.inProgress.length).toBe(1);
-      expect(parsed.inProgress[0]).toBe('Active Working Task');
-
-      // Queue: must be EXACTLY 1, ignoring the prose, bullet points, and code block
-      expect(parsed.queue.length).toBe(1);
-      expect(parsed.queue[0]).toBe('Fix mipa-bridge reliability');
-
-      // Completed
-      expect(parsed.completed.length).toBe(1);
-      expect(parsed.completed[0]).toBe('First Feature Merged');
-    });
-
-    it('returns empty lists for empty or invalid markdown without throwing', () => {
-      expect(parseBacklog('')).toEqual({ inProgress: [], queue: [], completed: [] });
-      expect(parseBacklog(null)).toEqual({ inProgress: [], queue: [], completed: [] });
-    });
-  });
-
   describe('getLocalTodayDateString', () => {
     it('produces YYYY-MM-DD formatted date in Asia/Taipei timezone', () => {
       const dateStr = getLocalTodayDateString('Asia/Taipei');
@@ -148,60 +90,15 @@ describe('agent-bridge.js - Tracked Agent Bridge Mechanism Suite', () => {
     });
   });
 
-  describe('queueBacklogTask', () => {
-    it('appends a correctly formatted ### [TODO] block under ## Queue (Priority Order)', () => {
-      const backlogFile = path.join(tmpDir, 'BACKLOG.md');
-      fs.writeFileSync(
-        backlogFile,
-        `# Header\n\n## Active / In Progress\n\n*(None)*\n\n## Queue (Priority Order)\n\n*(Queue currently empty - all prioritized tasks completed)*\n\n## Completed\n\n### [DONE] Old Item\n`
-      );
-
-      const result = queueBacklogTask('New Automated Task', 'Detailed description of the task', [
-        'Criteria 1',
-        'Criteria 2'
-      ], {
-        backlogPath: backlogFile,
-        date: '2026-11-15'
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.message).toContain('New Automated Task');
-
-      const updated = fs.readFileSync(backlogFile, 'utf8');
-      expect(updated).toContain('### [TODO] New Automated Task');
-      expect(updated).toContain('- **Date**: 2026-11-15');
-      expect(updated).toContain('- **Description**: Detailed description of the task');
-      expect(updated).toContain('- [ ] Criteria 1');
-      expect(updated).not.toContain('*(Queue currently empty - all prioritized tasks completed)*');
-
-      // Verify parseBacklog sees it
-      const parsed = parseBacklog(updated);
-      expect(parsed.queue).toEqual(['New Automated Task']);
-    });
-
-    it('throws descriptive error if BACKLOG.md is missing', () => {
-      expect(() => {
-        queueBacklogTask('Task', 'Desc', [], { backlogPath: path.join(tmpDir, 'nonexistent.md') });
-      }).toThrow(/does not exist/);
-    });
-  });
-
   describe('getMipaStatus & queryKnowledge', () => {
     it('returns degraded array and bridgeVersion in status output, falling back gracefully when ops content is absent', () => {
       const gitDir = path.join(tmpDir, '.git');
       fs.mkdirSync(gitDir, { recursive: true });
       fs.writeFileSync(path.join(gitDir, 'HEAD'), 'ref: refs/heads/test-branch\n');
 
-      const backlogFile = path.join(tmpDir, 'BACKLOG.md');
-      fs.writeFileSync(
-        backlogFile,
-        `## Active / In Progress\n\n## Queue (Priority Order)\n\n### [TODO] Task 1\n\n## Completed\n`
-      );
-
       // Status without ops content (e.g. CI runner environment)
       const fallbackStatus = getMipaStatus({
         repoRoot: tmpDir,
-        backlogPath: backlogFile,
         operationsContent: null,
         opsPath: path.join(tmpDir, 'nonexistent-ops.json')
       });
@@ -210,15 +107,14 @@ describe('agent-bridge.js - Tracked Agent Bridge Mechanism Suite', () => {
       expect(Array.isArray(fallbackStatus.degraded)).toBe(true);
       expect(fallbackStatus.degraded).toContain('operations:unconfigured');
       expect(fallbackStatus.workingBranch).toBe('test-branch');
-      expect(fallbackStatus.activeTasksCount).toBe(1);
-      expect(fallbackStatus.activeQueue).toEqual(['Task 1']);
+      expect(fallbackStatus.activeTasksCount).toBe(0);
+      expect(fallbackStatus.activeQueue).toEqual([]);
       expect(fallbackStatus.chineseLeverageTerm).toBe('效應比');
       expect(fallbackStatus.pricingTiers).toBeNull();
 
       // Status with operations content configured
       const configuredStatus = getMipaStatus({
         repoRoot: tmpDir,
-        backlogPath: backlogFile,
         operationsContent: {
           pricingTiers: {
             tierA: '$10/mo',
