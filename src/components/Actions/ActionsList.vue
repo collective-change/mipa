@@ -215,7 +215,12 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useActionsStore } from "@/store/store-actions";
+import { useUiActionStore } from "@/store/store-uiAction";
+import { useUiStore } from "@/store/store-ui";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useUsersStore } from "@/store/store-users";
 import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import { formatNumber } from "@/utils/util-formatNumber";
 import { formatSroiRatio } from "@/utils/sroi";
@@ -283,12 +288,12 @@ export default {
   },
 
   computed: {
-    //...mapGetters("settings", ["settings"]),
-    ...mapState("actions", ["matchingActions", "matchingActionsTotalCount"]),
-    ...mapState("uiAction", ["uiActionChanged"]),
-    ...mapState("ui", ["selectedActionId"]),
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapGetters("users", ["currentOrgUsers"]),
+    //...pickState(useSettingsStore, ["settings"]),
+    ...pickState(useActionsStore, ["matchingActions", "matchingActionsTotalCount"]),
+    ...pickState(useUiActionStore, ["uiActionChanged"]),
+    ...pickState(useUiStore, ["selectedActionId"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useUsersStore, { currentOrgUsers: "orgUsers" }),
     hasMoreActionsToLoad() {
       return (
         typeof this.matchingActionsTotalCount === "number" &&
@@ -470,7 +475,7 @@ export default {
     onRowClick(evt, row) {
       if (this.selectedActionId == row.id) {
         if (!this.uiActionChanged) {
-          this.$store.dispatch("ui/setSelectedActionId", row.id);
+          useUiStore(this.$pinia).setSelectedActionId(row.id);
         } else return;
       }
       if (this.uiActionChanged) {
@@ -483,9 +488,9 @@ export default {
             persistent: true,
           })
           .onOk(() => {
-            this.$store.dispatch("ui/setSelectedActionId", row.id);
+            useUiStore(this.$pinia).setSelectedActionId(row.id);
           });
-      } else this.$store.dispatch("ui/setSelectedActionId", row.id);
+      } else useUiStore(this.$pinia).setSelectedActionId(row.id);
     },
     getActionDisplayTitle(row) {
       if (!row) return "";
@@ -540,7 +545,7 @@ export default {
     },
     dispatchBindMatchingActions() {
       if (this.currentOrg)
-        this.$store.dispatch("actions/bindMatchingActions", {
+        useActionsStore(this.$pinia).bindMatchingActions({
           orgId: this.currentOrg.id,
           actionStatesToSearch: this.actionStatesToSearch,
           responsiblePersonToSearch:

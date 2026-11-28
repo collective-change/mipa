@@ -126,7 +126,11 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapActions } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useModelStore } from "@/store/store-model";
+import { useCalcResultsStore } from "@/store/store-calcResults";
+import { useUiStore } from "@/store/store-ui";
+import { useOrgsStore } from "@/store/store-orgs";
 import { collection, getDocs, limit, query, where } from "firebase/firestore";
 import { firebaseDb } from "@/boot/firebase";
 import CalculatorUi from "@/components/Calc/CalculatorUi.vue";
@@ -147,9 +151,9 @@ export default {
     };
   },
   computed: {
-    ...mapState("model", ["currentModel"]),
-    ...mapGetters("model", ["nodes"]),
-    ...mapState("calcResults", ["baseline"]),
+    ...pickState(useModelStore, ["currentModel"]),
+    ...pickState(useModelStore, { nodes: "nodesList" }),
+    ...pickState(useCalcResultsStore, ["baseline"]),
     orgId() {
       return this.$route.params.orgId;
     },
@@ -271,12 +275,13 @@ export default {
       return `longecho.gettingStarted.hidden.${this.modelId}`;
     },
     sampleOrg() {
-      const orgs = this.$store?.state?.orgs?.orgs;
+      const orgsStore = useOrgsStore(this.$pinia);
+      const orgs = orgsStore.orgs;
       if (Array.isArray(orgs)) {
         const match = orgs.find((o) => o && o.isSample);
         if (match) return match;
       }
-      const currentOrg = this.$store?.state?.orgs?.currentOrg;
+      const currentOrg = orgsStore.currentOrg;
       return currentOrg && currentOrg.isSample ? currentOrg : null;
     },
     finishedExampleRoute() {
@@ -303,14 +308,15 @@ export default {
     }
   },
   methods: {
-    ...mapActions("ui", ["setSelectedNodeId"]),
+    ...pickActions(useUiStore, ["setSelectedNodeId"]),
     async openFinishedExample() {
       if (this.sampleOrg) {
         this.$router.push(this.finishedExampleRoute);
         return;
       }
-      if (this.$store && this.$store._actions && this.$store._actions["orgs/createSampleOrg"]) {
-        const created = await this.$store.dispatch("orgs/createSampleOrg");
+      const orgsStore = useOrgsStore(this.$pinia);
+      if (typeof orgsStore.createSampleOrg === "function") {
+        const created = await orgsStore.createSampleOrg();
         if (created && created.orgId) {
           this.$router.push({
             name: "actions",

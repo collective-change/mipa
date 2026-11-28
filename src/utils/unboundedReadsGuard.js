@@ -32,7 +32,7 @@ export const KNOWN_FIXED_INSTANCES = [
   {
     id: "MIPA-23",
     file: "src/store/store-model.js",
-    lines: [335, 344],
+    lines: [389, 398],
     description: "Model graph query (bindNodes) enforces DEFAULT_NODES_LIMIT = 50 unless explicitly expanded."
   },
   {
@@ -53,7 +53,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
   {
     id: "STARTER-NODES-INIT",
     file: "src/store/store-model.js",
-    line: 159,
+    line: 216,
     anchor: 'collection(firebaseDb, "models", payload.modelId, "nodes")',
     date: "2026-11-20",
     reason: "Runs once during createInitialNodes immediately after writing the 7 starter role factors (fixed cardinality = 7)."
@@ -61,7 +61,7 @@ export const UNBOUNDED_READ_EXCEPTIONS = [
   {
     id: "MIPA-23-LOAD-ALL",
     file: "src/store/store-model.js",
-    line: 334,
+    line: 388,
     anchor: 'isUnbounded ? collection(firebaseDb, "models", modelId, "nodes")',
     date: "2026-11-20",
     reason: "MIPA-23: Explicit user-triggered 'Load all factors' opt-in branch (isUnbounded) after default limit(50) bounded graph load."

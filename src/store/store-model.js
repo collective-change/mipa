@@ -1,3 +1,4 @@
+import { defineStore } from "pinia";
 import { uid, Notify } from "quasar";
 import { firebaseDb, firebaseAuth } from "@/boot/firebase";
 import {
@@ -31,1031 +32,1028 @@ const t = key => i18n.global.t(key);
 
 export const DEFAULT_NODES_LIMIT = 50;
 
-const state = {
-  currentModel: null,
-  nodes: [],
-  nodesTotalCount: null,
-  nodesLimit: DEFAULT_NODES_LIMIT
-};
+// The organization currency, read from the orgs store's state when it exists
+// (the Pinia equivalent of Vuex's `rootState.orgs.currentOrg.currency`).
+function currentOrgCurrency(store) {
+  return store.$pinia?.state?.value?.orgs?.currentOrg?.currency;
+}
 
-const mutations = {
-  setNodesTotalCount(state, count) {
-    state.nodesTotalCount = count;
-  },
-  setNodesLimit(state, limit) {
-    state.nodesLimit = limit;
-  },
-  deleteLink(state, payload) {
-    let influencerId = payload.influencerId;
-    let influenceeId = payload.influenceeId;
-    let influencer = state.nodes.find(function(node) {
-      if (node.id == influencerId) return true;
-    });
-    let influencee = state.nodes.find(function(node) {
-      if (node.id == influenceeId) return true;
-    });
+export const useModelStore = defineStore("model", {
+  state: () => ({
+    currentModel: null,
+    nodes: [],
+    nodesTotalCount: null,
+    nodesLimit: DEFAULT_NODES_LIMIT
+  }),
 
-    //in influencer node, remove influencee
-    influencer.influencees = influencer.influencees.filter(function(id) {
-      return id != influenceeId;
-    });
-    //in influencee node, remove influencer
-    influencee.influencers = influencee.influencers.filter(function(id) {
-      return id != influencerId;
-    });
-  }
-};
-
-const actions = {
-  async addOrgMainModel({ dispatch }, payload) {
-    let model = {};
-    model.isPublic = false;
-    model.owners = { users: [firebaseAuth.currentUser.uid] };
-    model.editors = { users: [firebaseAuth.currentUser.uid] };
-    model.viewers = { users: [], emails: [] };
-    model.orgId = payload.orgId;
-    model.isOrgMainModel = true;
-    model.name = "Main";
-    model.unwrittenChanges = [];
-    model.simulationParams = {
-      finalTimeNumber: 120,
-      finalTimeUnit: "months",
-      numTimeSteps: 120,
-      orgWeightingFactor: 1,
-      timeStepGrowthRate: 0,
-      timeStepNumber: 1,
-      timeStepUnit: "months",
-      worldToOrgWeightingRatio: 0.5,
-      worldWeightingFactor: 1
-    };
-    try {
-      await setDoc(doc(firebaseDb, "models", payload.modelId), model);
-    } catch (error) {
-      showErrorMessage("Error creating model", error.message);
-      return;
-    }
-    // A sample organization brings its own factors.
-    if (payload.withoutStarterNodes) return;
-    dispatch("createInitialNodes", {
-      modelId: payload.modelId,
-      currency: payload.currency
-    });
-  },
-
-  async createInitialNodes({ dispatch }, payload) {
-    const basicNode = {
-      class: "unlinked",
-      isNew: false,
-      isSelfBlocking: false,
-      name: "unnamed",
-      symbol: "unnamed",
-      symbolFormula: "0",
-      sysFormula: "0",
-      unit: payload.currency,
-      unusedInfluencers: []
-    };
-    const nodes = [
-      {
-        name: t("starterHourlyCost"),
-        symbol: "averageEffortCostPerHour",
-        symbolFormula: "10",
-        sysFormula: "10",
-        isNew: true
-      },
-      {
-        name: t("starterEffort"),
-        symbol: "oneTimeEffort",
-        unit: "workhours"
-      },
-      {
-        name: t("starterSpending"),
-        symbol: "oneTimeSpending"
-      },
-      {
-        name: t("starterOrgCost"),
-        symbol: "costToOrganizationDuringInterval"
-      },
-      {
-        name: t("starterWorldCost"),
-        symbol: "costToWorldDuringInterval"
-      },
-      {
-        name: t("starterOrgBenefit"),
-        symbol: "benefitToOrganizationDuringInterval"
-      },
-      {
-        name: t("starterWorldBenefit"),
-        symbol: "benefitToWorldDuringInterval"
+  getters: {
+    // Nodes as plain objects with an enumerable `id` (bound documents keep
+    // `id` non-enumerable). Formerly the Vuex `model/nodes` getter.
+    nodesList: state => {
+      if (!state.nodes) {
+        return [];
       }
-    ];
+      return state.nodes.map(node => ({ ...node, id: node.id }));
+    },
+    links: state => {
+      let allLinks = [];
+      state.nodes.forEach(function(node) {
+        if ("influencers" in node) {
+          node.influencers.forEach(function(influencerId) {
+            let matchingRelaxedLink = null;
+            if (state.currentModel.relaxedLinks)
+              matchingRelaxedLink = state.currentModel.relaxedLinks.find(
+                link =>
+                  link.influenceeNodeId == node.id &&
+                  link.influencerNodeId == influencerId
+              );
 
-    let batch = writeBatch(firebaseDb);
-    nodes.forEach(node => {
-      let nodeRef = doc(collection(firebaseDb, "models", payload.modelId, "nodes"));
-      batch.set(nodeRef, Object.assign(Object.assign({}, basicNode), node));
-    });
-    await batch.commit();
-
-    const snapshot = await getDocs(collection(firebaseDb, "models", payload.modelId, "nodes"));
-
-    const roleNodesProperties = [
-      {
-        name: "averageEffortCostPerHour",
-        symbol: "averageEffortCostPerHour"
-      },
-      {
-        name: "effort",
-        symbol: "oneTimeEffort"
-      },
-      {
-        name: "orgBenefit",
-        symbol: "benefitToOrganizationDuringInterval"
-      },
-      {
-        name: "orgCost",
-        symbol: "costToOrganizationDuringInterval"
-      },
-      {
-        name: "spending",
-        symbol: "oneTimeSpending"
-      },
-      {
-        name: "worldBenefit",
-        symbol: "benefitToWorldDuringInterval"
-      },
-      {
-        name: "worldCost",
-        symbol: "costToWorldDuringInterval"
-      }
-    ];
-
-    let roleNodes = {};
-    snapshot.forEach(doc => {
-      const node = doc.data();
-
-      const foundProperty = roleNodesProperties.find(
-        element => element.symbol == node.symbol
-      );
-      if (foundProperty) roleNodes[foundProperty.name] = doc.id;
-    });
-
-    dispatch("updateModel", {
-      modelId: payload.modelId,
-      updates: { roleNodes },
-      silent: true // part of creating the organization; not a user edit
-    });
-  },
-
-  async updateModel({ dispatch, getters, state, rootState }, payload) {
-    let modelId = payload.modelId;
-
-    if (payload.updates && payload.updates.roleNodes) {
-      const orgCurrency =
-        payload.orgCurrency ||
-        rootState?.orgs?.currentOrg?.currency ||
-        state.currentModel?.currency ||
-        "USD";
-      const allNodes = (getters && getters.nodes) || (state && state.nodes) || [];
-      const changedNodes = [];
-      CURRENCY_ROLE_KEYS.forEach(roleKey => {
-        const nodeId = payload.updates.roleNodes[roleKey];
-        if (nodeId) {
-          const targetNode = allNodes.find(n => n.id === nodeId);
-          if (targetNode && targetNode.unit !== orgCurrency) {
-            changedNodes.push({ id: nodeId, changes: { unit: orgCurrency } });
-          }
+            allLinks.push({
+              source: influencerId,
+              target: node.id,
+              hasReciprocal:
+                "influencees" in node
+                  ? node.influencees.includes(influencerId)
+                  : false,
+              isBlocking:
+                "blockingInfluencers" in node
+                  ? node.blockingInfluencers.includes(influencerId)
+                  : false,
+              isUnused:
+                "unusedInfluencers" in node
+                  ? node.unusedInfluencers.includes(influencerId)
+                  : false,
+              strengthFactor: matchingRelaxedLink
+                ? matchingRelaxedLink.strengthFactor
+                : 1
+            });
+          });
         }
       });
-      if (changedNodes.length > 0) {
-        dispatch("updateNodes", {
-          modelId,
-          changedNodes,
-          orgCurrency
-        });
+      return allLinks;
+    }
+  },
+
+  actions: {
+    setNodesTotalCount(count) {
+      this.nodesTotalCount = count;
+    },
+
+    setNodesLimit(limit) {
+      this.nodesLimit = limit;
+    },
+
+    // Removes a link from the local node arrays (formerly the `deleteLink` mutation).
+    removeLinkLocally(payload) {
+      let influencerId = payload.influencerId;
+      let influenceeId = payload.influenceeId;
+      let influencer = this.nodes.find(function(node) {
+        if (node.id == influencerId) return true;
+      });
+      let influencee = this.nodes.find(function(node) {
+        if (node.id == influenceeId) return true;
+      });
+
+      //in influencer node, remove influencee
+      influencer.influencees = influencer.influencees.filter(function(id) {
+        return id != influenceeId;
+      });
+      //in influencee node, remove influencer
+      influencee.influencers = influencee.influencers.filter(function(id) {
+        return id != influencerId;
+      });
+    },
+
+    async addOrgMainModel(payload) {
+      let model = {};
+      model.isPublic = false;
+      model.owners = { users: [firebaseAuth.currentUser.uid] };
+      model.editors = { users: [firebaseAuth.currentUser.uid] };
+      model.viewers = { users: [], emails: [] };
+      model.orgId = payload.orgId;
+      model.isOrgMainModel = true;
+      model.name = "Main";
+      model.unwrittenChanges = [];
+      model.simulationParams = {
+        finalTimeNumber: 120,
+        finalTimeUnit: "months",
+        numTimeSteps: 120,
+        orgWeightingFactor: 1,
+        timeStepGrowthRate: 0,
+        timeStepNumber: 1,
+        timeStepUnit: "months",
+        worldToOrgWeightingRatio: 0.5,
+        worldWeightingFactor: 1
+      };
+      try {
+        await setDoc(doc(firebaseDb, "models", payload.modelId), model);
+      } catch (error) {
+        showErrorMessage("Error creating model", error.message);
+        return;
       }
-    }
+      // A sample organization brings its own factors.
+      if (payload.withoutStarterNodes) return;
+      this.createInitialNodes({
+        modelId: payload.modelId,
+        currency: payload.currency
+      });
+    },
 
-    //let formulaChanged = false;
-    payload.updates.updateTime = serverTimestamp();
-    payload.updates.updatedBy = firebaseAuth.currentUser.uid;
+    async createInitialNodes(payload) {
+      const basicNode = {
+        class: "unlinked",
+        isNew: false,
+        isSelfBlocking: false,
+        name: "unnamed",
+        symbol: "unnamed",
+        symbolFormula: "0",
+        sysFormula: "0",
+        unit: payload.currency,
+        unusedInfluencers: []
+      };
+      const nodes = [
+        {
+          name: t("starterHourlyCost"),
+          symbol: "averageEffortCostPerHour",
+          symbolFormula: "10",
+          sysFormula: "10",
+          isNew: true
+        },
+        {
+          name: t("starterEffort"),
+          symbol: "oneTimeEffort",
+          unit: "workhours"
+        },
+        {
+          name: t("starterSpending"),
+          symbol: "oneTimeSpending"
+        },
+        {
+          name: t("starterOrgCost"),
+          symbol: "costToOrganizationDuringInterval"
+        },
+        {
+          name: t("starterWorldCost"),
+          symbol: "costToWorldDuringInterval"
+        },
+        {
+          name: t("starterOrgBenefit"),
+          symbol: "benefitToOrganizationDuringInterval"
+        },
+        {
+          name: t("starterWorldBenefit"),
+          symbol: "benefitToWorldDuringInterval"
+        }
+      ];
 
-    let modelRef = doc(firebaseDb, "models", modelId);
-    try {
-      await setDoc(modelRef, payload.updates, { merge: true });
-      if (!payload.silent) Notify.create(i18n.global.t("toastModelUpdated"));
-    } catch (error) {
-      console.error("Error updating model", error.message);
-      showErrorMessage("Error updating model", error.message);
-    }
-  },
+      let batch = writeBatch(firebaseDb);
+      nodes.forEach(node => {
+        let nodeRef = doc(collection(firebaseDb, "models", payload.modelId, "nodes"));
+        batch.set(nodeRef, Object.assign(Object.assign({}, basicNode), node));
+      });
+      await batch.commit();
 
-  async setCustomVariables({ dispatch }, { modelId, variables }) {
-    await dispatch("updateModel", {
-      modelId,
-      updates: { customVariables: variables }
-    });
-  },
+      const snapshot = await getDocs(collection(firebaseDb, "models", payload.modelId, "nodes"));
 
-  async addCustomVariable({ dispatch, state }, { modelId, variable }) {
-    const currentVars = Array.isArray(state.currentModel?.customVariables)
-      ? [...state.currentModel.customVariables]
-      : [];
-    currentVars.push(variable);
-    await dispatch("updateModel", {
-      modelId,
-      updates: { customVariables: currentVars }
-    });
-  },
+      const roleNodesProperties = [
+        {
+          name: "averageEffortCostPerHour",
+          symbol: "averageEffortCostPerHour"
+        },
+        {
+          name: "effort",
+          symbol: "oneTimeEffort"
+        },
+        {
+          name: "orgBenefit",
+          symbol: "benefitToOrganizationDuringInterval"
+        },
+        {
+          name: "orgCost",
+          symbol: "costToOrganizationDuringInterval"
+        },
+        {
+          name: "spending",
+          symbol: "oneTimeSpending"
+        },
+        {
+          name: "worldBenefit",
+          symbol: "benefitToWorldDuringInterval"
+        },
+        {
+          name: "worldCost",
+          symbol: "costToWorldDuringInterval"
+        }
+      ];
 
-  async updateCustomVariable({ dispatch, state }, { modelId, variableName, updates }) {
-    const currentVars = Array.isArray(state.currentModel?.customVariables)
-      ? [...state.currentModel.customVariables]
-      : [];
-    const idx = currentVars.findIndex(v => v.name === variableName);
-    if (idx !== -1) {
-      currentVars[idx] = { ...currentVars[idx], ...updates };
-      await dispatch("updateModel", {
+      let roleNodes = {};
+      snapshot.forEach(doc => {
+        const node = doc.data();
+
+        const foundProperty = roleNodesProperties.find(
+          element => element.symbol == node.symbol
+        );
+        if (foundProperty) roleNodes[foundProperty.name] = doc.id;
+      });
+
+      this.updateModel({
+        modelId: payload.modelId,
+        updates: { roleNodes },
+        silent: true // part of creating the organization; not a user edit
+      });
+    },
+
+    async updateModel(payload) {
+      let modelId = payload.modelId;
+
+      if (payload.updates && payload.updates.roleNodes) {
+        const orgCurrency =
+          payload.orgCurrency ||
+          currentOrgCurrency(this) ||
+          this.currentModel?.currency ||
+          "USD";
+        const allNodes = this.nodesList || this.nodes || [];
+        const changedNodes = [];
+        CURRENCY_ROLE_KEYS.forEach(roleKey => {
+          const nodeId = payload.updates.roleNodes[roleKey];
+          if (nodeId) {
+            const targetNode = allNodes.find(n => n.id === nodeId);
+            if (targetNode && targetNode.unit !== orgCurrency) {
+              changedNodes.push({ id: nodeId, changes: { unit: orgCurrency } });
+            }
+          }
+        });
+        if (changedNodes.length > 0) {
+          this.updateNodes({
+            modelId,
+            changedNodes,
+            orgCurrency
+          });
+        }
+      }
+
+      //let formulaChanged = false;
+      payload.updates.updateTime = serverTimestamp();
+      payload.updates.updatedBy = firebaseAuth.currentUser.uid;
+
+      let modelRef = doc(firebaseDb, "models", modelId);
+      try {
+        await setDoc(modelRef, payload.updates, { merge: true });
+        if (!payload.silent) Notify.create(i18n.global.t("toastModelUpdated"));
+      } catch (error) {
+        console.error("Error updating model", error.message);
+        showErrorMessage("Error updating model", error.message);
+      }
+    },
+
+    async setCustomVariables({ modelId, variables }) {
+      await this.updateModel({
+        modelId,
+        updates: { customVariables: variables }
+      });
+    },
+
+    async addCustomVariable({ modelId, variable }) {
+      const currentVars = Array.isArray(this.currentModel?.customVariables)
+        ? [...this.currentModel.customVariables]
+        : [];
+      currentVars.push(variable);
+      await this.updateModel({
         modelId,
         updates: { customVariables: currentVars }
       });
-    }
-  },
+    },
 
-  async deleteCustomVariable({ dispatch, state }, { modelId, variableName }) {
-    const currentVars = Array.isArray(state.currentModel?.customVariables)
-      ? state.currentModel.customVariables.filter(v => v.name !== variableName)
-      : [];
-    await dispatch("updateModel", {
-      modelId,
-      updates: { customVariables: currentVars }
-    });
-  },
+    async updateCustomVariable({ modelId, variableName, updates }) {
+      const currentVars = Array.isArray(this.currentModel?.customVariables)
+        ? [...this.currentModel.customVariables]
+        : [];
+      const idx = currentVars.findIndex(v => v.name === variableName);
+      if (idx !== -1) {
+        currentVars[idx] = { ...currentVars[idx], ...updates };
+        await this.updateModel({
+          modelId,
+          updates: { customVariables: currentVars }
+        });
+      }
+    },
 
-  deleteModel({}, modelId) {
-    //let modelId = payload.modelId;
-    //let node = payload.node;
-    let modelRef = doc(firebaseDb, "models", modelId);
-    deleteDoc(modelRef)
-      .then(function() {
-        Notify.create(i18n.global.t("toastModelDeleted"));
-      })
-      .catch(function(error) {
-        showErrorMessage("Error deleting model", error.message);
+    async deleteCustomVariable({ modelId, variableName }) {
+      const currentVars = Array.isArray(this.currentModel?.customVariables)
+        ? this.currentModel.customVariables.filter(v => v.name !== variableName)
+        : [];
+      await this.updateModel({
+        modelId,
+        updates: { customVariables: currentVars }
       });
-  },
+    },
 
-  bindCurrentModel: firestoreAction(({ bindFirestoreRef }, modelId) => {
-    let userId = firebaseAuth.currentUser.uid;
-    // return the promise returned by `bindFirestoreRef`
-    return bindFirestoreRef(
-      "currentModel",
-      doc(firebaseDb, "models", modelId),
-      {
-        wait: false,
-        reset: true
-      }
-    );
-  }),
+    deleteModel(modelId) {
+      let modelRef = doc(firebaseDb, "models", modelId);
+      deleteDoc(modelRef)
+        .then(function() {
+          Notify.create(i18n.global.t("toastModelDeleted"));
+        })
+        .catch(function(error) {
+          showErrorMessage("Error deleting model", error.message);
+        });
+    },
 
-  unbindCurrentModel: firestoreAction(({ unbindFirestoreRef }) => {
-    unbindFirestoreRef("currentModel", true);
-  }),
-
-  bindNodes: firestoreAction(async ({ bindFirestoreRef, commit }, payload) => {
-    const modelId = typeof payload === "string" ? payload : payload?.modelId;
-    const isUnbounded = typeof payload === "object" && (payload?.limit === null || payload?.limit === "all");
-    const nodesLimit =
-      typeof payload === "object" && typeof payload?.limit === "number" && payload.limit > 0
-        ? payload.limit
-        : DEFAULT_NODES_LIMIT;
-
-    const baseQuery = collection(firebaseDb, "models", modelId, "nodes");
-    const nodesQuery = isUnbounded
-      ? collection(firebaseDb, "models", modelId, "nodes")
-      : query(collection(firebaseDb, "models", modelId, "nodes"), limit(nodesLimit));
-
-    try {
-      const countSnap = await getCountFromServer(baseQuery);
-      commit("setNodesTotalCount", countSnap.data().count);
-    } catch {
-      commit("setNodesTotalCount", null);
-    }
-
-    return bindFirestoreRef(
-      "nodes",
-      nodesQuery,
-      {
-        wait: false,
-        reset: true
-      }
-    );
-  }),
-
-  unbindNodes: firestoreAction(({ unbindFirestoreRef, commit }) => {
-    commit("setNodesTotalCount", null);
-    unbindFirestoreRef("nodes", true);
-  }),
-
-  // Adds a factor holding the hourly cost of a role or person, which actions
-  // can then use instead of the organization's average. Returns its id.
-  async addHourlyCostFactor({ state }, payload) {
-    const taken = new Set(state.nodes.map(n => n.symbol));
-    let base = camelize(payload.name || "");
-    base = /^[A-Za-z_][A-Za-z0-9_]*$/.test(base) ? base + "PerHour" : "hourlyCost";
-    let symbol = base;
-    for (let i = 2; taken.has(symbol); i++) symbol = base + i;
-    const cost = String(Number(payload.cost) || 0);
-    const docRef = await addDoc(collection(firebaseDb, "models", payload.modelId, "nodes"), {
-      class: "unlinked",
-      isNew: false,
-      isSelfBlocking: false,
-      isHourlyCost: true,
-      name: payload.name,
-      symbol,
-      symbolFormula: cost,
-      sysFormula: cost,
-      unit: payload.unit || "",
-      influencers: [],
-      influencees: [],
-      blockingInfluencers: [],
-      unusedInfluencers: [],
-      notes: "",
-      createTime: serverTimestamp(),
-      createdBy: firebaseAuth.currentUser.uid
-    });
-    Notify.create(i18n.global.t("toastFactorAdded"));
-    return docRef.id;
-  },
-
-  addNode({ dispatch, getters, state, rootState }, payload) {
-    //console.log(payload);
-    let node = payload.node;
-    const orgCurrency =
-      payload.orgCurrency ||
-      rootState?.orgs?.currentOrg?.currency ||
-      state.currentModel?.currency ||
-      "USD";
-    const roleNodes = payload.roleNodes || state.currentModel?.roleNodes || {};
-    if (isCurrencyRoleNode(node, roleNodes)) {
-      node.unit = orgCurrency;
-    }
-    node.createTime = serverTimestamp();
-    node.createdBy = firebaseAuth.currentUser ? firebaseAuth.currentUser.uid : "system";
-
-    const stableId = node.id || payload.nodeId;
-    const savePromise = stableId
-      ? setDoc(doc(firebaseDb, "models", payload.modelId, "nodes", stableId), node, { merge: true })
-          .then(() => ({ id: stableId }))
-      : addDoc(collection(firebaseDb, "models", payload.modelId, "nodes"), node);
-
-    return savePromise
-      .then(function(docRef) {
-        //add in default sysFormula
-        //docRef.update({ sysFormula: `delay( ${docRef.id} , dt, 0)` });
-        Notify.create(i18n.global.t("toastFactorAdded"));
-        if (payload.newNodeRole == "influencer") {
-          dispatch("addLink", {
-            modelId: payload.modelId,
-            link: {
-              sourceNodeId: payload.sourceNodeId,
-              targetNodeId: docRef.id,
-              targetType: "influencer"
-            }
-          });
-        } else if (payload.newNodeRole == "influencee") {
-          dispatch("addLink", {
-            modelId: payload.modelId,
-            link: {
-              sourceNodeId: payload.sourceNodeId,
-              targetNodeId: docRef.id,
-              targetType: "influencee"
-            }
-          });
+    bindCurrentModel: firestoreAction(({ bindFirestoreRef }, modelId) => {
+      // return the promise returned by `bindFirestoreRef`
+      return bindFirestoreRef(
+        "currentModel",
+        doc(firebaseDb, "models", modelId),
+        {
+          wait: false,
+          reset: true
         }
-        return docRef.id;
-      })
-      .catch(function(error) {
-        showErrorMessage("Error adding node", error.message);
-      });
-  },
-
-  async importCountryModel({ dispatch, state }, payload = {}) {
-    const modelId = payload.modelId || state.currentModel?.id;
-    if (!modelId) {
-      showErrorMessage("No active model found to import country model into.");
-      return;
-    }
-    const countryCode = payload.countryCode || "USA";
-    const version = payload.version || "1.0.0";
-    const countryModel = getShippedCountryModel(countryCode, version, payload.overrideValues || {});
-
-    let addedCount = 0;
-    let updatedCount = 0;
-    for (const node of countryModel.nodes) {
-      const existing = (state.nodes || []).find((n) => n.id === node.id || n.symbol === node.symbol);
-      if (existing) {
-        await dispatch("updateNode", {
-          modelId,
-          updates: {
-            id: existing.id,
-            latestValue: node.latestValue,
-            initialValue: node.initialValue,
-            notes: node.notes,
-            sourceCitation: node.sourceCitation,
-            citationUrl: node.citationUrl,
-            licence: node.licence,
-            isWorldFactor: true,
-            version: node.version,
-            provenance: node.provenance
-          }
-        });
-        updatedCount++;
-      } else {
-        await dispatch("addNode", {
-          modelId,
-          node: {
-            ...node
-          }
-        });
-        addedCount++;
-      }
-    }
-    Notify.create({
-      type: "positive",
-      message: `${i18n.global.t("worldModelImportedSuccess") || "Country model imported successfully"} (${addedCount} added, ${updatedCount} updated)`,
-      position: "top"
-    });
-    return { addedCount, updatedCount };
-  },
-
-  updateNode({ dispatch, getters, state, rootState }, payload) {
-    let modelId = payload.modelId;
-    let nodeId = payload.updates.id;
-
-    const orgCurrency =
-      payload.orgCurrency ||
-      rootState?.orgs?.currentOrg?.currency ||
-      state.currentModel?.currency ||
-      "USD";
-    const roleNodes = payload.roleNodes || state.currentModel?.roleNodes || {};
-    const allNodes = (getters && getters.nodes) || (state && state.nodes) || [];
-    const existingNode = allNodes.find(n => n.id === nodeId);
-    const nodeToCheck = Object.assign({}, existingNode, payload.updates);
-
-    if (isCurrencyRoleNode(nodeToCheck, roleNodes)) {
-      if (payload.updates.unit !== undefined || (existingNode && existingNode.unit !== orgCurrency)) {
-        payload.updates.unit = orgCurrency;
-      }
-    }
-
-    if (payload.updates && typeof payload.updates.symbolFormula === "string" && payload.updates.symbolFormula.trim()) {
-      const allNodes = (getters && getters.nodes) || (state && state.nodes) || [];
-      const { sysFormula, referencedNodeIds } = toSysFormula(
-        payload.updates.symbolFormula,
-        allNodes,
-        payload.updates
       );
-      if (!payload.updates.sysFormula || !payload.updates.sysFormula.includes("$")) {
-        payload.updates.sysFormula = sysFormula;
+    }),
+
+    unbindCurrentModel: firestoreAction(({ unbindFirestoreRef }) => {
+      unbindFirestoreRef("currentModel", true);
+    }),
+
+    bindNodes: firestoreAction(async function({ bindFirestoreRef }, payload) {
+      const modelId = typeof payload === "string" ? payload : payload?.modelId;
+      const isUnbounded = typeof payload === "object" && (payload?.limit === null || payload?.limit === "all");
+      const nodesLimit =
+        typeof payload === "object" && typeof payload?.limit === "number" && payload.limit > 0
+          ? payload.limit
+          : DEFAULT_NODES_LIMIT;
+
+      const baseQuery = collection(firebaseDb, "models", modelId, "nodes");
+      const nodesQuery = isUnbounded
+        ? collection(firebaseDb, "models", modelId, "nodes")
+        : query(collection(firebaseDb, "models", modelId, "nodes"), limit(nodesLimit));
+
+      try {
+        const countSnap = await getCountFromServer(baseQuery);
+        this.setNodesTotalCount(countSnap.data().count);
+      } catch {
+        this.setNodesTotalCount(null);
       }
-      if (Array.isArray(referencedNodeIds) && referencedNodeIds.length > 0) {
-        if (!Array.isArray(payload.updates.influencers)) {
-          payload.updates.influencers = [];
+
+      return bindFirestoreRef(
+        "nodes",
+        nodesQuery,
+        {
+          wait: false,
+          reset: true
         }
-        referencedNodeIds.forEach(refId => {
-          if (!payload.updates.influencers.includes(refId)) {
-            payload.updates.influencers.push(refId);
-          }
-        });
+      );
+    }),
+
+    unbindNodes: firestoreAction(function({ unbindFirestoreRef }) {
+      this.setNodesTotalCount(null);
+      unbindFirestoreRef("nodes", true);
+    }),
+
+    // Adds a factor holding the hourly cost of a role or person, which actions
+    // can then use instead of the organization's average. Returns its id.
+    async addHourlyCostFactor(payload) {
+      const taken = new Set(this.nodes.map(n => n.symbol));
+      let base = camelize(payload.name || "");
+      base = /^[A-Za-z_][A-Za-z0-9_]*$/.test(base) ? base + "PerHour" : "hourlyCost";
+      let symbol = base;
+      for (let i = 2; taken.has(symbol); i++) symbol = base + i;
+      const cost = String(Number(payload.cost) || 0);
+      const docRef = await addDoc(collection(firebaseDb, "models", payload.modelId, "nodes"), {
+        class: "unlinked",
+        isNew: false,
+        isSelfBlocking: false,
+        isHourlyCost: true,
+        name: payload.name,
+        symbol,
+        symbolFormula: cost,
+        sysFormula: cost,
+        unit: payload.unit || "",
+        influencers: [],
+        influencees: [],
+        blockingInfluencers: [],
+        unusedInfluencers: [],
+        notes: "",
+        createTime: serverTimestamp(),
+        createdBy: firebaseAuth.currentUser.uid
+      });
+      Notify.create(i18n.global.t("toastFactorAdded"));
+      return docRef.id;
+    },
+
+    addNode(payload) {
+      const store = this;
+      let node = payload.node;
+      const orgCurrency =
+        payload.orgCurrency ||
+        currentOrgCurrency(this) ||
+        this.currentModel?.currency ||
+        "USD";
+      const roleNodes = payload.roleNodes || this.currentModel?.roleNodes || {};
+      if (isCurrencyRoleNode(node, roleNodes)) {
+        node.unit = orgCurrency;
       }
-    }
+      node.createTime = serverTimestamp();
+      node.createdBy = firebaseAuth.currentUser ? firebaseAuth.currentUser.uid : "system";
 
-    //let formulaChanged = false;
-    payload.updates.updateTime = serverTimestamp();
-    payload.updates.updatedBy = firebaseAuth.currentUser.uid;
+      const stableId = node.id || payload.nodeId;
+      const savePromise = stableId
+        ? setDoc(doc(firebaseDb, "models", payload.modelId, "nodes", stableId), node, { merge: true })
+            .then(() => ({ id: stableId }))
+        : addDoc(collection(firebaseDb, "models", payload.modelId, "nodes"), node);
 
-    let nodesRef = collection(firebaseDb, "models", modelId, "nodes");
-    setDoc(doc(nodesRef, nodeId), payload.updates, { merge: true })
-      .then(function() {
-        //let keys = Object.keys(payload.updates);
-        Notify.create(
-          payload.successNotice ? payload.successNotice : t("toastFactorSaved")
+      return savePromise
+        .then(function(docRef) {
+          Notify.create(i18n.global.t("toastFactorAdded"));
+          if (payload.newNodeRole == "influencer") {
+            store.addLink({
+              modelId: payload.modelId,
+              link: {
+                sourceNodeId: payload.sourceNodeId,
+                targetNodeId: docRef.id,
+                targetType: "influencer"
+              }
+            });
+          } else if (payload.newNodeRole == "influencee") {
+            store.addLink({
+              modelId: payload.modelId,
+              link: {
+                sourceNodeId: payload.sourceNodeId,
+                targetNodeId: docRef.id,
+                targetType: "influencee"
+              }
+            });
+          }
+          return docRef.id;
+        })
+        .catch(function(error) {
+          showErrorMessage("Error adding node", error.message);
+        });
+    },
+
+    async importCountryModel(payload = {}) {
+      const modelId = payload.modelId || this.currentModel?.id;
+      if (!modelId) {
+        showErrorMessage("No active model found to import country model into.");
+        return;
+      }
+      const countryCode = payload.countryCode || "USA";
+      const version = payload.version || "1.0.0";
+      const countryModel = getShippedCountryModel(countryCode, version, payload.overrideValues || {});
+
+      let addedCount = 0;
+      let updatedCount = 0;
+      for (const node of countryModel.nodes) {
+        const existing = (this.nodes || []).find((n) => n.id === node.id || n.symbol === node.symbol);
+        if (existing) {
+          await this.updateNode({
+            modelId,
+            updates: {
+              id: existing.id,
+              latestValue: node.latestValue,
+              initialValue: node.initialValue,
+              notes: node.notes,
+              sourceCitation: node.sourceCitation,
+              citationUrl: node.citationUrl,
+              licence: node.licence,
+              isWorldFactor: true,
+              version: node.version,
+              provenance: node.provenance
+            }
+          });
+          updatedCount++;
+        } else {
+          await this.addNode({
+            modelId,
+            node: {
+              ...node
+            }
+          });
+          addedCount++;
+        }
+      }
+      Notify.create({
+        type: "positive",
+        message: `${i18n.global.t("worldModelImportedSuccess") || "Country model imported successfully"} (${addedCount} added, ${updatedCount} updated)`,
+        position: "top"
+      });
+      return { addedCount, updatedCount };
+    },
+
+    updateNode(payload) {
+      const store = this;
+      let modelId = payload.modelId;
+      let nodeId = payload.updates.id;
+
+      const orgCurrency =
+        payload.orgCurrency ||
+        currentOrgCurrency(this) ||
+        this.currentModel?.currency ||
+        "USD";
+      const roleNodes = payload.roleNodes || this.currentModel?.roleNodes || {};
+      const allNodes = this.nodesList || this.nodes || [];
+      const existingNode = allNodes.find(n => n.id === nodeId);
+      const nodeToCheck = Object.assign({}, existingNode, payload.updates);
+
+      if (isCurrencyRoleNode(nodeToCheck, roleNodes)) {
+        if (payload.updates.unit !== undefined || (existingNode && existingNode.unit !== orgCurrency)) {
+          payload.updates.unit = orgCurrency;
+        }
+      }
+
+      if (payload.updates && typeof payload.updates.symbolFormula === "string" && payload.updates.symbolFormula.trim()) {
+        const { sysFormula, referencedNodeIds } = toSysFormula(
+          payload.updates.symbolFormula,
+          allNodes,
+          payload.updates
         );
-        //if existence of latestValue changed, then update this nodes'
-        //classification in its influencees
-        if (
-          ("latestValueExistenceChanged" in payload &&
-            payload.latestValueExistenceChanged) ||
-          ("symbolChanged" in payload && payload.symbolChanged)
-        ) {
-          dispatch("updateNodeClassificationInInfluenceees", {
-            modelId: payload.modelId,
-            nodeId: nodeId
+        if (!payload.updates.sysFormula || !payload.updates.sysFormula.includes("$")) {
+          payload.updates.sysFormula = sysFormula;
+        }
+        if (Array.isArray(referencedNodeIds) && referencedNodeIds.length > 0) {
+          if (!Array.isArray(payload.updates.influencers)) {
+            payload.updates.influencers = [];
+          }
+          referencedNodeIds.forEach(refId => {
+            if (!payload.updates.influencers.includes(refId)) {
+              payload.updates.influencers.push(refId);
+            }
           });
         }
-      })
-      .catch(function(error) {
-        console.error(
-          payload.errorTitle ? payload.errorTitle : "Error updating node",
-          error.message
-        );
-        showErrorMessage(
-          payload.errorTitle ? payload.errorTitle : "Error updating node",
-          error.message
-        );
-      });
-  },
+      }
 
-  deleteNode({}, payload) {
-    let modelId = payload.modelId;
-    let node = payload.node;
-    let nodeRef = doc(firebaseDb, "models", modelId, "nodes", node.id);
-    deleteDoc(nodeRef)
-      .then(function() {
-        Notify.create(i18n.global.t("toastFactorDeleted"));
-      })
-      .catch(function(error) {
-        showErrorMessage("Error deleting node", error.message);
-      });
-  },
+      //let formulaChanged = false;
+      payload.updates.updateTime = serverTimestamp();
+      payload.updates.updatedBy = firebaseAuth.currentUser.uid;
 
-  addLink({ dispatch }, payload) {
-    let link = payload.link;
-    if (link.sourceNodeId == link.targetNodeId) {
-      throw new Error("Source node and target node cannot be the same node!");
-    }
-    let influencerNodeId, influenceeNodeId;
-    switch (link.targetType) {
-      case "influencer":
-        influencerNodeId = link.targetNodeId;
-        influenceeNodeId = link.sourceNodeId;
-        break;
-      case "influencee":
-        influencerNodeId = link.sourceNodeId;
-        influenceeNodeId = link.targetNodeId;
-        break;
-      default:
-        throw new Error("Link target type not recognized.");
-    }
-
-    var nodesRef = collection(firebaseDb, "models", payload.modelId, "nodes");
-    var batch = writeBatch(firebaseDb);
-    if (influencerNodeId)
-      batch.update(doc(nodesRef, influencerNodeId), {
-        influencees: arrayUnion(influenceeNodeId)
-      });
-    if (influenceeNodeId)
-      batch.update(doc(nodesRef, influenceeNodeId), {
-        influencers: arrayUnion(influencerNodeId)
-      });
-
-    batch
-      .commit()
-      .then(function() {
-        Notify.create(i18n.global.t("toastLinkAdded"));
-        //update class of source and target nodes
-        dispatch("reDetermineNodeClass", {
-          modelId: payload.modelId,
-          nodeId: link.sourceNodeId
+      let nodesRef = collection(firebaseDb, "models", modelId, "nodes");
+      // Returned so callers can await the write (Vuex's dispatch always
+      // returned a promise; it resolves to undefined as before).
+      return setDoc(doc(nodesRef, nodeId), payload.updates, { merge: true })
+        .then(function() {
+          Notify.create(
+            payload.successNotice ? payload.successNotice : t("toastFactorSaved")
+          );
+          //if existence of latestValue changed, then update this nodes'
+          //classification in its influencees
+          if (
+            ("latestValueExistenceChanged" in payload &&
+              payload.latestValueExistenceChanged) ||
+            ("symbolChanged" in payload && payload.symbolChanged)
+          ) {
+            store.updateNodeClassificationInInfluenceees({
+              modelId: payload.modelId,
+              nodeId: nodeId
+            });
+          }
+        })
+        .catch(function(error) {
+          console.error(
+            payload.errorTitle ? payload.errorTitle : "Error updating node",
+            error.message
+          );
+          showErrorMessage(
+            payload.errorTitle ? payload.errorTitle : "Error updating node",
+            error.message
+          );
         });
-        dispatch("reDetermineNodeClass", {
-          modelId: payload.modelId,
-          nodeId: link.targetNodeId
+    },
+
+    deleteNode(payload) {
+      let modelId = payload.modelId;
+      let node = payload.node;
+      let nodeRef = doc(firebaseDb, "models", modelId, "nodes", node.id);
+      deleteDoc(nodeRef)
+        .then(function() {
+          Notify.create(i18n.global.t("toastFactorDeleted"));
+        })
+        .catch(function(error) {
+          showErrorMessage("Error deleting node", error.message);
         });
-        //run updateClassifiedInfluencers on influencee
-        dispatch("updateClassifiedInfluencersOf", {
-          modelId: payload.modelId,
-          influenceeIds: [influenceeNodeId]
+    },
+
+    addLink(payload) {
+      const store = this;
+      let link = payload.link;
+      if (link.sourceNodeId == link.targetNodeId) {
+        throw new Error("Source node and target node cannot be the same node!");
+      }
+      let influencerNodeId, influenceeNodeId;
+      switch (link.targetType) {
+        case "influencer":
+          influencerNodeId = link.targetNodeId;
+          influenceeNodeId = link.sourceNodeId;
+          break;
+        case "influencee":
+          influencerNodeId = link.sourceNodeId;
+          influenceeNodeId = link.targetNodeId;
+          break;
+        default:
+          throw new Error("Link target type not recognized.");
+      }
+
+      var nodesRef = collection(firebaseDb, "models", payload.modelId, "nodes");
+      var batch = writeBatch(firebaseDb);
+      if (influencerNodeId)
+        batch.update(doc(nodesRef, influencerNodeId), {
+          influencees: arrayUnion(influenceeNodeId)
         });
-      })
-      .catch(function(error) {
-        console.error("Error adding link", error.message);
-        showErrorMessage("Error adding link", error.message);
-      });
-  },
+      if (influenceeNodeId)
+        batch.update(doc(nodesRef, influenceeNodeId), {
+          influencers: arrayUnion(influencerNodeId)
+        });
 
-  async relaxLink({}, payload) {
-    let success = false;
-    let relaxedLink = {
-      influenceeNodeId: payload.link.influenceeNodeId,
-      influencerNodeId: payload.link.influencerNodeId,
-      strengthFactor: 0.1
-    };
-    var modelRef = doc(firebaseDb, "models", state.currentModel.id);
-    try {
-      const res = await updateDoc(modelRef, {
-        relaxedLinks: arrayUnion(relaxedLink)
-      });
-      success = true;
-      Notify.create(i18n.global.t("toastLinkLoosened"));
-    } catch (error) {
-      showErrorMessage("Error relaxing link", error.message);
-    }
-    if (success) return relaxedLink;
-  },
+      batch
+        .commit()
+        .then(function() {
+          Notify.create(i18n.global.t("toastLinkAdded"));
+          //update class of source and target nodes
+          store.reDetermineNodeClass({
+            modelId: payload.modelId,
+            nodeId: link.sourceNodeId
+          });
+          store.reDetermineNodeClass({
+            modelId: payload.modelId,
+            nodeId: link.targetNodeId
+          });
+          //run updateClassifiedInfluencers on influencee
+          store.updateClassifiedInfluencersOf({
+            modelId: payload.modelId,
+            influenceeIds: [influenceeNodeId]
+          });
+        })
+        .catch(function(error) {
+          console.error("Error adding link", error.message);
+          showErrorMessage("Error adding link", error.message);
+        });
+    },
 
-  async relaxLinkMore({}, payload) {
-    //find existing relaxedLink from array then update its strengthFactor
-    let tempRelaxedLinks = JSON.parse(
-      JSON.stringify(state.currentModel.relaxedLinks)
-    );
-    let matchingRelaxedLink = tempRelaxedLinks.find(
-      link =>
-        link.influenceeNodeId == payload.link.influenceeNodeId &&
-        link.influencerNodeId == payload.link.influencerNodeId
-    );
-    matchingRelaxedLink.strengthFactor *= 0.1;
-    var modelRef = doc(firebaseDb, "models", state.currentModel.id);
-    try {
-      const res = await updateDoc(modelRef, {
-        relaxedLinks: tempRelaxedLinks
-      });
-      Notify.create(i18n.global.t("toastLinkLoosenedMore"));
-    } catch (error) {
-      showErrorMessage("Error relaxing link", error.message);
-    }
-  },
+    async relaxLink(payload) {
+      let success = false;
+      let relaxedLink = {
+        influenceeNodeId: payload.link.influenceeNodeId,
+        influencerNodeId: payload.link.influencerNodeId,
+        strengthFactor: 0.1
+      };
+      var modelRef = doc(firebaseDb, "models", this.currentModel.id);
+      try {
+        await updateDoc(modelRef, {
+          relaxedLinks: arrayUnion(relaxedLink)
+        });
+        success = true;
+        Notify.create(i18n.global.t("toastLinkLoosened"));
+      } catch (error) {
+        showErrorMessage("Error relaxing link", error.message);
+      }
+      if (success) return relaxedLink;
+    },
 
-  async restoreLinkForce({}, payload) {
-    let tempRelaxedLinks = JSON.parse(
-      JSON.stringify(state.currentModel.relaxedLinks)
-    );
-    tempRelaxedLinks = tempRelaxedLinks.filter(
-      link =>
-        !(
+    async relaxLinkMore(payload) {
+      //find existing relaxedLink from array then update its strengthFactor
+      let tempRelaxedLinks = JSON.parse(
+        JSON.stringify(this.currentModel.relaxedLinks)
+      );
+      let matchingRelaxedLink = tempRelaxedLinks.find(
+        link =>
           link.influenceeNodeId == payload.link.influenceeNodeId &&
           link.influencerNodeId == payload.link.influencerNodeId
-        )
-    );
-    var modelRef = doc(firebaseDb, "models", state.currentModel.id);
-    try {
-      const res = await updateDoc(modelRef, {
-        relaxedLinks: tempRelaxedLinks
-      });
-      Notify.create(i18n.global.t("toastLinkTightened"));
-    } catch (error) {
-      showErrorMessage("Error restoring link force", error.message);
-    }
-  },
-
-  deleteLink({ commit, dispatch }, payload) {
-    let link = payload.link;
-    let influencerNodeId = link.influencerNodeId;
-    let influenceeNodeId = link.influenceeNodeId;
-
-    commit("deleteLink", {
-      influencerId: influencerNodeId,
-      influenceeId: influenceeNodeId
-    });
-
-    var nodesRef = collection(firebaseDb, "models", payload.modelId, "nodes");
-    var batch = writeBatch(firebaseDb);
-    batch.update(doc(nodesRef, influencerNodeId), {
-      influencees: arrayRemove(influenceeNodeId)
-    });
-    batch.update(doc(nodesRef, influenceeNodeId), {
-      influencers: arrayRemove(influencerNodeId)
-    });
-    batch
-      .commit()
-      .then(function() {
-        Notify.create(i18n.global.t("toastLinkDeleted"));
-        //update class of influencer and influencee nodes
-        dispatch("reDetermineNodeClass", {
-          modelId: payload.modelId,
-          nodeId: link.influencerNodeId
+      );
+      matchingRelaxedLink.strengthFactor *= 0.1;
+      var modelRef = doc(firebaseDb, "models", this.currentModel.id);
+      try {
+        await updateDoc(modelRef, {
+          relaxedLinks: tempRelaxedLinks
         });
-        dispatch("reDetermineNodeClass", {
-          modelId: payload.modelId,
-          nodeId: link.influenceeNodeId
+        Notify.create(i18n.global.t("toastLinkLoosenedMore"));
+      } catch (error) {
+        showErrorMessage("Error relaxing link", error.message);
+      }
+    },
+
+    async restoreLinkForce(payload) {
+      let tempRelaxedLinks = JSON.parse(
+        JSON.stringify(this.currentModel.relaxedLinks)
+      );
+      tempRelaxedLinks = tempRelaxedLinks.filter(
+        link =>
+          !(
+            link.influenceeNodeId == payload.link.influenceeNodeId &&
+            link.influencerNodeId == payload.link.influencerNodeId
+          )
+      );
+      var modelRef = doc(firebaseDb, "models", this.currentModel.id);
+      try {
+        await updateDoc(modelRef, {
+          relaxedLinks: tempRelaxedLinks
         });
-      })
-      .catch(function(error) {
-        showErrorMessage("Error deleting link", error.message);
+        Notify.create(i18n.global.t("toastLinkTightened"));
+      } catch (error) {
+        showErrorMessage("Error restoring link force", error.message);
+      }
+    },
+
+    deleteLink(payload) {
+      const store = this;
+      let link = payload.link;
+      let influencerNodeId = link.influencerNodeId;
+      let influenceeNodeId = link.influenceeNodeId;
+
+      this.removeLinkLocally({
+        influencerId: influencerNodeId,
+        influenceeId: influenceeNodeId
       });
 
-    dispatch("updateClassifiedInfluencersOf", {
-      modelId: payload.modelId,
-      influenceeIds: [influenceeNodeId]
-    });
-  },
-
-  reDetermineNodeClass({}, payload) {
-    // Create a reference to the node doc.
-    var nodeDocRef = doc(firebaseDb, "models", payload.modelId, "nodes", payload.nodeId);
-
-    runTransaction(firebaseDb, function(transaction) {
-        // This code may get re-run multiple times and generate POST 400 errors if there are conflicts.
-        return transaction.get(nodeDocRef).then(function(nodeDoc) {
-          if (!nodeDoc.exists()) {
-            throw "Node document does not exist!";
-          }
-          var node = nodeDoc.data();
-          var hasInfluencers =
-            node.influencers && node.influencers.length ? true : false;
-          var hasInfluencees =
-            node.influencees && node.influencees.length ? true : false;
-          var oldClass = node.class;
-          var docToBeUpdated = false; //this is a workround for the firestore limitation "FirebaseError: Every document read in a transaction must also be written."
-          if (!hasInfluencers && !hasInfluencees && oldClass != "unlinked") {
-            transaction.update(nodeDocRef, { class: "unlinked" });
-            docToBeUpdated = true;
-          } else if (!hasInfluencers && hasInfluencees && oldClass != "input") {
-            transaction.update(nodeDocRef, { class: "input" });
-            docToBeUpdated = true;
-          } else if (
-            hasInfluencers &&
-            !hasInfluencees &&
-            oldClass != "output"
-          ) {
-            transaction.update(nodeDocRef, { class: "output" });
-            docToBeUpdated = true;
-          } else if (hasInfluencers && hasInfluencees && oldClass != "state") {
-            transaction.update(nodeDocRef, { class: "state" });
-            docToBeUpdated = true;
-          }
-          if (docToBeUpdated == false) {
-            //perform a dummy write as a workaround to the firestore limitation "FirebaseError: Every document read in a transaction must also be written."
-            transaction.update(nodeDocRef, {});
-          }
-        });
-      })
-      .then(function() {
-        //console.log("Transaction successfully committed!");
-      })
-      .catch(function(error) {
-        console.log("reDetermineNodeClass failed: ", error);
+      var nodesRef = collection(firebaseDb, "models", payload.modelId, "nodes");
+      var batch = writeBatch(firebaseDb);
+      batch.update(doc(nodesRef, influencerNodeId), {
+        influencees: arrayRemove(influenceeNodeId)
       });
-  },
-
-  updateNodeClassificationInInfluenceees({ dispatch }, payload) {
-    let node = state.nodes.find(node => node.id == payload.nodeId);
-    let influenceeIds = node.influencees;
-    dispatch("updateClassifiedInfluencersOf", {
-      modelId: payload.modelId,
-      influenceeIds: influenceeIds,
-      successNotice: t("toastFactorSaved"),
-      errorTitle: `Error reclassifying "${node.name}" in its influencees.`
-    });
-  },
-
-  /* Recalculate classifiedInfluencers (unused and blocking influencers)
-  of the node in the payload. */
-  updateClassifiedInfluencersOf({ dispatch }, payload) {
-    //console.log("updateClassifiedInfluencersOf");
-    let modelId = payload.modelId;
-    let influenceeIds = payload.influenceeIds;
-    if (typeof influenceeIds != "undefined")
-      influenceeIds.forEach(function(influenceeId) {
-        //get influencee node
-        let influenceeNode = state.nodes.find(node => node.id == influenceeId);
-        //run classifyInfluencers
-        let classifiedInfluencers = classifyInfluencers({
-          thisNode: influenceeNode
+      batch.update(doc(nodesRef, influenceeNodeId), {
+        influencers: arrayRemove(influencerNodeId)
+      });
+      batch
+        .commit()
+        .then(function() {
+          Notify.create(i18n.global.t("toastLinkDeleted"));
+          //update class of influencer and influencee nodes
+          store.reDetermineNodeClass({
+            modelId: payload.modelId,
+            nodeId: link.influencerNodeId
+          });
+          store.reDetermineNodeClass({
+            modelId: payload.modelId,
+            nodeId: link.influenceeNodeId
+          });
+        })
+        .catch(function(error) {
+          showErrorMessage("Error deleting link", error.message);
         });
 
-        //save results
-        dispatch("updateNode", {
-          modelId: modelId,
-          updates: {
-            id: influenceeId,
-            unusedInfluencers: classifiedInfluencers.unused,
-            blockingInfluencers: classifiedInfluencers.blocking
-          },
-          successNotice: payload.successNotice
-            ? payload.successNotice
-            : `Reclassified influencers of ${influenceeNode.name}`,
-          errorTitle: payload.errorTitle
-            ? payload.errorTitle
-            : `Error updating reclassified influencers of ${influenceeNode.name}`
-        });
+      this.updateClassifiedInfluencersOf({
+        modelId: payload.modelId,
+        influenceeIds: [influenceeNodeId]
       });
-    //console.log("end updateClassifiedInfluencersOf");
-  },
+    },
 
-  // Top-level representation: parentId is omitted entirely (key absent, never null).
-  async createNodeGroup({}, payload) {
-    let success = false;
-    let nodeGroup = {
-      id: uid(),
-      name: payload.groupName,
-      nodeIds: [payload.nodeId]
-    };
-    var modelRef = doc(firebaseDb, "models", state.currentModel.id);
-    try {
-      const res = await updateDoc(modelRef, {
-        nodeGroups: arrayUnion(nodeGroup)
-      });
-      success = true;
-      Notify.create(i18n.global.t("toastGroupCreated"));
-    } catch (error) {
-      showErrorMessage("Error creating node group", error.message);
-    }
-    if (success) return nodeGroup;
-  },
+    reDetermineNodeClass(payload) {
+      // Create a reference to the node doc.
+      var nodeDocRef = doc(firebaseDb, "models", payload.modelId, "nodes", payload.nodeId);
 
-  async addToNodeGroup({}, payload) {
-    let nodeId = payload.nodeId;
-    let nodeIsGroupNode = payload.nodeIsGroupNode;
-    let nodeGroupId = payload.nodeGroupId;
-
-    try {
-      var modelRef = doc(firebaseDb, "models", state.currentModel.id);
-      await runTransaction(firebaseDb, async t => {
-        const modelDoc = await t.get(modelRef);
-        let nodeGroups = modelDoc.data().nodeGroups;
-        let nodeGroup = nodeGroups.find(ng => ng.id == nodeGroupId);
-        nodeGroup.nodeIds.push(nodeId);
-        if (nodeIsGroupNode) {
-          let childNodeGroup = nodeGroups.find(ng => ng.id == nodeId);
-          childNodeGroup.parentId = nodeGroupId;
-        }
-        t.update(modelRef, { nodeGroups: nodeGroups });
-      });
-      Notify.create(i18n.global.t("toastAddedToGroup"));
-    } catch (e) {
-      Notify.create(i18n.global.t("toastAddToGroupFailed"));
-      console.log("Add node to group transaction failure:", e);
-    }
-  },
-
-  async removeNodeFromGroup({}, payload) {
-    let nodeId = payload.nodeId;
-    let nodeIsGroupNode = payload.nodeIsGroupNode;
-    let nodeGroupId = payload.nodeGroupId;
-    try {
-      var modelRef = doc(firebaseDb, "models", state.currentModel.id);
-      await runTransaction(firebaseDb, async t => {
-        const modelDoc = await t.get(modelRef);
-        let nodeGroups = modelDoc.data().nodeGroups;
-        let nodeGroup = nodeGroups.find(ng => ng.id == nodeGroupId);
-        let index = nodeGroup.nodeIds.indexOf(nodeId);
-        if (index !== -1) nodeGroup.nodeIds.splice(index, 1);
-        if (nodeIsGroupNode) {
-          let childNodeGroup = nodeGroups.find(ng => ng.id == nodeId);
-          if (childNodeGroup.parentId && childNodeGroup.parentId == nodeGroupId)
-            delete childNodeGroup.parentId;
-        }
-        t.update(modelRef, { nodeGroups: nodeGroups });
-      });
-      Notify.create(i18n.global.t("toastRemovedFromGroup"));
-    } catch (e) {
-      Notify.create(i18n.global.t("toastRemoveFromGroupFailed"));
-      console.log("removeNodeFromGroup transaction failure:", e);
-    }
-  },
-
-  async disbandNodeGroup({}, nodeGroupId) {
-    try {
-      var modelRef = doc(firebaseDb, "models", state.currentModel.id);
-      await runTransaction(firebaseDb, async t => {
-        const modelDoc = await t.get(modelRef);
-        let nodeGroups = modelDoc.data().nodeGroups;
-        // Child groups stay in the model. Re-attach them to the disbanded group's
-        // own parent (or the top level if it has none) so they keep their place
-        // in the hierarchy.
-        const disbanded = nodeGroups.find(group => group.id == nodeGroupId);
-        const grandparentId = disbanded?.parentId ?? null;
-        nodeGroups = nodeGroups
-          .filter(group => group.id != nodeGroupId)
-          .map(group => {
-            if (group.parentId == nodeGroupId) {
-              if (grandparentId) group.parentId = grandparentId;
-              else delete group.parentId; // Top level is represented as key absent (never parentId: null)
+      runTransaction(firebaseDb, function(transaction) {
+          // This code may get re-run multiple times and generate POST 400 errors if there are conflicts.
+          return transaction.get(nodeDocRef).then(function(nodeDoc) {
+            if (!nodeDoc.exists()) {
+              throw "Node document does not exist!";
             }
-            return group;
+            var node = nodeDoc.data();
+            var hasInfluencers =
+              node.influencers && node.influencers.length ? true : false;
+            var hasInfluencees =
+              node.influencees && node.influencees.length ? true : false;
+            var oldClass = node.class;
+            var docToBeUpdated = false; //this is a workround for the firestore limitation "FirebaseError: Every document read in a transaction must also be written."
+            if (!hasInfluencers && !hasInfluencees && oldClass != "unlinked") {
+              transaction.update(nodeDocRef, { class: "unlinked" });
+              docToBeUpdated = true;
+            } else if (!hasInfluencers && hasInfluencees && oldClass != "input") {
+              transaction.update(nodeDocRef, { class: "input" });
+              docToBeUpdated = true;
+            } else if (
+              hasInfluencers &&
+              !hasInfluencees &&
+              oldClass != "output"
+            ) {
+              transaction.update(nodeDocRef, { class: "output" });
+              docToBeUpdated = true;
+            } else if (hasInfluencers && hasInfluencees && oldClass != "state") {
+              transaction.update(nodeDocRef, { class: "state" });
+              docToBeUpdated = true;
+            }
+            if (docToBeUpdated == false) {
+              //perform a dummy write as a workaround to the firestore limitation "FirebaseError: Every document read in a transaction must also be written."
+              transaction.update(nodeDocRef, {});
+            }
           });
-        t.update(modelRef, { nodeGroups: nodeGroups });
+        })
+        .then(function() {
+          //console.log("Transaction successfully committed!");
+        })
+        .catch(function(error) {
+          console.log("reDetermineNodeClass failed: ", error);
+        });
+    },
+
+    updateNodeClassificationInInfluenceees(payload) {
+      let node = this.nodes.find(node => node.id == payload.nodeId);
+      let influenceeIds = node.influencees;
+      this.updateClassifiedInfluencersOf({
+        modelId: payload.modelId,
+        influenceeIds: influenceeIds,
+        successNotice: t("toastFactorSaved"),
+        errorTitle: `Error reclassifying "${node.name}" in its influencees.`
       });
-      Notify.create(i18n.global.t("toastUngrouped"));
-    } catch (e) {
-      Notify.create(i18n.global.t("toastUngroupFailed"));
-      console.log("disbandNodeGroup transaction failure:", e);
-    }
-  },
+    },
 
-  async updateNodes({ dispatch, getters, state, rootState }, payload) {
-    var nodesRef = collection(firebaseDb, "models", payload.modelId, "nodes");
+    /* Recalculate classifiedInfluencers (unused and blocking influencers)
+    of the node in the payload. */
+    updateClassifiedInfluencersOf(payload) {
+      const store = this;
+      let modelId = payload.modelId;
+      let influenceeIds = payload.influenceeIds;
+      if (typeof influenceeIds != "undefined")
+        influenceeIds.forEach(function(influenceeId) {
+          //get influencee node
+          let influenceeNode = store.nodes.find(node => node.id == influenceeId);
+          //run classifyInfluencers
+          let classifiedInfluencers = classifyInfluencers({
+            thisNode: influenceeNode
+          });
 
-    const orgCurrency =
-      payload.orgCurrency ||
-      rootState?.orgs?.currentOrg?.currency ||
-      state.currentModel?.currency ||
-      "USD";
-    const roleNodes = payload.roleNodes || state.currentModel?.roleNodes || {};
-    const allNodes = (getters && getters.nodes) || (state && state.nodes) || [];
+          //save results
+          store.updateNode({
+            modelId: modelId,
+            updates: {
+              id: influenceeId,
+              unusedInfluencers: classifiedInfluencers.unused,
+              blockingInfluencers: classifiedInfluencers.blocking
+            },
+            successNotice: payload.successNotice
+              ? payload.successNotice
+              : `Reclassified influencers of ${influenceeNode.name}`,
+            errorTitle: payload.errorTitle
+              ? payload.errorTitle
+              : `Error updating reclassified influencers of ${influenceeNode.name}`
+          });
+        });
+    },
 
-    const batchArray = [];
-    batchArray.push(writeBatch(firebaseDb));
-    let operationCounter = 0;
-    let batchIndex = 0;
+    // Top-level representation: parentId is omitted entirely (key absent, never null).
+    async createNodeGroup(payload) {
+      let success = false;
+      let nodeGroup = {
+        id: uid(),
+        name: payload.groupName,
+        nodeIds: [payload.nodeId]
+      };
+      var modelRef = doc(firebaseDb, "models", this.currentModel.id);
+      try {
+        await updateDoc(modelRef, {
+          nodeGroups: arrayUnion(nodeGroup)
+        });
+        success = true;
+        Notify.create(i18n.global.t("toastGroupCreated"));
+      } catch (error) {
+        showErrorMessage("Error creating node group", error.message);
+      }
+      if (success) return nodeGroup;
+    },
 
-    payload.changedNodes.forEach(changedNode => {
-      const existingNode = allNodes.find(n => n.id === changedNode.id);
-      const nodeToCheck = Object.assign({}, existingNode, changedNode.changes, { id: changedNode.id });
-      if (isCurrencyRoleNode(nodeToCheck, roleNodes)) {
-        if (changedNode.changes.unit !== undefined || (existingNode && existingNode.unit !== orgCurrency)) {
-          changedNode.changes.unit = orgCurrency;
+    async addToNodeGroup(payload) {
+      let nodeId = payload.nodeId;
+      let nodeIsGroupNode = payload.nodeIsGroupNode;
+      let nodeGroupId = payload.nodeGroupId;
+
+      try {
+        var modelRef = doc(firebaseDb, "models", this.currentModel.id);
+        await runTransaction(firebaseDb, async t => {
+          const modelDoc = await t.get(modelRef);
+          let nodeGroups = modelDoc.data().nodeGroups;
+          let nodeGroup = nodeGroups.find(ng => ng.id == nodeGroupId);
+          nodeGroup.nodeIds.push(nodeId);
+          if (nodeIsGroupNode) {
+            let childNodeGroup = nodeGroups.find(ng => ng.id == nodeId);
+            childNodeGroup.parentId = nodeGroupId;
+          }
+          t.update(modelRef, { nodeGroups: nodeGroups });
+        });
+        Notify.create(i18n.global.t("toastAddedToGroup"));
+      } catch (e) {
+        Notify.create(i18n.global.t("toastAddToGroupFailed"));
+        console.log("Add node to group transaction failure:", e);
+      }
+    },
+
+    async removeNodeFromGroup(payload) {
+      let nodeId = payload.nodeId;
+      let nodeIsGroupNode = payload.nodeIsGroupNode;
+      let nodeGroupId = payload.nodeGroupId;
+      try {
+        var modelRef = doc(firebaseDb, "models", this.currentModel.id);
+        await runTransaction(firebaseDb, async t => {
+          const modelDoc = await t.get(modelRef);
+          let nodeGroups = modelDoc.data().nodeGroups;
+          let nodeGroup = nodeGroups.find(ng => ng.id == nodeGroupId);
+          let index = nodeGroup.nodeIds.indexOf(nodeId);
+          if (index !== -1) nodeGroup.nodeIds.splice(index, 1);
+          if (nodeIsGroupNode) {
+            let childNodeGroup = nodeGroups.find(ng => ng.id == nodeId);
+            if (childNodeGroup.parentId && childNodeGroup.parentId == nodeGroupId)
+              delete childNodeGroup.parentId;
+          }
+          t.update(modelRef, { nodeGroups: nodeGroups });
+        });
+        Notify.create(i18n.global.t("toastRemovedFromGroup"));
+      } catch (e) {
+        Notify.create(i18n.global.t("toastRemoveFromGroupFailed"));
+        console.log("removeNodeFromGroup transaction failure:", e);
+      }
+    },
+
+    async disbandNodeGroup(nodeGroupId) {
+      try {
+        var modelRef = doc(firebaseDb, "models", this.currentModel.id);
+        await runTransaction(firebaseDb, async t => {
+          const modelDoc = await t.get(modelRef);
+          let nodeGroups = modelDoc.data().nodeGroups;
+          // Child groups stay in the model. Re-attach them to the disbanded group's
+          // own parent (or the top level if it has none) so they keep their place
+          // in the hierarchy.
+          const disbanded = nodeGroups.find(group => group.id == nodeGroupId);
+          const grandparentId = disbanded?.parentId ?? null;
+          nodeGroups = nodeGroups
+            .filter(group => group.id != nodeGroupId)
+            .map(group => {
+              if (group.parentId == nodeGroupId) {
+                if (grandparentId) group.parentId = grandparentId;
+                else delete group.parentId; // Top level is represented as key absent (never parentId: null)
+              }
+              return group;
+            });
+          t.update(modelRef, { nodeGroups: nodeGroups });
+        });
+        Notify.create(i18n.global.t("toastUngrouped"));
+      } catch (e) {
+        Notify.create(i18n.global.t("toastUngroupFailed"));
+        console.log("disbandNodeGroup transaction failure:", e);
+      }
+    },
+
+    async updateNodes(payload) {
+      var nodesRef = collection(firebaseDb, "models", payload.modelId, "nodes");
+
+      const orgCurrency =
+        payload.orgCurrency ||
+        currentOrgCurrency(this) ||
+        this.currentModel?.currency ||
+        "USD";
+      const roleNodes = payload.roleNodes || this.currentModel?.roleNodes || {};
+      const allNodes = this.nodesList || this.nodes || [];
+
+      const batchArray = [];
+      batchArray.push(writeBatch(firebaseDb));
+      let operationCounter = 0;
+      let batchIndex = 0;
+
+      payload.changedNodes.forEach(changedNode => {
+        const existingNode = allNodes.find(n => n.id === changedNode.id);
+        const nodeToCheck = Object.assign({}, existingNode, changedNode.changes, { id: changedNode.id });
+        if (isCurrencyRoleNode(nodeToCheck, roleNodes)) {
+          if (changedNode.changes.unit !== undefined || (existingNode && existingNode.unit !== orgCurrency)) {
+            changedNode.changes.unit = orgCurrency;
+          }
         }
-      }
 
-      batchArray[batchIndex].update(doc(nodesRef, changedNode.id), {
-        ...changedNode.changes,
-        updateTime: serverTimestamp(),
-        updatedBy: firebaseAuth.currentUser.uid
-      });
-      operationCounter++;
-
-      if (operationCounter === 499) {
-        batchArray.push(writeBatch(firebaseDb));
-        batchIndex++;
-        operationCounter = 0;
-      }
-    });
-
-    await Promise.all(
-      batchArray.map(async batch => {
-        await batch.commit();
-      })
-    )
-      .then(function() {
-        Notify.create(i18n.global.t("toastFactorsUpdated"));
-      })
-      .catch(function(error) {
-        console.error("Error updating nodes", error.message);
-        showErrorMessage("Error updating nodes", error.message);
-      });
-
-    // run updateNodeClassificationInInfluenceees on nodes that
-    // have latestValueExistenceChanged or symbolChanged
-    payload.changedNodes.forEach(changedNode => {
-      if (
-        ("latestValueExistenceChanged" in changedNode &&
-          changedNode.latestValueExistenceChanged) ||
-        ("symbolChanged" in changedNode && changedNode.symbolChanged)
-      ) {
-        dispatch("updateNodeClassificationInInfluenceees", {
-          modelId: payload.modelId,
-          nodeId: changedNode.id
+        batchArray[batchIndex].update(doc(nodesRef, changedNode.id), {
+          ...changedNode.changes,
+          updateTime: serverTimestamp(),
+          updatedBy: firebaseAuth.currentUser.uid
         });
-      }
-    });
-  }
-};
+        operationCounter++;
 
-const getters = {
-  nodesTotalCount: state => state.nodesTotalCount,
-  nodesLimit: state => state.nodesLimit,
-  nodes: state => {
-    if (!state.nodes) {
-      return [];
-    }
-    return state.nodes.map(node => ({ ...node, id: node.id }));
-  },
-  links: state => {
-    let allLinks = [];
-    state.nodes.forEach(function(node) {
-      //console.log(node.id);
-      if ("influencers" in node) {
-        node.influencers.forEach(function(influencerId) {
-          let matchingRelaxedLink = null;
-          if (state.currentModel.relaxedLinks)
-            matchingRelaxedLink = state.currentModel.relaxedLinks.find(
-              link =>
-                link.influenceeNodeId == node.id &&
-                link.influencerNodeId == influencerId
-            );
+        if (operationCounter === 499) {
+          batchArray.push(writeBatch(firebaseDb));
+          batchIndex++;
+          operationCounter = 0;
+        }
+      });
 
-          allLinks.push({
-            source: influencerId,
-            target: node.id,
-            hasReciprocal:
-              "influencees" in node
-                ? node.influencees.includes(influencerId)
-                : false,
-            isBlocking:
-              "blockingInfluencers" in node
-                ? node.blockingInfluencers.includes(influencerId)
-                : false,
-            isUnused:
-              "unusedInfluencers" in node
-                ? node.unusedInfluencers.includes(influencerId)
-                : false,
-            strengthFactor: matchingRelaxedLink
-              ? matchingRelaxedLink.strengthFactor
-              : 1
+      await Promise.all(
+        batchArray.map(async batch => {
+          await batch.commit();
+        })
+      )
+        .then(function() {
+          Notify.create(i18n.global.t("toastFactorsUpdated"));
+        })
+        .catch(function(error) {
+          console.error("Error updating nodes", error.message);
+          showErrorMessage("Error updating nodes", error.message);
+        });
+
+      // run updateNodeClassificationInInfluenceees on nodes that
+      // have latestValueExistenceChanged or symbolChanged
+      payload.changedNodes.forEach(changedNode => {
+        if (
+          ("latestValueExistenceChanged" in changedNode &&
+            changedNode.latestValueExistenceChanged) ||
+          ("symbolChanged" in changedNode && changedNode.symbolChanged)
+        ) {
+          this.updateNodeClassificationInInfluenceees({
+            modelId: payload.modelId,
+            nodeId: changedNode.id
           });
-        });
-      }
-    });
-    return allLinks;
+        }
+      });
+    }
   }
-};
-
-export default {
-  namespaced: true,
-  state,
-  mutations,
-  actions,
-  getters
-};
+});

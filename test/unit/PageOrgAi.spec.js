@@ -1,7 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useAuthStore } from "@/store/store-auth";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useUsersStore } from "@/store/store-users";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import PageOrgAi from "@/pages/PageOrgAi.vue";
@@ -12,32 +15,21 @@ const components = Object.fromEntries(
 );
 
 function mountPageOrgAi(options = {}) {
-  const store = createStore({
-    modules: {
-      auth: {
-        namespaced: true,
-        state: { userId: "user-admin-1" }
-      },
-      orgs: {
-        namespaced: true,
-        state: {
-          currentOrg: {
-            id: "org-1",
-            name: "Eco Foundation",
-            superAdmins: ["user-admin-1"]
-          }
-        }
-      },
-      users: {
-        namespaced: true,
-        getters: {
-          currentOrgUsers: () => [
-            { id: "user-admin-1", displayName: "Admin User", email: "admin@eco.org" },
-            { id: "user-2", displayName: "Staff Member", email: "staff@eco.org" }
-          ]
-        }
-      }
+  const store = createPinia();
+  setActivePinia(store);
+  useAuthStore(store).$patch({ userId: "user-admin-1" });
+  useOrgsStore(store).$patch({
+    currentOrg: {
+      id: "org-1",
+      name: "Eco Foundation",
+      superAdmins: ["user-admin-1"]
     }
+  });
+  useUsersStore(store).$patch({
+    currentOrgUsers: [
+      { id: "user-admin-1", displayName: "Admin User", email: "admin@eco.org" },
+      { id: "user-2", displayName: "Staff Member", email: "staff@eco.org" }
+    ]
   });
 
   const wrapper = mount(PageOrgAi, {

@@ -28,7 +28,9 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useModelStore } from "@/store/store-model";
+import { useUiStore } from "@/store/store-ui";
 
 export default {
   props: ["targetNodeId"],
@@ -42,8 +44,8 @@ export default {
     this.options = this.nodeOptions;
   },
   computed: {
-    ...mapState("ui", ["selectedNodeId"]),
-    ...mapGetters("model", ["nodes"]),
+    ...pickState(useUiStore, ["selectedNodeId"]),
+    ...pickState(useModelStore, { nodes: "nodesList" }),
     nodeOptions() {
       return this.nodes.filter((node) => node.id != this.selectedNodeId);
     },

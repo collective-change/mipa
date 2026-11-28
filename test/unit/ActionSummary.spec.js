@@ -1,11 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 import { createI18n } from "vue-i18n";
-import { getField, updateField } from "vuex-map-fields";
 import messages from "@/i18n";
 import ActionSummary from "@/components/Actions/ActionSummary.vue";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useUiStore } from "@/store/store-ui";
+import { useModelStore } from "@/store/store-model";
+import { useCalcResultsStore } from "@/store/store-calcResults";
+import { useActionsStore } from "@/store/store-actions";
+import { useUiActionStore } from "@/store/store-uiAction";
 
 vi.mock("@/api/idb", () => ({
   default: {
@@ -37,85 +42,39 @@ function mountActionSummary(actionOverrides = {}, locale = "en-us") {
     ...actionOverrides
   };
 
-  const store = createStore({
-    modules: {
-      orgs: {
-        namespaced: true,
-        state: {
-          currentOrg: { id: "org-1", name: "Clean Energy Org", nameSlug: "clean-energy", currency: "USD" }
-        }
-      },
-      ui: {
-        namespaced: true,
-        state: {
-          selectedActionId: "action-1"
-        }
-      },
-      model: {
-        namespaced: true,
-        state: {
-          currentModel: { id: "model-1", roleNodes: { averageEffortCostPerHour: "node-cost" } },
-          nodes: [
-            { id: "node-cost", name: "Average Hourly Cost", unit: "USD", symbolFormula: "30", isHourlyCost: true }
-          ]
-        },
-        getters: {
-          nodes: () => [
-            { id: "node-cost", name: "Average Hourly Cost", unit: "USD", symbolFormula: "30", isHourlyCost: true }
-          ]
-        },
-        actions: {
-          bindCurrentModel: vi.fn(),
-          bindNodes: vi.fn()
-        }
-      },
-      calcResults: {
-        namespaced: true,
-        state: {
-          resultsOfAction: {},
-          baseline: { nodesValues: { "node-cost": [30] } }
-        }
-      },
-      actions: {
-        namespaced: true,
-        state: {
-          matchingActions: []
-        },
-        actions: {
-          updateAction: vi.fn()
-        }
-      },
-      uiAction: {
-        namespaced: true,
-        state: {
-          uiAction: { ...initialAction },
-          uiActionChanged: false,
-          uiActionChangedFields: []
-        },
-        getters: {
-          getField
-        },
-        mutations: {
-          updateField,
-          updateUiActionField: updateField,
-          setActionMchState(state, val) {
-            state.uiAction.actionMchState = val;
-          },
-          mergeNewActionToUiAction(state, newAction) {
-            Object.assign(state.uiAction, newAction);
-          },
-          setUiAction(state, newAction) {
-            state.uiAction = newAction ? { ...newAction } : {};
-          }
-        },
-        actions: {
-          setUiAction({ commit }, act) {
-            commit("setUiAction", act);
-          }
-        }
-      }
-    }
+  const store = createPinia();
+  setActivePinia(store);
+  useOrgsStore(store).$patch({
+    currentOrg: { id: "org-1", name: "Clean Energy Org", nameSlug: "clean-energy", currency: "USD" }
   });
+  useUiStore(store).$patch({ selectedActionId: "action-1" });
+  const model = useModelStore(store);
+  model.$patch({
+    currentModel: { id: "model-1", roleNodes: { averageEffortCostPerHour: "node-cost" } },
+    nodes: [
+      { id: "node-cost", name: "Average Hourly Cost", unit: "USD", symbolFormula: "30", isHourlyCost: true }
+    ]
+  });
+  model.bindCurrentModel = vi.fn();
+  model.bindNodes = vi.fn();
+  const calcResults = useCalcResultsStore(store);
+  calcResults.$patch({
+    resultsOfAction: {},
+    baseline: { nodesValues: { "node-cost": [30] } }
+  });
+  // The old Vuex mock store had no such actions, so these were no-ops.
+  calcResults.loadResultsOfAction = vi.fn();
+  const actions = useActionsStore(store);
+  actions.$patch({ matchingActions: [] });
+  actions.updateAction = vi.fn();
+  const uiActionStore = useUiActionStore(store);
+  uiActionStore.$patch({
+    uiAction: { ...initialAction },
+    uiActionChanged: false,
+    uiActionChangedFields: []
+  });
+  uiActionStore.addNodeIdsToChart = vi.fn();
+  uiActionStore.setNodeIdsToChart = vi.fn();
 
   const wrapper = mount(ActionSummary, {
     props: {
@@ -238,5 +197,116 @@ describe("ActionSummary.vue - Consolidated Progress & Actuals Tracker", () => {
     expect(wrapper.text()).toContain("Climate Pressure");
     expect(wrapper.vm.climatePressure).toBeDefined();
     expect(wrapper.vm.climatePressure.pressureValue).toBe(4.95);
+  });
+
+  it("manages effort cost choice and hourly cost calculation for factor, custom, and average types", () => {
+    const { wrapper } = mountActionSummary({
+      effortCostPerHrType: "use_average"
+    });
+
+    expect(wrapper.vm.effortCostChoice).toBe("use_average");
+    expect(wrapper.vm.effortCostPerHourInUse).toBe(30);
+
+    wrapper.vm.effortCostChoice = "use_custom";
+    wrapper.vm.customEffortCostPerHr = 75;
+    expect(wrapper.vm.effortCostPerHrType).toBe("use_custom");
+    expect(wrapper.vm.effortCostPerHourInUse).toBe(75);
+
+    wrapper.vm.effortCostChoice = "factor:node-cost";
+    expect(wrapper.vm.effortCostPerHrType).toBe("use_factor");
+    expect(wrapper.vm.effortCostNodeId).toBe("node-cost");
+    expect(wrapper.vm.effortCostChoice).toBe("factor:node-cost");
+    expect(wrapper.vm.effortCostPerHourInUse).toBe(30);
+  });
+
+  it("computes progressChipColor across 0%, partial, and 100% completion", () => {
+    const { wrapper } = mountActionSummary({ effortCompletionPercentage: 0 });
+    expect(wrapper.vm.progressChipColor).toBe("grey-6");
+
+    const { wrapper: wrapperPartial } = mountActionSummary({ effortCompletionPercentage: 50 });
+    expect(wrapperPartial.vm.progressChipColor).toBe("primary");
+
+    const { wrapper: wrapperFull } = mountActionSummary({ effortCompletionPercentage: 100 });
+    expect(wrapperFull.vm.progressChipColor).toBe("positive");
+  });
+
+  it("handles departmentOptions and availableSdgOptions", () => {
+    const { wrapper } = mountActionSummary();
+    expect(wrapper.vm.departmentOptions.length).toBeGreaterThan(0);
+    expect(wrapper.vm.availableSdgOptions.length).toBeGreaterThan(0);
+  });
+
+  it("handles SROI adjustments and counterfactual updates", () => {
+    const { wrapper, store } = mountActionSummary();
+    const actionsStore = useActionsStore(store);
+
+    wrapper.vm.onSroiAdjustmentsUpdated({
+      deadweight: 15,
+      attribution: 20,
+      displacement: 5
+    });
+    expect(wrapper.vm.deadweight).toBe(15);
+    expect(wrapper.vm.attribution).toBe(20);
+    expect(wrapper.vm.displacement).toBe(5);
+
+    wrapper.vm.onSaveCounterfactual({ method: "control_group", notes: "tested" });
+    expect(wrapper.vm.counterfactual).toEqual({ method: "control_group", notes: "tested" });
+    expect(actionsStore.updateAction).toHaveBeenCalledWith({
+      id: "action-1",
+      updates: { counterfactual: { method: "control_group", notes: "tested" } }
+    });
+  });
+
+  it("submits action updates stripping derived properties", () => {
+    const { wrapper, store } = mountActionSummary({
+      actionLeverage: 10,
+      totalRoi: 2.5
+    });
+    const actionsStore = useActionsStore(store);
+    const uiActionStore = useUiActionStore(store);
+
+    wrapper.vm.submitAction();
+    expect(actionsStore.updateAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "action-1",
+        updates: expect.not.objectContaining({
+          actionLeverage: expect.anything(),
+          totalRoi: expect.anything()
+        })
+      })
+    );
+    expect(uiActionStore.uiActionChanged).toBe(false);
+  });
+
+  it("adds role cost factor via dialog method", async () => {
+    const { wrapper, store } = mountActionSummary();
+    const modelStore = useModelStore(store);
+    modelStore.addHourlyCostFactor = vi.fn().mockResolvedValue("node-role-cost");
+
+    wrapper.vm.openAddRoleCost();
+    expect(wrapper.vm.showAddRoleCost).toBe(true);
+    expect(wrapper.vm.newRoleCost).toEqual({ name: "", cost: null });
+
+    wrapper.vm.newRoleCost = { name: "Senior Engineer", cost: 60 };
+    await wrapper.vm.addRoleCost();
+
+    expect(modelStore.addHourlyCostFactor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Senior Engineer",
+        cost: 60
+      })
+    );
+    expect(wrapper.vm.effortCostChoice).toBe("factor:node-role-cost");
+    expect(wrapper.vm.showAddRoleCost).toBe(false);
+  });
+
+  it("handles unmounted cleanup and setSaveResultsOnDeviceForAction", async () => {
+    const idb = (await import("@/api/idb")).default;
+    const { wrapper } = mountActionSummary();
+
+    wrapper.vm.setSaveResultsOnDeviceForAction("action-1", true);
+    expect(idb.setSaveResultsOnDeviceForAction).toHaveBeenCalledWith("action-1", true);
+
+    wrapper.unmount();
   });
 });

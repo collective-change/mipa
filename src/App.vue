@@ -3,12 +3,14 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { pickActions } from "@/store/pinia-helpers";
+import { useSettingsStore } from "@/store/store-settings";
+import { useAuthStore } from "@/store/store-auth";
 
 export default {
   methods: {
-    ...mapActions("settings", ["getSettings"]),
-    ...mapActions("auth", ["handleAuthStateChange"]),
+    ...pickActions(useSettingsStore, ["getSettings"]),
+    ...pickActions(useAuthStore, ["handleAuthStateChange"]),
   },
   mounted() {
     this.getSettings();

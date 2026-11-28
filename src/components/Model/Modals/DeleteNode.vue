@@ -22,7 +22,8 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { pickActions } from "@/store/pinia-helpers";
+import { useModelStore } from "@/store/store-model";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
 import ModalCancelDeleteButtons from "@/components/Shared/ModalComponents/ModalCancelDeleteButtons.vue";
@@ -51,7 +52,7 @@ export default {
   },
 
   methods: {
-    ...mapActions("model", ["deleteNode"]),
+    ...pickActions(useModelStore, ["deleteNode"]),
 
     submitDeleteNode() {
       if (this.nodeReadyToDelete) {

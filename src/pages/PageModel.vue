@@ -339,7 +339,14 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useModelStore } from "@/store/store-model";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useActionsStore } from "@/store/store-actions";
+import { useUiStore } from "@/store/store-ui";
+import { useCalculatorStore } from "@/store/store-calculator";
+import { useAdHocDocsStore } from "@/store/store-adHocDocs";
+import { useCalcResultsStore } from "@/store/store-calcResults";
 import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import idb from "@/api/idb";
 import ConfigOrgModel from "@/components/Model/Modals/ConfigOrgModel.vue";
@@ -408,7 +415,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters("model", ["nodes", "nodesTotalCount"]),
+    ...pickState(useModelStore, { nodes: "nodesList", nodesTotalCount: "nodesTotalCount" }),
     hasAccess() {
       if (!this.currentModel) return false;
       return (
@@ -494,7 +501,7 @@ export default {
         }
 
         // Check user's orgs list in store
-        const userOrgs = this.$store?.state?.orgs?.orgs || [];
+        const userOrgs = useOrgsStore(this.$pinia).orgs || [];
         if (Array.isArray(userOrgs) && userOrgs.some((o) => viewerOrgs.includes(o.id))) {
           return true;
         }
@@ -505,10 +512,10 @@ export default {
     isReadOnly() {
       return this.hasAccess && !this.isEditor;
     },
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("model", ["currentModel"]),
-    ...mapState("actions", ["actions"]),
-    ...mapState("ui", [
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useModelStore, ["currentModel"]),
+    ...pickState(useActionsStore, ["actions"]),
+    ...pickState(useUiStore, [
       "uiNodeChanged",
       "uiNodeChangedFields",
       //"selectedNodeGroupId",
@@ -516,22 +523,24 @@ export default {
     ]),
     selectedNodeGroupId: {
       get() {
-        return this.$store.state.ui.selectedNodeGroupId
-          ? this.$store.state.ui.selectedNodeGroupId
+        const ui = useUiStore(this.$pinia);
+        return ui.selectedNodeGroupId
+          ? ui.selectedNodeGroupId
           : null;
       },
       set(value) {
-        this.$store.commit("ui/setSelectedNodeGroupId", value);
+        useUiStore(this.$pinia).setSelectedNodeGroupId(value);
       },
     },
     expandedNodeGroups: {
       get() {
-        return this.$store.state.ui.expandedNodeGroups
-          ? this.$store.state.ui.expandedNodeGroups
+        const ui = useUiStore(this.$pinia);
+        return ui.expandedNodeGroups
+          ? ui.expandedNodeGroups
           : [];
       },
       set(value) {
-        this.$store.commit("ui/setExpandedNodeGroups", value);
+        useUiStore(this.$pinia).setExpandedNodeGroups(value);
       },
     },
 
@@ -554,12 +563,12 @@ export default {
       this.showDraftModel = false;
       // Calculate once the new factors have arrived.
       setTimeout(() => {
-        this.$store.dispatch("calculator/calculate", {
+        useCalculatorStore(this.$pinia).calculate({
           calculationType: "baseline",
           orgId: this.$route.params.orgId,
           modelId: this.$route.params.modelId || this.$route.params.orgId,
           nodes: this.nodes,
-          exchangeRates: this.$store.state.adHocDocs.exchangeRates,
+          exchangeRates: useAdHocDocsStore(this.$pinia).exchangeRates,
           simulationParams: this.currentModel.simulationParams,
           roleNodes: this.currentModel.roleNodes,
           customVariables: this.currentModel?.customVariables || null,
@@ -585,8 +594,8 @@ export default {
           }
         });
     },
-    ...mapActions("ui", ["setSelectedNodeId"]),
-    ...mapActions("model", ["importCountryModel"]),
+    ...pickActions(useUiStore, ["setSelectedNodeId"]),
+    ...pickActions(useModelStore, ["importCountryModel"]),
 
     async confirmImportCountryModel() {
       const modelId = this.currentModel?.id || this.$route.params.modelId;
@@ -620,7 +629,7 @@ export default {
         modelId: this.currentModel.id,
         updates: { nodeGroups: clonedNodeGroups },
       };
-      this.$store.dispatch("model/updateModel", payload);
+      useModelStore(this.$pinia).updateModel(payload);
     },
 
     expandMenuTree() {
@@ -662,7 +671,7 @@ export default {
     dispatchBindNodes() {
       const modelId = this.$route.params.modelId;
       if (modelId) {
-        this.$store.dispatch("model/bindNodes", {
+        useModelStore(this.$pinia).bindNodes({
           modelId,
           limit: this.nodesLimit
         });
@@ -675,9 +684,9 @@ export default {
       this.modelLoading = true;
       try {
         if (orgId && (!this.currentOrg || this.currentOrg.id !== orgId)) {
-          await this.$store.dispatch("orgs/bindCurrentOrg", orgId).catch(() => {});
+          await Promise.resolve(useOrgsStore(this.$pinia).bindCurrentOrg(orgId)).catch(() => {});
         }
-        await this.$store.dispatch("model/bindCurrentModel", modelId);
+        await useModelStore(this.$pinia).bindCurrentModel(modelId);
       } catch (err) {
         console.warn("bindCurrentModel failed:", err);
       } finally {
@@ -685,24 +694,23 @@ export default {
       }
 
       if (this.hasAccess) {
-        this.$store.dispatch("model/bindNodes", {
+        useModelStore(this.$pinia).bindNodes({
           modelId,
           limit: this.nodesLimit
         });
-        this.$store.dispatch("adHocDocs/bindExchangeRates");
-        this.$store.dispatch("calcResults/loadBaseline", modelId);
+        useAdHocDocsStore(this.$pinia).bindExchangeRates();
+        useCalcResultsStore(this.$pinia).loadBaseline(modelId);
 
         let dependencyGraphSavefile = await idb.getDependencyGraphDisplay(
           modelId
         );
         if (dependencyGraphSavefile) {
-          this.$store.commit(
-            "ui/setExpandedNodeGroups",
+          useUiStore(this.$pinia).setExpandedNodeGroups(
             dependencyGraphSavefile.expandedNodeGroups
           );
           this.initialCirclePositions = dependencyGraphSavefile.circlePositions;
         } else {
-          this.$store.commit("ui/setExpandedNodeGroups", []);
+          useUiStore(this.$pinia).setExpandedNodeGroups([]);
           this.initialCirclePositions = [];
         }
       }

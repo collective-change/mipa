@@ -71,15 +71,11 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
-import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
+import { pickState } from "@/store/pinia-helpers";
+import { useModelStore } from "@/store/store-model";
+import { useActionsStore } from "@/store/store-actions";
 import { formatNumber } from "@/utils/util-formatNumber";
 import AddEditImpact from "@/components/Impacts/AddEditImpact.vue";
-
-const { mapFields } = createHelpers({
-  getterType: "uiAction/getField",
-  mutationType: "uiAction/updateUiActionField",
-});
 
 export default {
   components: {
@@ -112,14 +108,13 @@ export default {
   },
 
   computed: {
-    //...mapState("orgs", ["currentOrg"]),
-    ...mapState("model", ["nodes"]),
-    //...mapState("ui", ["selectedActionId"]),
-    ...mapState("actions", ["actions"]),
+    //...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useModelStore, ["nodes"]),
+    //...pickState(useUiStore, ["selectedActionId"]),
+    ...pickState(useActionsStore, ["actions"]),
   },
 
   methods: {
-    //...mapActions("model", ["updateAction"]),
     formatNumber,
     getImpactTypeIfClause(type) {
       switch (type) {
@@ -152,7 +147,7 @@ export default {
           persistent: true
         })
         .onOk(() => {
-          this.$store.commit("uiAction/deleteImpact", impactId);
+          useUiActionStore(this.$pinia).deleteImpact(impactId);
         });
     }*/
   },

@@ -175,14 +175,11 @@
 
 <script>
 //import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
-import { mapActions, mapGetters, mapState } from "vuex";
-import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
+import { pickState, pickActions, pickUiActionFields } from "@/store/pinia-helpers";
+import { useUiStore } from "@/store/store-ui";
+import { useActionsStore } from "@/store/store-actions";
+import { useUiActionStore } from "@/store/store-uiAction";
 import AddActionRelationship from "@/components/Actions/Relationships/AddActionRelationship.vue";
-
-const { mapFields } = createHelpers({
-  getterType: "uiAction/getField",
-  mutationType: "uiAction/updateUiActionField",
-});
 
 export default {
   //props: ["action"],
@@ -202,19 +199,19 @@ export default {
   },
 
   computed: {
-    ...mapState("ui", ["selectedActionId"]),
-    ...mapGetters("actions", ["actions"]),
+    ...pickState(useUiStore, ["selectedActionId"]),
+    ...pickState(useActionsStore, { actions: "actionsList" }),
     //fields calculated in the uiAction store, for display only
     //(do not modify their values in the component)
-    ...mapState("uiAction", ["uiAction", "uiActionChanged"]),
+    ...pickState(useUiActionStore, ["uiAction", "uiActionChanged"]),
     //fields for 2-way sync between component and store
-    ...mapFields([
+    ...pickUiActionFields(useUiActionStore, [
       "uiAction.blockerActionIds",
       "uiAction.blockeeActionIds",
       "uiAction.parentActionId",
       "uiAction.childrenActionIds",
     ]),
-    //...mapMultiRowFields(["uiAction.impacts"]),
+    //impacts: uiActionMultiRowField("impacts"),
     actionOptions() {
       return this.actions
         .filter((action) => action.id != this.selectedActionId)
@@ -225,7 +222,7 @@ export default {
   },
 
   methods: {
-    ...mapActions("actions", [
+    ...pickActions(useActionsStore, [
       "addParent",
       "addChild",
       "addBlocker",

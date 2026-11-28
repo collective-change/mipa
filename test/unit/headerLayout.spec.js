@@ -1,7 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useAuthStore } from "@/store/store-auth";
+import { useUsersStore } from "@/store/store-users";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
+import { useActionsStore } from "@/store/store-actions";
+import { useAdHocDocsStore } from "@/store/store-adHocDocs";
+import { useChatsStore } from "@/store/store-chats";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import Layout from "@/layouts/Layout.vue";
@@ -12,98 +19,36 @@ const components = Object.fromEntries(
 );
 
 function mountHeader(org = { id: "test-org", name: "Riverside Food Bank (sample)", nameSlug: "riverside" }, loggedIn = true) {
-  const store = createStore({
-    modules: {
-      auth: {
-        namespaced: true,
-        state: {
-          loggedIn,
-          currentUser: { uid: "user-1", email: "user@example.com" },
-          userDetails: { role: "admin" }
-        },
-        getters: {
-          loggedIn: (state) => state.loggedIn,
-          currentUser: (state) => state.currentUser,
-          userDetails: (state) => state.userDetails
-        }
-      },
-      org: {
-        namespaced: true,
-        state: {
-          currentOrg: org,
-          currentOrgRole: "admin",
-          currentOrgMembers: []
-        },
-        getters: {
-          currentOrg: (state) => state.currentOrg,
-          currentOrgRole: (state) => state.currentOrgRole,
-          currentOrgMembers: (state) => state.currentOrgMembers
-        }
-      },
-      orgs: {
-        namespaced: true,
-        state: {
-          currentOrg: org,
-          orgs: org ? [org] : []
-        },
-        actions: {
-          bindCurrentOrg: () => Promise.resolve(),
-          bindUserOrgs: () => Promise.resolve()
-        }
-      },
-      model: {
-        namespaced: true,
-        state: {
-          currentModel: { id: "model-1", name: "Baseline" },
-          nodes: [],
-          links: [],
-          selectedNodeId: null
-        },
-        getters: {
-          currentModel: (state) => state.currentModel,
-          nodes: (state) => state.nodes,
-          links: (state) => state.links,
-          selectedNodeId: (state) => state.selectedNodeId
-        }
-      },
-      ui: {
-        namespaced: true,
-        state: {
-          leftDrawerOpen: false,
-          currentLinkGroup: "model"
-        },
-        getters: {
-          leftDrawerOpen: (state) => state.leftDrawerOpen,
-          currentLinkGroup: (state) => state.currentLinkGroup
-        },
-        mutations: {
-          setLeftDrawerOpen(state, val) {
-            state.leftDrawerOpen = val;
-          }
-        }
-      },
-      adHocDocs: {
-        namespaced: true,
-        state: {
-          appSummary: {},
-          exchangeRates: {}
-        },
-        actions: {
-          bindAppSummary: () => Promise.resolve(),
-          bindExchangeRates: () => Promise.resolve()
-        }
-      },
-      chats: {
-        namespaced: true,
-        state: {
-          unreadChats: []
-        },
-        actions: {
-          bindUnreadChats: () => Promise.resolve()
-        }
-      }
-    }
+  // Only the stores Layout.vue reads are seeded; Firestore bind/unbind actions are
+  // stubbed (the old Vuex mock either resolved them or left them undefined = no-op).
+  const store = createPinia();
+  setActivePinia(store);
+  useAuthStore(store).$patch({ loggedIn });
+  Object.assign(useUsersStore(store), {
+    bindCurrentUser: () => Promise.resolve(),
+    unbindCurrentUser: () => {},
+    bindCurrentOrgUsers: () => Promise.resolve()
   });
+  useOrgsStore(store).$patch({ currentOrg: org, orgs: org ? [org] : [] });
+  Object.assign(useOrgsStore(store), {
+    bindCurrentOrg: () => Promise.resolve(),
+    unbindCurrentOrg: () => {}
+  });
+  useModelStore(store).$patch({ currentModel: { id: "model-1", name: "Baseline" }, nodes: [] });
+  Object.assign(useModelStore(store), {
+    unbindCurrentModel: () => {},
+    unbindNodes: () => {}
+  });
+  Object.assign(useActionsStore(store), { unbindMatchingActions: () => {} });
+  useAdHocDocsStore(store).$patch({ appSummary: {}, exchangeRates: {} });
+  Object.assign(useAdHocDocsStore(store), {
+    bindAppSummary: () => Promise.resolve(),
+    bindExchangeRates: () => Promise.resolve(),
+    unbindAppSummary: () => {},
+    unbindExchangeRates: () => {}
+  });
+  useChatsStore(store).$patch({ unreadChats: [] });
+  Object.assign(useChatsStore(store), { bindUnreadChats: () => Promise.resolve() });
 
   return mount(Layout, {
     global: {

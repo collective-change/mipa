@@ -61,10 +61,7 @@
                     color="primary"
                     icon="delete"
                     @click="
-                      $store.dispatch(
-                        'uiAction/removeNodeIdToChart',
-                        chart.nodeId
-                      );
+                      removeNodeIdToChart(chart.nodeId);
                       removeFromCharts(chart.nodeId);
                     "
                   />
@@ -86,10 +83,7 @@
                     color="primary"
                     icon="delete"
                     @click="
-                      $store.dispatch(
-                        'uiAction/removeNodeIdToChart',
-                        chart.nodeId
-                      );
+                      removeNodeIdToChart(chart.nodeId);
                       removeFromCharts(chart.nodeId);
                     "
                   />
@@ -114,10 +108,7 @@
                     :options="filteredNodeOptions"
                     @update:model-value="
                       (nodeId) => {
-                        this.$store.dispatch(
-                          'uiAction/addNodeIdToChart',
-                          nodeId
-                        );
+                        addNodeIdToChart(nodeId);
                         nodeIdToAdd = null;
                       }
                     "
@@ -158,7 +149,10 @@
 </template>
 
 <script>
-import { mapActions, mapMutations, mapGetters, mapState } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useCalcResultsStore } from "@/store/store-calcResults";
+import { useModelStore } from "@/store/store-model";
+import { useUiActionStore } from "@/store/store-uiAction";
 import { GChart } from "vue-google-charts";
 import draggable from "vuedraggable";
 
@@ -200,16 +194,16 @@ export default {
   },
 
   computed: {
-    //...mapState("ui", ["selectedActionId"]),
-    ...mapState("calcResults", ["resultsOfAction"]),
-    ...mapState("model", ["currentModel"]),
-    ...mapGetters("model", ["nodes"]),
+    //...pickState(useUiStore, ["selectedActionId"]),
+    ...pickState(useCalcResultsStore, ["resultsOfAction"]),
+    ...pickState(useModelStore, ["currentModel"]),
+    ...pickState(useModelStore, { nodes: "nodesList" }),
 
     //fields calculated in the uiAction store, for display only
     //(do not modify their values in the component)
-    ...mapState("uiAction", ["uiAction"]),
+    ...pickState(useUiActionStore, ["uiAction"]),
     //fields for 2-way sync between component and store
-    //...mapFields(["uiAction.nodeIdsToChart"]),
+    //...pickUiActionFields(useUiActionStore, ["uiAction.nodeIdsToChart"]),
 
     nodeOptions() {
       return this.nodes.map((node) => {
@@ -219,8 +213,12 @@ export default {
   },
 
   methods: {
-    ...mapActions("model", ["updateAction"]),
-    ...mapMutations("uiAction", ["mergeNewActionToUiAction"]),
+    // (dropped a dead "model/updateAction" mapping: the model store never had that action)
+    ...pickActions(useUiActionStore, [
+      "mergeNewActionToUiAction",
+      "addNodeIdToChart",
+      "removeNodeIdToChart",
+    ]),
 
     updateChartDataForNode(nodeId) {
       //console.log(this.resultsOfAction.timeSPoints);
@@ -362,8 +360,7 @@ export default {
       }
 
       if (this.currentModel && this.uiAction && this.uiAction.impacts) {
-        this.$store.dispatch(
-          "calcResults/loadResultsOfAction",
+        useCalcResultsStore(this.$pinia).loadResultsOfAction(
           this.uiAction.id
         );
 
@@ -380,8 +377,7 @@ export default {
         );
         this.defaultNodeIdsToChart.push(this.currentModel.roleNodes.worldCost);
 
-        this.$store.dispatch(
-          "uiAction/addNodeIdsToChart",
+        useUiActionStore(this.$pinia).addNodeIdsToChart(
           this.defaultNodeIdsToChart
         );
       }
@@ -399,7 +395,7 @@ export default {
         oldId,
         this.uiAction
       );
-      this.$store.dispatch("calcResults/loadResultsOfAction", this.uiAction.id);
+      useCalcResultsStore(this.$pinia).loadResultsOfAction(this.uiAction.id);
       this.chartsArr = [];
     },
     nodes: function () {
@@ -421,7 +417,7 @@ export default {
           JSON.stringify(orderedNodeIds) !==
           JSON.stringify(this.prevOrderedNodeIds)
         ) {
-          this.$store.dispatch("uiAction/setNodeIdsToChart", orderedNodeIds);
+          useUiActionStore(this.$pinia).setNodeIdsToChart(orderedNodeIds);
           this.prevOrderedNodeIds = orderedNodeIds;
         }
       }

@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useModelStore } from "@/store/store-model";
+import { useCalcResultsStore } from "@/store/store-calcResults";
+import { useUiStore } from "@/store/store-ui";
+import { useOrgsStore } from "@/store/store-orgs";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import GettingStarted from "@/components/Model/GettingStarted.vue";
@@ -22,6 +26,11 @@ vi.mock("firebase/firestore", () => ({
 
 vi.mock("@/boot/firebase", () => ({
   firebaseDb: {}
+}));
+
+// Stubbed at mount anyway; mocked so this spec does not depend on its store wiring.
+vi.mock("@/components/Calc/CalculatorUi.vue", () => ({
+  default: { name: "CalculatorUi", template: "<button />" }
 }));
 
 describe("MIPA-56: GettingStarted.vue - Step 3 Close the Model & Named Limits", () => {
@@ -46,46 +55,34 @@ describe("MIPA-56: GettingStarted.vue - Step 3 Close the Model & Named Limits", 
     baseline = null,
     orgs = null
   } = {}) {
-    const modules = {
-      model: {
-        namespaced: true,
-        state: {
-          currentModel: {
-            id: "test_m1",
-            name: "Test Strategy Model",
-            isOrgMainModel: true,
-            roleNodes,
-            simulationParams: { finalTimeNumber: 120, finalTimeUnit: "months" }
-          }
-        },
-        getters: {
-          nodes: () => nodes
-        }
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const model = useModelStore(pinia);
+    model.$patch({
+      currentModel: {
+        id: "test_m1",
+        name: "Test Strategy Model",
+        isOrgMainModel: true,
+        roleNodes,
+        simulationParams: { finalTimeNumber: 120, finalTimeUnit: "months" }
       },
-      calcResults: {
-        namespaced: true,
-        state: {
-          baseline
-        }
-      },
-      ui: {
-        namespaced: true,
-        actions: {
-          setSelectedNodeId: mockSetSelectedNodeId
-        }
-      }
-    };
+      nodes
+    });
+    useCalcResultsStore(pinia).$patch({ baseline });
+    useUiStore(pinia).setSelectedNodeId = mockSetSelectedNodeId;
+    const orgsStore = useOrgsStore(pinia);
+    // Without an orgs fixture there is no sample org and no way to create one.
+    orgsStore.createSampleOrg = undefined;
     if (orgs) {
-      modules.orgs = {
-        namespaced: true,
-        state: {
-          orgs: orgs.orgs || [],
-          currentOrg: orgs.currentOrg || null
-        },
-        actions: orgs.actions || {}
-      };
+      orgsStore.$patch({
+        orgs: orgs.orgs || [],
+        currentOrg: orgs.currentOrg || null
+      });
+      if (orgs.actions && orgs.actions.createSampleOrg) {
+        orgsStore.createSampleOrg = orgs.actions.createSampleOrg;
+      }
     }
-    return createStore({ modules });
+    return pinia;
   }
 
   function mountComponent(storeInstance, locale = "en-us") {
@@ -232,7 +229,7 @@ describe("MIPA-56: GettingStarted.vue - Step 3 Close the Model & Named Limits", 
       step3.go();
 
       // First unconnected default is role_org_benefit
-      expect(mockSetSelectedNodeId).toHaveBeenCalledWith(expect.anything(), "role_org_benefit");
+      expect(mockSetSelectedNodeId).toHaveBeenCalledWith("role_org_benefit");
     });
 
     it("selects worldBenefit factor when clicked after default factors are connected", () => {
@@ -251,7 +248,7 @@ describe("MIPA-56: GettingStarted.vue - Step 3 Close the Model & Named Limits", 
       const step3 = wrapper.vm.steps[2];
       step3.go();
 
-      expect(mockSetSelectedNodeId).toHaveBeenCalledWith(expect.anything(), "role_world_benefit");
+      expect(mockSetSelectedNodeId).toHaveBeenCalledWith("role_world_benefit");
     });
   });
 

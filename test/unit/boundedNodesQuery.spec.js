@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createPinia, setActivePinia } from "pinia";
 
 // Mock Firebase modular SDK to inspect queries and limits
 let countQueries = [];
@@ -28,14 +29,24 @@ vi.mock("firebase/firestore", async (importOriginal) => {
 let boundRefs = [];
 vi.mock("@/store/firestore-bind", () => {
   return {
-    firestoreAction: (fn) => (context, payload) => {
-      const bindFirestoreRef = vi.fn((key, q, options) => {
-        boundRefs.push({ key, query: q, options });
-        return Promise.resolve([]);
-      });
-      const unbindFirestoreRef = vi.fn();
-      return fn({ ...context, bindFirestoreRef, unbindFirestoreRef }, payload);
-    }
+    firestoreAction: (fn) =>
+      function (...args) {
+        const isPinia = Boolean(this && typeof this.$id === "string" && this.$state);
+        const bindFirestoreRef = vi.fn((key, q, options) => {
+          boundRefs.push({ key, query: q, options });
+          return Promise.resolve([]);
+        });
+        const unbindFirestoreRef = vi.fn();
+        if (isPinia) {
+          return fn.call(
+            this,
+            { state: this.$state, store: this, bindFirestoreRef, unbindFirestoreRef },
+            args[0]
+          );
+        }
+        const [context, payload] = args;
+        return fn.call(this, { ...context, bindFirestoreRef, unbindFirestoreRef }, payload);
+      }
   };
 });
 
@@ -44,9 +55,15 @@ vi.mock("@/boot/firebase", () => ({
   firebaseAuth: { currentUser: { uid: "test-user-123" } }
 }));
 
-const { DEFAULT_NODES_LIMIT, default: modelModule } = await import("@/store/store-model");
-const { default: chatsModule } = await import("@/store/store-chats");
-const { default: usersModule } = await import("@/store/store-users");
+const { DEFAULT_NODES_LIMIT, useModelStore } = await import("@/store/store-model");
+const { useChatsStore } = await import("@/store/store-chats");
+const { useUsersStore } = await import("@/store/store-users");
+
+function makeModelStore() {
+  const store = useModelStore(createPinia());
+  vi.spyOn(store, "setNodesTotalCount");
+  return store;
+}
 
 describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
   beforeEach(() => {
@@ -59,10 +76,9 @@ describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
   });
 
   it("bindNodes applies default limit(50) and issues getCountFromServer when called with string modelId", async () => {
-    const commit = vi.fn();
-    const actionFn = modelModule.actions.bindNodes;
+    const store = makeModelStore();
 
-    await actionFn({ commit }, "model-test-123");
+    await store.bindNodes("model-test-123");
 
     expect(boundRefs).toHaveLength(1);
     const bound = boundRefs[0];
@@ -76,14 +92,14 @@ describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
 
     // Check getCountFromServer was called and count committed
     expect(countQueries).toHaveLength(1);
-    expect(commit).toHaveBeenCalledWith("setNodesTotalCount", 120);
+    expect(store.setNodesTotalCount).toHaveBeenCalledWith(120);
+    expect(store.nodesTotalCount).toBe(120);
   });
 
   it("bindNodes applies default limit(50) when called with object without limit", async () => {
-    const commit = vi.fn();
-    const actionFn = modelModule.actions.bindNodes;
+    const store = makeModelStore();
 
-    await actionFn({ commit }, { modelId: "model-test-456" });
+    await store.bindNodes({ modelId: "model-test-456" });
 
     expect(boundRefs).toHaveLength(1);
     const bound = boundRefs[0];
@@ -93,10 +109,9 @@ describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
   });
 
   it("bindNodes respects custom limit when provided in payload object", async () => {
-    const commit = vi.fn();
-    const actionFn = modelModule.actions.bindNodes;
+    const store = makeModelStore();
 
-    await actionFn({ commit }, { modelId: "model-test-123", limit: 25 });
+    await store.bindNodes({ modelId: "model-test-123", limit: 25 });
 
     expect(boundRefs).toHaveLength(1);
     const bound = boundRefs[0];
@@ -106,10 +121,9 @@ describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
   });
 
   it("bindNodes supports unbounding when limit is null or 'all'", async () => {
-    const commit = vi.fn();
-    const actionFn = modelModule.actions.bindNodes;
+    const store = makeModelStore();
 
-    await actionFn({ commit }, { modelId: "model-test-123", limit: null });
+    await store.bindNodes({ modelId: "model-test-123", limit: null });
 
     expect(boundRefs).toHaveLength(1);
     const bound = boundRefs[0];
@@ -118,8 +132,7 @@ describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
   });
 
   it("bindCurrentModel does not request maxRefDepth: 1", () => {
-    const actionFn = modelModule.actions.bindCurrentModel;
-    actionFn({}, "model-test-123");
+    makeModelStore().bindCurrentModel("model-test-123");
 
     expect(boundRefs).toHaveLength(1);
     const bound = boundRefs[0];
@@ -128,8 +141,10 @@ describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
   });
 
   it("store-chats binds do not request maxRefDepth: 1", () => {
-    chatsModule.actions.bindUnreadChats({});
-    chatsModule.actions.bindCurrentChat({}, "chat-1");
+    setActivePinia(createPinia());
+    const chatsStore = useChatsStore();
+    chatsStore.bindUnreadChats("user-1");
+    chatsStore.bindCurrentChat("chat-1");
 
     expect(boundRefs).toHaveLength(2);
     expect(boundRefs[0].options.maxRefDepth).toBeUndefined();
@@ -137,8 +152,10 @@ describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
   });
 
   it("store-users binds do not request maxRefDepth: 1", () => {
-    usersModule.actions.bindCurrentUser({});
-    usersModule.actions.bindCurrentOrgUsers({}, "org-1");
+    setActivePinia(createPinia());
+    const usersStore = useUsersStore();
+    usersStore.bindCurrentUser();
+    usersStore.bindCurrentOrgUsers("org-1");
 
     expect(boundRefs).toHaveLength(2);
     expect(boundRefs[0].options.maxRefDepth).toBeUndefined();
@@ -146,15 +163,16 @@ describe("MIPA-23: Bounded Nodes Query and Model Graph Pagination", () => {
   });
 
   it("store mutations update total counts and limit state", () => {
-    const state = {
+    const store = makeModelStore();
+    store.$patch({
       nodesTotalCount: null,
       nodesLimit: 50
-    };
+    });
 
-    modelModule.mutations.setNodesTotalCount(state, 462);
-    expect(state.nodesTotalCount).toBe(462);
+    store.setNodesTotalCount(462);
+    expect(store.nodesTotalCount).toBe(462);
 
-    modelModule.mutations.setNodesLimit(state, 100);
-    expect(state.nodesLimit).toBe(100);
+    store.setNodesLimit(100);
+    expect(store.nodesLimit).toBe(100);
   });
 });

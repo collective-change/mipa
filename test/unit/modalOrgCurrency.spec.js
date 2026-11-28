@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useAdHocDocsStore } from "@/store/store-adHocDocs";
+import { useOrgsStore } from "@/store/store-orgs";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import ModalOrgCurrency, {
@@ -27,40 +29,31 @@ function createTestI18n(locale = "en-us") {
 }
 
 function createTestStore(exchangeRates = null) {
-  return createStore({
-    modules: {
-      adHocDocs: {
-        namespaced: true,
-        state: () => ({
-          exchangeRates: exchangeRates || {
-            rates: {
-              USD: 1,
-              TWD: 32,
-              EUR: 0.85,
-              GBP: 0.75,
-              JPY: 150,
-              CNY: 7.2,
-              CAD: 1.35,
-              AUD: 1.5,
-              CHF: 0.9,
-              HKD: 7.8,
-              SGD: 1.3,
-              AED: 3.67,
-              AFN: 70,
-              ALL: 95,
-              ZWL: 300
-            }
-          }
-        })
-      },
-      orgs: {
-        namespaced: true,
-        actions: {
-          addOrg: () => Promise.resolve()
-        }
+  const store = createPinia();
+  setActivePinia(store);
+  useAdHocDocsStore(store).$patch({
+    exchangeRates: exchangeRates || {
+      rates: {
+        USD: 1,
+        TWD: 32,
+        EUR: 0.85,
+        GBP: 0.75,
+        JPY: 150,
+        CNY: 7.2,
+        CAD: 1.35,
+        AUD: 1.5,
+        CHF: 0.9,
+        HKD: 7.8,
+        SGD: 1.3,
+        AED: 3.67,
+        AFN: 70,
+        ALL: 95,
+        ZWL: 300
       }
     }
   });
+  useOrgsStore(store).addOrg = () => Promise.resolve();
+  return store;
 }
 
 describe("MIPA-17: ModalOrgCurrency & Filterable Currency Selection", () => {

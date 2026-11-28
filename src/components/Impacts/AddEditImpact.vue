@@ -114,7 +114,10 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
+import { useUiActionStore } from "@/store/store-uiAction";
 import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
 import ModalSaveButton from "@/components/Shared/ModalComponents/ModalSaveButton.vue";
 
@@ -235,8 +238,8 @@ export default {
   mounted: function () {},
 
   computed: {
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("model", ["currentModel"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useModelStore, ["currentModel"]),
 
     nodeOptions() {
       return this.nodes.map((node) => {
@@ -310,9 +313,9 @@ export default {
         Object.assign(newImpact, this.impact);
         if (this.addOrEdit == "add") {
           newImpact.id = Date.now();
-          this.$store.commit("uiAction/addImpact", newImpact);
+          useUiActionStore(this.$pinia).addImpact(newImpact);
         } else {
-          this.$store.commit("uiAction/updateImpact", newImpact);
+          useUiActionStore(this.$pinia).updateImpact(newImpact);
         }
         this.$emit("close");
       }

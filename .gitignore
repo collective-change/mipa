@@ -59,6 +59,7 @@ local-layer-backups/
 # Test output
 test-results/
 playwright-report/
+coverage/
 
 # Local service operations & agent state - not part of the product.
 # Backed up via scripts/backup-local-layer.js to private destination.

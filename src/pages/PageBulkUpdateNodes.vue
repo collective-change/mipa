@@ -56,7 +56,12 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
+import { useUsersStore } from "@/store/store-users";
+import { useAdHocDocsStore } from "@/store/store-adHocDocs";
+import { useCalcResultsStore } from "@/store/store-calcResults";
 import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 //import idb from "@/api/idb";
 import { copyToClipboard } from "quasar";
@@ -71,10 +76,10 @@ export default {
     return { text: "" };
   },
   computed: {
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("model", ["currentModel"]),
-    ...mapGetters("model", ["nodes"]),
-    ...mapGetters("users", ["currentOrgUsers"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useModelStore, ["currentModel"]),
+    ...pickState(useModelStore, { nodes: "nodesList" }),
+    ...pickState(useUsersStore, { currentOrgUsers: "orgUsers" }),
   },
 
   methods: {
@@ -280,7 +285,7 @@ export default {
             modelId: this.currentModel.id,
             changedNodes: payload.changedNodes,
           };
-          this.$store.dispatch("model/updateNodes", payloadToStore);
+          useModelStore(this.$pinia).updateNodes(payloadToStore);
         })
         .onOk(() => {
           // console.log('>>>> second OK catcher')
@@ -347,12 +352,12 @@ export default {
         await new Promise((resolve) => setTimeout(resolve, 200));
       //bind to list of models the org-user can view
       //(user is in model's owners, editors, or viewers)
-      //this.$store.dispatch("orgs/bindReadableModels", this.$route.params.orgId);
+      //useOrgsStore(this.$pinia).bindReadableModels(this.$route.params.orgId);
       let modelId = this.$route.params.orgId;
-      this.$store.dispatch("model/bindCurrentModel", modelId);
-      this.$store.dispatch("model/bindNodes", modelId);
-      this.$store.dispatch("adHocDocs/bindExchangeRates");
-      this.$store.dispatch("calcResults/loadBaseline", modelId);
+      useModelStore(this.$pinia).bindCurrentModel(modelId);
+      useModelStore(this.$pinia).bindNodes(modelId);
+      useAdHocDocsStore(this.$pinia).bindExchangeRates();
+      useCalcResultsStore(this.$pinia).loadBaseline(modelId);
     })();
     //console.log("above code doesn't block main function stack");
   },

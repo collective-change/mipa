@@ -212,7 +212,8 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { pickActions } from "@/store/pinia-helpers";
+import { useModelStore } from "@/store/store-model";
 import { copyToClipboard, Notify } from "quasar";
 
 export default {
@@ -304,7 +305,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions("model", [
+    ...pickActions(useModelStore, [
       "addCustomVariable",
       "updateCustomVariable",
       "deleteCustomVariable",

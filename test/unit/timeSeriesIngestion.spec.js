@@ -1,11 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import FactorSeriesModal from "@/components/Model/Modals/FactorSeriesModal.vue";
 import IngestDataDialog from "@/components/Model/Modals/IngestDataDialog.vue";
+import { useAuthStore } from "@/store/store-auth";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
 import {
   parseTimeSeriesData,
   mergeTimeSeries,
@@ -31,29 +34,14 @@ function createTestStore(nodes = []) {
   const updateNodeMock = vi.fn().mockResolvedValue({});
   const addNodeMock = vi.fn().mockResolvedValue({ id: "new_id" });
 
-  const store = createStore({
-    modules: {
-      auth: {
-        namespaced: true,
-        state: () => ({ user: { email: "tester@example.com" } })
-      },
-      orgs: {
-        namespaced: true,
-        state: () => ({ currentOrg: { id: "org-1", currency: "USD" } })
-      },
-      model: {
-        namespaced: true,
-        state: () => ({ currentModel: { id: "model-1" } }),
-        getters: {
-          nodes: () => nodes
-        },
-        actions: {
-          updateNode: updateNodeMock,
-          addNode: addNodeMock
-        }
-      }
-    }
-  });
+  const store = createPinia();
+  setActivePinia(store);
+  useAuthStore(store).$patch({ user: { email: "tester@example.com" } });
+  useOrgsStore(store).$patch({ currentOrg: { id: "org-1", currency: "USD" } });
+  const model = useModelStore(store);
+  model.$patch({ currentModel: { id: "model-1" }, nodes });
+  model.updateNode = updateNodeMock;
+  model.addNode = addNodeMock;
 
   return { store, updateNodeMock, addNodeMock };
 }
@@ -267,7 +255,7 @@ describe("MIPA-20: Factor Time Series Ingestion & UI Governance", () => {
       await wrapper.vm.attachTimeSeriesToFactor();
 
       expect(updateNodeMock).toHaveBeenCalledTimes(1);
-      const callPayload = updateNodeMock.mock.calls[0][1];
+      const callPayload = updateNodeMock.mock.calls[0][0];
       expect(callPayload.updates.id).toBe("node1");
       expect(callPayload.updates.timeSeries.length).toBe(2);
       expect(callPayload.updates.seriesProvenance.sourceCitation).toBe("Outreach Finance Plan");

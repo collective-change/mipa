@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia } from "pinia";
+import { useAuthStore } from "@/store/store-auth";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import PageLanding from "@/pages/PageLanding.vue";
@@ -12,9 +13,8 @@ const components = Object.fromEntries(
 );
 
 function mountLanding(locale = "en-us") {
-  const store = createStore({
-    modules: { auth: { namespaced: true, state: { loggedIn: false } } }
-  });
+  const store = createPinia();
+  useAuthStore(store).$patch({ loggedIn: false });
   return mount(PageLanding, {
     global: {
       plugins: [

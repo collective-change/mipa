@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useModelStore } from "@/store/store-model";
+import { useUiStore } from "@/store/store-ui";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import DependencyGraph from "@/components/Model/DependencyGraph.vue";
@@ -14,70 +16,48 @@ const components = Object.fromEntries(
 function mountDependencyGraphWithGroups({ nodes = [], links = [], nodeGroups = [], expandedNodeGroups = [] } = {}) {
   let expandedState = [...expandedNodeGroups];
 
-  const store = createStore({
-    modules: {
-      auth: {
-        namespaced: true,
-        state: { loggedIn: true, user: { email: "tester@example.com" } }
-      },
-      model: {
-        namespaced: true,
-        state: {
-          currentModel: {
-            id: "m_test",
-            name: "Test System Dynamics Model",
-            nodeGroups
-          },
-          nodes,
-          links,
-          selectedNodeId: null
-        },
-        getters: {
-          currentModel: (state) => state.currentModel,
-          nodes: (state) => state.nodes,
-          links: (state) => state.links,
-          selectedNodeId: (state) => state.selectedNodeId
-        },
-        actions: {
-          addLink: () => {},
-          deleteLink: () => {},
-          relaxLink: () => {},
-          relaxLinkMore: () => {},
-          restoreLinkForce: () => {},
-          createNodeGroup: () => {},
-          addToNodeGroup: () => {},
-          removeNodeFromGroup: () => {},
-          disbandNodeGroup: () => {}
-        }
-      },
-      ui: {
-        namespaced: true,
-        state: {
-          selectedNodeId: null,
-          selectedNodeGroupId: null,
-          expandedNodeGroups: expandedState,
-          uiNodeChanged: false,
-          uiNodeChangedFields: []
-        },
-        getters: {
-          selectedNodeId: (state) => state.selectedNodeId,
-          selectedNodeGroupId: (state) => state.selectedNodeGroupId,
-          expandedNodeGroups: (state) => state.expandedNodeGroups
-        },
-        mutations: {
-          setSelectedNodeId: (state, val) => {
-            state.selectedNodeId = val;
-          },
-          setSelectedNodeGroupId: (state, val) => {
-            state.selectedNodeGroupId = val;
-          },
-          setExpandedNodeGroups: (state, val) => {
-            state.expandedNodeGroups = val;
-          }
-        }
-      }
-    }
+  const store = createPinia();
+  setActivePinia(store);
+
+  // The model store derives `links` from each factor's `influencers`, so give
+  // the factors the influencers that produce the requested links.
+  const nodesWithInfluencers = nodes.map((node) => ({
+    ...node,
+    influencers: links.filter((l) => l.target === node.id).map((l) => l.source)
+  }));
+  const model = useModelStore(store);
+  model.$patch({
+    currentModel: {
+      id: "m_test",
+      name: "Test System Dynamics Model",
+      nodeGroups
+    },
+    nodes: nodesWithInfluencers
   });
+  for (const name of [
+    "addLink",
+    "deleteLink",
+    "relaxLink",
+    "relaxLinkMore",
+    "restoreLinkForce",
+    "createNodeGroup",
+    "addToNodeGroup",
+    "removeNodeFromGroup",
+    "disbandNodeGroup"
+  ]) {
+    model[name] = () => {};
+  }
+
+  const ui = useUiStore(store);
+  ui.$patch({
+    selectedNodeId: null,
+    selectedNodeGroupId: null,
+    expandedNodeGroups: expandedState,
+    uiNodeChanged: false,
+    uiNodeChangedFields: []
+  });
+  // The Vuex test store had no ui/setSelectedNodeId action (dispatch was a no-op).
+  ui.setSelectedNodeId = () => {};
 
   return mount(DependencyGraph, {
     props: {
@@ -165,7 +145,7 @@ describe("MIPA-21: Smoother Node-Group Collapse & Expand Motion (Issue #53)", ()
     const outside2PosBefore = { x: nOutside2.x, y: nOutside2.y };
 
     // Trigger collapse: update expandedNodeGroups to []
-    vm.$store.commit("ui/setExpandedNodeGroups", []);
+    useUiStore(vm.$pinia).setExpandedNodeGroups([]);
     await vm.$nextTick();
 
     // Verify group toggle activated smooth force ramping
@@ -252,7 +232,7 @@ describe("MIPA-21: Smoother Node-Group Collapse & Expand Motion (Issue #53)", ()
     const outsidePosBefore = { x: outsideNode.x, y: outsideNode.y };
 
     // Trigger expand
-    vm.$store.commit("ui/setExpandedNodeGroups", ["group_costs"]);
+    useUiStore(vm.$pinia).setExpandedNodeGroups(["group_costs"]);
     await vm.$nextTick();
 
     expect(vm.isRampingForces).toBe(true);

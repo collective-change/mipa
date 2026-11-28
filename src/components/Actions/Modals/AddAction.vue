@@ -297,7 +297,10 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
+import { useActionsStore } from "@/store/store-actions";
 import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
 import ModalActionTitle from "@/components/Actions/Modals/Shared/ModalActionTitle.vue";
 import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
@@ -364,9 +367,9 @@ export default {
     };
   },
   computed: {
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("model", ["currentModel"]),
-    ...mapGetters("model", ["nodes"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useModelStore, ["currentModel"]),
+    ...pickState(useModelStore, { nodes: "nodesList" }),
 
     currentCurrency() {
       return this.currentOrg?.currency || "USD";
@@ -382,7 +385,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions("actions", ["addAction"]),
+    ...pickActions(useActionsStore, ["addAction"]),
 
     async generateProposal() {
       if (!this.ideaText || !this.ideaText.trim()) return;

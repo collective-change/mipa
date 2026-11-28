@@ -260,7 +260,13 @@
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useAuthStore } from "@/store/store-auth";
+import { useUsersStore } from "@/store/store-users";
+import { useModelStore } from "@/store/store-model";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useAdHocDocsStore } from "@/store/store-adHocDocs";
+import { useActionsStore } from "@/store/store-actions";
 import { openURL } from "quasar";
 import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import UnreadMessages from "@/components/Chats/UnreadMessages.vue";
@@ -305,11 +311,11 @@ export default {
     };
   },
   computed: {
-    ...mapState("auth", ["loggedIn", "userId"]),
-    ...mapState("users", ["currentUser"]),
-    ...mapState("model", ["currentModel"]),
-    ...mapState("orgs", ["orgs", "currentOrg"]),
-    ...mapState("adHocDocs", ["exchangeRates", "appSummary"]),
+    ...pickState(useAuthStore, ["loggedIn", "userId"]),
+    ...pickState(useUsersStore, ["currentUser"]),
+    ...pickState(useModelStore, ["currentModel"]),
+    ...pickState(useOrgsStore, ["orgs", "currentOrg"]),
+    ...pickState(useAdHocDocsStore, ["exchangeRates", "appSummary"]),
 
     visibleDrawerLinks2() {
       if (this.loggedIn) return this.links2;
@@ -521,7 +527,7 @@ export default {
     },
   },
   methods: {
-    ...mapActions("auth", ["logoutUser"]),
+    ...pickActions(useAuthStore, ["logoutUser"]),
     openURL,
     onItemClick() {
       console.log("Clicked on an Item");
@@ -533,22 +539,24 @@ export default {
       if (!this.loggedIn) return;
       const warn = (error) =>
         console.warn("Could not load shared data:", error.message);
-      this.$store.dispatch("adHocDocs/bindAppSummary").catch(warn);
-      this.$store.dispatch("adHocDocs/bindExchangeRates").catch(warn);
+      const adHocDocs = useAdHocDocsStore(this.$pinia);
+      Promise.resolve(adHocDocs.bindAppSummary()).catch(warn);
+      Promise.resolve(adHocDocs.bindExchangeRates()).catch(warn);
     },
     unbindPublicData() {
-      this.$store.dispatch("adHocDocs/unbindAppSummary");
-      this.$store.dispatch("adHocDocs/unbindExchangeRates");
+      const adHocDocs = useAdHocDocsStore(this.$pinia);
+      adHocDocs.unbindAppSummary();
+      adHocDocs.unbindExchangeRates();
     },
     bindMinimalOrgRelatedData(orgId) {
-      this.$store.dispatch("orgs/bindCurrentOrg", orgId);
+      useOrgsStore(this.$pinia).bindCurrentOrg(orgId);
     },
     unbindAllOrgRelatedData() {
-      this.$store.dispatch("orgs/unbindCurrentOrg");
-      this.$store.dispatch("actions/unbindMatchingActions");
-      this.$store.dispatch("model/unbindCurrentModel");
-      this.$store.dispatch("model/unbindNodes");
-      //this.$store.dispatch("calcResults/unbindBaseline");
+      useOrgsStore(this.$pinia).unbindCurrentOrg();
+      useActionsStore(this.$pinia).unbindMatchingActions();
+      useModelStore(this.$pinia).unbindCurrentModel();
+      useModelStore(this.$pinia).unbindNodes();
+      //useCalcResultsStore(this.$pinia).unbindBaseline();
     },
     notifyUpdateAvailable() {
       this.$q.notify({
@@ -585,7 +593,7 @@ export default {
       )
         await new Promise((resolve) => setTimeout(resolve, 200));
 
-      this.$store.dispatch("users/bindCurrentUser");
+      useUsersStore(this.$pinia).bindCurrentUser();
     })();
   },
   mounted() {
@@ -614,7 +622,7 @@ export default {
     window.removeEventListener("longecho-update-available", this.notifyUpdateAvailable);
     this.unbindAllOrgRelatedData();
     this.unbindPublicData();
-    this.$store.dispatch("users/unbindCurrentUser");
+    useUsersStore(this.$pinia).unbindCurrentUser();
   },
   watch: {
     loggedIn(isLoggedIn) {
@@ -694,7 +702,7 @@ export default {
           oldCurrentOrg == null ||
           newCurrentOrg.users.length != oldCurrentOrg.users.length
         ) {
-          this.$store.dispatch("users/bindCurrentOrgUsers", newCurrentOrg.id);
+          useUsersStore(this.$pinia).bindCurrentOrgUsers(newCurrentOrg.id);
         }
       }
     },

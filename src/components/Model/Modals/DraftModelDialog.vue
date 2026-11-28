@@ -285,7 +285,9 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useModelStore } from "@/store/store-model";
+import { useAdHocDocsStore } from "@/store/store-adHocDocs";
 import { doc, getDoc } from "firebase/firestore";
 import { parse } from "mathjs";
 import { firebaseDb } from "@/boot/firebase";
@@ -335,9 +337,9 @@ export default {
     };
   },
   computed: {
-    ...mapState("model", ["currentModel"]),
-    ...mapGetters("model", ["nodes"]),
-    ...mapState("adHocDocs", ["exchangeRates"]),
+    ...pickState(useModelStore, ["currentModel"]),
+    ...pickState(useModelStore, { nodes: "nodesList" }),
+    ...pickState(useAdHocDocsStore, ["exchangeRates"]),
     orgId() {
       return this.$route.params.orgId;
     },

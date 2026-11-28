@@ -18,7 +18,9 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useUsersStore } from "@/store/store-users";
 
 export default {
   props: ["label", "modelValue"],
@@ -37,8 +39,8 @@ export default {
   },
 
   computed: {
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapGetters("users", ["currentOrgUsers"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useUsersStore, { currentOrgUsers: "orgUsers" }),
 
     userOptions() {
       if (this.currentOrg == undefined) return [];

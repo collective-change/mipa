@@ -301,7 +301,8 @@
 </template>
 
 <script>
-import { mapActions, mapState } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useModelStore } from "@/store/store-model";
 import {
   PUBLIC_MODEL_TEMPLATES,
   getPublicTemplates,
@@ -350,7 +351,7 @@ export default {
     };
   },
   computed: {
-    ...mapState("model", ["currentModel"]),
+    ...pickState(useModelStore, ["currentModel"]),
     isOpen: {
       get() {
         return this.modelValue;
@@ -387,7 +388,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions("model", ["addNode"]),
+    ...pickActions(useModelStore, ["addNode"]),
 
     async confirmClone(template) {
       const modelId = this.model?.id || this.currentModel?.id || this.$route?.params?.modelId;

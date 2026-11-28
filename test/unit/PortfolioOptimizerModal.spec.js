@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import PortfolioOptimizerModal from "@/components/Actions/Modals/PortfolioOptimizerModal.vue";
+import { useOrgsStore } from "@/store/store-orgs";
 
 const { Quasar } = All;
 const components = Object.fromEntries(
@@ -33,14 +34,9 @@ const mockActions = [
 ];
 
 function mountModal(props = {}, locale = "en-us") {
-  const store = createStore({
-    modules: {
-      orgs: {
-        namespaced: true,
-        state: { currentOrg: { currency: "USD" } }
-      }
-    }
-  });
+  const store = createPinia();
+  setActivePinia(store);
+  useOrgsStore(store).$patch({ currentOrg: { currency: "USD" } });
 
   const wrapper = mount(PortfolioOptimizerModal, {
     props: {

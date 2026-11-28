@@ -355,7 +355,9 @@
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
 import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
 import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
 import ModalOrgName from "@/components/Orgs/Modals/Shared/ModalOrgName.vue";
@@ -396,8 +398,8 @@ export default {
     "custom-variables-modal": CustomVariablesModal,
   },
   computed: {
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("model", ["currentModel", "nodes"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useModelStore, ["currentModel", "nodes"]),
     customVariablesList() {
       const vars = this.currentModel?.customVariables;
       if (Array.isArray(vars)) return vars;
@@ -441,7 +443,7 @@ export default {
     },
   },
   methods: {
-    ...mapActions("model", ["updateModel"]),
+    ...pickActions(useModelStore, ["updateModel"]),
     addViewer() {
       this.viewerEmailError = "";
       if (!this.newViewerEmail) return;

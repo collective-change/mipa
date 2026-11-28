@@ -878,8 +878,13 @@
 
 <script>
 import { firebaseAuth } from "@/boot/firebase";
-import { mapActions, mapMutations, mapGetters, mapState } from "vuex";
-import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
+import { pickState, pickActions, pickUiActionFields } from "@/store/pinia-helpers";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useUiStore } from "@/store/store-ui";
+import { useModelStore } from "@/store/store-model";
+import { useCalcResultsStore } from "@/store/store-calcResults";
+import { useActionsStore } from "@/store/store-actions";
+import { useUiActionStore } from "@/store/store-uiAction";
 import { interpret } from "xstate";
 import { actionMachine } from "@/state-machines/machine-action";
 import { formatNumber } from "@/utils/util-formatNumber";
@@ -901,10 +906,29 @@ import ClimatePressureCard from "@/components/Actions/ClimatePressureCard.vue";
 import CounterfactualCard from "@/components/Actions/CounterfactualCard.vue";
 import { calculateSroiMetrics, formatSroiRatio } from "@/utils/sroi";
 
-const { mapFields } = createHelpers({
-  getterType: "uiAction/getField",
-  mutationType: "uiAction/updateUiActionField",
-});
+// Equivalent of the old multi-row field helper on "uiAction.<listName>":
+// an array of row objects whose properties get/set uiAction.<listName>[i].<field>.
+function uiActionMultiRowField(listName) {
+  return {
+    get() {
+      const store = useUiActionStore(this?.$pinia);
+      const rows = (store.uiAction && store.uiAction[listName]) || [];
+      return rows.map((row, index) =>
+        Object.keys(row).reduce((proxy, fieldKey) => {
+          const path = `uiAction.${listName}[${index}].${fieldKey}`;
+          Object.defineProperty(proxy, fieldKey, {
+            enumerable: true,
+            get: () => store.uiAction[listName][index][fieldKey],
+            set: (value) => {
+              store.updateUiActionField({ path, value });
+            }
+          });
+          return proxy;
+        }, {})
+      );
+    }
+  };
+}
 
 export default {
   components: {
@@ -946,22 +970,22 @@ export default {
   },
 
   computed: {
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("ui", ["selectedActionId"]),
-    ...mapState("model", ["currentModel"]),
-    ...mapGetters("model", ["nodes"]),
-    ...mapState("calcResults", ["resultsOfAction", "baseline"]),
-    //...mapState("actions", ["currentAction"]),
-    ...mapState("actions", ["matchingActions"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useUiStore, ["selectedActionId"]),
+    ...pickState(useModelStore, ["currentModel"]),
+    ...pickState(useModelStore, { nodes: "nodesList" }),
+    ...pickState(useCalcResultsStore, ["resultsOfAction", "baseline"]),
+    //...pickState(useActionsStore, ["currentAction"]),
+    ...pickState(useActionsStore, ["matchingActions"]),
     //fields calculated in the uiAction store, for display only
     //(do not modify their values in the component)
-    ...mapState("uiAction", [
+    ...pickState(useUiActionStore, [
       "uiAction",
       "uiActionChanged",
       "uiActionChangedFields",
     ]),
     //fields for 2-way sync between component and store
-    ...mapFields([
+    ...pickUiActionFields(useUiActionStore, [
       "uiAction.title",
       "uiAction.actionMchState",
       "uiAction.useSimpleEstimateMethod",
@@ -995,7 +1019,7 @@ export default {
       "uiAction.sdgTargets",
       "uiAction.chatId",
     ]),
-    ...mapMultiRowFields(["uiAction.impacts"]),
+    impacts: uiActionMultiRowField("impacts"),
 
     embedded() {
       if (this.$route && this.$route.params && this.$route.params.actionId) {
@@ -1209,7 +1233,7 @@ export default {
     async addRoleCost() {
       this.addingRoleCost = true;
       try {
-        const nodeId = await this.$store.dispatch("model/addHourlyCostFactor", {
+        const nodeId = await useModelStore(this.$pinia).addHourlyCostFactor({
           modelId: this.currentModel.id,
           name: this.newRoleCost.name.trim(),
           cost: this.newRoleCost.cost,
@@ -1223,8 +1247,8 @@ export default {
         this.addingRoleCost = false;
       }
     },
-    ...mapActions("model", ["updateAction"]),
-    ...mapMutations("uiAction", ["mergeNewActionToUiAction"]),
+    // (dropped a dead "model/updateAction" mapping: the model store never had that action)
+    ...pickActions(useUiActionStore, ["mergeNewActionToUiAction"]),
     formatNumber,
     formatSroiRatio,
 
@@ -1240,7 +1264,7 @@ export default {
         id: this.action.id,
         updates: { counterfactual: cfPayload }
       };
-      this.$store.dispatch("actions/updateAction", payload);
+      useActionsStore(this.$pinia).updateAction(payload);
     },
 
     async loadAction(newAction) {
@@ -1252,13 +1276,13 @@ export default {
         .onTransition((state) => {
           // Update the current state component data property with the next state
           this.actionMchState = state;
-          this.$store.commit("uiAction/setActionMchState", state);
+          useUiActionStore(this.$pinia).setActionMchState(state);
 
           // Update the context component data property with the updated context
           this.actionStateContext = state.context;
         })
         .start();
-      this.$store.dispatch("uiAction/setUiAction", {
+      useUiActionStore(this.$pinia).setUiAction({
         id: newAction.id,
         ...newAction,
       });
@@ -1268,8 +1292,7 @@ export default {
 
       // Start with saved state or the machine's initial state
       if (!this.uiAction.actionMchState.hasOwnProperty("value")) {
-        this.$store.commit(
-          "uiAction/setActionMchState",
+        useUiActionStore(this.$pinia).setActionMchState(
           actionMachine.initialState
         );
         //console.log("set to initial state: ", this.uiAction.actionMchState);
@@ -1305,8 +1328,8 @@ export default {
         id: this.action.id,
         updates,
       };
-      this.$store.dispatch("actions/updateAction", payload);
-      this.$store.commit("uiAction/setUiActionChanged", false);
+      useActionsStore(this.$pinia).updateAction(payload);
+      useUiActionStore(this.$pinia).setUiActionChanged(false);
     },
     setSaveResultsOnDeviceForAction(actionId, val) {
       idb.setSaveResultsOnDeviceForAction(actionId, val);
@@ -1323,8 +1346,8 @@ export default {
       }
       let orgId = this.$route.params.orgId;
       let modelId = this.$route.params.orgId;
-      this.$store.dispatch("model/bindCurrentModel", modelId);
-      this.$store.dispatch("model/bindNodes", modelId);
+      useModelStore(this.$pinia).bindCurrentModel(modelId);
+      useModelStore(this.$pinia).bindNodes(modelId);
     })();
   },
 
@@ -1349,9 +1372,9 @@ export default {
           this.saveFullResults = false;
         } else if (newAction) {
           //same action, just refreshed
-          this.$store.commit("uiAction/mergeNewActionToUiAction", newAction);
+          useUiActionStore(this.$pinia).mergeNewActionToUiAction(newAction);
         } else {
-          this.$store.dispatch("uiAction/setUiAction", null);
+          useUiActionStore(this.$pinia).setUiAction(null);
           console.log("no new action, setUiAction to null");
         }
       },

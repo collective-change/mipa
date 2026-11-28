@@ -65,21 +65,24 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useAuthStore } from "@/store/store-auth";
+import { useChatsStore } from "@/store/store-chats";
+import { useUsersStore } from "@/store/store-users";
 
 export default {
   data() {
     return {};
   },
   created: function () {
-    this.$store.dispatch("chats/bindUnreadChats", this.userId);
+    useChatsStore(this.$pinia).bindUnreadChats(this.userId);
   },
 
   computed: {
-    ...mapState("auth", ["loggedIn", "userId"]),
-    //...mapState("orgs", ["currentOrg"]),
-    ...mapGetters("chats", ["unreadChats"]),
-    ...mapGetters("users", ["currentOrgUsers"]),
+    ...pickState(useAuthStore, ["loggedIn", "userId"]),
+    //...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useChatsStore, { unreadChats: "sortedUnreadChats" }),
+    ...pickState(useUsersStore, { currentOrgUsers: "orgUsers" }),
     unreadMessagesCount() {
       let that = this;
       if (this.userId && this.unreadChats)
@@ -91,7 +94,7 @@ export default {
   },
 
   methods: {
-    ...mapActions("chats", [
+    ...pickActions(useChatsStore, [
       "fsAddChat",
       "fsAddChatMember",
       "fsRemoveChatMember",

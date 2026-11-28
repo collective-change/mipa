@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import {
@@ -48,7 +48,10 @@ vi.mock("firebase/firestore", () => ({
   getFirestore: () => ({}),
   connectFirestoreEmulator: () => {},
   query: () => ({}),
-  where: () => ({})
+  where: () => ({}),
+  orderBy: () => ({}),
+  onSnapshot: () => () => {},
+  DocumentReference: class {}
 }));
 
 vi.mock("firebase/app", () => ({
@@ -60,9 +63,15 @@ vi.mock("firebase/auth", () => ({
   connectAuthEmulator: () => {}
 }));
 
+const mockHttpsCallable = vi.fn(() => vi.fn().mockResolvedValue({}));
+vi.mock("firebase/functions", () => ({
+  httpsCallable: (...args) => mockHttpsCallable(...args)
+}));
+
 vi.mock("@/boot/firebase", () => ({
   firebaseDb: {},
-  firebaseAuth: { currentUser: { uid: "test-user-123" } }
+  firebaseAuth: { currentUser: { uid: "test-user-123", email: "test@example.com" } },
+  firebaseFunctions: {}
 }));
 
 vi.mock("quasar", async (importOriginal) => {
@@ -77,8 +86,24 @@ vi.mock("@/utils/util-show-error-message", () => ({
   showErrorMessage: vi.fn()
 }));
 
-const storeModel = (await import("@/store/store-model.js")).default;
-const storeOrgs = (await import("@/store/store-orgs.js")).default;
+const { useModelStore } = await import("@/store/store-model.js");
+const { useOrgsStore } = await import("@/store/store-orgs.js");
+const { useUiStore } = await import("@/store/store-ui.js");
+const { useCalcResultsStore } = await import("@/store/store-calcResults.js");
+const { useActionsStore } = await import("@/store/store-actions.js");
+
+// A fresh Pinia with the org (rootState.orgs in the old Vuex tests) and the
+// model state set up; returns the model store.
+function createModelStore(state, rootState) {
+  const pinia = createPinia();
+  setActivePinia(pinia);
+  if (rootState && rootState.orgs) {
+    useOrgsStore(pinia).$patch({ currentOrg: rootState.orgs.currentOrg });
+  }
+  const model = useModelStore(pinia);
+  model.$patch(state);
+  return model;
+}
 
 describe("MIPA-22: Role Nodes Currency Coercion Guard", () => {
   beforeEach(() => {
@@ -154,7 +179,7 @@ describe("MIPA-22: Role Nodes Currency Coercion Guard", () => {
     });
   });
 
-  describe("Vuex Store Guard (store-model.js)", () => {
+  describe("Model Store Guard (store-model.js)", () => {
     it("updateNode: coerces currency role node unit to org currency when user attempts to change it", async () => {
       const mockState = {
         currentModel: {
@@ -186,10 +211,7 @@ describe("MIPA-22: Role Nodes Currency Coercion Guard", () => {
         }
       };
 
-      await storeModel.actions.updateNode(
-        { dispatch: vi.fn(), getters: { nodes: mockState.nodes }, state: mockState, rootState: mockRootState },
-        payload
-      );
+      await createModelStore(mockState, mockRootState).updateNode(payload);
 
       // Assert unit was coerced back to org default currency (USD)
       expect(payload.updates.unit).toBe("USD");
@@ -227,10 +249,7 @@ describe("MIPA-22: Role Nodes Currency Coercion Guard", () => {
         }
       };
 
-      await storeModel.actions.updateNode(
-        { dispatch: vi.fn(), getters: { nodes: mockState.nodes }, state: mockState, rootState: mockRootState },
-        payload
-      );
+      await createModelStore(mockState, mockRootState).updateNode(payload);
 
       expect(payload.updates.unit).toBe("boxes");
       expect(writtenNodeUpdates["node_meals"].unit).toBe("boxes");
@@ -268,10 +287,7 @@ describe("MIPA-22: Role Nodes Currency Coercion Guard", () => {
         ]
       };
 
-      await storeModel.actions.updateNodes(
-        { dispatch: vi.fn(), getters: { nodes: mockState.nodes }, state: mockState, rootState: mockRootState },
-        payload
-      );
+      await createModelStore(mockState, mockRootState).updateNodes(payload);
 
       const costUpdate = batchUpdates.find((b) => b.id === "node_cost");
       const spendingUpdate = batchUpdates.find((b) => b.id === "node_spending");
@@ -310,12 +326,11 @@ describe("MIPA-22: Role Nodes Currency Coercion Guard", () => {
         }
       };
 
-      await storeModel.actions.updateModel(
-        { dispatch: mockDispatch, getters: { nodes: mockState.nodes }, state: mockState, rootState: mockRootState },
-        payload
-      );
+      const model = createModelStore(mockState, mockRootState);
+      model.updateNodes = mockDispatch;
+      await model.updateModel(payload);
 
-      expect(mockDispatch).toHaveBeenCalledWith("updateNodes", {
+      expect(mockDispatch).toHaveBeenCalledWith({
         modelId: "model_1",
         changedNodes: [{ id: "node_custom_ben", changes: { unit: "USD" } }],
         orgCurrency: "USD"
@@ -323,7 +338,7 @@ describe("MIPA-22: Role Nodes Currency Coercion Guard", () => {
     });
   });
 
-  describe("Vuex Store Guard (store-orgs.js)", () => {
+  describe("Orgs Store Guard (store-orgs.js)", () => {
     it("updateOrg: changing organization currency propagates to all role nodes in the current model", async () => {
       const mockDispatch = vi.fn();
       const mockRootState = {
@@ -346,20 +361,19 @@ describe("MIPA-22: Role Nodes Currency Coercion Guard", () => {
       const payload = {
         id: "org_1",
         updates: {
+          name: "European Mission",
           currency: "EUR"
         }
       };
 
-      storeOrgs.actions.updateOrg(
-        { dispatch: mockDispatch, rootState: mockRootState },
-        payload
-      );
+      const model = createModelStore(mockRootState.model);
+      model.updateNodes = mockDispatch;
+      useOrgsStore().updateOrg(payload);
 
       // Wait a microtask for setDoc promise then
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(mockDispatch).toHaveBeenCalledWith(
-        "model/updateNodes",
         {
           modelId: "model_1",
           changedNodes: [
@@ -367,67 +381,103 @@ describe("MIPA-22: Role Nodes Currency Coercion Guard", () => {
             { id: "node_oc", changes: { unit: "EUR" } }
           ],
           orgCurrency: "EUR"
-        },
-        { root: true }
+        }
       );
+    });
+
+    it("clearOrgs resets the orgs collection to null", () => {
+      const pinia = createPinia();
+      setActivePinia(pinia);
+      const orgsStore = useOrgsStore(pinia);
+      orgsStore.orgs = [{ id: "o1" }];
+      orgsStore.clearOrgs();
+      expect(orgsStore.orgs).toBeNull();
+    });
+
+    it("addOrg creates organization document, member record, and main model", async () => {
+      const pinia = createPinia();
+      setActivePinia(pinia);
+      const orgsStore = useOrgsStore(pinia);
+      const modelStore = useModelStore(pinia);
+      const addOrgMainModelSpy = vi.spyOn(modelStore, "addOrgMainModel").mockResolvedValue(undefined);
+
+      await orgsStore.addOrg({ name: "New Charity Org", currency: "USD" });
+      expect(addOrgMainModelSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          currency: "USD"
+        })
+      );
+    });
+
+    it("deleteOrg calls callable cloud function and triggers model deletion", async () => {
+      const pinia = createPinia();
+      setActivePinia(pinia);
+      const orgsStore = useOrgsStore(pinia);
+      const modelStore = useModelStore(pinia);
+      const deleteModelSpy = vi.spyOn(modelStore, "deleteModel").mockResolvedValue(undefined);
+
+      await orgsStore.deleteOrg("org_delete_me");
+      expect(deleteModelSpy).toHaveBeenCalledWith("org_delete_me");
+    });
+
+    it("deleteOrg falls back to direct document deletion if callable fails", async () => {
+      const pinia = createPinia();
+      setActivePinia(pinia);
+      const orgsStore = useOrgsStore(pinia);
+      const modelStore = useModelStore(pinia);
+      const deleteModelSpy = vi.spyOn(modelStore, "deleteModel").mockResolvedValue(undefined);
+
+      mockHttpsCallable.mockReturnValueOnce(() => Promise.reject(new Error("callable-failed")));
+
+      await orgsStore.deleteOrg("org_fallback");
+      expect(deleteModelSpy).toHaveBeenCalledWith("org_fallback");
+    });
+
+    it("bindOrgs, unbindOrgs, bindCurrentOrg, and unbindCurrentOrg manage listeners", () => {
+      const pinia = createPinia();
+      setActivePinia(pinia);
+      const orgsStore = useOrgsStore(pinia);
+
+      orgsStore.bindOrgs();
+      orgsStore.unbindOrgs();
+      orgsStore.bindCurrentOrg("org_test");
+      orgsStore.unbindCurrentOrg();
     });
   });
 
   describe("UI Guard (NodeSummary.vue)", () => {
     function mountNodeSummaryWithNode(node, orgCurrency = "USD", locale = "en-us") {
-      const store = createStore({
-        modules: {
-          ui: {
-            namespaced: true,
-            state: {
-              selectedNodeId: node.id,
-              uiNodeChanged: false,
-              uiNodeChangedFields: []
-            },
-            mutations: {
-              setUiNodeChanged: vi.fn(),
-              setUiNodeChangedFields: vi.fn()
-            }
-          },
-          orgs: {
-            namespaced: true,
-            state: {
-              currentOrg: { id: "org_1", currency: orgCurrency, users: [] }
-            }
-          },
-          model: {
-            namespaced: true,
-            state: {
-              currentModel: {
-                id: "model_1",
-                currency: orgCurrency,
-                roleNodes: {
-                  orgBenefit: "node_org_benefit",
-                  orgCost: "node_org_cost"
-                }
-              },
-              nodes: [node]
-            },
-            getters: {
-              nodes: () => [node],
-              links: () => []
-            },
-            actions: {
-              updateNode: vi.fn(),
-              addLink: vi.fn()
-            }
-          },
-          calcResults: {
-            namespaced: true,
-            state: { baseline: {} }
-          },
-          actions: {
-            namespaced: true,
-            state: { matchingActions: [], actions: [] },
-            getters: { actions: () => [] }
-          }
-        }
+      const store = createPinia();
+      setActivePinia(store);
+      const ui = useUiStore(store);
+      ui.$patch({
+        selectedNodeId: node.id,
+        uiNodeChanged: false,
+        uiNodeChangedFields: []
       });
+      // The Vuex test store stubbed these mutations (addUiNodeChangedFields
+      // was not registered, so committing it was a no-op).
+      ui.setUiNodeChanged = vi.fn();
+      ui.addUiNodeChangedFields = vi.fn();
+      useOrgsStore(store).$patch({
+        currentOrg: { id: "org_1", currency: orgCurrency, users: [] }
+      });
+      const model = useModelStore(store);
+      model.$patch({
+        currentModel: {
+          id: "model_1",
+          currency: orgCurrency,
+          roleNodes: {
+            orgBenefit: "node_org_benefit",
+            orgCost: "node_org_cost"
+          }
+        },
+        nodes: [node]
+      });
+      model.updateNode = vi.fn();
+      model.addLink = vi.fn();
+      useCalcResultsStore(store).$patch({ baseline: {} });
+      useActionsStore(store).$patch({ matchingActions: [], actions: [] });
 
       const i18n = createI18n({
         legacy: true,

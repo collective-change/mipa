@@ -205,16 +205,20 @@ describe("sample organization", () => {
     };
 
     try {
-      const orgsModule = (await import("@/store/store-orgs")).default;
-      const dispatched = [];
-      const dispatch = vi.fn(async (type, payload) => {
-        dispatched.push({ type, payload });
-      });
+      const { createPinia, setActivePinia } = await import("pinia");
+      const { useOrgsStore } = await import("@/store/store-orgs");
+      const { useAdHocDocsStore } = await import("@/store/store-adHocDocs");
+      const { useCalcResultsStore } = await import("@/store/store-calcResults");
 
-      const created = await orgsModule.actions.createSampleOrg({
-        dispatch,
-        rootState: { adHocDocs: { exchangeRates: { base: "USD", rates: { USD: 1, TWD: 30, EUR: 0.8 } } } }
-      });
+      const pinia = createPinia();
+      setActivePinia(pinia);
+      const adHocDocsStore = useAdHocDocsStore(pinia);
+      adHocDocsStore.exchangeRates = { base: "USD", rates: { USD: 1, TWD: 30, EUR: 0.8 } };
+      const calcResultsStore = useCalcResultsStore(pinia);
+      const saveBaselineSpy = vi.spyOn(calcResultsStore, "saveBaseline").mockResolvedValue(undefined);
+      const orgsStore = useOrgsStore(pinia);
+
+      const created = await orgsStore.createSampleOrg();
 
       expect(created.orgId).toBeTruthy();
       expect(created.nameSlug).toBeTruthy();
@@ -238,9 +242,8 @@ describe("sample organization", () => {
       expect(byTitle[enUs.sample.actions.supermarkets.title].actionLeverage).toBeLessThan(0);
       expect(byTitle[enUs.sample.actions.report.title].actionLeverage).toBeLessThan(0);
 
-      const baselineSave = dispatched.find(d => d.type === "calcResults/saveBaseline");
-      expect(baselineSave).toBeDefined();
-      expect(baselineSave.payload.resultsType).toBe("baseline");
+      expect(saveBaselineSpy).toHaveBeenCalledTimes(1);
+      expect(saveBaselineSpy.mock.calls[0][0].resultsType).toBe("baseline");
     } finally {
       globalThis.Worker = originalWorker;
     }

@@ -197,7 +197,9 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
 import {
   calculateSroiMetrics,
   formatSroiRatio,
@@ -236,8 +238,8 @@ export default {
     }
   },
   computed: {
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("model", ["nodes"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useModelStore, ["nodes"]),
 
     actionTitle() {
       return this.action?.title || this.$t("Action");

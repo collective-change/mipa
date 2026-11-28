@@ -20,7 +20,8 @@
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useModelStore } from "@/store/store-model";
 import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
 import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
 import ModalNodeSelection from "@/components/Model/Modals/Shared/ModalNodeSelection.vue";
@@ -33,10 +34,10 @@ export default {
     "modal-node-selection": ModalNodeSelection,
   },
   computed: {
-    ...mapState("model", ["selectedNodeId"]),
+    ...pickState(useModelStore, ["selectedNodeId"]),
   },
   methods: {
-    ...mapActions("model", ["addLink"]),
+    ...pickActions(useModelStore, ["addLink"]),
 
     submitForm() {
       this.$refs.modalNodeSelection.$refs.targetNode.validate();

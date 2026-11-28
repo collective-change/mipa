@@ -1,10 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import IngestDataDialog, { SAMPLE_FINANCIAL_TABLE } from "@/components/Model/Modals/IngestDataDialog.vue";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
+import { useAuthStore } from "@/store/store-auth";
 
 const { Quasar } = All;
 const components = Object.fromEntries(
@@ -37,31 +40,15 @@ const mockNodes = [
 ];
 
 function createTestWrapper(nodes = mockNodes) {
-  const modelActions = {
-    addNode: vi.fn().mockResolvedValue({ id: "new_node_id" }),
-    updateNode: vi.fn().mockResolvedValue({})
-  };
-
-  const store = createStore({
-    modules: {
-      orgs: {
-        namespaced: true,
-        state: () => ({ currentOrg: { id: "org1", currency: "USD" } })
-      },
-      model: {
-        namespaced: true,
-        state: () => ({ currentModel: { id: "model1" } }),
-        getters: {
-          nodes: () => nodes
-        },
-        actions: modelActions
-      },
-      auth: {
-        namespaced: true,
-        state: () => ({ userEmail: "analyst@example.org" })
-      }
-    }
-  });
+  const pinia = createPinia();
+  setActivePinia(pinia);
+  useOrgsStore(pinia).$patch({ currentOrg: { id: "org1", currency: "USD" } });
+  const model = useModelStore(pinia);
+  model.$patch({ currentModel: { id: "model1" }, nodes });
+  model.addNode = vi.fn().mockResolvedValue({ id: "new_node_id" });
+  model.updateNode = vi.fn().mockResolvedValue({});
+  const modelActions = { addNode: model.addNode, updateNode: model.updateNode };
+  useAuthStore(pinia).$patch({ userEmail: "analyst@example.org" });
 
   const i18n = createI18n({
     legacy: false,
@@ -74,7 +61,7 @@ function createTestWrapper(nodes = mockNodes) {
       modelValue: true
     },
     global: {
-      plugins: [[Quasar, { components }], store, i18n],
+      plugins: [[Quasar, { components }], pinia, i18n],
       directives: {
         ClosePopup: {}
       },

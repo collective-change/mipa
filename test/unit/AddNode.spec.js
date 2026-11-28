@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import AddNode from "@/components/Model/Modals/AddNode.vue";
+import { useModelStore } from "@/store/store-model";
 
 const { Quasar } = All;
 const components = Object.fromEntries(
@@ -12,24 +13,18 @@ const components = Object.fromEntries(
 );
 
 function mountAddNode(existingNodes = []) {
-  const actions = {
-    addNode: vi.fn(),
-  };
-  const store = createStore({
-    modules: {
-      model: {
-        namespaced: true,
-        state: { nodes: existingNodes },
-        actions,
-      },
-    },
-  });
+  const pinia = createPinia();
+  setActivePinia(pinia);
+  const model = useModelStore(pinia);
+  model.$patch({ nodes: existingNodes });
+  model.addNode = vi.fn();
+  const actions = { addNode: model.addNode };
   const wrapper = mount(AddNode, {
     props: { sourceNodeId: "", newNodeRole: "" },
     global: {
       plugins: [
         [Quasar, { components, directives: { ClosePopup: All.ClosePopup } }],
-        store,
+        pinia,
         createI18n({ legacy: true, locale: "en-us", messages }),
       ],
       mocks: {

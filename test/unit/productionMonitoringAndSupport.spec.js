@@ -1,7 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useAuthStore } from "@/store/store-auth";
+import { useUsersStore } from "@/store/store-users";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
+import { useActionsStore } from "@/store/store-actions";
+import { useAdHocDocsStore } from "@/store/store-adHocDocs";
+import { useChatsStore } from "@/store/store-chats";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import PageHelp from "@/pages/PageHelp.vue";
@@ -13,64 +20,50 @@ const components = Object.fromEntries(
 );
 
 function createMockStore(customAuth = {}) {
-  return createStore({
-    modules: {
-      auth: {
-        namespaced: true,
-        state: {
-          loggedIn: true,
-          userId: "buyer-user-1",
-          user: {
-            uid: "buyer-user-1",
-            email: "buyer@tzuchi.org.tw",
-            displayName: "Tzu Chi Coordinator"
-          },
-          ...customAuth
-        }
-      },
-      orgs: {
-        namespaced: true,
-        state: {
-          currentOrg: {
-            id: "org-tzuchi",
-            name: "Tzu Chi Foundation",
-            subscriptionTier: "starter"
-          },
-          orgs: []
-        }
-      },
-      users: {
-        namespaced: true,
-        state: {
-          currentUser: { id: "buyer-user-1" }
-        }
-      },
-      model: {
-        namespaced: true,
-        state: { currentModel: null }
-      },
-      chats: {
-        namespaced: true,
-        state: {
-          unreadChats: []
-        },
-        getters: {
-          unreadChats: (state) => state.unreadChats
-        },
-        actions: {
-          bindUnreadChats: () => Promise.resolve()
-        }
-      },
-      adHocDocs: {
-        namespaced: true,
-        state: { exchangeRates: {}, appSummary: null },
-        actions: {
-          bindAppSummary: vi.fn().mockResolvedValue(null),
-          bindExchangeRates: vi.fn().mockResolvedValue(null)
-        }
-      }
-    }
+  const store = createPinia();
+  setActivePinia(store);
+  useAuthStore(store).$patch({
+    loggedIn: true,
+    userId: "buyer-user-1",
+    user: {
+      uid: "buyer-user-1",
+      email: "buyer@tzuchi.org.tw",
+      displayName: "Tzu Chi Coordinator"
+    },
+    ...customAuth
   });
+  useOrgsStore(store).$patch({
+    currentOrg: {
+      id: "org-tzuchi",
+      name: "Tzu Chi Foundation",
+      subscriptionTier: "starter"
+    },
+    orgs: []
+  });
+  useUsersStore(store).$patch({ currentUser: { id: "buyer-user-1" } });
+  useModelStore(store).$patch({ currentModel: null });
+  useChatsStore(store).$patch({ unreadChats: [] });
+  useAdHocDocsStore(store).$patch({ exchangeRates: {}, appSummary: null });
+  Object.assign(useChatsStore(store), { bindUnreadChats: () => Promise.resolve() });
+  Object.assign(useAdHocDocsStore(store), {
+    bindAppSummary: vi.fn().mockResolvedValue(null),
+    bindExchangeRates: vi.fn().mockResolvedValue(null),
+    unbindAppSummary: () => {},
+    unbindExchangeRates: () => {}
+  });
+  // Actions the old Vuex mock did not define were no-ops; keep them that way.
+  Object.assign(useUsersStore(store), {
+    bindCurrentUser: () => Promise.resolve(),
+    unbindCurrentUser: () => {},
+    bindCurrentOrgUsers: () => Promise.resolve()
+  });
+  Object.assign(useOrgsStore(store), {
+    bindCurrentOrg: () => Promise.resolve(),
+    unbindCurrentOrg: () => {}
+  });
+  Object.assign(useModelStore(store), { unbindCurrentModel: () => {}, unbindNodes: () => {} });
+  Object.assign(useActionsStore(store), { unbindMatchingActions: () => {} });
+  return store;
 }
 
 function mountComponent(Component, locale = "en-us", store = createMockStore()) {

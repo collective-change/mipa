@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useAuthStore } from "@/store/store-auth";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import PageAuth from "@/pages/PageAuth.vue";
@@ -12,16 +13,11 @@ const components = Object.fromEntries(
 );
 
 function mountPageAuth(query = {}) {
-  const store = createStore({
-    modules: {
-      auth: {
-        namespaced: true,
-        actions: {
-          registerUser: vi.fn(),
-          loginUser: vi.fn()
-        }
-      }
-    }
+  const store = createPinia();
+  setActivePinia(store);
+  Object.assign(useAuthStore(store), {
+    registerUser: vi.fn(),
+    loginUser: vi.fn()
   });
 
   const wrapper = mount(PageAuth, {

@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount, flushPromises } from "@vue/test-utils";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 import { createI18n } from "vue-i18n";
 import enUs from "../../src/i18n/en-us";
 import DraftModelDialog from "../../src/components/Model/Modals/DraftModelDialog.vue";
+import { useModelStore } from "@/store/store-model";
+import { useAdHocDocsStore } from "@/store/store-adHocDocs";
 
 const mockRequestDraft = vi.fn();
 const mockWriteDraft = vi.fn();
@@ -57,33 +59,23 @@ describe("DraftModelDialog.vue (MIPA-55 limit gate)", () => {
   ];
 
   function createWrapper() {
-    const store = createStore({
-      modules: {
-        model: {
-          namespaced: true,
-          state: {
-            currentModel: {
-              id: "model-1",
-              simulationParams: { finalTimeNumber: 120, finalTimeUnit: "months", numTimeSteps: 4 },
-              roleNodes: {}
-            }
-          },
-          getters: {
-            nodes: () => existingNodes
-          }
-        },
-        adHocDocs: {
-          namespaced: true,
-          state: {
-            exchangeRates: { base: "USD", rates: { USD: 1 } }
-          }
-        }
-      }
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    useModelStore(pinia).$patch({
+      currentModel: {
+        id: "model-1",
+        simulationParams: { finalTimeNumber: 120, finalTimeUnit: "months", numTimeSteps: 4 },
+        roleNodes: {}
+      },
+      nodes: existingNodes
+    });
+    useAdHocDocsStore(pinia).$patch({
+      exchangeRates: { base: "USD", rates: { USD: 1 } }
     });
 
     return mount(DraftModelDialog, {
       global: {
-        plugins: [store, i18n],
+        plugins: [pinia, i18n],
         mocks: {
           $route: { params: { orgId: "org-1", modelId: "model-1", orgNameSlug: "bakery" } },
           $q: { notify: vi.fn() }

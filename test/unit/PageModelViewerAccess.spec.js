@@ -1,7 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
+import { useActionsStore } from "@/store/store-actions";
+import { useUiStore } from "@/store/store-ui";
+import { useAdHocDocsStore } from "@/store/store-adHocDocs";
+import { useCalcResultsStore } from "@/store/store-calcResults";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import PageModel from "@/pages/PageModel.vue";
@@ -39,67 +45,40 @@ function createTestI18n(locale = "en-us") {
 }
 
 function createTestStore({ currentModel = null, currentOrg = null, userOrgs = [], nodes = [] } = {}) {
-  return createStore({
-    modules: {
-      orgs: {
-        namespaced: true,
-        state: {
-          currentOrg,
-          orgs: userOrgs
-        },
-        actions: {
-          bindCurrentOrg: vi.fn().mockResolvedValue(currentOrg)
-        }
-      },
-      model: {
-        namespaced: true,
-        state: {
-          currentModel,
-          nodes,
-          nodesTotalCount: nodes.length,
-          nodesLimit: 50
-        },
-        getters: {
-          nodes: (state) => state.nodes,
-          nodesTotalCount: (state) => state.nodesTotalCount
-        },
-        actions: {
-          bindCurrentModel: vi.fn().mockResolvedValue(currentModel),
-          bindNodes: vi.fn().mockResolvedValue(nodes)
-        }
-      },
-      actions: {
-        namespaced: true,
-        state: { actions: [] }
-      },
-      ui: {
-        namespaced: true,
-        state: {
-          uiNodeChanged: false,
-          uiNodeChangedFields: [],
-          selectedNodeId: null,
-          selectedNodeGroupId: null,
-          expandedNodeGroups: []
-        },
-        mutations: {
-          setExpandedNodeGroups: vi.fn(),
-          setSelectedNodeGroupId: vi.fn()
-        }
-      },
-      adHocDocs: {
-        namespaced: true,
-        actions: {
-          bindExchangeRates: vi.fn()
-        }
-      },
-      calcResults: {
-        namespaced: true,
-        actions: {
-          loadBaseline: vi.fn()
-        }
-      }
-    }
+  const pinia = createPinia();
+  setActivePinia(pinia);
+
+  const orgs = useOrgsStore(pinia);
+  orgs.$patch({ currentOrg, orgs: userOrgs });
+  orgs.bindCurrentOrg = vi.fn().mockResolvedValue(currentOrg);
+
+  const model = useModelStore(pinia);
+  model.$patch({
+    currentModel,
+    nodes,
+    nodesTotalCount: nodes.length,
+    nodesLimit: 50
   });
+  model.bindCurrentModel = vi.fn().mockResolvedValue(currentModel);
+  model.bindNodes = vi.fn().mockResolvedValue(nodes);
+
+  useActionsStore(pinia).$patch({ actions: [] });
+
+  const ui = useUiStore(pinia);
+  ui.$patch({
+    uiNodeChanged: false,
+    uiNodeChangedFields: [],
+    selectedNodeId: null,
+    selectedNodeGroupId: null,
+    expandedNodeGroups: []
+  });
+  ui.setExpandedNodeGroups = vi.fn();
+  ui.setSelectedNodeGroupId = vi.fn();
+
+  useAdHocDocsStore(pinia).bindExchangeRates = vi.fn();
+  useCalcResultsStore(pinia).loadBaseline = vi.fn();
+
+  return pinia;
 }
 
 describe("MIPA-51: PageModel org-level viewer and access guardrails", () => {

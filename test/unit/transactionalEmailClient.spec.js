@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createPinia, setActivePinia } from "pinia";
 
 const mockNotifyCreate = vi.fn();
 const mockShowErrorMessage = vi.fn();
@@ -29,11 +30,13 @@ vi.mock("firebase/firestore", () => ({
   collectionGroup: vi.fn(),
   deleteDoc: vi.fn(),
   doc: vi.fn((_db, ...segs) => ({ path: segs.join("/") })),
+  orderBy: vi.fn(),
   query: vi.fn(),
   serverTimestamp: vi.fn(() => "MOCK_TS"),
   setDoc: vi.fn(),
   updateDoc: (...args) => mockUpdateDoc(...args),
-  where: vi.fn()
+  where: vi.fn(),
+  writeBatch: vi.fn()
 }));
 
 vi.mock("firebase/auth", () => ({
@@ -75,23 +78,26 @@ vi.mock("@/boot/i18n", () => ({
   }
 }));
 
-import storeMembers from "@/store/store-members";
-import storeAuth from "@/store/store-auth";
+import { useMembersStore } from "@/store/store-members";
+import { useAuthStore } from "@/store/store-auth";
 
 describe("MIPA-44: Client store transactional email wiring", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setActivePinia(createPinia());
   });
 
   describe("store-members.js", () => {
     it("inviteMember invokes createInvitation callable with locale and notifies success", async () => {
       const callableFn = vi.fn().mockResolvedValueOnce({ data: { success: true, invitationId: "inv-1" } });
       mockHttpsCallable.mockReturnValueOnce(callableFn);
+      const membersStore = useMembersStore();
 
-      const ok = await storeMembers.actions.inviteMember(
-        {},
-        { org: { id: "org-1", name: "Tzu Chi" }, email: "teammate@tzuchi.org.tw", role: "member" }
-      );
+      const ok = await membersStore.inviteMember({
+        org: { id: "org-1", name: "Tzu Chi" },
+        email: "teammate@tzuchi.org.tw",
+        role: "member"
+      });
 
       expect(ok).toBe(true);
       expect(mockHttpsCallable).toHaveBeenCalledWith(expect.anything(), "createInvitation");
@@ -109,11 +115,13 @@ describe("MIPA-44: Client store transactional email wiring", () => {
       const err = new Error("Rate limit exceeded");
       err.code = "functions/resource-exhausted";
       mockHttpsCallable.mockReturnValueOnce(vi.fn().mockRejectedValueOnce(err));
+      const membersStore = useMembersStore();
 
-      const ok = await storeMembers.actions.inviteMember(
-        {},
-        { org: { id: "org-1", name: "Tzu Chi" }, email: "teammate@tzuchi.org.tw", role: "member" }
-      );
+      const ok = await membersStore.inviteMember({
+        org: { id: "org-1", name: "Tzu Chi" },
+        email: "teammate@tzuchi.org.tw",
+        role: "member"
+      });
 
       expect(ok).toBe(false);
       expect(mockShowErrorMessage).toHaveBeenCalledWith("Something went wrong", "Rate limit exceeded");
@@ -123,11 +131,13 @@ describe("MIPA-44: Client store transactional email wiring", () => {
     it("resendInvitation invokes resendInvitation Cloud Function and notifies on success", async () => {
       const callableFn = vi.fn().mockResolvedValueOnce({ data: { success: true, emailSent: true } });
       mockHttpsCallable.mockReturnValueOnce(callableFn);
+      const membersStore = useMembersStore();
 
-      const ok = await storeMembers.actions.resendInvitation(
-        {},
-        { orgId: "org-1", invitationId: "inv-9", email: "teammate@tzuchi.org.tw" }
-      );
+      const ok = await membersStore.resendInvitation({
+        orgId: "org-1",
+        invitationId: "inv-9",
+        email: "teammate@tzuchi.org.tw"
+      });
 
       expect(ok).toBe(true);
       expect(mockHttpsCallable).toHaveBeenCalledWith(expect.anything(), "resendInvitation");
@@ -147,11 +157,13 @@ describe("MIPA-44: Client store transactional email wiring", () => {
       const err = new Error("Too many invitations sent");
       err.code = "functions/resource-exhausted";
       mockHttpsCallable.mockReturnValueOnce(vi.fn().mockRejectedValueOnce(err));
+      const membersStore = useMembersStore();
 
-      const ok = await storeMembers.actions.resendInvitation(
-        {},
-        { orgId: "org-1", invitationId: "inv-9", email: "teammate@tzuchi.org.tw" }
-      );
+      const ok = await membersStore.resendInvitation({
+        orgId: "org-1",
+        invitationId: "inv-9",
+        email: "teammate@tzuchi.org.tw"
+      });
 
       expect(ok).toBe(false);
       expect(mockShowErrorMessage).toHaveBeenCalledWith("Something went wrong", "Too many invitations sent");
@@ -163,8 +175,9 @@ describe("MIPA-44: Client store transactional email wiring", () => {
     it("sendPasswordResetEmail invokes requestPasswordReset callable and shows toast", async () => {
       const callableFn = vi.fn().mockResolvedValueOnce({ data: { success: true, sent: true } });
       mockHttpsCallable.mockReturnValueOnce(callableFn);
+      const authStore = useAuthStore();
 
-      await storeAuth.actions.sendPasswordResetEmail({}, { email: "member@tzuchi.org.tw" });
+      await authStore.sendPasswordResetEmail({ email: "member@tzuchi.org.tw" });
 
       expect(mockHttpsCallable).toHaveBeenCalledWith(expect.anything(), "requestPasswordReset");
       expect(callableFn).toHaveBeenCalledWith({
@@ -179,8 +192,9 @@ describe("MIPA-44: Client store transactional email wiring", () => {
       const err = new Error("Too many password reset requests");
       err.code = "functions/resource-exhausted";
       mockHttpsCallable.mockReturnValueOnce(vi.fn().mockRejectedValueOnce(err));
+      const authStore = useAuthStore();
 
-      await storeAuth.actions.sendPasswordResetEmail({}, { email: "member@tzuchi.org.tw" });
+      await authStore.sendPasswordResetEmail({ email: "member@tzuchi.org.tw" });
 
       expect(mockShowErrorMessage).toHaveBeenCalledWith("Error", "Too many password reset requests");
       expect(mockSendPasswordResetEmail).not.toHaveBeenCalled();
@@ -191,8 +205,9 @@ describe("MIPA-44: Client store transactional email wiring", () => {
       unavailable.code = "functions/unavailable";
       mockHttpsCallable.mockReturnValueOnce(vi.fn().mockRejectedValueOnce(unavailable));
       mockSendPasswordResetEmail.mockResolvedValueOnce(undefined);
+      const authStore = useAuthStore();
 
-      await storeAuth.actions.sendPasswordResetEmail({}, { email: "member@tzuchi.org.tw" });
+      await authStore.sendPasswordResetEmail({ email: "member@tzuchi.org.tw" });
 
       expect(mockSendPasswordResetEmail).toHaveBeenCalledWith(expect.anything(), "member@tzuchi.org.tw");
       expect(mockNotifyCreate).toHaveBeenCalledWith("toastEmailSent");

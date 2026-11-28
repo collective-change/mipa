@@ -96,7 +96,10 @@
 </template>
 
 <script>
-import { mapState, mapActions, mapGetters } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useUsersStore } from "@/store/store-users";
+import { useChatsStore } from "@/store/store-chats";
+import { useOrgsStore } from "@/store/store-orgs";
 import { firebaseAuth } from "@/boot/firebase";
 import {
   Timestamp
@@ -125,10 +128,10 @@ export default {
     };
   },
   computed: {
-    ...mapState("users", ["currentUser"]),
-    ...mapState("chats", ["currentChat"]),
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapGetters("users", ["currentOrgUsers"]),
+    ...pickState(useUsersStore, ["currentUser"]),
+    ...pickState(useChatsStore, ["currentChat"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useUsersStore, { currentOrgUsers: "orgUsers" }),
     messagesForDisplay() {
       if (this.currentChat) {
         return this.currentChat.newestMessages;
@@ -139,7 +142,7 @@ export default {
     },
   },
   methods: {
-    ...mapActions("chats", [
+    ...pickActions(useChatsStore, [
       "fsAddChat",
       "fsAddMessage",
       "fsResetReadCount",

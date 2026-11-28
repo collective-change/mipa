@@ -301,6 +301,7 @@ import {
   mergeTimeSeries,
   SAMPLE_TIME_SERIES
 } from "@/utils/dataIngestion";
+import { useAuthStore } from "@/store/store-auth";
 import { formatNumber } from "@/utils/util-formatNumber";
 
 export default {
@@ -331,6 +332,10 @@ export default {
     };
   },
   computed: {
+    // Signed-in user's email; tolerates a missing Pinia like the old optional-chained store read.
+    authUserEmail() {
+      return this.$pinia ? useAuthStore(this.$pinia).user?.email : undefined;
+    },
     existingPoints() {
       const s = this.factor?.timeSeries || this.factor?.series;
       return Array.isArray(s) ? s : [];
@@ -363,7 +368,7 @@ export default {
     parsedResult() {
       return parseTimeSeriesData(this.rawInput, {
         sourceCitation: this.sourceCitation,
-        userEmail: this.$store?.state?.auth?.user?.email || "user"
+        userEmail: this.authUserEmail || "user"
       });
     },
     parsedPoints() {
@@ -435,7 +440,7 @@ export default {
         const provenance = {
           sourceCitation: this.sourceCitation || this.parsedResult.provenance.sourceCitation || "",
           importedAt: new Date().toISOString(),
-          importedBy: this.$store?.state?.auth?.user?.email || "user",
+          importedBy: this.authUserEmail || "user",
           pointCount: finalSeries.length,
           historicalCount: finalSeries.filter(p => !p.isPredicted).length,
           predictedCount: finalSeries.filter(p => p.isPredicted).length,

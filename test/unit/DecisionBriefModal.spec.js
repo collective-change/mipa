@@ -1,11 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import DecisionBriefModal from "@/components/Actions/Modals/DecisionBriefModal.vue";
 import ExplainRankingModal from "@/components/Actions/Modals/ExplainRankingModal.vue";
+import { useActionsStore } from "@/store/store-actions";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
 
 const { Quasar } = All;
 const components = Object.fromEntries(
@@ -36,32 +39,17 @@ const sampleActions = [
 ];
 
 function createMockStore() {
-  return createStore({
-    modules: {
-      actions: {
-        namespaced: true,
-        state: {
-          matchingActions: sampleActions
-        }
-      },
-      orgs: {
-        namespaced: true,
-        state: {
-          currentOrg: { id: "org-1", name: "Impact Network", currency: "USD" }
-        }
-      },
-      model: {
-        namespaced: true,
-        state: {
-          currentModel: { id: "mod-1", name: "Operations Model" },
-          nodes: []
-        },
-        getters: {
-          nodes: () => []
-        }
-      }
-    }
+  const pinia = createPinia();
+  setActivePinia(pinia);
+  useActionsStore(pinia).$patch({ matchingActions: sampleActions });
+  useOrgsStore(pinia).$patch({
+    currentOrg: { id: "org-1", name: "Impact Network", currency: "USD" }
   });
+  useModelStore(pinia).$patch({
+    currentModel: { id: "mod-1", name: "Operations Model" },
+    nodes: []
+  });
+  return pinia;
 }
 
 const mountOptions = (store, i18n) => ({

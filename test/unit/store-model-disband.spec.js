@@ -29,19 +29,20 @@ vi.mock("@/boot/i18n", () => ({ i18n: { global: { t: k => k } } }));
 vi.mock("quasar", () => ({ uid: () => "x", Notify: { create: () => {} } }));
 vi.mock("@/utils/util-show-error-message", () => ({ showErrorMessage: () => {} }));
 
-const storeModel = (await import("@/store/store-model.js")).default;
-const { actions, state } = storeModel;
+const { useModelStore } = await import("@/store/store-model.js");
+const { createPinia } = await import("pinia");
+const store = useModelStore(createPinia());
 
 describe("disbandNodeGroup", () => {
   it("clears parentId on child groups so they stay listed at the top level", async () => {
-    state.currentModel = { id: "model1" };
+    store.currentModel = { id: "model1" };
     currentNodeGroups = [
       { id: "parent", nodeIds: [] },
       { id: "child", nodeIds: [], parentId: "parent" },
       { id: "grandchild", nodeIds: [], parentId: "child" }
     ];
 
-    await actions.disbandNodeGroup({}, "parent");
+    await store.disbandNodeGroup("parent");
 
     const groups = written.nodeGroups;
     expect(groups.map(g => g.id)).toEqual(["child", "grandchild"]);
@@ -56,14 +57,14 @@ describe("disbandNodeGroup", () => {
   });
 
   it("re-attaches child groups to the disbanded group's parent in a three-level tree", async () => {
-    state.currentModel = { id: "model1" };
+    store.currentModel = { id: "model1" };
     currentNodeGroups = [
       { id: "root", nodeIds: [] },
       { id: "parent", nodeIds: [], parentId: "root" },
       { id: "child", nodeIds: [], parentId: "parent" }
     ];
 
-    await actions.disbandNodeGroup({}, "parent");
+    await store.disbandNodeGroup("parent");
 
     const groups = written.nodeGroups;
     expect(groups.map(g => g.id)).toEqual(["root", "child"]);

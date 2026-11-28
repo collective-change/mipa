@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useAuthStore } from "@/store/store-auth";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import LoginRegister from "@/components/Auth/LoginRegister.vue";
@@ -17,9 +18,9 @@ function mountLoginRegister(tab = "login") {
     loginUser: vi.fn(),
     sendPasswordResetEmail: vi.fn()
   };
-  const store = createStore({
-    modules: { auth: { namespaced: true, actions } }
-  });
+  const store = createPinia();
+  setActivePinia(store);
+  Object.assign(useAuthStore(store), actions);
   const wrapper = mount(LoginRegister, {
     props: { tab },
     global: {
