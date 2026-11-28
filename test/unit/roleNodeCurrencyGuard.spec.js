@@ -48,7 +48,10 @@ vi.mock("firebase/firestore", () => ({
   getFirestore: () => ({}),
   connectFirestoreEmulator: () => {},
   query: () => ({}),
-  where: () => ({})
+  where: () => ({}),
+  orderBy: () => ({}),
+  onSnapshot: () => () => {},
+  DocumentReference: class {}
 }));
 
 vi.mock("firebase/app", () => ({
@@ -60,9 +63,15 @@ vi.mock("firebase/auth", () => ({
   connectAuthEmulator: () => {}
 }));
 
+const mockHttpsCallable = vi.fn(() => vi.fn().mockResolvedValue({}));
+vi.mock("firebase/functions", () => ({
+  httpsCallable: (...args) => mockHttpsCallable(...args)
+}));
+
 vi.mock("@/boot/firebase", () => ({
   firebaseDb: {},
-  firebaseAuth: { currentUser: { uid: "test-user-123" } }
+  firebaseAuth: { currentUser: { uid: "test-user-123", email: "test@example.com" } },
+  firebaseFunctions: {}
 }));
 
 vi.mock("quasar", async (importOriginal) => {
@@ -352,6 +361,7 @@ describe("MIPA-22: Role Nodes Currency Coercion Guard", () => {
       const payload = {
         id: "org_1",
         updates: {
+          name: "European Mission",
           currency: "EUR"
         }
       };
@@ -373,6 +383,65 @@ describe("MIPA-22: Role Nodes Currency Coercion Guard", () => {
           orgCurrency: "EUR"
         }
       );
+    });
+
+    it("clearOrgs resets the orgs collection to null", () => {
+      const pinia = createPinia();
+      setActivePinia(pinia);
+      const orgsStore = useOrgsStore(pinia);
+      orgsStore.orgs = [{ id: "o1" }];
+      orgsStore.clearOrgs();
+      expect(orgsStore.orgs).toBeNull();
+    });
+
+    it("addOrg creates organization document, member record, and main model", async () => {
+      const pinia = createPinia();
+      setActivePinia(pinia);
+      const orgsStore = useOrgsStore(pinia);
+      const modelStore = useModelStore(pinia);
+      const addOrgMainModelSpy = vi.spyOn(modelStore, "addOrgMainModel").mockResolvedValue(undefined);
+
+      await orgsStore.addOrg({ name: "New Charity Org", currency: "USD" });
+      expect(addOrgMainModelSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          currency: "USD"
+        })
+      );
+    });
+
+    it("deleteOrg calls callable cloud function and triggers model deletion", async () => {
+      const pinia = createPinia();
+      setActivePinia(pinia);
+      const orgsStore = useOrgsStore(pinia);
+      const modelStore = useModelStore(pinia);
+      const deleteModelSpy = vi.spyOn(modelStore, "deleteModel").mockResolvedValue(undefined);
+
+      await orgsStore.deleteOrg("org_delete_me");
+      expect(deleteModelSpy).toHaveBeenCalledWith("org_delete_me");
+    });
+
+    it("deleteOrg falls back to direct document deletion if callable fails", async () => {
+      const pinia = createPinia();
+      setActivePinia(pinia);
+      const orgsStore = useOrgsStore(pinia);
+      const modelStore = useModelStore(pinia);
+      const deleteModelSpy = vi.spyOn(modelStore, "deleteModel").mockResolvedValue(undefined);
+
+      mockHttpsCallable.mockReturnValueOnce(() => Promise.reject(new Error("callable-failed")));
+
+      await orgsStore.deleteOrg("org_fallback");
+      expect(deleteModelSpy).toHaveBeenCalledWith("org_fallback");
+    });
+
+    it("bindOrgs, unbindOrgs, bindCurrentOrg, and unbindCurrentOrg manage listeners", () => {
+      const pinia = createPinia();
+      setActivePinia(pinia);
+      const orgsStore = useOrgsStore(pinia);
+
+      orgsStore.bindOrgs();
+      orgsStore.unbindOrgs();
+      orgsStore.bindCurrentOrg("org_test");
+      orgsStore.unbindCurrentOrg();
     });
   });
 

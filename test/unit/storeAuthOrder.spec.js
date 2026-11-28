@@ -1,30 +1,59 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createPiniaInstance } from "@/store/index";
 
+const {
+  mockLocalStorageSet,
+  mockDeleteUser,
+  mockUser,
+  mockCreateUser,
+  mockSignOut,
+  mockSendEmailVerification,
+  mockGetAdditionalUserInfo,
+  mockSignInWithEmailAndPassword,
+  mockSignInWithCustomToken,
+  mockOnAuthStateChanged,
+  mockSetDoc,
+  mockFirebaseAuth,
+  mockVerifyUserAccess,
+  mockShowErrorMessage,
+  mockIsPublicPath
+} = vi.hoisted(() => {
+  const deleteUser = vi.fn().mockResolvedValue(undefined);
+  return {
+    mockLocalStorageSet: vi.fn(),
+    mockDeleteUser: deleteUser,
+    mockUser: {
+      uid: "test-user-uid",
+      email: "invited@tzuchi.org.tw",
+      delete: deleteUser
+    },
+    mockCreateUser: vi.fn(),
+    mockSignOut: vi.fn(),
+    mockSendEmailVerification: vi.fn().mockResolvedValue(undefined),
+    mockGetAdditionalUserInfo: vi.fn(),
+    mockSignInWithEmailAndPassword: vi.fn(),
+    mockSignInWithCustomToken: vi.fn(),
+    mockOnAuthStateChanged: vi.fn(),
+    mockSetDoc: vi.fn().mockResolvedValue(undefined),
+    mockFirebaseAuth: { currentUser: null },
+    mockVerifyUserAccess: vi.fn(),
+    mockShowErrorMessage: vi.fn(),
+    mockIsPublicPath: vi.fn()
+  };
+});
+
 vi.mock("quasar", () => ({
-  LocalStorage: { set: vi.fn(), get: vi.fn() },
+  LocalStorage: { set: (...args) => mockLocalStorageSet(...args), get: vi.fn() },
   Loading: { show: vi.fn(), hide: vi.fn() },
   Notify: { create: vi.fn() }
 }));
 
-const mockDeleteUser = vi.fn().mockResolvedValue(undefined);
-const mockUser = {
-  uid: "test-user-uid",
-  email: "invited@tzuchi.org.tw",
-  delete: mockDeleteUser
-};
-
-const mockCreateUser = vi.fn();
-const mockSignOut = vi.fn();
-const mockSendEmailVerification = vi.fn().mockResolvedValue(undefined);
-const mockGetAdditionalUserInfo = vi.fn();
-
 vi.mock("firebase/auth", () => ({
   createUserWithEmailAndPassword: (...args) => mockCreateUser(...args),
-  signInWithEmailAndPassword: vi.fn(),
+  signInWithEmailAndPassword: (...args) => mockSignInWithEmailAndPassword(...args),
   signOut: (...args) => mockSignOut(...args),
   sendPasswordResetEmail: vi.fn(),
-  onAuthStateChanged: vi.fn(),
+  onAuthStateChanged: (...args) => mockOnAuthStateChanged(...args),
   sendEmailVerification: (...args) => mockSendEmailVerification(...args),
   signInWithPopup: vi.fn(),
   GoogleAuthProvider: vi.fn().mockImplementation(function () {
@@ -34,11 +63,10 @@ vi.mock("firebase/auth", () => ({
     this.addScope = vi.fn();
     this.setCustomParameters = vi.fn();
   }),
-  signInWithCustomToken: vi.fn(),
+  signInWithCustomToken: (...args) => mockSignInWithCustomToken(...args),
   getAdditionalUserInfo: (...args) => mockGetAdditionalUserInfo(...args)
 }));
 
-const mockSetDoc = vi.fn().mockResolvedValue(undefined);
 vi.mock("firebase/firestore", () => ({
   collection: vi.fn(),
   doc: vi.fn((_db, col, id) => ({ path: `${col}/${id}` })),
@@ -55,12 +83,10 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 vi.mock("@/boot/firebase", () => ({
-  firebaseAuth: { currentUser: null },
+  firebaseAuth: mockFirebaseAuth,
   firebaseDb: {},
   firebaseFunctions: {}
 }));
-
-const mockVerifyUserAccess = vi.fn();
 
 vi.mock("@/utils/earlyAccess", () => ({
   verifyUserAccess: (...args) => mockVerifyUserAccess(...args),
@@ -68,11 +94,11 @@ vi.mock("@/utils/earlyAccess", () => ({
 }));
 
 vi.mock("@/utils/util-show-error-message", () => ({
-  showErrorMessage: vi.fn()
+  showErrorMessage: (...args) => mockShowErrorMessage(...args)
 }));
 
 vi.mock("@/router/public-paths", () => ({
-  isPublicPath: vi.fn()
+  isPublicPath: (...args) => mockIsPublicPath(...args)
 }));
 
 vi.mock("@/boot/i18n", () => ({
@@ -225,6 +251,102 @@ describe("MIPA-18: store-auth registration & OAuth auth order", () => {
 
       expect(user).toBe(existingUser);
       expect(mockVerifyUserAccess).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("state setters & session actions", () => {
+    it("updates loggedIn, userId, and user state directly", () => {
+      authStore.setLoggedIn(true);
+      expect(authStore.loggedIn).toBe(true);
+
+      authStore.setUserId("user-123");
+      expect(authStore.userId).toBe("user-123");
+
+      authStore.setUser({ displayName: "Tester", email: "test@example.com" });
+      expect(authStore.user).toEqual({ displayName: "Tester", email: "test@example.com" });
+    });
+
+    it("logs in with email/password and redirects to root, or surfaces error on failure", async () => {
+      mockSignInWithEmailAndPassword.mockResolvedValueOnce({ user: mockUser });
+      await authStore.loginUser({ email: "user@example.com", password: "password" });
+      expect(mockRouter.push).toHaveBeenCalledWith("/");
+
+      mockSignInWithEmailAndPassword.mockRejectedValueOnce(new Error("auth/wrong-password"));
+      await authStore.loginUser({ email: "user@example.com", password: "wrong" });
+      expect(mockShowErrorMessage).toHaveBeenCalledWith("Error", "auth/wrong-password");
+    });
+
+    it("supports loginWithMicrosoft and loginWithApple", async () => {
+      mockGetAdditionalUserInfo.mockReturnValue({ isNewUser: false });
+      const { signInWithPopup } = await import("firebase/auth");
+
+      vi.mocked(signInWithPopup).mockResolvedValueOnce({
+        user: { uid: "ms-user", email: "ms@example.com" }
+      });
+      const msUser = await authStore.loginWithMicrosoft();
+      expect(msUser).toEqual({ uid: "ms-user", email: "ms@example.com" });
+
+      vi.mocked(signInWithPopup).mockResolvedValueOnce({
+        user: { uid: "apple-user", email: "apple@example.com" }
+      });
+      const appleUser = await authStore.loginWithApple();
+      expect(appleUser).toEqual({ uid: "apple-user", email: "apple@example.com" });
+    });
+
+    it("handles loginWithCustomToken success and error", async () => {
+      mockSignInWithCustomToken.mockResolvedValueOnce({ user: { uid: "token-user" } });
+      const customUser = await authStore.loginWithCustomToken("valid-token");
+      expect(customUser).toEqual({ uid: "token-user" });
+
+      mockSignInWithCustomToken.mockRejectedValueOnce(new Error("auth/invalid-custom-token"));
+      await expect(authStore.loginWithCustomToken("bad-token")).rejects.toThrow(
+        "auth/invalid-custom-token"
+      );
+      expect(mockShowErrorMessage).toHaveBeenCalledWith("Error", "auth/invalid-custom-token");
+    });
+
+    it("calls signOut on logoutUser", () => {
+      authStore.logoutUser();
+      expect(mockSignOut).toHaveBeenCalled();
+    });
+
+    it("handles auth state changes for logged in and logged out users", () => {
+      let authCallback;
+      mockOnAuthStateChanged.mockImplementation((_auth, cb) => {
+        authCallback = cb;
+      });
+
+      authStore.handleAuthStateChange();
+      expect(authCallback).toBeDefined();
+
+      // Logged in branch
+      mockFirebaseAuth.currentUser = { uid: "user-session-1" };
+      mockRouter.currentRoute.value = { path: "/auth" };
+      authCallback({
+        uid: "user-session-1",
+        displayName: "Session User",
+        email: "session@example.com",
+        emailVerified: true,
+        photoURL: null,
+        phoneNumber: null,
+        providerData: []
+      });
+
+      expect(authStore.loggedIn).toBe(true);
+      expect(authStore.userId).toBe("user-session-1");
+      expect(authStore.user.displayName).toBe("Session User");
+      expect(mockLocalStorageSet).toHaveBeenCalledWith("loggedIn", true);
+      expect(mockRouter.push).toHaveBeenCalledWith("/orgs");
+
+      // Logged out branch
+      mockIsPublicPath.mockReturnValue(false);
+      authCallback(null);
+
+      expect(authStore.loggedIn).toBe(false);
+      expect(authStore.userId).toBeNull();
+      expect(authStore.user).toBeNull();
+      expect(mockLocalStorageSet).toHaveBeenCalledWith("loggedIn", false);
+      expect(mockRouter.replace).toHaveBeenCalledWith("/auth");
     });
   });
 });

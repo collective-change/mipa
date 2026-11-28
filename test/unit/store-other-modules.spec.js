@@ -139,6 +139,8 @@ describe("store-index, store-users, store-chats, store-calculator & store-action
   it("store-users updates user profile and exposes orgUsers with enumerable id", async () => {
     setActivePinia(createPinia());
     const usersStore = useUsersStore();
+    expect(usersStore.orgUsers).toEqual([]);
+
     const rawUser = { email: "alice@example.com", displayName: "Alice" };
     Object.defineProperty(rawUser, "id", { value: "u1", enumerable: false });
     usersStore.currentOrgUsers = [rawUser];
@@ -154,6 +156,19 @@ describe("store-index, store-users, store-chats, store-calculator & store-action
       data: { displayName: "Alice Updated" },
       options: { merge: true }
     });
+
+    const { setDoc } = await import("firebase/firestore");
+    setDoc.mockRejectedValueOnce(new Error("permission-denied"));
+    await usersStore.updateUser({ id: "u1", updates: { displayName: "Failed" } });
+    expect(mockShowErrorMessage).toHaveBeenCalledWith(
+      "Error updating user information",
+      "permission-denied"
+    );
+
+    usersStore.bindCurrentUser();
+    usersStore.unbindCurrentUser();
+    usersStore.bindCurrentOrgUsers("org-1");
+    usersStore.unbindCurrentOrgUsers();
   });
 
   it("store-chats creates chats, manages members/messages/unread counts, and sorts unreadChats descending", async () => {
