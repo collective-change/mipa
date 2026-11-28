@@ -13,7 +13,7 @@ test.beforeAll(() => {
 test.describe("MIPA-6: User Comprehension & Visual Funnel Harness", () => {
   test("Step 1: Landing page & Registration link", async ({ page }) => {
     // 1. Visit landing page
-    await page.goto("/", { waitUntil: "load" });
+    await page.goto("/landing", { waitUntil: "load" });
     await expect(page).toHaveTitle(/longecho/i);
 
     // Save hero screenshot
