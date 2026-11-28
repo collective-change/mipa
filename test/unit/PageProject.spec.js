@@ -44,6 +44,26 @@ describe("PageProject.vue (collective-change.org front page)", () => {
     expect(text).toContain("由 Ted Hwang 建造。");
   });
 
+  it("renders the approved Japanese copy", () => {
+    const text = mountProject("ja").text();
+    expect(text).toContain("Collective Change");
+    expect(text).toContain("コストが見えている時でさえ、意思決定は十分に困難です。");
+    expect(text).toContain("Collective Change はそのためのツールを開発しています。");
+    expect(text).toContain("取り得る選択肢の中で何が全体として最善であるか");
+    expect(text).toContain("投入する前にリターンを確認できる。");
+    expect(text).toContain("開発者: Ted Hwang");
+  });
+
+  it("renders the approved Spanish copy", () => {
+    const text = mountProject("es").text();
+    expect(text).toContain("Collective Change");
+    expect(text).toContain("Las decisiones ya son bastante difíciles cuando se puede ver lo que cuestan.");
+    expect(text).toContain("Collective Change crea herramientas para eso.");
+    expect(text).toContain("entre las cosas que podrías hacer, ves cuáles son las mejores en conjunto");
+    expect(text).toContain("Ve el retorno antes de gastar.");
+    expect(text).toContain("Creado por Ted Hwang");
+  });
+
   it("links to longecho.app and the contact address", () => {
     const wrapper = mountProject("en-us");
     expect(wrapper.get('[data-testid="project-longecho-link"]').attributes("href")).toBe(
@@ -52,11 +72,15 @@ describe("PageProject.vue (collective-change.org front page)", () => {
     expect(wrapper.html()).toContain("mailto:hello@collective-change.org");
   });
 
-  it("has no missing translation keys in either locale", () => {
+  it("has no missing translation keys across all supported locales", () => {
     const keysOf = (locale) =>
       Object.keys(messages[locale]).filter((k) => k.startsWith("project")).sort();
-    expect(keysOf("en-us").length).toBe(22);
-    expect(keysOf("zh-tw")).toEqual(keysOf("en-us"));
+    const expected = keysOf("en-us");
+    expect(expected.length).toBe(22);
+    expect(keysOf("zh-tw")).toEqual(expected);
+    expect(keysOf("ja")).toEqual(expected);
+    expect(keysOf("es")).toEqual(expected);
+    expect(keysOf("zh-cn")).toEqual(expected);
   });
 });
 
