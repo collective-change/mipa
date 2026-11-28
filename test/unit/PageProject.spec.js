@@ -32,7 +32,10 @@ describe("PageProject.vue (collective-change.org front page)", () => {
     );
     expect(text).toContain("See the return before you spend.");
     expect(text).toContain("A convenience, not the point.");
-    expect(text).toContain("Built by Ted Hwang");
+    expect(text).toContain(
+      "Collective Change is an open-governance organisation dedicated to strategic coordination and systemic change."
+    );
+    expect(text).not.toContain("Ted Hwang");
   });
 
   it("renders the approved Traditional Chinese copy", () => {
@@ -41,7 +44,8 @@ describe("PageProject.vue (collective-change.org front page)", () => {
     expect(text).toContain("Collective Change 為此做工具。");
     expect(text).toContain("在你可能做的那些事裡，看見哪些整體上最好——用你自己的尺");
     expect(text).toContain("在花出去之前，先看見回收。");
-    expect(text).toContain("由 Ted Hwang 建造。");
+    expect(text).toContain("Collective Change 是一個致力於策略協作與系統性變革的開放治理組織。");
+    expect(text).not.toContain("Ted Hwang");
   });
 
   it("renders the approved Japanese copy", () => {
@@ -51,7 +55,10 @@ describe("PageProject.vue (collective-change.org front page)", () => {
     expect(text).toContain("Collective Change はそのためのツールを開発しています。");
     expect(text).toContain("取り得る選択肢の中で何が全体として最善であるか");
     expect(text).toContain("投入する前にリターンを確認できる。");
-    expect(text).toContain("開発者: Ted Hwang");
+    expect(text).toContain(
+      "Collective Change は、戦略的協調とシステム的変革に取り組むオープンガバナンス組織です。"
+    );
+    expect(text).not.toContain("Ted Hwang");
   });
 
   it("renders the approved Spanish copy", () => {
@@ -61,7 +68,10 @@ describe("PageProject.vue (collective-change.org front page)", () => {
     expect(text).toContain("Collective Change crea herramientas para eso.");
     expect(text).toContain("entre las cosas que podrías hacer, ves cuáles son las mejores en conjunto");
     expect(text).toContain("Ve el retorno antes de gastar.");
-    expect(text).toContain("Creado por Ted Hwang");
+    expect(text).toContain(
+      "Collective Change es una organización de gobernanza abierta dedicada a la coordinación estratégica y el cambio sistémico."
+    );
+    expect(text).not.toContain("Ted Hwang");
   });
 
   it("links to longecho.app and the contact address", () => {
@@ -76,7 +86,7 @@ describe("PageProject.vue (collective-change.org front page)", () => {
     const keysOf = (locale) =>
       Object.keys(messages[locale]).filter((k) => k.startsWith("project")).sort();
     const expected = keysOf("en-us");
-    expect(expected.length).toBe(22);
+    expect(expected.length).toBe(21);
     expect(keysOf("zh-tw")).toEqual(expected);
     expect(keysOf("ja")).toEqual(expected);
     expect(keysOf("es")).toEqual(expected);

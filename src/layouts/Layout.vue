@@ -19,6 +19,8 @@
           clickable
           :to="loggedIn ? '/orgs' : '/'"
         >
+          <span class="text-weight-bold text-grey-9 q-mr-sm header-org-identity">Collective Change</span>
+          <span class="text-grey-5 q-mr-sm header-org-separator" aria-hidden="true">·</span>
           <img
             :src="'/longecho/longecho-wordmark.svg'"
             alt="Longecho"
