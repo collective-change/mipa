@@ -14,6 +14,10 @@ describe("Security Audit & Hardening", () => {
       expect(rulesContent).toContain("allow read, write: if false;");
     });
 
+    it("explicitly denies all client reads and writes to the server-only ops/ subtree (todo281)", () => {
+      expect(rulesContent).toMatch(/match \/ops\/\{document=\*\*\}\s*\{\s*allow read, write: if false;\s*\}/);
+    });
+
     it("enforces authentication on userInOrg helper", () => {
       expect(rulesContent).toMatch(/function userInOrg\(orgId\) \{\s*return request\.auth != null/);
     });

@@ -35,3 +35,6 @@ export {
 export {
   submitSupportTicket
 } from "./support/supportIntake";
+export {
+  opsStoreManager
+} from "./ops/opsStoreManager";
