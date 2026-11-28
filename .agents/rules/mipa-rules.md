@@ -46,6 +46,20 @@ npm test --prefix functions  # Cloud functions tests
 - Emulators (when `useEmulators=true` in `.env`):
   `firebase emulators:start --only auth,firestore,functions --project demo-mipa --import initial-firestore-emulator-data`
 
+## Local Services & Emulators (Standing Rule)
+
+This machine is often unattended, so a dispatched run must never raise a permission dialog a
+person is not there to answer.
+
+- A dispatched run **must not start a local emulator, dev server, or any other long-lived,
+  port-binding process unless the task genuinely requires it**. Most tasks (a code change, a
+  push, a PR, a doc edit) require none.
+- When a local environment **is** genuinely required, the **only sanctioned way** is
+  `mipa-operations/scripts/mipa-local-up.sh` — it is idempotent, checks each port first, and
+  fails loudly instead of starting a second emulator on a taken port.
+- A run must not **leave** an emulator/dev server behind; if it started one it stops it before
+  it finishes.
+
 ## Shared Backlog Workflow (Cross-Conversation)
 - **Backlog file**: `docs/BACKLOG.md` is the single source of truth for features, fixes, and ideas across conversations.
 - **Adding ideas**: When the user asks to save, note, or queue an idea from any conversation, append it under `## Queue (Priority Order)` in `docs/BACKLOG.md` with status `### [TODO] <Title>`.
