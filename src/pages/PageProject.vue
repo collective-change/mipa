@@ -1,6 +1,12 @@
 <template>
   <q-page class="project-page">
     <section class="project-container q-py-xl q-px-md">
+      <img
+        :src="'/collective-change/collective-change-symbol.svg'"
+        :alt="$t('projectTitle')"
+        class="project-mark q-mb-lg"
+        data-testid="project-mark"
+      />
       <h1 class="text-h3 text-weight-bolder text-grey-9 q-mt-none q-mb-lg" data-testid="project-title">
         {{ $t("projectTitle") }}
       </h1>
@@ -46,6 +52,11 @@ export default {
 .project-container {
   max-width: 720px;
   margin: 0 auto;
+}
+.project-mark {
+  width: 88px;
+  height: 88px;
+  display: block;
 }
 .project-list li {
   margin-bottom: 0.75rem;

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <!-- Single symmetrical unit centered at (100, 100) facing down (90 deg) -->
+    <!-- Geometry:
+         - Ring centerline radius R = 74.5
+         - Node circle: true geometric <circle cx="100" cy="174.5" r="17.5" />
+         - Inner arc edge: concave circular arc centered at (100, 174.5) with radius 24.5 (7 px uniform gap)
+         - Outer arc radius = 82.5, inner arc radius = 66.5 (thickness = 16)
+         - Outer rounded cap: semicircle radius = 8.0 centered at +/- 42.5 deg from bottom center -->
+    <g id="unit">
+      <!-- Right-side arc -->
+      <path d="M 155.70 160.87
+               A 8 8 0 0 0 144.88 149.06
+               A 66.5 66.5 0 0 1 122.49 162.55
+               A 24.5 24.5 0 0 1 124.21 178.41
+               A 82.5 82.5 0 0 0 155.70 160.87 Z"
+            fill="currentColor" />
+
+      <!-- Left-side arc (exact mirror across x = 100) -->
+      <path d="M 44.30 160.87
+               A 8 8 0 0 1 55.12 149.06
+               A 66.5 66.5 0 0 0 77.51 162.55
+               A 24.5 24.5 0 0 0 75.79 178.41
+               A 82.5 82.5 0 0 1 44.30 160.87 Z"
+            fill="currentColor" />
+
+      <!-- Central node circle -->
+      <circle cx="100" cy="174.5" r="17.5" fill="currentColor" />
+    </g>
+  </defs>
+
+  <!-- Bottom unit (0 deg) - Dark Blue -->
+  <g color="#155D9C">
+    <use href="#unit" />
+  </g>
+
+  <!-- Top-Left unit (120 deg clockwise) - Medium Blue -->
+  <g color="#428BCA" transform="rotate(120 100 100)">
+    <use href="#unit" />
+  </g>
+
+  <!-- Top-Right unit (240 deg clockwise) - Light Blue -->
+  <g color="#86C3F7" transform="rotate(240 100 100)">
+    <use href="#unit" />
+  </g>
+</svg>
