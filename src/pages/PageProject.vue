@@ -29,7 +29,7 @@
       <p class="text-body2 text-grey-8 q-mt-lg"><em>{{ $t("projectAside") }}</em></p>
 
       <p class="text-body2 text-grey-8 q-mt-xl" data-testid="project-byline">
-        {{ $t("projectBuiltByPrefix") }}<strong>Ted Hwang</strong>{{ $t("projectBuiltBySuffix") }}
+        {{ $t("projectAboutOrg") }} ·
         <a href="mailto:hello@collective-change.org">hello@collective-change.org</a>
       </p>
     </section>
