@@ -3,9 +3,9 @@ const routes = [
     path: "/",
     component: () => import("@/layouts/Layout.vue"),
     children: [
-      { path: "", component: () => import("@/pages/PageLanding.vue") },
+      { path: "", component: () => import("@/pages/PageProject.vue") },
       { path: "/orgs", name: "orgs", component: () => import("@/pages/PageOrgs.vue") },
-      { path: "/about", name: "about", component: () => import("@/pages/PageLanding.vue") },
+      { path: "/about", name: "about", component: () => import("@/pages/PageProject.vue") },
       { path: "/landing", name: "landing", component: () => import("@/pages/PageLanding.vue") },
       //{ path: "/teams", component: () => import("@/pages/PageTeams.vue") },
       //{ path: "/todo", component: () => import("@/pages/PageTodo.vue") },
