@@ -3,6 +3,15 @@
     <!-- Hero Section -->
     <section class="landing-hero q-py-xl q-px-md">
       <div class="landing-container text-center">
+        <div class="q-mb-md">
+          <img
+            :src="'/longecho/longecho-wordmark.svg'"
+            alt="Longecho"
+            class="landing-wordmark"
+            style="height: 40px; max-width: 100%;"
+          />
+        </div>
+
         <q-badge
           color="blue-1"
           text-color="primary"

@@ -19,7 +19,13 @@
           clickable
           :to="loggedIn ? '/orgs' : '/'"
         >
-          <q-toolbar-title shrink class="text-weight-bold text-primary"
+          <img
+            :src="'/longecho/longecho-wordmark.svg'"
+            alt="Longecho"
+            class="header-wordmark vertical-middle"
+            style="height: 24px; max-width: 140px;"
+          />
+          <q-toolbar-title shrink class="text-weight-bold text-primary sr-only"
             >Longecho</q-toolbar-title
           >
         </q-btn>
