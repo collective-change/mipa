@@ -19,7 +19,8 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { pickActions } from "@/store/pinia-helpers";
+import { useOrgsStore } from "@/store/store-orgs";
 import mixinAddEditOrg from "@/mixins/mixin-add-edit-org";
 
 export default {
@@ -32,7 +33,7 @@ export default {
   },
 
   methods: {
-    ...mapActions("orgs", ["updateOrg"]),
+    ...pickActions(useOrgsStore, ["updateOrg"]),
     submitOrg() {
       this.updateOrg({
         id: this.id,

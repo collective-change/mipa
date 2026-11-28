@@ -40,7 +40,7 @@ describe("MIPA-45: Unbounded Firestore Read Guard & Read Cost Measurement", () =
     const modelSource = fs.readFileSync(path.resolve(process.cwd(), "src/store/store-model.js"), "utf8");
     const modelScan = scanSourceForUnboundedReads(modelSource, "src/store/store-model.js");
     expect(modelScan.violations).toEqual([]);
-    expect(modelScan.approvedExceptionsHit.some((e) => e.id === "MIPA-23-LOAD-ALL" && e.line === 334)).toBe(true);
+    expect(modelScan.approvedExceptionsHit.some((e) => e.id === "MIPA-23-LOAD-ALL" && e.line === 388)).toBe(true);
 
     // 3. MIPA-38: PageModelDossier.vue default fetchNodes branch passes; explicit Load-All branch is dated/explained
     const dossierSource = fs.readFileSync(path.resolve(process.cwd(), "src/pages/PageModelDossier.vue"), "utf8");

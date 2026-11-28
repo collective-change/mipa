@@ -1,7 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useAuthStore } from "@/store/store-auth";
+import { useOrgsStore } from "@/store/store-orgs";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import PageTerms from "@/pages/PageTerms.vue";
@@ -16,40 +18,32 @@ const components = Object.fromEntries(
 );
 
 function createMockStore(customAuth = {}) {
-  return createStore({
-    modules: {
-      auth: {
-        namespaced: true,
-        state: {
-          loggedIn: true,
-          userId: "test-user-123",
-          user: {
-            uid: "test-user-123",
-            email: "founder@collective-change.org",
-            displayName: "Test Founder",
-            emailVerified: true
-          },
-          ...customAuth
-        },
-        actions: {
-          deleteAccount: vi.fn()
-        }
-      },
-      orgs: {
-        namespaced: true,
-        state: {
-          orgs: [
-            {
-              id: "org-1",
-              name: "Climate Action Initiative",
-              currency: "USD",
-              superAdmins: ["test-user-123"]
-            }
-          ]
-        }
-      }
-    }
+  const store = createPinia();
+  setActivePinia(store);
+  const auth = useAuthStore(store);
+  auth.$patch({
+    loggedIn: true,
+    userId: "test-user-123",
+    user: {
+      uid: "test-user-123",
+      email: "founder@collective-change.org",
+      displayName: "Test Founder",
+      emailVerified: true
+    },
+    ...customAuth
   });
+  auth.deleteAccount = vi.fn();
+  useOrgsStore(store).$patch({
+    orgs: [
+      {
+        id: "org-1",
+        name: "Climate Action Initiative",
+        currency: "USD",
+        superAdmins: ["test-user-123"]
+      }
+    ]
+  });
+  return store;
 }
 
 function mountComponent(Component, locale = "en-us", store = createMockStore()) {

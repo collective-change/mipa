@@ -1,7 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useAuthStore } from "@/store/store-auth";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useMembersStore } from "@/store/store-members";
+import { useUsersStore } from "@/store/store-users";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import PageOrgMembers from "@/pages/PageOrgMembers.vue";
@@ -39,29 +43,14 @@ function mountPageOrgMembers(options = {}) {
     unbindOrgInvitations: vi.fn()
   };
 
-  const store = createStore({
-    modules: {
-      auth: {
-        namespaced: true,
-        state: { userId: options.userId || "user-admin-1" }
-      },
-      orgs: {
-        namespaced: true,
-        state: { currentOrg }
-      },
-      members: {
-        namespaced: true,
-        state: { orgInvitations: invitations },
-        actions
-      },
-      users: {
-        namespaced: true,
-        getters: {
-          currentOrgUsers: () => users
-        }
-      }
-    }
-  });
+  const store = createPinia();
+  setActivePinia(store);
+  useAuthStore(store).$patch({ userId: options.userId || "user-admin-1" });
+  useOrgsStore(store).$patch({ currentOrg });
+  const members = useMembersStore(store);
+  members.$patch({ orgInvitations: invitations });
+  Object.assign(members, actions);
+  useUsersStore(store).$patch({ currentOrgUsers: users });
 
   const wrapper = mount(PageOrgMembers, {
     global: {
@@ -95,7 +84,6 @@ describe("PageOrgMembers.vue - Role Explanations & Invitation Resend", () => {
     await wrapper.vm.resend(invitations[0]);
 
     expect(actions.resendInvitation).toHaveBeenCalledWith(
-      expect.anything(),
       expect.objectContaining({
         orgId: "org-1",
         invitationId: "inv-1",

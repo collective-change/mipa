@@ -26,7 +26,8 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useAdHocDocsStore } from "@/store/store-adHocDocs";
 import { sampleCurrencyFor } from "@/utils/sample-org";
 
 export const PRIORITY_CURRENCIES = [
@@ -114,7 +115,7 @@ export default {
     };
   },
   computed: {
-    ...mapState("adHocDocs", ["exchangeRates"]),
+    ...pickState(useAdHocDocsStore, ["exchangeRates"]),
     currencies() {
       return getOrderedCurrencies(this.exchangeRates?.rates);
     }

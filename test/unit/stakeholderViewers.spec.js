@@ -1,10 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import ConfigOrgModel from "@/components/Model/Modals/ConfigOrgModel.vue";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
 import { checkSeatCapacity } from "../../functions/src/orgMembers";
 
 const { Quasar } = All;
@@ -66,19 +68,12 @@ function mountConfigOrgModel(options = {}) {
 
   const updateModelMock = vi.fn();
 
-  const store = createStore({
-    modules: {
-      orgs: {
-        namespaced: true,
-        state: { currentOrg: { id: "org-1", name: "Impact Org" } }
-      },
-      model: {
-        namespaced: true,
-        state: { currentModel, nodes },
-        actions: { updateModel: updateModelMock }
-      }
-    }
-  });
+  const store = createPinia();
+  setActivePinia(store);
+  useOrgsStore(store).$patch({ currentOrg: { id: "org-1", name: "Impact Org" } });
+  const model = useModelStore(store);
+  model.$patch({ currentModel, nodes });
+  model.updateModel = updateModelMock;
 
   const i18n = createTestI18n(options.locale || "en-us");
 
@@ -138,7 +133,7 @@ describe("MIPA-15: Stakeholder Viewers UI & Governance", () => {
 
     wrapper.vm.submitModel();
     expect(updateModelMock).toHaveBeenCalledTimes(1);
-    const callArgs = updateModelMock.mock.calls[0][1];
+    const callArgs = updateModelMock.mock.calls[0][0];
     expect(callArgs.modelId).toBe("model-1");
     expect(callArgs.updates.viewers.emails).toContain("board-director@foundation.org");
     expect(callArgs.updates.viewers.emails).toContain("existing-viewer@example.com");

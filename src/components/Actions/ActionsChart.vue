@@ -5,7 +5,10 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useActionsStore } from "@/store/store-actions";
+import { useUiActionStore } from "@/store/store-uiAction";
+import { useUiStore } from "@/store/store-ui";
 import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import { formatNumber } from "@/utils/util-formatNumber";
 import * as d3 from "d3";
@@ -144,11 +147,11 @@ export default {
   },
 
   computed: {
-    //...mapGetters("settings", ["settings"]),
-    ...mapState("actions", ["matchingActions"]),
-    ...mapState("uiAction", ["uiActionChanged"]),
-    ...mapState("ui", ["selectedActionId"]),
-    ...mapGetters("actions", ["blockingRelationshipsOfMatchingActions"]),
+    //...pickState(useSettingsStore, ["settings"]),
+    ...pickState(useActionsStore, ["matchingActions"]),
+    ...pickState(useUiActionStore, ["uiActionChanged"]),
+    ...pickState(useUiStore, ["selectedActionId"]),
+    ...pickState(useActionsStore, ["blockingRelationshipsOfMatchingActions"]),
 
     chartableActions() {
       if (this.blockingRelationshipsOfMatchingActions)
@@ -183,12 +186,12 @@ export default {
           })
 
           .onOk(() => {
-            this.$store.dispatch("ui/setSelectedActionId", d.id);
+            useUiStore(this.$pinia).setSelectedActionId(d.id);
             bubbles.classed("selected", false);
             bubbles.filter((td) => td === d).classed("selected", true);
           });
       } else {
-        this.$store.dispatch("ui/setSelectedActionId", d.id);
+        useUiStore(this.$pinia).setSelectedActionId(d.id);
         bubbles.classed("selected", false);
         bubbles.filter((td) => td === d).classed("selected", true);
       }

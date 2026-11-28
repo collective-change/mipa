@@ -1,7 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useModelStore } from "@/store/store-model";
+import { useUiStore } from "@/store/store-ui";
+import { useCalcResultsStore } from "@/store/store-calcResults";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import NodeSummary from "@/components/Model/NodeSummary.vue";
@@ -59,40 +62,26 @@ function mountNodeSummary(selectedId = "node_meals", locale = "en-us") {
     setSelectedNodeId: vi.fn()
   };
 
-  const store = createStore({
-    modules: {
-      model: {
-        namespaced: true,
-        state: {
-          currentModel: { id: "test-model-1", roleNodes: {} },
-          nodes: currentMockNodes
-        },
-        getters: {
-          nodes: () => currentMockNodes,
-          links: () => []
-        },
-        actions
-      },
-      ui: {
-        namespaced: true,
-        state: {
-          selectedNodeId: selectedId,
-          uiNodeChanged: false,
-          uiNodeChangedFields: []
-        },
-        actions: uiActions,
-        mutations: {
-          setUiNodeChanged: vi.fn(),
-          addUiNodeChangedFields: vi.fn()
-        }
-      },
-      calcResults: {
-        namespaced: true,
-        state: {
-          baseline: { timeSPoints: [], nodesValues: {} }
-        }
-      }
-    }
+  const store = createPinia();
+  setActivePinia(store);
+  const model = useModelStore(store);
+  model.$patch({
+    currentModel: { id: "test-model-1", roleNodes: {} },
+    nodes: currentMockNodes
+  });
+  Object.assign(model, actions);
+  const ui = useUiStore(store);
+  ui.$patch({
+    selectedNodeId: selectedId,
+    uiNodeChanged: false,
+    uiNodeChangedFields: []
+  });
+  Object.assign(ui, uiActions, {
+    setUiNodeChanged: vi.fn(),
+    addUiNodeChangedFields: vi.fn()
+  });
+  useCalcResultsStore(store).$patch({
+    baseline: { timeSPoints: [], nodesValues: {} }
   });
 
   const wrapper = mount(NodeSummary, {
@@ -230,7 +219,6 @@ describe("NodeSummary.vue - Formula Autocomplete & Syntax Helpers", () => {
     expect(wrapper.vm.nodeToSubmit.influencers).toContain("node_budget");
     // 2. Dispatches addLink for the auto-linked factor
     expect(actions.addLink).toHaveBeenCalledWith(
-      expect.anything(),
       expect.objectContaining({
         modelId: "test-model-1",
         link: expect.objectContaining({
@@ -242,7 +230,6 @@ describe("NodeSummary.vue - Formula Autocomplete & Syntax Helpers", () => {
     );
     // 3. updateNode receives sysFormula with $<nodeId>
     expect(actions.updateNode).toHaveBeenCalledWith(
-      expect.anything(),
       expect.objectContaining({
         updates: expect.objectContaining({
           sysFormula: "$node_budget * 0.1",
@@ -293,7 +280,6 @@ describe("NodeSummary.vue - Formula Autocomplete & Syntax Helpers", () => {
       wrapper.vm.submitNode();
 
       expect(actions.updateNode).toHaveBeenCalledWith(
-        expect.anything(),
         expect.objectContaining({
           updates: expect.objectContaining({
             symbolFormula: "$node_volunteers * 15",

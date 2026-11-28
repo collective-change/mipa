@@ -53,7 +53,9 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useActionsStore } from "@/store/store-actions";
+import { useUiStore } from "@/store/store-ui";
 import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import AddAction from "@/components/Actions/Modals/AddAction.vue";
 export default {
@@ -92,14 +94,14 @@ export default {
   },
 
   computed: {
-    //...mapGetters("settings", ["settings"]),
-    ...mapState("actions", ["actions"]),
+    //...pickState(useSettingsStore, ["settings"]),
+    ...pickState(useActionsStore, ["actions"]),
   },
 
   methods: {
     onRowClick(evt, row) {
       console.log("clicked on", row.id);
-      this.$store.dispatch("ui/setSelectedActionId", row.id);
+      useUiStore(this.$pinia).setSelectedActionId(row.id);
     },
     // emulate fetching data from server
     addRow() {

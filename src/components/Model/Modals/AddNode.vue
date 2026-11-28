@@ -43,7 +43,8 @@
 </template>
 
 <script>
-import { mapActions, mapState } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useModelStore } from "@/store/store-model";
 import { camelize } from "@/utils/util-camelize";
 import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
 import ModalButtons from "@/components/Shared/ModalComponents/ModalButtons.vue";
@@ -68,11 +69,11 @@ export default {
   },
 
   computed: {
-    ...mapState("model", ["nodes"]),
+    ...pickState(useModelStore, ["nodes"]),
   },
 
   methods: {
-    ...mapActions("model", ["addNode"]),
+    ...pickActions(useModelStore, ["addNode"]),
 
     onNameUpdated(val) {
       this.nodeToSubmit.name = val;

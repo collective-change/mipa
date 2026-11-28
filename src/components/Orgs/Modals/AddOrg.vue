@@ -19,7 +19,8 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { pickActions } from "@/store/pinia-helpers";
+import { useOrgsStore } from "@/store/store-orgs";
 import mixinAddEditOrg from "@/mixins/mixin-add-edit-org";
 import { sampleCurrencyFor } from "@/utils/sample-org";
 
@@ -46,7 +47,7 @@ export default {
     };
   },
   methods: {
-    ...mapActions("orgs", ["addOrg"]),
+    ...pickActions(useOrgsStore, ["addOrg"]),
 
     submitOrg() {
       this.addOrg(this.orgToSubmit);

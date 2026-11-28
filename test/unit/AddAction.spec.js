@@ -1,10 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import AddAction from "@/components/Actions/Modals/AddAction.vue";
+import { useActionsStore } from "@/store/store-actions";
+import { useModelStore } from "@/store/store-model";
+import { useOrgsStore } from "@/store/store-orgs";
 
 const { Quasar } = All;
 const components = Object.fromEntries(
@@ -12,9 +15,10 @@ const components = Object.fromEntries(
 );
 
 function mountAddAction(options = {}) {
-  const actions = {
-    addAction: vi.fn(),
-  };
+  const store = createPinia();
+  setActivePinia(store);
+  const actions = useActionsStore(store);
+  actions.addAction = vi.fn();
 
   const sampleNodes = [
     {
@@ -33,29 +37,12 @@ function mountAddAction(options = {}) {
     }
   ];
 
-  const store = createStore({
-    modules: {
-      actions: {
-        namespaced: true,
-        actions,
-      },
-      model: {
-        namespaced: true,
-        state: {
-          nodes: sampleNodes,
-          currentModel: { id: "model-1", name: "Main Model" }
-        },
-        getters: {
-          nodes: () => sampleNodes
-        }
-      },
-      orgs: {
-        namespaced: true,
-        state: {
-          currentOrg: { id: "org-1", name: "Test Org", currency: "TWD" }
-        }
-      }
-    },
+  useModelStore(store).$patch({
+    nodes: sampleNodes,
+    currentModel: { id: "model-1", name: "Main Model" }
+  });
+  useOrgsStore(store).$patch({
+    currentOrg: { id: "org-1", name: "Test Org", currency: "TWD" }
   });
 
   const wrapper = mount(AddAction, {
@@ -131,7 +118,7 @@ describe("AddAction.vue", () => {
     await wrapper.vm.saveDraftAction();
 
     expect(actions.addAction).toHaveBeenCalled();
-    const submitted = actions.addAction.mock.calls[0][1];
+    const submitted = actions.addAction.mock.calls[0][0];
     expect(submitted.title).toBe("自建太陽能光電系統");
     expect(submitted.estSpending).toBe(500000);
     expect(submitted.orgId).toBe("org-1");

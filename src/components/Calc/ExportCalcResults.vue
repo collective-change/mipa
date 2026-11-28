@@ -10,7 +10,10 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
+import { useCalcResultsStore } from "@/store/store-calcResults";
 
 export default {
   // attributes (icon, flat, no-caps...) go to the button, not the wrapper
@@ -21,10 +24,10 @@ export default {
     return {};
   },
   computed: {
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("model", ["currentModel"]),
-    ...mapGetters("model", ["nodes"]),
-    ...mapState("calcResults", ["baseline", "resultsOfAction"])
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useModelStore, ["currentModel"]),
+    ...pickState(useModelStore, { nodes: "nodesList" }),
+    ...pickState(useCalcResultsStore, ["baseline", "resultsOfAction"])
   },
   methods: {
     async exportCalcResults() {
@@ -51,8 +54,7 @@ export default {
             ".tsv";
           break;
         case "resultsOfAction":
-          await this.$store.dispatch(
-            "calcResults/loadResultsOfAction",
+          await useCalcResultsStore(this.$pinia).loadResultsOfAction(
             this.actionId
           );
           tsvContent += prepResultsOfActionArray(

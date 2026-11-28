@@ -44,7 +44,8 @@
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useMembersStore } from "@/store/store-members";
 import { firebaseAuth } from "@/boot/firebase";
 
 export default {
@@ -55,10 +56,10 @@ export default {
     };
   },
   computed: {
-    ...mapState("members", ["myInvitations"])
+    ...pickState(useMembersStore, ["myInvitations"])
   },
   methods: {
-    ...mapActions("members", [
+    ...pickActions(useMembersStore, [
       "acceptInvitation",
       "deleteInvitation",
       "sendVerificationEmail",

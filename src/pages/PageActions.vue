@@ -39,7 +39,11 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useActionsStore } from "@/store/store-actions";
+import { useUiStore } from "@/store/store-ui";
+import { useUiActionStore } from "@/store/store-uiAction";
+import { useModelStore } from "@/store/store-model";
 import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import ActionsList from "@/components/Actions/ActionsList.vue";
 import ActionsChart from "@/components/Actions/ActionsChart.vue";
@@ -78,9 +82,9 @@ export default {
         (a) => a.actionLeverage > 0 && isFinite(a.actionLeverage)
       );
     },
-    ...mapState("actions", ["matchingActions"]),
-    ...mapState("ui", ["selectedActionId"]),
-    ...mapState("uiAction", ["uiActionChanged"]),
+    ...pickState(useActionsStore, ["matchingActions"]),
+    ...pickState(useUiStore, ["selectedActionId"]),
+    ...pickState(useUiActionStore, ["uiActionChanged"]),
   },
   created() {
     (async () => {
@@ -91,8 +95,8 @@ export default {
 
       // Actions are bound with pagination / bounding by ActionsList.
       let orgId = this.$route.params.orgId;
-      this.$store.dispatch("model/bindCurrentModel", orgId);
-      this.$store.dispatch("model/bindNodes", orgId);
+      useModelStore(this.$pinia).bindCurrentModel(orgId);
+      useModelStore(this.$pinia).bindNodes(orgId);
     })();
   },
 
@@ -100,7 +104,7 @@ export default {
     selectedAction: function () {
       if (this.actions) {
         let found = this.actions.find(function (action) {
-          return action.id == this.$store.state.ui.selectedActionId;
+          return action.id == useUiStore(this.$pinia).selectedActionId;
         });
         console.log("found", found);
         return found;

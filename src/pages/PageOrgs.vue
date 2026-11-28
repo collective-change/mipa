@@ -46,7 +46,9 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useSettingsStore } from "@/store/store-settings";
+import { useOrgsStore } from "@/store/store-orgs";
 import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import { showErrorMessage } from "@/utils/util-show-error-message";
 import NoOrgs from "@/components/Orgs/NoOrgs.vue";
@@ -64,8 +66,8 @@ export default {
   },
 
   computed: {
-    ...mapGetters("settings", ["settings"]),
-    ...mapState("orgs", ["orgs"]),
+    ...pickState(useSettingsStore, ["settings"]),
+    ...pickState(useOrgsStore, ["orgs"]),
     hasSample() {
       return (this.orgs || []).some(org => org.isSample);
     }
@@ -75,7 +77,7 @@ export default {
     async createSample() {
       this.creatingSample = true;
       try {
-        const { orgId, nameSlug } = await this.$store.dispatch("orgs/createSampleOrg");
+        const { orgId, nameSlug } = await useOrgsStore(this.$pinia).createSampleOrg();
         this.$router.push(`/org/${nameSlug}/model/${orgId}/${orgId}`);
       } catch (error) {
         showErrorMessage(this.$t("sampleFailed"), error.message);
@@ -92,14 +94,14 @@ export default {
         !firebaseAuth.currentUser // define the condition as you like
       )
         await new Promise(resolve => setTimeout(resolve, 200));
-      this.$store.dispatch("orgs/bindOrgs");
+      useOrgsStore(this.$pinia).bindOrgs();
     })();
     //console.log("above code doesn't block main function stack");
   },
 
 
   beforeUnmount() {
-    this.$store.dispatch("orgs/unbindOrgs");
+    useOrgsStore(this.$pinia).unbindOrgs();
   },
 
   watch: {

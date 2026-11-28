@@ -93,7 +93,10 @@
 </template>
 
 <script>
-import { mapState, mapActions, mapGetters } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useSettingsStore } from "@/store/store-settings";
+import { useAuthStore } from "@/store/store-auth";
+import { useOrgsStore } from "@/store/store-orgs";
 import EditOrg from "@/components/Orgs/Modals/EditOrg.vue";
 
 export default {
@@ -104,11 +107,11 @@ export default {
     };
   },
   computed: {
-    ...mapGetters("settings", ["settings"]),
-    ...mapState("auth", ["userId"]),
+    ...pickState(useSettingsStore, ["settings"]),
+    ...pickState(useAuthStore, ["userId"]),
   },
   methods: {
-    ...mapActions("orgs", ["updateOrg", "deleteOrg"]),
+    ...pickActions(useOrgsStore, ["updateOrg", "deleteOrg"]),
     showEditOrgModal() {
       this.showEditOrg = true;
     },

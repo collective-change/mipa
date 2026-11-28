@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createStore } from "vuex";
+import { createPinia } from "pinia";
 
 const mockNotifyCreate = vi.fn();
 const mockShowErrorMessage = vi.fn();
@@ -144,32 +144,24 @@ vi.mock("firebase/firestore", () => {
   };
 });
 
-const { firestoreMutations } = await import("@/store/firestore-bind");
-const modelModule = (await import("@/store/store-model")).default;
-const { DEFAULT_NODES_LIMIT } = await import("@/store/store-model");
+const { useModelStore, DEFAULT_NODES_LIMIT } = await import("@/store/store-model");
 
 const flushMicrotasks = () => new Promise((resolve) => setTimeout(resolve, 15));
 
 function makeTestStore({ currentModel = null, nodes = [], orgCurrency = "USD" } = {}) {
-  Object.assign(modelModule.state, {
+  const pinia = createPinia();
+  // The orgs store's state, as the model store reads it for the org currency.
+  pinia.state.value.orgs = {
+    currentOrg: { id: "org-1", currency: orgCurrency }
+  };
+  const store = useModelStore(pinia);
+  store.$patch({
     currentModel,
     nodes,
     nodesTotalCount: null,
     nodesLimit: DEFAULT_NODES_LIMIT
   });
-
-  return createStore({
-    mutations: { ...firestoreMutations },
-    modules: {
-      model: modelModule,
-      orgs: {
-        namespaced: true,
-        state: () => ({
-          currentOrg: { id: "org-1", currency: orgCurrency }
-        })
-      }
-    }
-  });
+  return store;
 }
 
 describe("store-model characterization (current behavior)", () => {
@@ -212,7 +204,7 @@ describe("store-model characterization (current behavior)", () => {
         data: () => ({ symbol })
       }));
 
-      await store.dispatch("model/addOrgMainModel", {
+      await store.addOrgMainModel({
         orgId: "org-1",
         modelId: "model-1",
         currency: "TWD"
@@ -258,7 +250,7 @@ describe("store-model characterization (current behavior)", () => {
 
     it("addOrgMainModel skips starter nodes when withoutStarterNodes is true and surfaces setDoc errors", async () => {
       const store = makeTestStore();
-      await store.dispatch("model/addOrgMainModel", {
+      await store.addOrgMainModel({
         orgId: "org-sample",
         modelId: "org-sample",
         currency: "USD",
@@ -268,7 +260,7 @@ describe("store-model characterization (current behavior)", () => {
       expect(batchInstances).toHaveLength(0);
 
       shouldFailSetDoc = true;
-      await store.dispatch("model/addOrgMainModel", {
+      await store.addOrgMainModel({
         orgId: "org-fail",
         modelId: "org-fail",
         currency: "USD"
@@ -278,26 +270,26 @@ describe("store-model characterization (current behavior)", () => {
 
     it("updateModel notifies toast when not silent and handles errors; deleteModel deletes doc or reports error", async () => {
       const store = makeTestStore({ currentModel: { id: "m1" } });
-      await store.dispatch("model/updateModel", {
+      await store.updateModel({
         modelId: "m1",
         updates: { name: "Renamed Model" }
       });
       expect(mockNotifyCreate).toHaveBeenCalledWith("toastModelUpdated");
 
       shouldFailSetDoc = true;
-      await store.dispatch("model/updateModel", {
+      await store.updateModel({
         modelId: "m1",
         updates: { name: "Will Fail" }
       });
       expect(mockShowErrorMessage).toHaveBeenCalledWith("Error updating model", "setDoc failed");
 
-      store.dispatch("model/deleteModel", "m1");
+      store.deleteModel("m1");
       await flushMicrotasks();
       expect(deleteDocCalls).toHaveLength(1);
       expect(mockNotifyCreate).toHaveBeenCalledWith("toastModelDeleted");
 
       shouldFailDeleteDoc = true;
-      store.dispatch("model/deleteModel", "m1");
+      store.deleteModel("m1");
       await flushMicrotasks();
       expect(mockShowErrorMessage).toHaveBeenCalledWith("Error deleting model", "deleteDoc failed");
     });
@@ -312,7 +304,7 @@ describe("store-model characterization (current behavior)", () => {
         }
       });
 
-      await store.dispatch("model/addCustomVariable", {
+      await store.addCustomVariable({
         modelId: "m1",
         variable: { name: "unitPrice", value: 25 }
       });
@@ -321,8 +313,8 @@ describe("store-model characterization (current behavior)", () => {
         { name: "unitPrice", value: 25 }
       ]);
 
-      store.state.model.currentModel.customVariables = setDocCalls.at(-1).data.customVariables;
-      await store.dispatch("model/updateCustomVariable", {
+      store.currentModel.customVariables = setDocCalls.at(-1).data.customVariables;
+      await store.updateCustomVariable({
         modelId: "m1",
         variableName: "unitPrice",
         updates: { value: 30 }
@@ -331,14 +323,14 @@ describe("store-model characterization (current behavior)", () => {
 
       // Non-existent variable does not write
       const prevCount = setDocCalls.length;
-      await store.dispatch("model/updateCustomVariable", {
+      await store.updateCustomVariable({
         modelId: "m1",
         variableName: "missingVar",
         updates: { value: 99 }
       });
       expect(setDocCalls).toHaveLength(prevCount);
 
-      await store.dispatch("model/deleteCustomVariable", {
+      await store.deleteCustomVariable({
         modelId: "m1",
         variableName: "taxRate"
       });
@@ -346,7 +338,7 @@ describe("store-model characterization (current behavior)", () => {
         { name: "unitPrice", value: 25 }
       ]);
 
-      await store.dispatch("model/setCustomVariables", {
+      await store.setCustomVariables({
         modelId: "m1",
         variables: []
       });
@@ -358,16 +350,16 @@ describe("store-model characterization (current behavior)", () => {
     it("binds model and nodes, falls back to null count when getCountFromServer throws, and resets on unbind", async () => {
       const store = makeTestStore();
 
-      const pModel = store.dispatch("model/bindCurrentModel", "m1");
+      const pModel = store.bindCurrentModel("m1");
       listeners[0].next({
         id: "m1",
         exists: () => true,
         data: () => ({ name: "Main" })
       });
       await pModel;
-      expect(store.state.model.currentModel).toEqual({ name: "Main" });
+      expect(store.currentModel).toEqual({ name: "Main" });
 
-      const pNodes = store.dispatch("model/bindNodes", "m1");
+      const pNodes = store.bindNodes("m1");
       await flushMicrotasks();
       listeners[1].next({
         docs: [
@@ -375,25 +367,25 @@ describe("store-model characterization (current behavior)", () => {
         ]
       });
       await pNodes;
-      expect(store.state.model.nodesTotalCount).toBe(42);
-      expect(store.getters["model/nodesTotalCount"]).toBe(42);
-      expect(store.getters["model/nodesLimit"]).toBe(50);
-      expect(store.getters["model/nodes"]).toEqual([
+      expect(store.nodesTotalCount).toBe(42);
+      expect(store.nodesTotalCount).toBe(42);
+      expect(store.nodesLimit).toBe(50);
+      expect(store.nodesList).toEqual([
         { id: "n1", name: "Factor 1", symbol: "f1" }
       ]);
 
       // Count failure sets nodesTotalCount to null
       shouldFailCount = true;
-      const pNodes2 = store.dispatch("model/bindNodes", { modelId: "m1", limit: "all" });
+      const pNodes2 = store.bindNodes({ modelId: "m1", limit: "all" });
       await flushMicrotasks();
       listeners[2].next({ docs: [] });
       await pNodes2;
-      expect(store.state.model.nodesTotalCount).toBeNull();
+      expect(store.nodesTotalCount).toBeNull();
 
-      store.dispatch("model/unbindNodes");
-      store.dispatch("model/unbindCurrentModel");
-      expect(store.state.model.nodes).toEqual([]);
-      expect(store.state.model.currentModel).toBeNull();
+      store.unbindNodes();
+      store.unbindCurrentModel();
+      expect(store.nodes).toEqual([]);
+      expect(store.currentModel).toBeNull();
     });
   });
 
@@ -406,7 +398,7 @@ describe("store-model characterization (current behavior)", () => {
         ]
       });
 
-      const id1 = await store.dispatch("model/addHourlyCostFactor", {
+      const id1 = await store.addHourlyCostFactor({
         modelId: "m1",
         name: "Senior Nurse",
         cost: 45,
@@ -421,7 +413,7 @@ describe("store-model characterization (current behavior)", () => {
         unit: "USD"
       });
 
-      const id2 = await store.dispatch("model/addHourlyCostFactor", {
+      const id2 = await store.addHourlyCostFactor({
         modelId: "m1",
         name: "資深護理師",
         cost: "not-a-number"
@@ -438,7 +430,7 @@ describe("store-model characterization (current behavior)", () => {
       });
 
       mockCurrentUser = null; // exercises fallback createdBy: "system"
-      const stableRes = await store.dispatch("model/addNode", {
+      const stableRes = await store.addNode({
         modelId: "m1",
         node: { id: "stable_ben", name: "Org Benefit", symbol: "benefitToOrganizationDuringInterval", unit: "EUR" },
         sourceNodeId: "src",
@@ -450,7 +442,7 @@ describe("store-model characterization (current behavior)", () => {
       expect(batchInstances).toHaveLength(1); // addLink batch executed
 
       mockCurrentUser = { uid: "user-123" };
-      const addedRes = await store.dispatch("model/addNode", {
+      const addedRes = await store.addNode({
         modelId: "m1",
         node: { name: "Driver", symbol: "driver", unit: "people" },
         sourceNodeId: "src",
@@ -460,7 +452,7 @@ describe("store-model characterization (current behavior)", () => {
       expect(batchInstances).toHaveLength(2);
 
       shouldFailSetDoc = true;
-      await store.dispatch("model/addNode", {
+      await store.addNode({
         modelId: "m1",
         nodeId: "fail_id",
         node: { name: "Fail", symbol: "fail" }
@@ -470,7 +462,7 @@ describe("store-model characterization (current behavior)", () => {
 
     it("importCountryModel guards missing modelId and adds/updates shipped country factors", async () => {
       const emptyStore = makeTestStore({ currentModel: null });
-      const missingRes = await emptyStore.dispatch("model/importCountryModel", {});
+      const missingRes = await emptyStore.importCountryModel({});
       expect(missingRes).toBeUndefined();
       expect(mockShowErrorMessage).toHaveBeenCalledWith("No active model found to import country model into.");
 
@@ -478,7 +470,7 @@ describe("store-model characterization (current behavior)", () => {
         currentModel: { id: "m1", currency: "USD" },
         nodes: [{ id: "world_country_usa_sp_pop_totl", symbol: "world_usa_population" }]
       });
-      const res = await store.dispatch("model/importCountryModel", {
+      const res = await store.importCountryModel({
         countryCode: "USA",
         version: "1.0.0"
       });
@@ -510,7 +502,7 @@ describe("store-model characterization (current behavior)", () => {
         ]
       });
 
-      store.dispatch("model/updateNode", {
+      store.updateNode({
         modelId: "m1",
         updates: {
           id: "n_in",
@@ -528,7 +520,7 @@ describe("store-model characterization (current behavior)", () => {
 
       // Also test formula auto-referencing in updateNode
       setDocCalls = [];
-      store.dispatch("model/updateNode", {
+      store.updateNode({
         modelId: "m1",
         updates: {
           id: "n_out",
@@ -541,7 +533,7 @@ describe("store-model characterization (current behavior)", () => {
 
       // Error branch on updateNode
       shouldFailSetDoc = true;
-      store.dispatch("model/updateNode", {
+      store.updateNode({
         modelId: "m1",
         updates: { id: "n_out", name: "Broken" },
         errorTitle: "Custom Error Title"
@@ -550,12 +542,12 @@ describe("store-model characterization (current behavior)", () => {
       expect(mockShowErrorMessage).toHaveBeenCalledWith("Custom Error Title", "setDoc failed");
 
       // deleteNode success and error
-      store.dispatch("model/deleteNode", { modelId: "m1", node: { id: "n_out" } });
+      store.deleteNode({ modelId: "m1", node: { id: "n_out" } });
       await flushMicrotasks();
       expect(mockNotifyCreate).toHaveBeenCalledWith("toastFactorDeleted");
 
       shouldFailDeleteDoc = true;
-      store.dispatch("model/deleteNode", { modelId: "m1", node: { id: "n_out" } });
+      store.deleteNode({ modelId: "m1", node: { id: "n_out" } });
       await flushMicrotasks();
       expect(mockShowErrorMessage).toHaveBeenCalledWith("Error deleting node", "deleteDoc failed");
     });
@@ -593,7 +585,7 @@ describe("store-model characterization (current behavior)", () => {
       });
 
       // Getters.links characterization
-      const links = store.getters["model/links"];
+      const links = store.links;
       expect(links).toHaveLength(2);
       const aToB = links.find((l) => l.source === "a" && l.target === "b");
       const bToA = links.find((l) => l.source === "b" && l.target === "a");
@@ -610,21 +602,21 @@ describe("store-model characterization (current behavior)", () => {
 
       // Validation errors on addLink
       expect(() =>
-        store.dispatch("model/addLink", {
+        store.addLink({
           modelId: "m1",
           link: { sourceNodeId: "a", targetNodeId: "a", targetType: "influencer" }
         })
       ).toThrow("Source node and target node cannot be the same node!");
 
       expect(() =>
-        store.dispatch("model/addLink", {
+        store.addLink({
           modelId: "m1",
           link: { sourceNodeId: "a", targetNodeId: "b", targetType: "invalid" }
         })
       ).toThrow("Link target type not recognized.");
 
       // relaxLink, relaxLinkMore, restoreLinkForce
-      const relaxed = await store.dispatch("model/relaxLink", {
+      const relaxed = await store.relaxLink({
         link: { influencerNodeId: "b", influenceeNodeId: "a" }
       });
       expect(relaxed).toEqual({
@@ -633,24 +625,24 @@ describe("store-model characterization (current behavior)", () => {
         strengthFactor: 0.1
       });
 
-      await store.dispatch("model/relaxLinkMore", {
+      await store.relaxLinkMore({
         link: { influencerNodeId: "a", influenceeNodeId: "b" }
       });
       expect(updateDocCalls.at(-1).data.relaxedLinks[0].strengthFactor).toBeCloseTo(0.01, 5);
 
-      await store.dispatch("model/restoreLinkForce", {
+      await store.restoreLinkForce({
         link: { influencerNodeId: "a", influenceeNodeId: "b" }
       });
       expect(updateDocCalls.at(-1).data.relaxedLinks).toEqual([]);
 
       // deleteLink mutates local state immediately and commits arrayRemove batch
-      store.dispatch("model/deleteLink", {
+      store.deleteLink({
         modelId: "m1",
         link: { influencerNodeId: "a", influenceeNodeId: "b" }
       });
       await flushMicrotasks();
-      expect(store.state.model.nodes[0].influencees).not.toContain("b");
-      expect(store.state.model.nodes[1].influencers).not.toContain("a");
+      expect(store.nodes[0].influencees).not.toContain("b");
+      expect(store.nodes[1].influencers).not.toContain("a");
       expect(mockNotifyCreate).toHaveBeenCalledWith("toastLinkDeleted");
     });
 
@@ -664,7 +656,7 @@ describe("store-model characterization (current behavior)", () => {
       transactionDocs.set("models/m1/nodes/unchanged_node", { class: "input", influencers: [], influencees: ["x"] });
 
       for (const nodeId of ["unlinked_node", "input_node", "output_node", "state_node", "unchanged_node", "missing_node"]) {
-        store.dispatch("model/reDetermineNodeClass", { modelId: "m1", nodeId });
+        store.reDetermineNodeClass({ modelId: "m1", nodeId });
       }
       await flushMicrotasks();
 
@@ -680,7 +672,7 @@ describe("store-model characterization (current behavior)", () => {
     it("createNodeGroup, addToNodeGroup, and removeNodeFromGroup manage group membership and nested parentId", async () => {
       const store = makeTestStore({ currentModel: { id: "m1" } });
 
-      const created = await store.dispatch("model/createNodeGroup", {
+      const created = await store.createNodeGroup({
         groupName: "Operations",
         nodeId: "n1"
       });
@@ -697,7 +689,7 @@ describe("store-model characterization (current behavior)", () => {
         ]
       });
 
-      await store.dispatch("model/addToNodeGroup", {
+      await store.addToNodeGroup({
         nodeId: "child_g",
         nodeIsGroupNode: true,
         nodeGroupId: "parent_g"
@@ -711,7 +703,7 @@ describe("store-model characterization (current behavior)", () => {
         nodeGroups: structuredClone(transactionUpdates.at(-1).data.nodeGroups)
       });
 
-      await store.dispatch("model/removeNodeFromGroup", {
+      await store.removeNodeFromGroup({
         nodeId: "child_g",
         nodeIsGroupNode: true,
         nodeGroupId: "parent_g"
@@ -740,7 +732,7 @@ describe("store-model characterization (current behavior)", () => {
         latestValueExistenceChanged: idx === 0
       }));
 
-      await store.dispatch("model/updateNodes", {
+      await store.updateNodes({
         modelId: "m1",
         changedNodes
       });

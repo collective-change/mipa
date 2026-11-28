@@ -63,7 +63,10 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useChatsStore } from "@/store/store-chats";
+import { useUsersStore } from "@/store/store-users";
 
 export default {
   props: ["chatId", "subjectDocType", "subjectDocLineage", "subjectDocTitle"],
@@ -77,13 +80,13 @@ export default {
   },
 
   computed: {
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("chats", ["currentChat"]),
-    ...mapGetters("users", ["currentOrgUsers"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useChatsStore, ["currentChat"]),
+    ...pickState(useUsersStore, { currentOrgUsers: "orgUsers" }),
   },
 
   methods: {
-    ...mapActions("chats", [
+    ...pickActions(useChatsStore, [
       "fsAddChat",
       "fsAddChatMember",
       "fsRemoveChatMember",

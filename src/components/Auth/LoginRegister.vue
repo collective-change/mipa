@@ -193,7 +193,8 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { pickActions } from "@/store/pinia-helpers";
+import { useAuthStore } from "@/store/store-auth";
 
 export default {
   props: ["tab"],
@@ -210,7 +211,7 @@ export default {
     };
   },
   methods: {
-    ...mapActions("auth", [
+    ...pickActions(useAuthStore, [
       "registerUser",
       "loginUser",
       "sendPasswordResetEmail",

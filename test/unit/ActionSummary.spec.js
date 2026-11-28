@@ -1,11 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 import { createI18n } from "vue-i18n";
-import { getField, updateField } from "vuex-map-fields";
 import messages from "@/i18n";
 import ActionSummary from "@/components/Actions/ActionSummary.vue";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useUiStore } from "@/store/store-ui";
+import { useModelStore } from "@/store/store-model";
+import { useCalcResultsStore } from "@/store/store-calcResults";
+import { useActionsStore } from "@/store/store-actions";
+import { useUiActionStore } from "@/store/store-uiAction";
 
 vi.mock("@/api/idb", () => ({
   default: {
@@ -37,85 +42,39 @@ function mountActionSummary(actionOverrides = {}, locale = "en-us") {
     ...actionOverrides
   };
 
-  const store = createStore({
-    modules: {
-      orgs: {
-        namespaced: true,
-        state: {
-          currentOrg: { id: "org-1", name: "Clean Energy Org", nameSlug: "clean-energy", currency: "USD" }
-        }
-      },
-      ui: {
-        namespaced: true,
-        state: {
-          selectedActionId: "action-1"
-        }
-      },
-      model: {
-        namespaced: true,
-        state: {
-          currentModel: { id: "model-1", roleNodes: { averageEffortCostPerHour: "node-cost" } },
-          nodes: [
-            { id: "node-cost", name: "Average Hourly Cost", unit: "USD", symbolFormula: "30", isHourlyCost: true }
-          ]
-        },
-        getters: {
-          nodes: () => [
-            { id: "node-cost", name: "Average Hourly Cost", unit: "USD", symbolFormula: "30", isHourlyCost: true }
-          ]
-        },
-        actions: {
-          bindCurrentModel: vi.fn(),
-          bindNodes: vi.fn()
-        }
-      },
-      calcResults: {
-        namespaced: true,
-        state: {
-          resultsOfAction: {},
-          baseline: { nodesValues: { "node-cost": [30] } }
-        }
-      },
-      actions: {
-        namespaced: true,
-        state: {
-          matchingActions: []
-        },
-        actions: {
-          updateAction: vi.fn()
-        }
-      },
-      uiAction: {
-        namespaced: true,
-        state: {
-          uiAction: { ...initialAction },
-          uiActionChanged: false,
-          uiActionChangedFields: []
-        },
-        getters: {
-          getField
-        },
-        mutations: {
-          updateField,
-          updateUiActionField: updateField,
-          setActionMchState(state, val) {
-            state.uiAction.actionMchState = val;
-          },
-          mergeNewActionToUiAction(state, newAction) {
-            Object.assign(state.uiAction, newAction);
-          },
-          setUiAction(state, newAction) {
-            state.uiAction = newAction ? { ...newAction } : {};
-          }
-        },
-        actions: {
-          setUiAction({ commit }, act) {
-            commit("setUiAction", act);
-          }
-        }
-      }
-    }
+  const store = createPinia();
+  setActivePinia(store);
+  useOrgsStore(store).$patch({
+    currentOrg: { id: "org-1", name: "Clean Energy Org", nameSlug: "clean-energy", currency: "USD" }
   });
+  useUiStore(store).$patch({ selectedActionId: "action-1" });
+  const model = useModelStore(store);
+  model.$patch({
+    currentModel: { id: "model-1", roleNodes: { averageEffortCostPerHour: "node-cost" } },
+    nodes: [
+      { id: "node-cost", name: "Average Hourly Cost", unit: "USD", symbolFormula: "30", isHourlyCost: true }
+    ]
+  });
+  model.bindCurrentModel = vi.fn();
+  model.bindNodes = vi.fn();
+  const calcResults = useCalcResultsStore(store);
+  calcResults.$patch({
+    resultsOfAction: {},
+    baseline: { nodesValues: { "node-cost": [30] } }
+  });
+  // The old Vuex mock store had no such actions, so these were no-ops.
+  calcResults.loadResultsOfAction = vi.fn();
+  const actions = useActionsStore(store);
+  actions.$patch({ matchingActions: [] });
+  actions.updateAction = vi.fn();
+  const uiActionStore = useUiActionStore(store);
+  uiActionStore.$patch({
+    uiAction: { ...initialAction },
+    uiActionChanged: false,
+    uiActionChangedFields: []
+  });
+  uiActionStore.addNodeIdsToChart = vi.fn();
+  uiActionStore.setNodeIdsToChart = vi.fn();
 
   const wrapper = mount(ActionSummary, {
     props: {

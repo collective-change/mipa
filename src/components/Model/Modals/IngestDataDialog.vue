@@ -475,7 +475,10 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapActions } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
+import { useAuthStore } from "@/store/store-auth";
 import {
   ACCOUNTING_CATEGORIES,
   parseTabularData,
@@ -542,10 +545,12 @@ export default {
     };
   },
   computed: {
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("model", ["currentModel"]),
-    ...mapGetters("model", ["nodes"]),
-    ...mapState("auth", ["userEmail"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useModelStore, ["currentModel"]),
+    ...pickState(useModelStore, { nodes: "nodesList" }),
+    // NOTE: the auth store has no `userEmail` state (it never had one in Vuex
+    // either), so this is undefined and callers fall back to "user".
+    ...pickState(useAuthStore, ["userEmail"]),
 
     accountingCategoryOptions() {
       return this.accountingCategories.map((c) => ({
@@ -617,7 +622,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions("model", ["addNode", "updateNode"]),
+    ...pickActions(useModelStore, ["addNode", "updateNode"]),
 
     onTextUpdated() {
       this.reparse();

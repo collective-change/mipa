@@ -26,7 +26,11 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useActionsStore } from "@/store/store-actions";
+import { useUiStore } from "@/store/store-ui";
+import { useUiActionStore } from "@/store/store-uiAction";
+import { useAuthStore } from "@/store/store-auth";
 import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import ActionsList from "@/components/Actions/ActionsList.vue";
 import ActionsChart from "@/components/Actions/ActionsChart.vue";
@@ -56,10 +60,10 @@ export default {
     };
   },
   computed: {
-    ...mapState("actions", ["matchingActions"]),
-    ...mapState("ui", ["selectedActionId"]),
-    ...mapState("uiAction", ["uiActionChanged"]),
-    ...mapState("auth", ["userId"]),
+    ...pickState(useActionsStore, ["matchingActions"]),
+    ...pickState(useUiStore, ["selectedActionId"]),
+    ...pickState(useUiActionStore, ["uiActionChanged"]),
+    ...pickState(useAuthStore, ["userId"]),
   },
   created() {
     (async () => {
@@ -69,7 +73,7 @@ export default {
         await new Promise((resolve) => setTimeout(resolve, 200));
 
       let orgId = this.$route.params.orgId;
-      //this.$store.dispatch("actions/bindActions", orgId);
+      //useActionsStore(this.$pinia).bindActions(orgId);
     })();
   },
 
@@ -77,7 +81,7 @@ export default {
     selectedAction: function () {
       if (this.actions) {
         let found = this.actions.find(function (action) {
-          return action.id == this.$store.state.ui.selectedActionId;
+          return action.id == useUiStore(this.$pinia).selectedActionId;
         });
         console.log("found", found);
         return found;

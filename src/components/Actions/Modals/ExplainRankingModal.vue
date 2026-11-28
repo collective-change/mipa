@@ -226,7 +226,10 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useActionsStore } from "@/store/store-actions";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
 import { formatNumber } from "@/utils/util-formatNumber";
 import {
   explainActionComparison,
@@ -263,9 +266,9 @@ export default {
     };
   },
   computed: {
-    ...mapState("actions", ["matchingActions"]),
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapGetters("model", ["nodes"]),
+    ...pickState(useActionsStore, ["matchingActions"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useModelStore, { nodes: "nodesList" }),
     isOpen: {
       get() {
         return this.modelValue;

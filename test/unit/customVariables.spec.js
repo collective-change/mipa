@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import CustomVariablesModal from "@/components/Model/Modals/CustomVariablesModal.vue";
+import { useModelStore } from "@/store/store-model";
 import { validateFormulaSyntax, getFactorSuggestions, toSysFormula } from "@/utils/formulaHelper";
 
 const { Quasar } = All;
@@ -26,32 +27,26 @@ function createTestStore(modelOverrides = {}) {
   const updateCustomVariableMock = vi.fn();
   const deleteCustomVariableMock = vi.fn();
 
-  const store = createStore({
-    modules: {
-      model: {
-        namespaced: true,
-        state: () => ({
-          currentModel: {
-            id: "model-1",
-            name: "Test Model",
-            customVariables: [
-              { name: "unitPrice", value: 25, unit: "USD", description: "Standard selling price" },
-              { name: "taxRate", value: 0.05, unit: "", description: "Applicable sales tax" }
-            ],
-            ...modelOverrides
-          },
-          nodes: [
-            { id: "n1", symbol: "sales", name: "Units Sold", symbolFormula: "100", sysFormula: "100" }
-          ]
-        }),
-        actions: {
-          addCustomVariable: addCustomVariableMock,
-          updateCustomVariable: updateCustomVariableMock,
-          deleteCustomVariable: deleteCustomVariableMock
-        }
-      }
-    }
+  const store = createPinia();
+  setActivePinia(store);
+  const model = useModelStore(store);
+  model.$patch({
+    currentModel: {
+      id: "model-1",
+      name: "Test Model",
+      customVariables: [
+        { name: "unitPrice", value: 25, unit: "USD", description: "Standard selling price" },
+        { name: "taxRate", value: 0.05, unit: "", description: "Applicable sales tax" }
+      ],
+      ...modelOverrides
+    },
+    nodes: [
+      { id: "n1", symbol: "sales", name: "Units Sold", symbolFormula: "100", sysFormula: "100" }
+    ]
   });
+  model.addCustomVariable = addCustomVariableMock;
+  model.updateCustomVariable = updateCustomVariableMock;
+  model.deleteCustomVariable = deleteCustomVariableMock;
 
   return { store, addCustomVariableMock, updateCustomVariableMock, deleteCustomVariableMock };
 }
@@ -119,7 +114,7 @@ describe("MIPA-19: Custom Variables Management & Formula Integration", () => {
       return mount(CustomVariablesModal, {
         props: {
           modelValue: true,
-          model: store.state.model.currentModel,
+          model: useModelStore(store).currentModel,
           ...props
         },
         global: {
@@ -177,7 +172,6 @@ describe("MIPA-19: Custom Variables Management & Formula Integration", () => {
       await wrapper.vm.saveVariable();
 
       expect(addCustomVariableMock).toHaveBeenCalledWith(
-        expect.anything(),
         {
           modelId: "model-1",
           variable: {
@@ -196,7 +190,6 @@ describe("MIPA-19: Custom Variables Management & Formula Integration", () => {
 
       wrapper.vm.confirmDelete("unitPrice");
       expect(deleteCustomVariableMock).toHaveBeenCalledWith(
-        expect.anything(),
         {
           modelId: "model-1",
           variableName: "unitPrice"

@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useModelStore } from "@/store/store-model";
+import { useUiStore } from "@/store/store-ui";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import DependencyGraph from "@/components/Model/DependencyGraph.vue";
@@ -12,52 +14,33 @@ const components = Object.fromEntries(
 );
 
 function mountDependencyGraph(nodes = [], initialPositions = []) {
-  const store = createStore({
-    modules: {
-      auth: {
-        namespaced: true,
-        state: { loggedIn: true }
-      },
-      model: {
-        namespaced: true,
-        state: {
-          currentModel: { id: "m1", name: "Model 1", nodeGroups: [] },
-          nodes,
-          links: [],
-          selectedNodeId: null
-        },
-        getters: {
-          currentModel: (state) => state.currentModel,
-          nodes: (state) => state.nodes,
-          links: (state) => state.links,
-          selectedNodeId: (state) => state.selectedNodeId
-        },
-        actions: {
-          addLink: () => {},
-          deleteLink: () => {},
-          relaxLink: () => {},
-          relaxLinkMore: () => {},
-          restoreLinkForce: () => {},
-          createNodeGroup: () => {},
-          addToNodeGroup: () => {},
-          removeNodeFromGroup: () => {},
-          disbandNodeGroup: () => {}
-        }
-      },
-      ui: {
-        namespaced: true,
-        state: {
-          selectedNodeGroupId: null
-        },
-        getters: {
-          selectedNodeGroupId: (state) => state.selectedNodeGroupId
-        },
-        mutations: {
-          setSelectedNodeGroupId: () => {}
-        }
-      }
-    }
+  const store = createPinia();
+  setActivePinia(store);
+
+  const model = useModelStore(store);
+  model.$patch({
+    currentModel: { id: "m1", name: "Model 1", nodeGroups: [] },
+    nodes
   });
+  for (const name of [
+    "addLink",
+    "deleteLink",
+    "relaxLink",
+    "relaxLinkMore",
+    "restoreLinkForce",
+    "createNodeGroup",
+    "addToNodeGroup",
+    "removeNodeFromGroup",
+    "disbandNodeGroup"
+  ]) {
+    model[name] = () => {};
+  }
+
+  const ui = useUiStore(store);
+  ui.$patch({ selectedNodeGroupId: null });
+  ui.setSelectedNodeGroupId = () => {};
+  // The Vuex test store had no ui/setSelectedNodeId action (dispatch was a no-op).
+  ui.setSelectedNodeId = () => {};
 
   return mount(DependencyGraph, {
     props: {

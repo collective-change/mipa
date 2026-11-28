@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useAuthStore } from "@/store/store-auth";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import LoginRegister from "@/components/Auth/LoginRegister.vue";
@@ -21,9 +22,9 @@ function mountLoginRegister(tab = "login", locale = "en-us") {
     loginWithApple: vi.fn().mockResolvedValue({ uid: "a123", email: "a@example.com" }),
     loginWithCustomToken: vi.fn().mockResolvedValue({ uid: "c123", email: "c@example.com" })
   };
-  const store = createStore({
-    modules: { auth: { namespaced: true, actions } }
-  });
+  const store = createPinia();
+  setActivePinia(store);
+  Object.assign(useAuthStore(store), actions);
   const wrapper = mount(LoginRegister, {
     props: { tab },
     global: {
@@ -88,7 +89,6 @@ describe("OAuth Sign-In & LoginRegister.vue", () => {
     await wrapper.vm.submitCustomToken();
 
     expect(actions.loginWithCustomToken).toHaveBeenCalledWith(
-      expect.anything(),
       "sample-custom-jwt-token"
     );
     expect(wrapper.vm.showWeChatDialog).toBe(false);

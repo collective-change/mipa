@@ -117,7 +117,9 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useModelStore } from "@/store/store-model";
+import { useUiStore } from "@/store/store-ui";
 import * as d3 from "d3";
 import * as sizeof from "object-sizeof";
 import idb from "@/api/idb";
@@ -215,15 +217,15 @@ export default {
   },
 
   computed: {
-    ...mapState("ui", [
+    ...pickState(useUiStore, [
       "selectedNodeId",
       "selectedNodeGroupId",
       "uiNodeChanged",
       "uiNodeChangedFields",
       "circularNodeIds",
     ]),
-    ...mapGetters("model", ["nodes", "links"]),
-    ...mapState("model", ["currentModel"]),
+    ...pickState(useModelStore, { nodes: "nodesList", links: "links" }),
+    ...pickState(useModelStore, ["currentModel"]),
     /*debugLinks() {
       return this.d3Data.links.map(link => {
         return { source: link.source.id, target: link.target.id };
@@ -238,10 +240,10 @@ export default {
     },
     expandedNodeGroups: {
       get() {
-        return this.$store.state.ui.expandedNodeGroups;
+        return useUiStore(this.$pinia).expandedNodeGroups;
       },
       set(value) {
-        this.$store.commit("ui/setExpandedNodeGroups", value);
+        useUiStore(this.$pinia).setExpandedNodeGroups(value);
       },
     },
     selectedNode() {
@@ -412,7 +414,7 @@ export default {
   },
 
   methods: {
-    ...mapActions("model", [
+    ...pickActions(useModelStore, [
       "addLink",
       "deleteLink",
       "relaxLink",
@@ -423,7 +425,7 @@ export default {
       "removeNodeFromGroup",
       "disbandNodeGroup",
     ]),
-    ...mapActions("ui", ["setSelectedNodeId"]),
+    ...pickActions(useUiStore, ["setSelectedNodeId"]),
 
     filterFn(val, update, abort) {
       update(() => {
@@ -1263,7 +1265,7 @@ export default {
                     nodeId: that.selectedNodeId,
                     groupName: node.name,
                   });
-                  that.$store.commit("ui/setSelectedNodeGroupId", nodeGroup.id);
+                  useUiStore(that.$pinia).setSelectedNodeGroupId(nodeGroup.id);
                   //TODO: set nodeGroup as expanded
                   let expandedNodeGroups = [...that.expandedNodeGroups];
                   expandedNodeGroups.push(nodeGroup.id);
@@ -1651,15 +1653,15 @@ export default {
                 nodeGroup.nodeIds.includes(d.id)) ||
               nodeGroup.id == d.id
             ) {
-              that.$store.commit("ui/setSelectedNodeGroupId", nodeGroup.id);
+              useUiStore(that.$pinia).setSelectedNodeGroupId(nodeGroup.id);
               selectedNodeGroupFound = true;
             }
           });
           if (!selectedNodeGroupFound) {
-            that.$store.commit("ui/setSelectedNodeGroupId", null);
+            useUiStore(that.$pinia).setSelectedNodeGroupId(null);
           }
         } else {
-          that.$store.commit("ui/setSelectedNodeGroupId", null);
+          useUiStore(that.$pinia).setSelectedNodeGroupId(null);
         }
         this.updateNodeClassAndText(false);
       }
@@ -1867,11 +1869,11 @@ export default {
       if (foundNodeGroup) {
         await this.expandGroup(foundNodeGroup.id);
         {
-          this.$store.commit("ui/setSelectedNodeGroupId", foundNodeGroup.id);
+          useUiStore(this.$pinia).setSelectedNodeGroupId(foundNodeGroup.id);
         }
       } else {
         //if nodeId is not a group node
-        this.$store.commit("ui/setSelectedNodeGroupId", null);
+        useUiStore(this.$pinia).setSelectedNodeGroupId(null);
       }
     },
 
@@ -1936,9 +1938,9 @@ export default {
           );
           if (nodeGroup) {
             this.selectedNodeGroup = nodeGroup;
-            this.$store.commit("ui/setSelectedNodeGroupId", nodeGroup.id);
+            useUiStore(this.$pinia).setSelectedNodeGroupId(nodeGroup.id);
           } else {
-            this.$store.commit("ui/setSelectedNodeGroupId", null);
+            useUiStore(this.$pinia).setSelectedNodeGroupId(null);
           }
         }
         this.prepD3DataAndUpdate();
@@ -2000,7 +2002,7 @@ export default {
             (ng) => ng.id == idOfNodeGroupToSelect
           );
           if (nodeGroupToSelect) {
-            this.$store.commit("ui/setSelectedNodeGroupId", nodeGroupToSelect.id);
+            useUiStore(this.$pinia).setSelectedNodeGroupId(nodeGroupToSelect.id);
           }
 
           //notify prepD3DataAndUpdate with newly expanded or collapsed node group

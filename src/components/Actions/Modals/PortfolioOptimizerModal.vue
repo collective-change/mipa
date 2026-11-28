@@ -269,6 +269,7 @@
 
 <script>
 import { formatNumber } from "@/utils/util-formatNumber";
+import { useOrgsStore } from "@/store/store-orgs";
 import { solvePortfolioOptimization, DEFAULT_DEPARTMENTS } from "@/utils/portfolioOptimizer";
 
 export default {
@@ -299,7 +300,8 @@ export default {
   },
   computed: {
     currency() {
-      return this.$store?.state?.orgs?.currentOrg?.currency || "USD";
+      // Like the old optional-chained store lookup, fall back to USD when no store is installed.
+      return (this.$pinia && useOrgsStore(this.$pinia).currentOrg?.currency) || "USD";
     },
     totalCandidateCost() {
       return this.actions.reduce((sum, a) => sum + (Number(a.outstandingDirectCosts ?? a.outstandingDirectCost) || 0), 0);

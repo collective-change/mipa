@@ -586,7 +586,10 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useActionsStore } from "@/store/store-actions";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
 import { exportFile, Notify } from "quasar";
 import { firebaseAuth } from "@/boot/firebase";
 import { formatNumber } from "@/utils/util-formatNumber";
@@ -638,10 +641,10 @@ export default {
     };
   },
   computed: {
-    ...mapState("actions", ["matchingActions"]),
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("model", ["currentModel"]),
-    ...mapGetters("model", ["nodes"]),
+    ...pickState(useActionsStore, ["matchingActions"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useModelStore, ["currentModel"]),
+    ...pickState(useModelStore, { nodes: "nodesList" }),
     isOpen: {
       get() {
         return this.modelValue;

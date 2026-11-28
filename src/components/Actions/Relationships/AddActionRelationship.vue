@@ -31,7 +31,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { useUiActionStore } from "@/store/store-uiAction";
 import ModalHeader from "@/components/Shared/ModalComponents/ModalHeader.vue";
 import ModalSaveButton from "@/components/Shared/ModalComponents/ModalSaveButton.vue";
 
@@ -222,9 +222,9 @@ export default {
         Object.assign(newImpact, this.impact);
         if (this.addOrEdit == "add") {
           newImpact.id = Date.now();
-          this.$store.commit("uiAction/addImpact", newImpact);
+          useUiActionStore(this.$pinia).addImpact(newImpact);
         } else {
-          this.$store.commit("uiAction/updateImpact", newImpact);
+          useUiActionStore(this.$pinia).updateImpact(newImpact);
         }
         this.$emit("close");
       }

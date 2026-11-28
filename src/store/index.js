@@ -1,10 +1,8 @@
 import { createPinia, setActivePinia } from "pinia";
 import { markRaw } from "vue";
-import { createStore } from "vuex";
-import { firestoreMutations } from "./firestore-bind";
 
-import model from "./store-model";
-
+// Creates the app's Pinia instance. Every store can reach the router via
+// `this.$router`.
 export function createPiniaInstance(router) {
   const pinia = createPinia();
   const routerPlugin = ({ store }) => {
@@ -20,16 +18,4 @@ export function createPiniaInstance(router) {
   return pinia;
 }
 
-export default function (/* { ssrContext } */) {
-  const Store = createStore({
-    mutations: {
-      ...firestoreMutations
-    },
-    modules: {
-      model
-    },
-    strict: import.meta.env.DEV === true
-  });
-
-  return Store;
-}
+export default createPiniaInstance;

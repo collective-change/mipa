@@ -312,7 +312,10 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useAuthStore } from "@/store/store-auth";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useUsersStore } from "@/store/store-users";
 import { doc, onSnapshot } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { firebaseDb, firebaseFunctions, useEmulators } from "@/boot/firebase";
@@ -404,9 +407,9 @@ export default {
     };
   },
   computed: {
-    ...mapState("auth", ["userId"]),
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapGetters("users", ["currentOrgUsers"]),
+    ...pickState(useAuthStore, ["userId"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useUsersStore, { currentOrgUsers: "orgUsers" }),
 
     orgId() {
       return this.$route.params.orgId;

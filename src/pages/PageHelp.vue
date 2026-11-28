@@ -161,7 +161,9 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useAuthStore } from "@/store/store-auth";
+import { useOrgsStore } from "@/store/store-orgs";
 import { httpsCallable } from "firebase/functions";
 import { firebaseFunctions } from "@/boot/firebase";
 import { FEEDBACK_URL } from "@/utils/util-links";
@@ -169,8 +171,8 @@ import { FEEDBACK_URL } from "@/utils/util-links";
 export default {
   name: "PageHelp",
   computed: {
-    ...mapState("auth", ["loggedIn", "user", "userId"]),
-    ...mapState("orgs", ["currentOrg"]),
+    ...pickState(useAuthStore, ["loggedIn", "user", "userId"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
     categoryOptions() {
       return [
         { value: "defect", label: "Defect / Bug" },

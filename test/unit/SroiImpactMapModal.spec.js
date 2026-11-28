@@ -1,10 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import SroiImpactMapModal from "@/components/Actions/Modals/SroiImpactMapModal.vue";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
 
 const { Quasar } = All;
 const components = Object.fromEntries(
@@ -35,18 +37,10 @@ const sampleNodes = [
 ];
 
 function createTestWrapper(locale = "en-us") {
-  const store = createStore({
-    modules: {
-      orgs: {
-        namespaced: true,
-        state: () => ({ currentOrg: { id: "org1", name: "Water For All", currency: "USD" } })
-      },
-      model: {
-        namespaced: true,
-        state: () => ({ nodes: sampleNodes })
-      }
-    }
-  });
+  const store = createPinia();
+  setActivePinia(store);
+  useOrgsStore(store).$patch({ currentOrg: { id: "org1", name: "Water For All", currency: "USD" } });
+  useModelStore(store).$patch({ nodes: sampleNodes });
 
   const i18n = createI18n({
     legacy: false,

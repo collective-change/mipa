@@ -17,13 +17,14 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useSettingsStore } from "@/store/store-settings";
 import OrgCard from "@/components/Orgs/OrgCard.vue";
 
 export default {
   props: ["orgs"],
   computed: {
-    ...mapGetters("settings", ["settings"]),
+    ...pickState(useSettingsStore, ["settings"]),
   },
   components: {
     orgCard: OrgCard,

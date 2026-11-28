@@ -177,4 +177,58 @@ describe("store-uiAction (Pinia)", () => {
     expect(store.uiAction.nodeIdsToChart).toEqual(["n1"]);
     expect(updateActionSpy).toHaveBeenCalledTimes(1);
   });
+
+  it("updateUiActionField writes nested and bracketed paths, creating missing objects, and tracks the root field", () => {
+    const store = useUiActionStore();
+    store.setUiAction({
+      id: "act-6",
+      impacts: [{ id: "imp-1", operand: "1" }]
+    });
+
+    store.updateUiActionField({ path: "uiAction.counterfactualDetails.source.name", value: "Census" });
+    expect(store.uiAction.counterfactualDetails).toEqual({ source: { name: "Census" } });
+
+    store.updateUiActionField({ path: "uiAction.impacts[0].operand", value: "7" });
+    expect(store.uiAction.impacts[0]).toEqual({ id: "imp-1", operand: "7" });
+
+    expect(store.uiActionChanged).toBe(true);
+    expect(store.uiActionChangedFields).toEqual(["counterfactualDetails", "impacts"]);
+  });
+
+  it("updateImpact and deleteImpact mark impacts as changed when nothing was changed before", () => {
+    const store = useUiActionStore();
+    store.setUiAction({
+      id: "act-7",
+      impacts: [
+        { id: "imp-1", operand: "1" },
+        { id: "imp-2", operand: "2" }
+      ]
+    });
+
+    store.updateImpact({ id: "imp-2", operand: "20" });
+    expect(store.uiAction.impacts.map((i) => i.operand)).toEqual(["1", "20"]);
+    expect(store.uiActionChanged).toBe(true);
+    expect(store.uiActionChangedFields).toEqual(["impacts"]);
+
+    store.setUiAction({
+      id: "act-8",
+      impacts: [{ id: "imp-1", operand: "1" }]
+    });
+    expect(store.uiActionChangedFields).toEqual([]);
+    store.deleteImpact("imp-1");
+    expect(store.uiAction.impacts).toEqual([]);
+    expect(store.uiActionChanged).toBe(true);
+    expect(store.uiActionChangedFields).toEqual(["impacts"]);
+  });
+
+  it("removeNodeIdToChart still persists when the factor was not charted", async () => {
+    const store = useUiActionStore();
+    store.setUiAction({ id: "act-9", impacts: [], nodeIdsToChart: ["n1"] });
+    await store.removeNodeIdToChart("missing");
+    expect(store.uiAction.nodeIdsToChart).toEqual(["n1"]);
+    expect(updateActionSpy).toHaveBeenCalledWith({
+      id: "act-9",
+      updates: { nodeIdsToChart: ["n1"] }
+    });
+  });
 });

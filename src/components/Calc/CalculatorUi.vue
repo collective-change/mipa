@@ -18,7 +18,12 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useModelStore } from "@/store/store-model";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useCalculatorStore } from "@/store/store-calculator";
+import { useAdHocDocsStore } from "@/store/store-adHocDocs";
+import { useActionsStore } from "@/store/store-actions";
 
 export default {
   // attributes (icon, flat, no-caps...) go to the button, not the wrapper
@@ -32,16 +37,16 @@ export default {
     };
   },
   computed: {
-    ...mapGetters("model", ["nodes"]),
-    ...mapState("model", ["currentModel"]),
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("calculator", [
+    ...pickState(useModelStore, { nodes: "nodesList" }),
+    ...pickState(useModelStore, ["currentModel"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useCalculatorStore, [
       "calculatorIsRunning",
       "calculationProgress",
       //"calculationProgressLabel"
     ]),
-    ...mapState("adHocDocs", ["exchangeRates"]),
-    ...mapGetters("actions", ["actions"]),
+    ...pickState(useAdHocDocsStore, ["exchangeRates"]),
+    ...pickState(useActionsStore, { actions: "actionsList" }),
     loading() {},
   },
   methods: {
@@ -74,7 +79,7 @@ export default {
         default:
           throw `Calculation type "${this.calculationType}" not recognized.`;
       }
-      this.$store.dispatch("calculator/calculate", payload);
+      useCalculatorStore(this.$pinia).calculate(payload);
     },
   },
   created() {},

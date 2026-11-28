@@ -791,7 +791,12 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useModelStore } from "@/store/store-model";
+import { useCalcResultsStore } from "@/store/store-calcResults";
+import { useUiStore } from "@/store/store-ui";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useActionsStore } from "@/store/store-actions";
 import { parse } from "mathjs";
 import LatexFormula from "@/components/Shared/LatexFormula.vue";
 import { GChart } from "vue-google-charts";
@@ -878,16 +883,16 @@ export default {
   },
 
   computed: {
-    ...mapState("ui", [
+    ...pickState(useUiStore, [
       "selectedNodeId",
       "uiNodeChanged",
       "uiNodeChangedFields",
     ]),
-    ...mapState("calcResults", ["baseline"]),
-    ...mapState("model", ["currentModel"]),
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("actions", ["matchingActions", "actions"]),
-    ...mapGetters("model", ["nodes", "links"]),
+    ...pickState(useCalcResultsStore, ["baseline"]),
+    ...pickState(useModelStore, ["currentModel"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useActionsStore, ["matchingActions", "actions"]),
+    ...pickState(useModelStore, { nodes: "nodesList", links: "links" }),
 
     orgCurrency() {
       return (
@@ -1086,8 +1091,8 @@ export default {
       };
       this.showAddLink = true;
     },
-    ...mapActions("model", ["updateNode", "addLink"]),
-    ...mapActions("ui", ["setSelectedNodeId"]),
+    ...pickActions(useModelStore, ["updateNode", "addLink"]),
+    ...pickActions(useUiStore, ["setSelectedNodeId"]),
 
     isAlphanumeric(str) {
       return str ? str.match(/^[a-z0-9_]+$/i) !== null : false;
@@ -1441,7 +1446,7 @@ export default {
         if (this.isCurrencyRoleNode && this.nodeToSubmit.unit !== this.orgCurrency) {
           this.nodeToSubmit.unit = this.orgCurrency;
         }
-        this.$store.commit("ui/setUiNodeChanged", false);
+        useUiStore(this.$pinia).setUiNodeChanged(false);
         this.influencerChartsArr = [];
         this.nodeChart = {};
         this.updateChartData();
@@ -1470,8 +1475,8 @@ export default {
             ].includes(item);
           });
           if (differences.length) {
-            this.$store.commit("ui/setUiNodeChanged", true);
-            this.$store.commit("ui/addUiNodeChangedFields", differences);
+            useUiStore(this.$pinia).setUiNodeChanged(true);
+            useUiStore(this.$pinia).addUiNodeChangedFields(differences);
             //console.log({ differences });
           }
         } else {

@@ -7,7 +7,9 @@
 </template>
 
 <script>
-import { mapGetters, mapState } from "vuex";
+import { pickState } from "@/store/pinia-helpers";
+import { useActionsStore } from "@/store/store-actions";
+import { useUiActionStore } from "@/store/store-uiAction";
 import { firebaseApp, firebaseDb, firebaseAuth } from "@/boot/firebase";
 import ActionsList from "@/components/Actions/ActionsList.vue";
 import UnprioritizedActionsList from "@/components/Actions/UnprioritizedActionsList.vue";
@@ -33,8 +35,8 @@ export default {
     };
   },
   computed: {
-    ...mapState("actions", ["currentAction"]),
-    ...mapState("uiAction", ["uiActionChanged"]),
+    ...pickState(useActionsStore, ["currentAction"]),
+    ...pickState(useUiActionStore, ["uiActionChanged"]),
   },
   created() {},
   mounted() {},
@@ -42,7 +44,7 @@ export default {
   watch: {
     "$route.params.actionId": {
       handler: function (actionId) {
-        this.$store.dispatch("actions/bindCurrentAction", actionId);
+        useActionsStore(this.$pinia).bindCurrentAction(actionId);
       },
       immediate: true,
     },
@@ -66,7 +68,7 @@ export default {
   beforeUnmount() {
     //if the new route does not need actions, then unbind
     if (!["actionDetails"].includes(this.$route.name)) {
-      this.$store.dispatch("actions/unbindCurrentAction");
+      useActionsStore(this.$pinia).unbindCurrentAction();
     }
   },
 };

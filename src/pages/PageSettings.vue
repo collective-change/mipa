@@ -77,7 +77,9 @@
 </template>
 
 <script>
-import { mapState, mapActions } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useAuthStore } from "@/store/store-auth";
+import { useOrgsStore } from "@/store/store-orgs";
 import { WEBSITE_URL, FEEDBACK_URL } from "@/utils/util-links";
 
 export default {
@@ -89,14 +91,14 @@ export default {
     };
   },
   computed: {
-    ...mapState("auth", ["user", "userId"]),
-    ...mapState("orgs", ["orgs"]),
+    ...pickState(useAuthStore, ["user", "userId"]),
+    ...pickState(useOrgsStore, ["orgs"]),
     userEmail() {
       return (this.user && this.user.email) || "";
     }
   },
   methods: {
-    ...mapActions("auth", ["deleteAccount"]),
+    ...pickActions(useAuthStore, ["deleteAccount"]),
     exportUserData() {
       const data = {
         uid: this.userId || (this.user && this.user.uid) || "",

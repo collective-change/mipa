@@ -258,7 +258,11 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapActions } from "vuex";
+import { pickState, pickActions } from "@/store/pinia-helpers";
+import { useAuthStore } from "@/store/store-auth";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useMembersStore } from "@/store/store-members";
+import { useUsersStore } from "@/store/store-users";
 import { requestCheckoutUrl } from "@/utils/billing";
 
 export default {
@@ -272,10 +276,10 @@ export default {
     };
   },
   computed: {
-    ...mapState("auth", ["userId"]),
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("members", ["orgInvitations"]),
-    ...mapGetters("users", ["currentOrgUsers"]),
+    ...pickState(useAuthStore, ["userId"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useMembersStore, ["orgInvitations"]),
+    ...pickState(useUsersStore, { currentOrgUsers: "orgUsers" }),
     orgId() {
       return this.$route.params.orgId;
     },
@@ -337,7 +341,7 @@ export default {
     }
   },
   methods: {
-    ...mapActions("members", [
+    ...pickActions(useMembersStore, [
       "inviteMember",
       "deleteInvitation",
       "resendInvitation",

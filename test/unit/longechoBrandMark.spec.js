@@ -3,7 +3,14 @@ import fs from "fs";
 import path from "path";
 import { mount } from "@vue/test-utils";
 import * as All from "quasar";
-import { createStore } from "vuex";
+import { createPinia, setActivePinia } from "pinia";
+import { useAuthStore } from "@/store/store-auth";
+import { useUsersStore } from "@/store/store-users";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
+import { useActionsStore } from "@/store/store-actions";
+import { useAdHocDocsStore } from "@/store/store-adHocDocs";
+import { useChatsStore } from "@/store/store-chats";
 import { createI18n } from "vue-i18n";
 import messages from "@/i18n";
 import Layout from "@/layouts/Layout.vue";
@@ -77,17 +84,31 @@ describe("todo253: Longecho Mark & Brand Asset Adoption", () => {
   });
 
   it("renders the wordmark in Layout.vue (header)", () => {
-    const store = createStore({
-      modules: {
-        auth: { namespaced: true, state: { loggedIn: false } },
-        org: { namespaced: true, state: { currentOrg: null } },
-        orgs: { namespaced: true, state: { orgs: [] } },
-        model: { namespaced: true, state: { currentModel: null, nodes: [], links: [] } },
-        ui: { namespaced: true, state: { leftDrawerOpen: false, currentLinkGroup: "model" } },
-        adHocDocs: { namespaced: true, state: { appSummary: {}, exchangeRates: {} } },
-        chats: { namespaced: true, state: { unreadChats: [] } }
-      }
+    const store = createPinia();
+    setActivePinia(store);
+    useAuthStore(store).$patch({ loggedIn: false });
+    useOrgsStore(store).$patch({ orgs: [] });
+    useAdHocDocsStore(store).$patch({ appSummary: {}, exchangeRates: {} });
+    useChatsStore(store).$patch({ unreadChats: [] });
+    // The old Vuex mock defined no actions, so every dispatch was a no-op.
+    Object.assign(useUsersStore(store), {
+      bindCurrentUser: () => Promise.resolve(),
+      unbindCurrentUser: () => {},
+      bindCurrentOrgUsers: () => Promise.resolve()
     });
+    Object.assign(useOrgsStore(store), {
+      bindCurrentOrg: () => Promise.resolve(),
+      unbindCurrentOrg: () => {}
+    });
+    Object.assign(useModelStore(store), { unbindCurrentModel: () => {}, unbindNodes: () => {} });
+    Object.assign(useActionsStore(store), { unbindMatchingActions: () => {} });
+    Object.assign(useAdHocDocsStore(store), {
+      bindAppSummary: () => Promise.resolve(),
+      bindExchangeRates: () => Promise.resolve(),
+      unbindAppSummary: () => {},
+      unbindExchangeRates: () => {}
+    });
+    Object.assign(useChatsStore(store), { bindUnreadChats: () => Promise.resolve() });
 
     const wrapper = mount(Layout, {
       global: {
@@ -118,9 +139,8 @@ describe("todo253: Longecho Mark & Brand Asset Adoption", () => {
   });
 
   it("renders the wordmark on PageLanding.vue", () => {
-    const store = createStore({
-      modules: { auth: { namespaced: true, state: { loggedIn: false } } }
-    });
+    const store = createPinia();
+    useAuthStore(store).$patch({ loggedIn: false });
 
     const wrapper = mount(PageLanding, {
       global: {

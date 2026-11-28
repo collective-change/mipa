@@ -79,14 +79,13 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapState } from "vuex";
-import { createHelpers, mapMultiRowFields } from "vuex-map-fields";
+import { pickState, pickUiActionFields } from "@/store/pinia-helpers";
+import { useOrgsStore } from "@/store/store-orgs";
+import { useModelStore } from "@/store/store-model";
+import { useUiStore } from "@/store/store-ui";
+import { useActionsStore } from "@/store/store-actions";
+import { useUiActionStore } from "@/store/store-uiAction";
 import AddEditImpact from "@/components/Impacts/AddEditImpact.vue";
-
-const { mapFields } = createHelpers({
-  getterType: "uiAction/getField",
-  mutationType: "uiAction/updateUiActionField",
-});
 
 export default {
   components: {
@@ -117,15 +116,15 @@ export default {
   },
 
   computed: {
-    ...mapState("orgs", ["currentOrg"]),
-    ...mapState("model", ["nodes"]),
-    ...mapState("ui", ["selectedActionId"]),
-    ...mapState("actions", ["actions"]),
+    ...pickState(useOrgsStore, ["currentOrg"]),
+    ...pickState(useModelStore, ["nodes"]),
+    ...pickState(useUiStore, ["selectedActionId"]),
+    ...pickState(useActionsStore, ["actions"]),
     //fields calculated in the uiAction store, for display only
     //(do not modify their values in the component)
-    ...mapState("uiAction", ["uiAction"]),
+    ...pickState(useUiActionStore, ["uiAction"]),
     //fields for 2-way sync between component and store
-    ...mapFields(["uiAction.title", "uiAction.impacts"]),
+    ...pickUiActionFields(useUiActionStore, ["uiAction.title", "uiAction.impacts"]),
 
     impactToEdit() {
       if (this.editImpactId != null)
@@ -135,7 +134,6 @@ export default {
   },
 
   methods: {
-    //...mapActions("model", ["updateAction"]),
     //formatNumber
     getImpactTypeIfClause(type) {
       switch (type) {
@@ -162,7 +160,7 @@ export default {
           persistent: true,
         })
         .onOk(() => {
-          this.$store.commit("uiAction/deleteImpact", impactId);
+          useUiActionStore(this.$pinia).deleteImpact(impactId);
         });
     },
   },
